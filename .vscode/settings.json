@@ -1,0 +1,66 @@
+{
+    // Configuración de Python
+    "python.defaultInterpreterPath": "${workspaceFolder}/venv/Scripts/python.exe",
+    "python.terminal.activateEnvironment": true,
+    "python.analysis.typeCheckingMode": "basic",
+    "python.analysis.autoImportCompletions": true,
+    "python.linting.enabled": true,
+    "python.linting.pylintEnabled": true,
+
+    // Configuración del editor
+    "editor.formatOnSave": true,
+    "editor.formatOnPaste": true,
+    "editor.wordWrap": "on",
+    "editor.minimap.enabled": true,
+    "editor.renderWhitespace": "boundary",
+
+    // Archivos y carpetas
+    "files.autoSave": "afterDelay",
+    "files.autoSaveDelay": 1000,
+    "files.exclude": {
+        "**/__pycache__": true,
+        "**/.pytest_cache": true,
+        "**/*.pyc": true
+    },
+
+    // Terminal
+    "terminal.integrated.defaultProfile.windows": "Command Prompt",
+    "terminal.integrated.cursorBlinking": true,
+    "terminal.integrated.fontSize": 14,
+
+    // Extensiones específicas
+    "[python]": {
+        "editor.defaultFormatter": "ms-python.python",
+        "editor.formatOnType": true,
+        "editor.codeActionsOnSave": {
+            "source.organizeImports": "explicit"
+        }
+    },
+
+    "[html]": {
+        "editor.defaultFormatter": "vscode.html-language-features",
+        "editor.autoClosingTags": true,
+        "editor.suggest.insertMode": "replace"
+    },
+
+    "[json]": {
+        "editor.defaultFormatter": "vscode.json-language-features",
+        "editor.quickSuggestions": {
+            "strings": true
+        }
+    },
+
+    // Configuración del proyecto
+    "workbench.startupEditor": "none",
+    "workbench.editor.enablePreview": false,
+    "workbench.iconTheme": "vs-seti",
+
+    // Debugging
+    "debug.console.fontSize": 14,
+    "debug.console.wordWrap": true,
+
+    // Configuración de Git
+    "git.autofetch": true,
+    "git.confirmSync": false,
+    "git.enableSmartCommit": true
+}

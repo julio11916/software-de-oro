@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Software de Oro - Sistema de Gestión</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --oro: #FFD700;
+            --oro-oscuro: #FFA500;
+            --gris-claro: #f8f9fa;
+            --gris: #6c757d;
+            --blanco: #ffffff;
+            --sombra: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* HEADER */
+        header {
+            background: linear-gradient(90deg, var(--oro) 0%, var(--oro-oscuro) 100%);
+            color: #333;
+            padding: 25px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            text-align: center;
+            box-shadow: var(--sombra);
+            position: relative;
+            overflow: hidden;
+        }
+
+        header::before {
+            content: "";
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg,
+                    transparent 30%,
+                    rgba(255, 255, 255, 0.1) 50%,
+                    transparent 70%);
+            animation: brillo 3s infinite linear;
+        }
+
+        @keyframes brillo {
+            0% {
+                transform: translateX(-100%) translateY(-100%) rotate(0deg);
+            }
+
+            100% {
+                transform: translateX(100%) translateY(100%) rotate(360deg);
+            }
+        }
+
+        header h1 {
+            font-size: 2.8rem;
+            margin-bottom: 10px;
+            position: relative;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            position: relative;
+        }
+
+        /* CARDS */
+        .card {
+            background: var(--blanco);
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 25px;
+            box-shadow: var(--sombra);
+            transition: transform 0.3s, box-shadow 0.3s;
+            border-left: 5px solid var(--oro);
+        }
+
+        .card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        .card h2 {
+            color: var(--oro-oscuro);
+            margin-bottom: 20px;
+            font-size: 1.8rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .card h2 i {
+            font-size: 1.5rem;
+        }
+
+        /* GRID */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px;
+            margin: 25px 0;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, var(--blanco) 0%, var(--gris-claro) 100%);
+            padding: 25px;
+            border-radius: 12px;
+            text-align: center;
+            box-shadow: var(--sombra);
+            border-top: 4px solid var(--oro);
+            transition: all 0.3s;
+        }
+
+        .stat-card:hover {
+            transform: scale(1.03);
+        }
+
+        .stat-number {
+            font-size: 3rem;
+            font-weight: bold;
+            color: var(--oro-oscuro);
+            margin: 15px 0;
+            text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .stat-card p {
+            color: var(--gris);
+            font-size: 1rem;
+        }
+
+        /* FORMULARIOS */
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #555;
+        }
+
+        input,
+        select,
+        textarea {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border 0.3s;
+        }
+
+        input:focus,
+        select:focus,
+        textarea:focus {
+            border-color: var(--oro);
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(255, 215, 0, 0.2);
+        }
+
+        /* BOTONES */
+        .btn {
+            background: linear-gradient(90deg, var(--oro) 0%, var(--oro-oscuro) 100%);
+            color: #333;
+            padding: 14px 28px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 1rem;
+            margin: 8px 5px;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            box-shadow: 0 4px 8px rgba(255, 165, 0, 0.2);
+        }
+
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 12px rgba(255, 165, 0, 0.3);
+        }
+
+        .btn:active {
+            transform: translateY(-1px);
+        }
+
+        .btn-small {
+            padding: 8px 16px;
+            font-size: 0.9rem;
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 2px solid var(--oro);
+            color: var(--oro-oscuro);
+        }
+
+        .btn-outline:hover {
+            background: linear-gradient(90deg, var(--oro) 0%, var(--oro-oscuro) 100%);
+            color: #333;
+        }
+
+        /* TABLAS */
+        .table-container {
+            overflow-x: auto;
+            margin-top: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 600px;
+        }
+
+        th {
+            background: linear-gradient(90deg, var(--oro) 0%, var(--oro-oscuro) 100%);
+            color: #333;
+            padding: 15px;
+            text-align: left;
+            font-weight: bold;
+        }
+
+        td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #eee;
+        }
+
+        tr:hover {
+            background-color: rgba(255, 215, 0, 0.05);
+        }
+
+        /* ALERTAS */
+        .alert {
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            display: none;
+        }
+
+        .alert-success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .alert-error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        /* RESPONSIVE */
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+
+            header {
+                padding: 20px;
+            }
+
+            header h1 {
+                font-size: 2rem;
+            }
+
+            .card {
+                padding: 20px;
+            }
+
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .stat-number {
+                font-size: 2.5rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <!-- HEADER -->
+        <header>
+            <h1><i class="fas fa-crown"></i> Software de Oro</h1>
+            <p>Sistema de Gestión Profesional con Base de Datos en Excel</p>
+        </header>
+
+        <!-- ALERTAS -->
+        <div id="alertSuccess" class="alert alert-success">
+            <i class="fas fa-check-circle"></i> <span id="alertText">Operación exitosa</span>
+        </div>
+
+        <div id="alertError" class="alert alert-error">
+            <i class="fas fa-exclamation-circle"></i> <span id="errorText">Error en la operación</span>
+        </div>
+
+        <!-- DASHBOARD -->
+        <div class="card">
+            <h2><i class="fas fa-tachometer-alt"></i> Dashboard</h2>
+            <div class="dashboard-grid" id="stats">
+                <!-- Las estadísticas se cargarán con JavaScript -->
+                <div class="stat-card">
+                    <i class="fas fa-users fa-2x"></i>
+                    <div class="stat-number">0</div>
+                    <p>Usuarios Registrados</p>
+                </div>
+                <div class="stat-card">
+                    <i class="fas fa-box fa-2x"></i>
+                    <div class="stat-number">0</div>
+                    <p>Productos en Inventario</p>
+                </div>
+                <div class="stat-card">
+                    <i class="fas fa-shopping-cart fa-2x"></i>
+                    <div class="stat-number">0</div>
+                    <p>Ventas Realizadas</p>
+                </div>
+                <div class="stat-card">
+                    <i class="fas fa-dollar-sign fa-2x"></i>
+                    <div class="stat-number">$0.00</div>
+                    <p>Ingresos Totales</p>
+                </div>
+            </div>
+            <button class="btn" onclick="cargarDashboard()">
+                <i class="fas fa-sync-alt"></i> Actualizar Estadísticas
+            </button>
+        </div>
+
+        <!-- GESTIÓN DE USUARIOS -->
+        <div class="card">
+            <h2><i class="fas fa-user-plus"></i> Gestión de Usuarios</h2>
+
+            <div class="form-group">
+                <h3><i class="fas fa-user-circle"></i> Nuevo Usuario</h3>
+                <input type="text" id="nombre" placeholder="Nombre completo *" required>
+                <input type="email" id="email" placeholder="Correo electrónico *" required>
+                <input type="tel" id="telefono" placeholder="Teléfono">
+                <button class="btn" onclick="agregarUsuario()">
+                    <i class="fas fa-plus"></i> Agregar Usuario
+                </button>
+            </div>
+
+            <div style="margin-top: 40px;">
+                <h3><i class="fas fa-list"></i> Usuarios Registrados</h3>
+                <button class="btn" onclick="cargarUsuarios()">
+                    <i class="fas fa-eye"></i> Ver Todos los Usuarios
+                </button>
+                <button class="btn btn-outline" onclick="exportarUsuarios()">
+                    <i class="fas fa-file-export"></i> Exportar a Excel
+                </button>
+
+                <div id="lista-usuarios" style="margin-top: 25px;"></div>
+            </div>
+        </div>
+
+        <!-- HERRAMIENTAS DEL SISTEMA -->
+        <div class="card">
+            <h2><i class="fas fa-tools"></i> Herramientas del Sistema</h2>
+            <div class="dashboard-grid">
+                <button class="btn" onclick="location.href='/dashboard'">
+                    <i class="fas fa-chart-bar"></i> Dashboard Completo
+                </button>
+                <button class="btn" onclick="location.href='/api/usuarios'" target="_blank">
+                    <i class="fas fa-code"></i> Ver API Usuarios
+                </button>
+                <button class="btn btn-outline" onclick="location.reload()">
+                    <i class="fas fa-redo"></i> Recargar Página
+                </button>
+                <button class="btn btn-outline" onclick="mostrarInfoSistema()">
+                    <i class="fas fa-info-circle"></i> Información del Sistema
+                </button>
+            </div>
+        </div>
+
+        <!-- INFORMACIÓN DEL SISTEMA -->
+        <div class="card">
+            <h2><i class="fas fa-database"></i> Información Técnica</h2>
+            <div class="dashboard-grid">
+                <div class="stat-card">
+                    <i class="fas fa-file-excel"></i>
+                    <div class="stat-number" id="dbSize">0 KB</div>
+                    <p>Tamaño Base de Datos</p>
+                </div>
+                <div class="stat-card">
+                    <i class="fas fa-table"></i>
+                    <div class="stat-number" id="tableCount">0</div>
+                    <p>Tablas en el Sistema</p>
+                </div>
+                <div class="stat-card">
+                    <i class="fas fa-server"></i>
+                    <div class="stat-number" id="totalRecords">0</div>
+                    <p>Registros Totales</p>
+                </div>
+                <div class="stat-card">
+                    <i class="fas fa-clock"></i>
+                    <div class="stat-number" id="uptime">0s</div>
+                    <p>Tiempo Activo</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Variables globales
+        let startTime = Date.now();
+
+        // Mostrar información del sistema
+        function mostrarInfoSistema() {
+            alert(`Software de Oro v1.0\n\n` +
+                `Sistema de gestión con base de datos en Excel\n` +
+                `Tecnologías: Python, Pandas, Flask, HTML5, CSS3, JavaScript\n` +
+                `Base de datos: ${window.location.origin}/bd/base_datos.xlsx`);
+        }
+
+        // Actualizar tiempo activo
+        function actualizarUptime() {
+            const elapsed = Math.floor((Date.now() - startTime) / 1000);
+            const hours = Math.floor(elapsed / 3600);
+            const minutes = Math.floor((elapsed % 3600) / 60);
+            const seconds = elapsed % 60;
+
+            let uptimeText = '';
+            if (hours > 0) uptimeText += `${hours}h `;
+            if (minutes > 0 || hours > 0) uptimeText += `${minutes}m `;
+            uptimeText += `${seconds}s`;
+
+            document.getElementById('uptime').textContent = uptimeText;
+        }
+
+        // Actualizar cada segundo
+        setInterval(actualizarUptime, 1000);
+
+        // Mostrar alertas
+        function mostrarAlerta(mensaje, tipo = 'success') {
+            const alertDiv = tipo === 'success' ?
+                document.getElementById('alertSuccess') :
+                document.getElementById('alertError');
+
+            const textSpan = tipo === 'success' ?
+                document.getElementById('alertText') :
+                document.getElementById('errorText');
+
+            textSpan.textContent = mensaje;
+            alertDiv.style.display = 'block';
+
+            // Ocultar después de 5 segundos
+            setTimeout(() => {
+                alertDiv.style.display = 'none';
+            }, 5000);
+        }
