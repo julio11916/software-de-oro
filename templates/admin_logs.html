@@ -1,0 +1,57 @@
+<h1>Historial de Modificaciones</h1>
+
+<form method="POST">
+    <label>Filtrar por usuario:</label>
+    <input type="text" name="usuario" placeholder="correo del usuario">
+
+    <label>Filtrar por fecha (YYYY-MM-DD):</label>
+    <input type="text" name="fecha" placeholder="ej. 2026-02-06">
+
+    <button type="submit">Aplicar filtros</button>
+
+
+
+    <a href="{{ url_for('export_sales') }}">📥 Exportar informe de ventas (CSV)</a>
+
+    <h2>Pedidos</h2>
+    <!-- tabla de pedidos como antes -->
+
+    <h2>Pagos</h2>
+    <!-- tabla de pagos como antes -->
+
+    <a href="{{ url_for('export_sales') }}">📥 Exportar informe completo de ventas (CSV)</a>
+
+    <a href="{{ url_for('logout') }}">Cerrar sesión</a>
+
+</form>
+
+<form method="POST" action="{{ url_for('export_logs') }}">
+    <label>Exportar registros filtrados:</label>
+    <input type="text" name="usuario" placeholder="correo del usuario">
+    <input type="text" name="fecha" placeholder="YYYY-MM-DD">
+    <button type="submit">Exportar a CSV</button>
+</form>
+
+{% if registros %}
+<table border="1">
+    <tr>
+        <th>ID Registro</th>
+        <th>Usuario</th>
+        <th>Acción</th>
+        <th>Fecha</th>
+    </tr>
+    {% for reg in registros %}
+    <tr>
+        <td>{{ reg.id_registro }}</td>
+        <td>{{ reg.id_usuario }}</td>
+        <td>{{ reg.accion }}</td>
+        <td>{{ reg.fecha_accion }}</td>
+    </tr>
+    {% endfor %}
+</table>
+{% else %}
+<p>No hay registros disponibles.</p>
+{% endif %}
+
+<a href="{{ url_for('admin_orders') }}">Volver a pedidos</a> |
+<a href="{{ url_for('logout') }}">Cerrar sesión</a>

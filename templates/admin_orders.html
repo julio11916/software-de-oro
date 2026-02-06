@@ -1,0 +1,54 @@
+<h1>Panel de Administración</h1>
+
+<h2>Pedidos</h2>
+<table border="1">
+    <tr>
+        <th>ID Pedido</th>
+        <th>Usuario</th>
+        <th>Fecha</th>
+        <th>Estado</th>
+        <th>Acción</th>
+    </tr>
+    {% for pedido in pedidos %}
+    <tr>
+        <td>{{ pedido.id_pedido }}</td>
+        <td>{{ pedido.id_usuario }}</td>
+        <td>{{ pedido.fecha_pedido }}</td>
+        <td>{{ pedido.estado }}</td>
+        <td>
+            <form method="POST" action="{{ url_for('update_order', id_pedido=pedido.id_pedido) }}">
+                <select name="estado">
+                    <option value="pendiente">Pendiente</option>
+                    <option value="enviado">Enviado</option>
+                    <option value="entregado">Entregado</option>
+                </select>
+                <button type="submit">Actualizar</button>
+            </form>
+        </td>
+    </tr>
+    {% endfor %}
+</table>
+
+<h2>Pagos</h2>
+<table border="1">
+    <tr>
+        <th>ID Pago</th>
+        <th>ID Pedido</th>
+        <th>Monto</th>
+        <th>Método</th>
+        <th>Fecha</th>
+        <th>Estado</th>
+    </tr>
+    {% for pago in pagos %}
+    <tr>
+        <td>{{ pago.id_pago }}</td>
+        <td>{{ pago.id_pedido }}</td>
+        <td>{{ pago.monto }}</td>
+        <td>{{ pago.metodo_pago }}</td>
+        <td>{{ pago.fecha_pago }}</td>
+        <td>{{ pago.estado_pago }}</td>
+    </tr>
+    {% endfor %}
+</table>
+
+<a href="{{ url_for('logout') }}">Cerrar sesión</a> 

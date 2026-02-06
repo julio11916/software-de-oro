@@ -1,0 +1,46 @@
+<h1>Dashboard de Ventas</h1>
+
+<h2>Ventas por Producto</h2>
+<canvas id="chartProductos"></canvas>
+
+<h2>Ventas por Mes</h2>
+<canvas id="chartMeses"></canvas>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Datos desde Flask
+    const ventasProducto = {{ ventas_producto| tojson }};
+    const ventasMes = {{ ventas_mes| tojson }};
+
+    // Gráfico de ventas por producto
+    const ctxProd = document.getElementById('chartProductos').getContext('2d');
+    new Chart(ctxProd, {
+        type: 'bar',
+        data: {
+            labels: ventasProducto.map(v => v.nombre),
+            datasets: [{
+                label: 'Cantidad vendida',
+                data: ventasProducto.map(v => v.cantidad),
+                backgroundColor: 'rgba(54, 162, 235, 0.6)'
+            }]
+        }
+    });
+
+    // Gráfico de ventas por mes
+    const ctxMes = document.getElementById('chartMeses').getContext('2d');
+    new Chart(ctxMes, {
+        type: 'line',
+        data: {
+            labels: ventasMes.map(v => v.mes),
+            datasets: [{
+                label: 'Total ventas',
+                data: ventasMes.map(v => v.subtotal),
+                borderColor: 'rgba(255, 99, 132, 0.8)',
+                fill: false
+            }]
+        }
+    });
+</script>
+
+<a href="{{ url_for('admin_orders') }}">Volver a pedidos</a> |
+<a href="{{ url_for('logout') }}">Cerrar sesión</a>

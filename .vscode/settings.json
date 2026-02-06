@@ -62,5 +62,8 @@
     // Configuración de Git
     "git.autofetch": true,
     "git.confirmSync": false,
-    "git.enableSmartCommit": true
+    "git.enableSmartCommit": true,
+    "files.associations": {
+        "plyconfig.json": "jsonc"
+    }
 }
