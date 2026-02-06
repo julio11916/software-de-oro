@@ -1,0 +1,29 @@
+<h1>Catálogo de Ropa Militar</h1>
+
+<table border="1">
+    <tr>
+        <th>ID</th>
+        <th>Nombre</th>
+        <th>Descripción</th>
+        <th>Precio</th>
+        <th>Stock</th>
+        <th>Acción</th>
+    </tr>
+    {% for producto in productos %}
+    <tr>
+        <td>{{ producto.id_producto }}</td>
+        <td>{{ producto.nombre }}</td>
+        <td>{{ producto.descripcion }}</td>
+        <td>{{ producto.precio }}</td>
+        <td>{{ producto.stock }}</td>
+        <td>
+            <form method="POST" action="{{ url_for('add_to_cart', id_producto=producto.id_producto) }}">
+                <input type="number" name="cantidad" value="1" min="1">
+                <button type="submit">Agregar al carrito</button>
+            </form>
+        </td>
+    </tr>
+    {% endfor %}
+</table>
+
+<a href="{{ url_for('logout') }}">Cerrar sesión</a>
