@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detalles del Pedido #{{ pedido.id_pedido }}</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 20px 0;
+        }
+
+        th,
+        td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #4CAF50;
+            color: white;
+        }
+
+        tr:hover {
+            background-color: #f5f5f5;
+        }
+
+        .info-pedido {
+            background-color: #f0f0f0;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+
+        .btn-back {
+            padding: 10px 20px;
+            background-color: #2196F3;
+            color: white;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .total {
+            font-size: 18px;
+            font-weight: bold;
+            color: #4CAF50;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Detalles de tu Pedido #{{ pedido.id_pedido }}</h1>
+
+    <a href="{{ url_for('user_orders') }}" class="btn-back">← Volver a Mis Pedidos</a> |
+    <a href="{{ url_for('user_dashboard') }}">Dashboard</a>
+
+    <div class="info-pedido">
+        <h2>Información del Pedido</h2>
+        <p><strong>Número de Pedido:</strong> #{{ pedido.id_pedido }}</p>
+        <p><strong>Fecha de Compra:</strong> {{ pedido.fecha_pedido }}</p>
+        <p><strong>Estado:</strong>
+            <span
+                style="color: {% if pedido.estado == 'entregado' %}green{% elif pedido.estado == 'enviado' %}blue{% elif pedido.estado == 'cancelado' %}red{% else %}orange{% endif %}; font-weight: bold;">
+                {{ pedido.estado }}
+            </span>
+        </p>
+    </div>
+
+    <h2>Productos</h2>
+    {% if detalles %}
+    <table>
+        <tr>
+            <th>Producto</th>
+            <th>Precio Unitario</th>
+            <th>Cantidad</th>
+            <th>Subtotal</th>
+        </tr>
+        {% for detalle in detalles %}
+        <tr>
+            <td>{{ detalle.nombre }}</td>
+            <td>${{ "%.2f"|format(detalle.precio) }}</td>
+            <td>{{ detalle.cantidad }}</td>
+            <td>${{ "%.2f"|format(detalle.subtotal) }}</td>
+        </tr>
+        {% endfor %}
+        <tr>
+            <td colspan="3" style="text-align: right; font-size: 16px;"><strong>TOTAL:</strong></td>
+            <td class="total">${{ "%.2f"|format(detalles|sum(attribute='subtotal')) }}</td>
+        </tr>
+    </table>
+    {% else %}
+    <p>No hay información disponible sobre los productos de este pedido.</p>
+    {% endif %}
+
+</body>
+
+</html>
