@@ -15,7 +15,7 @@ if not os.path.exists('bd/detalle_pedido.xlsx'):
 def home():
     productos = pd.read_excel('bd/producto.xlsx')
     lista_productos = productos.to_dict(orient='records')
-    return render_template('login.html', productos=lista_productos)
+    return render_template('Usuario/Banner usuario/login.html', productos=lista_productos)
 
 @app.route('/login', methods=['POST'])
 def login():
@@ -27,8 +27,26 @@ def login():
 
     if not usuario.empty:
         rol = usuario.iloc[0]['rol']
+        id_usuario = usuario.iloc[0]['id_usuario']
         session['usuario'] = email
+        session['id_usuario'] = int(id_usuario)
         session['rol'] = rol
+
+        # Registrar el login
+        if os.path.exists('bd/registros.xlsx'):
+            registros = pd.read_excel('bd/registros.xlsx')
+        else:
+            registros = pd.DataFrame(columns=['id_registro', 'id_usuario', 'accion', 'fecha_accion'])
+
+        nuevo_registro = {
+            'id_registro': len(registros) + 1,
+            'id_usuario': email,
+            'accion': f"Inicio de sesión exitoso",
+            'fecha_accion': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        }
+
+        registros = pd.concat([registros, pd.DataFrame([nuevo_registro])], ignore_index=True)
+        registros.to_excel('bd/registros.xlsx', index=False)
 
         if rol == 'admin':
             return redirect(url_for('admin_dashboard'))
@@ -66,9 +84,25 @@ def registro():
         usuarios = pd.concat([usuarios, pd.DataFrame([nuevo_usuario])], ignore_index=True)
         usuarios.to_excel('bd/usuarios.xlsx', index=False)
 
+        # Registrar el nuevo usuario en registros
+        if os.path.exists('bd/registros.xlsx'):
+            registros = pd.read_excel('bd/registros.xlsx')
+        else:
+            registros = pd.DataFrame(columns=['id_registro', 'id_usuario', 'accion', 'fecha_accion'])
+
+        nuevo_registro = {
+            'id_registro': len(registros) + 1,
+            'id_usuario': email,
+            'accion': f"Nuevo usuario registrado: {nombre}",
+            'fecha_accion': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        }
+
+        registros = pd.concat([registros, pd.DataFrame([nuevo_registro])], ignore_index=True)
+        registros.to_excel('bd/registros.xlsx', index=False)
+
         return redirect(url_for('home'))
 
-    return render_template('registro.html')
+    return render_template('Usuario/Info empresa(sobre nosotros)/registro.html')
 
 @app.route('/logout')
 def logout():
@@ -87,23 +121,83 @@ def admin_dashboard():
 
         productos = productos[productos['eliminado'] == False]
         lista_productos = productos.to_dict(orient='records')
-        return render_template('admin_dashboard.html', productos=lista_productos)
+        return render_template('Administrador/admin_dashboard.html', productos=lista_productos)
     return "Acceso denegado"
 
 
 @app.route('/admin/orders')
 def admin_orders():
     if session.get('rol') == 'admin':
-        pedidos = pd.read_excel('bd/pedidos.xlsx')
-        pagos = pd.read_excel('bd/pagos.xlsx')
+        if os.path.exists('bd/pedidos.xlsx'):
+            pedidos = pd.read_excel('bd/pedidos.xlsx')
+        else:
+            pedidos = pd.DataFrame(columns=['id_pedido', 'id_usuario', 'fecha_pedido', 'estado'])
+        
+        if os.path.exists('bd/pagos.xlsx'):
+            pagos = pd.read_excel('bd/pagos.xlsx')
+        else:
+            pagos = pd.DataFrame(columns=['id_pago', 'id_pedido', 'monto', 'metodo_pago', 'fecha_pago', 'estado_pago'])
 
         lista_pedidos = pedidos.to_dict(orient='records')
         lista_pagos = pagos.to_dict(orient='records')
 
-        return render_template('admin_orders.html',
+        return render_template('Administrador/admin_orders.html',
                                pedidos=lista_pedidos,
                                pagos=lista_pagos)
     return "Acceso denegado"
+
+@app.route('/admin/orders/update/<int:id_pedido>', methods=['POST'])
+def update_order(id_pedido):
+    if session.get('rol') != 'admin':
+        return "Acceso denegado"
+    
+    pedidos = pd.read_excel('bd/pedidos.xlsx')
+    nuevo_estado = request.form['estado']
+    
+    idx = pedidos[pedidos['id_pedido'] == id_pedido].index
+    if not idx.empty:
+        estado_anterior = pedidos.at[idx[0], 'estado']
+        pedidos.at[idx[0], 'estado'] = nuevo_estado
+        pedidos.to_excel('bd/pedidos.xlsx', index=False)
+        
+        # Registrar acción
+        if os.path.exists('bd/registros.xlsx'):
+            registros = pd.read_excel('bd/registros.xlsx')
+        else:
+            registros = pd.DataFrame(columns=['id_registro', 'id_usuario', 'accion', 'fecha_accion'])
+        
+        nuevo_registro = {
+            'id_registro': len(registros) + 1,
+            'id_usuario': session['usuario'],
+            'accion': f"Actualizó pedido #{id_pedido} de '{estado_anterior}' a '{nuevo_estado}'",
+            'fecha_accion': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        }
+        
+        registros = pd.concat([registros, pd.DataFrame([nuevo_registro])], ignore_index=True)
+        registros.to_excel('bd/registros.xlsx', index=False)
+    
+    return redirect(url_for('admin_orders'))
+
+@app.route('/admin/orders/details/<int:id_pedido>')
+def order_details(id_pedido):
+    if session.get('rol') != 'admin':
+        return "Acceso denegado"
+    
+    pedidos = pd.read_excel('bd/pedidos.xlsx')
+    pedido = pedidos[pedidos['id_pedido'] == id_pedido]
+    
+    if pedido.empty:
+        return "Pedido no encontrado"
+    
+    detalle_pedido = pd.read_excel('bd/detalle_pedido.xlsx')
+    detalles = detalle_pedido[detalle_pedido['id_pedido'] == id_pedido]
+    
+    productos = pd.read_excel('bd/producto.xlsx')
+    detalles = pd.merge(detalles, productos[['id_producto', 'nombre']], on='id_producto')
+    
+    return render_template('Usuario/order_details.html',
+                          pedido=pedido.iloc[0].to_dict(),
+                          detalles=detalles.to_dict(orient='records'))
 
 @app.route('/admin/agregar_producto', methods=['POST'])
 def agregar_producto():
@@ -159,7 +253,70 @@ def admin_logs():
             registros = registros[registros['fecha_accion'].astype(str).str.startswith(fecha)]
 
     registros = registros.to_dict(orient='records')
-    return render_template('admin_logs.html', registros=registros)
+    return render_template('Administrador/admin_logs.html', registros=registros)
+
+@app.route('/admin/logs/export', methods=['POST'])
+def export_logs():
+    if session.get('rol') != 'admin':
+        return "Acceso denegado"
+    
+    registros = pd.read_excel('bd/registros.xlsx') if os.path.exists('bd/registros.xlsx') else pd.DataFrame(columns=['id_registro', 'id_usuario', 'accion', 'fecha_accion'])
+    
+    # Aplicar filtros si existen
+    usuario = request.form.get('usuario')
+    fecha = request.form.get('fecha')
+    
+    if usuario:
+        registros = registros[registros['id_usuario'].astype(str).str.contains(usuario, case=False, na=False)]
+    if fecha:
+        registros = registros[registros['fecha_accion'].astype(str).str.startswith(fecha)]
+    
+    # Convertir a CSV
+    csv_data = registros.to_csv(index=False)
+    
+    # Crear respuesta con descarga
+    return Response(
+        csv_data,
+        mimetype='text/csv',
+        headers={'Content-Disposition': f'attachment; filename=registros_{datetime.now().strftime("%Y%m%d_%H%M%S")}.csv'}
+    )
+
+@app.route('/admin/sales/export')
+def export_sales():
+    if session.get('rol') != 'admin':
+        return "Acceso denegado"
+    
+    if os.path.exists('bd/pedidos.xlsx'):
+        pedidos = pd.read_excel('bd/pedidos.xlsx')
+    else:
+        pedidos = pd.DataFrame(columns=['id_pedido', 'id_usuario', 'fecha_pedido', 'estado'])
+    
+    if os.path.exists('bd/pagos.xlsx'):
+        pagos = pd.read_excel('bd/pagos.xlsx')
+    else:
+        pagos = pd.DataFrame(columns=['id_pago', 'id_pedido', 'monto', 'metodo_pago', 'fecha_pago', 'estado_pago'])
+    
+    if os.path.exists('bd/detalle_pedido.xlsx'):
+        detalle = pd.read_excel('bd/detalle_pedido.xlsx')
+    else:
+        detalle = pd.DataFrame(columns=['id_detalle', 'id_pedido', 'id_producto', 'cantidad', 'subtotal'])
+    
+    # Combinar los datos
+    informe = pd.merge(pedidos, pagos, on='id_pedido', how='left')
+    
+    # Agregar totales por pedido
+    totales_pedido = detalle.groupby('id_pedido')['subtotal'].sum().reset_index()
+    totales_pedido.columns = ['id_pedido', 'total_productos']
+    informe = pd.merge(informe, totales_pedido, on='id_pedido', how='left')
+    
+    # Convertir a CSV
+    csv_data = informe.to_csv(index=False)
+    
+    return Response(
+        csv_data,
+        mimetype='text/csv',
+        headers={'Content-Disposition': f'attachment; filename=ventas_{datetime.now().strftime("%Y%m%d_%H%M%S")}.csv'}
+    )
 
 
 #admin dashboard
@@ -323,7 +480,7 @@ def admin_papelera():
     productos['eliminado'] = productos['eliminado'].astype(object)
 
     eliminados = productos[productos['eliminado'] == True].to_dict(orient='records')
-    return render_template('admin_papelera.html', productos=eliminados)
+    return render_template('Administrador/admin_papelera.html', productos=eliminados)
 
 
 @app.route('/admin/editar/<int:id_producto>', methods=['GET', 'POST'])
@@ -346,7 +503,8 @@ def editar_producto(id_producto):
         productos.to_excel('bd/producto.xlsx', index=False)
         return redirect(url_for('admin_dashboard'))
 
-    return render_template('editar_producto.html', producto=producto.iloc[0])
+    # Note: editar_producto.html template doesn't exist
+    return render_template('Administrador/editar_producto.html', producto=producto.iloc[0])
 
     # Filtros por usuario y fecha
     usuario = request.form.get('usuario')
@@ -358,7 +516,7 @@ def editar_producto(id_producto):
         registros = registros[registros['fecha_accion'].astype(str).str.startswith(fecha)]
 
     registros = registros.to_dict(orient='records')
-    return render_template('admin_logs.html', registros=registros)
+    return render_template('Administrador/admin_logs.html', registros=registros)
 
 @app.route('/user')
 def user_dashboard():
@@ -371,51 +529,62 @@ def user_dashboard():
 
         productos = productos[productos['eliminado'] == False]
         lista_productos = productos.to_dict(orient='records')
-        return render_template('user_dashboard.html', productos=lista_productos)
+        return render_template('Usuario/user_dashboard.html', productos=lista_productos)
     return "Acceso denegado"
 
 
 @app.route('/add_to_cart/<int:id_producto>', methods=['POST'])
 def add_to_cart(id_producto):
+    if 'carrito' not in session:
+        session['carrito'] = []
+    
     productos = pd.read_excel('bd/producto.xlsx')
-    detalle_pedido = pd.read_excel('bd/detalle_pedido.xlsx')
-
     cantidad = int(request.form['cantidad'])
     producto = productos[productos['id_producto'] == id_producto].iloc[0]
-
+    
     subtotal = producto['precio'] * cantidad
-
-    nuevo_id = len(detalle_pedido) + 1
-    nuevo_pedido = {
-        'id_detalle': nuevo_id,
-        'id_pedido': 1,  # por ahora pedido fijo
-        'id_producto': id_producto,
+    
+    # Agregar al carrito en sesión
+    item_carrito = {
+        'id_producto': int(id_producto),
+        'nombre': producto['nombre'],
         'cantidad': cantidad,
-        'subtotal': subtotal
+        'precio': float(producto['precio']),
+        'subtotal': float(subtotal)
     }
-
-    detalle_pedido = pd.concat([detalle_pedido, pd.DataFrame([nuevo_pedido])], ignore_index=True)
-    detalle_pedido.to_excel('bd/detalle_pedido.xlsx', index=False)
-
+    
+    session['carrito'].append(item_carrito)
+    session.modified = True
+    
     return redirect(url_for('user_dashboard'))
 
 @app.route('/cart')
 def cart():
     if session.get('rol') == 'normal':
-        detalle_pedido = pd.read_excel('bd/detalle_pedido.xlsx')
-        carrito = detalle_pedido.to_dict(orient='records')
-        total = detalle_pedido['subtotal'].sum() if not detalle_pedido.empty else 0
-        return render_template('cart.html', carrito=carrito, total=total)
+        carrito = session.get('carrito', [])
+        total = sum(item['subtotal'] for item in carrito)
+        return render_template('Usuario/Carrito/cart.html', carrito=carrito, total=total)
     return "Acceso denegado"
+
+@app.route('/cart/remove/<int:index>', methods=['POST'])
+def remove_from_cart(index):
+    if session.get('rol') == 'normal':
+        carrito = session.get('carrito', [])
+        if 0 <= index < len(carrito):
+            carrito.pop(index)
+            session['carrito'] = carrito
+            session.modified = True
+    return redirect(url_for('cart'))
 
 @app.route('/pay', methods=['POST'])
 def pay():
     if session.get('rol') == 'normal':
-        detalle_pedido = pd.read_excel('bd/detalle_pedido.xlsx')
-        total = detalle_pedido['subtotal'].sum() if not detalle_pedido.empty else 0
-
-        if total == 0:
+        carrito = session.get('carrito', [])
+        
+        if not carrito:
             return "No hay productos en el carrito."
+        
+        total = sum(item['subtotal'] for item in carrito)
 
         if os.path.exists('bd/pagos.xlsx'):
             pagos = pd.read_excel('bd/pagos.xlsx')
@@ -426,18 +595,39 @@ def pay():
             pedidos = pd.read_excel('bd/pedidos.xlsx')
         else:
             pedidos = pd.DataFrame(columns=['id_pedido','id_usuario','fecha_pedido','estado'])
+        
+        if os.path.exists('bd/detalle_pedido.xlsx'):
+            detalle_pedido = pd.read_excel('bd/detalle_pedido.xlsx')
+        else:
+            detalle_pedido = pd.DataFrame(columns=['id_detalle','id_pedido','id_producto','cantidad','subtotal'])
 
-        nuevo_id_pedido = len(pedidos) + 1
+        # Crear nuevo pedido
+        nuevo_id_pedido = len(pedidos) + 1 if not pedidos.empty else 1
         nuevo_pedido = {
             'id_pedido': nuevo_id_pedido,
-            'id_usuario': session['usuario'],
+            'id_usuario': session.get('id_usuario', session['usuario']),
             'fecha_pedido': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-            'estado': 'pagado'
+            'estado': 'pendiente'
         }
         pedidos = pd.concat([pedidos, pd.DataFrame([nuevo_pedido])], ignore_index=True)
         pedidos.to_excel('bd/pedidos.xlsx', index=False)
+        
+        # Guardar detalles del pedido
+        for item in carrito:
+            nuevo_id_detalle = len(detalle_pedido) + 1 if not detalle_pedido.empty else 1
+            nuevo_detalle = {
+                'id_detalle': nuevo_id_detalle,
+                'id_pedido': nuevo_id_pedido,
+                'id_producto': item['id_producto'],
+                'cantidad': item['cantidad'],
+                'subtotal': item['subtotal']
+            }
+            detalle_pedido = pd.concat([detalle_pedido, pd.DataFrame([nuevo_detalle])], ignore_index=True)
+        
+        detalle_pedido.to_excel('bd/detalle_pedido.xlsx', index=False)
 
-        nuevo_id_pago = len(pagos) + 1
+        # Registrar pago
+        nuevo_id_pago = len(pagos) + 1 if not pagos.empty else 1
         nuevo_pago = {
             'id_pago': nuevo_id_pago,
             'id_pedido': nuevo_id_pedido,
@@ -448,9 +638,73 @@ def pay():
         }
         pagos = pd.concat([pagos, pd.DataFrame([nuevo_pago])], ignore_index=True)
         pagos.to_excel('bd/pagos.xlsx', index=False)
+        
+        # Registrar acción
+        if os.path.exists('bd/registros.xlsx'):
+            registros = pd.read_excel('bd/registros.xlsx')
+        else:
+            registros = pd.DataFrame(columns=['id_registro', 'id_usuario', 'accion', 'fecha_accion'])
+        
+        nuevo_registro = {
+            'id_registro': len(registros) + 1,
+            'id_usuario': session['usuario'],
+            'accion': f"Creó pedido #{nuevo_id_pedido} con {len(carrito)} producto(s) por ${total}",
+            'fecha_accion': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        }
+        
+        registros = pd.concat([registros, pd.DataFrame([nuevo_registro])], ignore_index=True)
+        registros.to_excel('bd/registros.xlsx', index=False)
+        
+        # Limpiar carrito
+        session['carrito'] = []
+        session.modified = True
 
-        return f"Pedido #{nuevo_id_pedido} creado y pago registrado con éxito. Total: {total}"
+        return f"Pedido #{nuevo_id_pedido} creado y pago registrado con éxito. Total: ${total}"
     return "Acceso denegado"
+
+@app.route('/user/orders')
+def user_orders():
+    if session.get('rol') != 'normal':
+        return "Acceso denegado"
+    
+    if os.path.exists('bd/pedidos.xlsx'):
+        pedidos = pd.read_excel('bd/pedidos.xlsx')
+        id_usuario = session.get('id_usuario')
+        pedidos_usuario = pedidos[pedidos['id_usuario'] == id_usuario]
+    else:
+        pedidos_usuario = pd.DataFrame(columns=['id_pedido', 'id_usuario', 'fecha_pedido', 'estado'])
+    
+    # Obtener montos de pagos
+    if os.path.exists('bd/pagos.xlsx'):
+        pagos = pd.read_excel('bd/pagos.xlsx')
+        pedidos_usuario = pd.merge(pedidos_usuario, pagos[['id_pedido', 'monto', 'metodo_pago']], 
+                                   on='id_pedido', how='left')
+    
+    lista_pedidos = pedidos_usuario.to_dict(orient='records')
+    return render_template('Usuario/user_orders.html', pedidos=lista_pedidos)
+
+@app.route('/user/orders/details/<int:id_pedido>')
+def user_order_details(id_pedido):
+    if session.get('rol') != 'normal':
+        return "Acceso denegado"
+    
+    # Verificar que el pedido pertenece al usuario
+    pedidos = pd.read_excel('bd/pedidos.xlsx')
+    pedido = pedidos[(pedidos['id_pedido'] == id_pedido) & 
+                     (pedidos['id_usuario'] == session.get('id_usuario'))]
+    
+    if pedido.empty:
+        return "Pedido no encontrado o no tienes permiso para verlo"
+    
+    detalle_pedido = pd.read_excel('bd/detalle_pedido.xlsx')
+    detalles = detalle_pedido[detalle_pedido['id_pedido'] == id_pedido]
+    
+    productos = pd.read_excel('bd/producto.xlsx')
+    detalles = pd.merge(detalles, productos[['id_producto', 'nombre', 'precio']], on='id_producto')
+    
+    return render_template('Usuario/user_order_details.html',
+                          pedido=pedido.iloc[0].to_dict(),
+                          detalles=detalles.to_dict(orient='records'))
 
 @app.route('/admin/charts')
 def admin_charts():
@@ -468,7 +722,7 @@ def admin_charts():
         ventas_por_mes = pd.merge(ventas_por_mes, pedidos[['id_pedido','mes']], on='id_pedido')
         ventas_por_mes = ventas_por_mes.groupby('mes')['subtotal'].sum().reset_index()
 
-        return render_template('admin_charts.html',
+        return render_template('Administrador/admin_charts.html',
                                ventas_producto=ventas_por_producto.to_dict(orient='records'),
                                ventas_mes=ventas_por_mes.to_dict(orient='records'))
     return "Acceso denegado"

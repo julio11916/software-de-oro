@@ -26,6 +26,7 @@
         <div class="container-fluid">
             <a class="navbar-brand" href="#">🪖 Ropa Militar</a>
             <div class="d-flex">
+                <a href="{{ url_for('user_orders') }}" class="btn btn-outline-light me-2">📦 Mis Pedidos</a>
                 <a href="{{ url_for('cart') }}" class="btn btn-outline-light me-2">🛒 Ver carrito</a>
                 <a href="{{ url_for('logout') }}" class="btn btn-danger">Cerrar sesión</a>
             </div>
@@ -36,7 +37,7 @@
         <h2 class="mb-4">Catálogo de Ropa Militar</h2>
         <div class="row">
             {% for producto in productos %}
-            
+
             <div class="col-md-4 mb-4">
                 <div class="card producto-card h-100">
                     {% if producto.imagen_url %}

@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Historial de Modificaciones</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 20px 0;
+        }
+
+        th,
+        td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #4CAF50;
+            color: white;
+        }
+
+        tr:hover {
+            background-color: #f5f5f5;
+        }
+
+        .filtros {
+            background-color: #f0f0f0;
+            padding: 15px;
+            margin: 20px 0;
+        }
+
+        .btn-export {
+            background-color: #2196F3;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            cursor: pointer;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Historial de Modificaciones</h1>
+
+    <a href="{{ url_for('admin_dashboard') }}">Volver al Dashboard</a> |
+    <a href="{{ url_for('admin_orders') }}">Ver Pedidos</a> |
+    <a href="{{ url_for('logout') }}">Cerrar sesión</a>
+
+    <div class="filtros">
+        <h3>Filtrar Registros</h3>
+        <form method="POST">
+            <label>Filtrar por usuario:</label>
+            <input type="text" name="usuario" placeholder="correo del usuario">
+
+            <label>Filtrar por fecha (YYYY-MM-DD):</label>
+            <input type="text" name="fecha" placeholder="ej. 2026-02-16">
+
+            <button type="submit">Aplicar filtros</button>
+        </form>
+    </div>
+
+    <div class="filtros">
+        <h3>Exportar Registros</h3>
+        <form method="POST" action="{{ url_for('export_logs') }}">
+            <label>Exportar registros filtrados:</label>
+            <input type="text" name="usuario" placeholder="correo del usuario">
+            <input type="text" name="fecha" placeholder="YYYY-MM-DD">
+            <button type="submit" class="btn-export">📥 Exportar a CSV</button>
+        </form>
+    </div>
+
+    {% if registros %}
+    <h2>Registros ({{ registros|length }} total)</h2>
+    <table>
+        <tr>
+            <th>ID Registro</th>
+            <th>Usuario</th>
+            <th>Acción</th>
+            <th>Fecha</th>
+        </tr>
+        {% for reg in registros %}
+        <tr>
+            <td>{{ reg.id_registro }}</td>
+            <td>{{ reg.id_usuario }}</td>
+            <td>{{ reg.accion }}</td>
+            <td>{{ reg.fecha_accion }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+    {% else %}
+    <p>No hay registros disponibles.</p>
+    {% endif %}
+</body>
+
+</html>

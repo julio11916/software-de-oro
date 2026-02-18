@@ -1,0 +1,818 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ropa Militar - Catálogo</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #ffc107;
+            --hover-color: #34495e;
+        }
+
+        body {
+            background-color: #f8f9fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        /* Barra superior */
+        .top-bar {
+            background-color: var(--primary-color);
+            padding: 1rem 0;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .logo-brand {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: white;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .logo-brand:hover {
+            color: var(--secondary-color);
+        }
+
+        /* Barra de búsqueda */
+        .search-container {
+            flex-grow: 1;
+            max-width: 600px;
+            margin: 0 2rem;
+        }
+
+        .search-box {
+            position: relative;
+        }
+
+        .search-box input {
+            border-radius: 25px;
+            padding: 0.6rem 3rem 0.6rem 1.5rem;
+            border: none;
+        }
+
+        .search-box button {
+            position: absolute;
+            right: 5px;
+            top: 50%;
+            transform: translateY(-50%);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            border: none;
+            background-color: var(--secondary-color);
+            color: var(--primary-color);
+        }
+
+        .search-box button:hover {
+            background-color: #ffb300;
+        }
+
+        /* Iconos de usuario y carrito */
+        .top-icons {
+            display: flex;
+            gap: 1.5rem;
+            align-items: center;
+        }
+
+        .icon-btn {
+            color: white;
+            text-decoration: none;
+            font-size: 1.3rem;
+            position: relative;
+            transition: color 0.3s;
+        }
+
+        .icon-btn:hover {
+            color: var(--secondary-color);
+        }
+
+        .cart-badge {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background-color: #dc3545;
+            color: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            font-size: 0.7rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+
+        /* Dropdown de usuario */
+        .user-dropdown {
+            position: relative;
+        }
+
+        .user-dropdown-btn {
+            background: none;
+            border: none;
+            padding: 0;
+            cursor: pointer;
+        }
+
+        .dropdown-menu-custom {
+            display: none;
+            position: absolute;
+            top: 100%;
+            right: 0;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            min-width: 200px;
+            margin-top: 0.5rem;
+            z-index: 1000;
+            animation: fadeInDown 0.3s;
+        }
+
+        .dropdown-menu-custom.show {
+            display: block;
+        }
+
+        .dropdown-menu-custom a {
+            display: block;
+            padding: 0.8rem 1.2rem;
+            color: var(--primary-color);
+            text-decoration: none;
+            transition: background 0.2s;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .dropdown-menu-custom a:last-child {
+            border-bottom: none;
+        }
+
+        .dropdown-menu-custom a:hover {
+            background-color: #f8f9fa;
+            padding-left: 1.5rem;
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Layout con sidebar */
+        .main-layout {
+            display: flex;
+            gap: 0;
+            min-height: calc(100vh - 200px);
+        }
+
+        /* Sidebar vertical izquierdo */
+        .sidebar {
+            width: 280px;
+            background-color: white;
+            box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1);
+            position: sticky;
+            top: 0;
+            height: fit-content;
+            max-height: calc(100vh - 100px);
+            overflow-y: auto;
+        }
+
+        .sidebar-title {
+            padding: 1.5rem;
+            background-color: var(--primary-color);
+            color: white;
+            font-weight: bold;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .nav-links {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        .nav-links>li {
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .nav-links>li>a {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1rem 1.5rem;
+            color: var(--primary-color);
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s;
+            background-color: white;
+        }
+
+        .nav-links>li>a:hover {
+            background-color: var(--secondary-color);
+            color: var(--primary-color);
+            padding-left: 2rem;
+        }
+
+        .nav-links>li>a .icon-left {
+            margin-right: 0.5rem;
+        }
+
+        .nav-links>li>a .icon-right {
+            font-size: 0.8rem;
+            transition: transform 0.3s;
+        }
+
+        .nav-links>li.active>a .icon-right {
+            transform: rotate(180deg);
+        }
+
+        /* Submenú desplegable vertical */
+        .submenu {
+            display: none;
+            background: #f8f9fa;
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+
+        .nav-links>li.active .submenu {
+            display: block;
+            max-height: 500px;
+        }
+
+        .submenu a {
+            display: flex;
+            align-items: center;
+            padding: 0.8rem 1.5rem 0.8rem 3rem;
+            color: var(--primary-color);
+            text-decoration: none;
+            transition: all 0.2s;
+            border-bottom: 1px solid #e9ecef;
+            font-size: 0.95rem;
+        }
+
+        .submenu a:hover {
+            background-color: white;
+            padding-left: 3.5rem;
+        }
+
+        .submenu a:last-child {
+            border-bottom: none;
+        }
+
+        .submenu a i {
+            margin-right: 0.5rem;
+            width: 20px;
+        }
+
+        /* Contenido principal */
+        .main-content {
+            flex: 1;
+            padding: 0;
+        }
+
+        .main-content .container {
+            max-width: 100%;
+            padding-left: 2rem;
+            padding-right: 2rem;
+        }
+
+        /* Catálogo */
+        .catalogo {
+            margin-top: 2rem;
+            margin-bottom: 3rem;
+            width: 100%;
+            padding-left: 1rem;
+        }
+
+        .section-title {
+            text-align: center;
+            margin-bottom: 2rem;
+            margin-left: 0;
+            margin-right: 0;
+            padding-left: 0;
+            color: var(--primary-color);
+            font-weight: bold;
+            width: 100%;
+        }
+
+        .producto-card {
+            transition: all 0.3s;
+            height: 100%;
+            border: none;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .producto-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        .producto-card img {
+            height: 250px;
+            object-fit: cover;
+            transition: transform 0.3s;
+        }
+
+        .producto-card:hover img {
+            transform: scale(1.05);
+        }
+
+        .card-body {
+            padding: 1.2rem;
+        }
+
+        .card-title {
+            color: var(--primary-color);
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+
+        .price {
+            font-size: 1.4rem;
+            font-weight: bold;
+            color: #28a745;
+        }
+
+        /* Footer */
+        .footer {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 3rem 0 1rem;
+            margin-top: 4rem;
+        }
+
+        .footer h5 {
+            color: var(--secondary-color);
+            margin-bottom: 1.5rem;
+            font-weight: bold;
+        }
+
+        .footer ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .footer ul li {
+            margin-bottom: 0.7rem;
+        }
+
+        .footer ul li a {
+            color: #ecf0f1;
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+
+        .footer ul li a:hover {
+            color: var(--secondary-color);
+        }
+
+        .footer-bottom {
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            text-align: center;
+        }
+
+        .social-icons {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .social-icons a {
+            color: white;
+            font-size: 1.5rem;
+            transition: color 0.3s;
+        }
+
+        .social-icons a:hover {
+            color: var(--secondary-color);
+        }
+
+        /* Animaciones */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .producto-card {
+            animation: fadeIn 0.5s ease-out;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Barra Superior -->
+    <div class="top-bar">
+        <div class="container">
+            <div class="d-flex align-items-center">
+                <!-- Logo -->
+                <a href="#" class="logo-brand">
+                    <i class="fas fa-shield-alt"></i>
+                    Ropa Militar
+                </a>
+
+                <!-- Barra de búsqueda -->
+                <div class="search-container">
+                    <div class="search-box">
+                        <input type="text" class="form-control" id="searchInput" placeholder="Buscar productos...">
+                        <button type="button" onclick="buscarProducto()">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Iconos de Usuario y Carrito -->
+                <div class="top-icons">
+                    <!-- Usuario con dropdown -->
+                    <div class="user-dropdown">
+                        <button class="user-dropdown-btn icon-btn" onclick="toggleUserMenu()">
+                            <i class="fas fa-user"></i>
+                        </button>
+                        <div class="dropdown-menu-custom" id="userDropdown">
+                            <a href="#" data-bs-toggle="modal" data-bs-target="#loginModal" onclick="closeUserMenu()">
+                                <i class="fas fa-sign-in-alt me-2"></i>Iniciar sesión
+                            </a>
+                            <a href="{{ url_for('registro') }}">
+                                <i class="fas fa-user-plus me-2"></i>Crear cuenta
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Carrito -->
+                    <a href="#" class="icon-btn" onclick="mostrarCarrito()">
+                        <i class="fas fa-shopping-cart"></i>
+                        <span class="cart-badge" id="cartCount">0</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Layout Principal con Sidebar -->
+    <div class="main-layout">
+        <!-- Sidebar Vertical Izquierdo -->
+        <aside class="sidebar">
+            <div class="sidebar-title">
+                <i class="fas fa-bars"></i>
+                Menú de Navegación
+            </div>
+            <ul class="nav-links">
+                <!-- Ofertas -->
+                <li>
+                    <a href="#" onclick="toggleSubmenu(event, this)">
+                        <span>
+                            <i class="fas fa-tags icon-left"></i>Ofertas
+                        </span>
+                        <i class="fas fa-chevron-down icon-right"></i>
+                    </a>
+                    <div class="submenu">
+                        <a href="#"><i class="fas fa-percent"></i>Descuentos del 50%</a>
+                        <a href="#"><i class="fas fa-fire"></i>Ofertas Flash</a>
+                        <a href="#"><i class="fas fa-gift"></i>Promociones Especiales</a>
+                    </div>
+                </li>
+
+                <!-- Explorar Categorías -->
+                <li>
+                    <a href="#" onclick="toggleSubmenu(event, this)">
+                        <span>
+                            <i class="fas fa-th-large icon-left"></i>Explorar Categorías
+                        </span>
+                        <i class="fas fa-chevron-down icon-right"></i>
+                    </a>
+                    <div class="submenu">
+                        <a href="#"><i class="fas fa-tshirt"></i>Camisetas</a>
+                        <a href="#"><i class="fas fa-vest"></i>Chalecos Tácticos</a>
+                        <a href="#"><i class="fas fa-shoe-prints"></i>Botas Militares</a>
+                        <a href="#"><i class="fas fa-hat-cowboy"></i>Gorras y Sombreros</a>
+                        <a href="#"><i class="fas fa-backpack"></i>Mochilas</a>
+                        <a href="#"><i class="fas fa-layer-group"></i>Accesorios</a>
+                    </div>
+                </li>
+
+                <!-- Productos Destacados -->
+                <li>
+                    <a href="#" onclick="toggleSubmenu(event, this)">
+                        <span>
+                            <i class="fas fa-star icon-left"></i>Productos Destacados
+                        </span>
+                        <i class="fas fa-chevron-down icon-right"></i>
+                    </a>
+                    <div class="submenu">
+                        <a href="#"><i class="fas fa-award"></i>Más Vendidos</a>
+                        <a href="#"><i class="fas fa-crown"></i>Premium</a>
+                        <a href="#"><i class="fas fa-sparkles"></i>Novedades</a>
+                        <a href="#"><i class="fas fa-heart"></i>Favoritos</a>
+                    </div>
+                </li>
+            </ul>
+        </aside>
+
+        <!-- Contenido Principal -->
+        <div class="main-content">
+            <!-- Catálogo de Productos -->
+            <div class="container catalogo">
+                <h2 class="section-title">Catálogo de Ropa Militar</h2>
+                <div class="row" id="productosContainer">
+                    {% for producto in productos %}
+                    <div class="col-lg-3 col-md-4 col-sm-6 mb-4 producto-item" data-nombre="{{ producto.nombre|lower }}"
+                        data-precio="{{ producto.precio }}">
+                        <div class="card producto-card">
+                            {% if producto.imagen_url %}
+                            <img src="{{ url_for('static', filename=producto.imagen_url) }}" class="card-img-top"
+                                alt="{{ producto.nombre }}">
+                            {% else %}
+                            <img src="{{ url_for('static', filename='img/default.jpg') }}" class="card-img-top"
+                                alt="{{ producto.nombre }}">
+                            {% endif %}
+                            <div class="card-body">
+                                <h5 class="card-title">{{ producto.nombre }}</h5>
+                                <p class="card-text text-muted">{{ producto.descripcion }}</p>
+                                <p class="price">${{ producto.precio }}</p>
+                                <p class="text-muted mb-3">
+                                    <i class="fas fa-box"></i> Stock: {{ producto.stock }}
+                                </p>
+                                <form method="POST"
+                                    action="{{ url_for('add_to_cart', id_producto=producto.id_producto) }}"
+                                    onsubmit="return verificarLogin(event)">
+                                    <div class="input-group mb-2">
+                                        <input type="number" name="cantidad" class="form-control" value="1" min="1"
+                                            max="{{ producto.stock }}">
+                                        <button type="submit" class="btn btn-primary">
+                                            <i class="fas fa-cart-plus"></i> Agregar
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="row">
+                <!-- Sobre Nosotros -->
+                <div class="col-md-3 mb-4">
+                    <h5><i class="fas fa-shield-alt"></i> Ropa Militar</h5>
+                    <p>Tu tienda de confianza para equipamiento militar de alta calidad. Vestimos profesionales desde
+                        2020.</p>
+                    <div class="social-icons">
+                        <a href="#"><i class="fab fa-facebook"></i></a>
+                        <a href="#"><i class="fab fa-instagram"></i></a>
+                        <a href="#"><i class="fab fa-twitter"></i></a>
+                        <a href="#"><i class="fab fa-youtube"></i></a>
+                    </div>
+                </div>
+
+                <!-- Enlaces Rápidos -->
+                <div class="col-md-3 mb-4">
+                    <h5><i class="fas fa-link"></i> Enlaces Rápidos</h5>
+                    <ul>
+                        <li><a href="#"><i class="fas fa-angle-right"></i> Inicio</a></li>
+                        <li><a href="#"><i class="fas fa-angle-right"></i> Catálogo</a></li>
+                        <li><a href="#"><i class="fas fa-angle-right"></i> Ofertas</a></li>
+                        <li><a href="#"><i class="fas fa-angle-right"></i> Sobre Nosotros</a></li>
+                        <li><a href="#"><i class="fas fa-angle-right"></i> Contacto</a></li>
+                    </ul>
+                </div>
+
+                <!-- Atención al Cliente -->
+                <div class="col-md-3 mb-4">
+                    <h5><i class="fas fa-headset"></i> Atención al Cliente</h5>
+                    <ul>
+                        <li><a href="#"><i class="fas fa-angle-right"></i> Preguntas Frecuentes</a></li>
+                        <li><a href="#"><i class="fas fa-angle-right"></i> Política de Devoluciones</a></li>
+                        <li><a href="#"><i class="fas fa-angle-right"></i> Envíos</a></li>
+                        <li><a href="#"><i class="fas fa-angle-right"></i> Términos y Condiciones</a></li>
+                        <li><a href="#"><i class="fas fa-angle-right"></i> Privacidad</a></li>
+                    </ul>
+                </div>
+
+                <!-- Contacto -->
+                <div class="col-md-3 mb-4">
+                    <h5><i class="fas fa-envelope"></i> Contacto</h5>
+                    <ul>
+                        <li><i class="fas fa-map-marker-alt"></i> Av. Principal #123, Ciudad</li>
+                        <li><i class="fas fa-phone"></i> +57 123 456 7890</li>
+                        <li><i class="fas fa-envelope"></i> info@ropamilitar.com</li>
+                        <li><i class="fas fa-clock"></i> Lun-Sáb: 9:00 - 18:00</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="footer-bottom">
+                <p>&copy; 2026 Ropa Militar. Todos los derechos reservados. | Diseñado con <i
+                        class="fas fa-heart text-danger"></i></p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Modal de login -->
+    <div class="modal fade" id="loginModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <form method="POST" action="{{ url_for('login') }}">
+                    <div class="modal-header bg-dark text-white">
+                        <h5 class="modal-title">
+                            <i class="fas fa-sign-in-alt"></i> Iniciar sesión
+                        </h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="email" class="form-label">
+                                <i class="fas fa-envelope"></i> Correo electrónico
+                            </label>
+                            <input type="email" class="form-control" name="email" required
+                                placeholder="correo@ejemplo.com">
+                        </div>
+                        <div class="mb-3">
+                            <label for="password" class="form-label">
+                                <i class="fas fa-lock"></i> Contraseña
+                            </label>
+                            <input type="password" class="form-control" name="password" required placeholder="••••••••">
+                        </div>
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" class="form-check-input" id="remember">
+                            <label class="form-check-label" for="remember">
+                                Recordarme
+                            </label>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="submit" class="btn btn-warning w-100">
+                            <i class="fas fa-sign-in-alt"></i> Ingresar
+                        </button>
+                        <div class="text-center w-100 mt-2">
+                            <small>¿No tienes cuenta? <a href="{{ url_for('registro') }}">Regístrate aquí</a></small>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Toggle del menú de usuario (click estático)
+        function toggleUserMenu() {
+            const dropdown = document.getElementById('userDropdown');
+            dropdown.classList.toggle('show');
+        }
+
+        function closeUserMenu() {
+            const dropdown = document.getElementById('userDropdown');
+            dropdown.classList.remove('show');
+        }
+
+        // Cerrar dropdown al hacer click fuera
+        document.addEventListener('click', function (event) {
+            const userDropdown = document.querySelector('.user-dropdown');
+            const dropdown = document.getElementById('userDropdown');
+            if (dropdown && !userDropdown.contains(event.target)) {
+                dropdown.classList.remove('show');
+            }
+        });
+
+        // Toggle del submenú en sidebar
+        function toggleSubmenu(event, element) {
+            event.preventDefault();
+            const parentLi = element.parentElement;
+            const wasActive = parentLi.classList.contains('active');
+
+            // Cerrar todos los submenús
+            document.querySelectorAll('.nav-links > li').forEach(li => {
+                li.classList.remove('active');
+            });
+
+            // Abrir el seleccionado si no estaba activo
+            if (!wasActive) {
+                parentLi.classList.add('active');
+            }
+        }
+
+        // Función para verificar login
+        function verificarLogin(event) {
+            event.preventDefault();
+            alert("Debes iniciar sesión o registrarte para comprar.");
+            const loginModal = new bootstrap.Modal(document.getElementById('loginModal'));
+            loginModal.show();
+            return false;
+        }
+
+        // Función de búsqueda
+        function buscarProducto() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const productos = document.querySelectorAll('.producto-item');
+            let encontrados = 0;
+
+            productos.forEach(producto => {
+                const nombre = producto.getAttribute('data-nombre');
+                if (nombre.includes(searchTerm)) {
+                    producto.style.display = 'block';
+                    encontrados++;
+                } else {
+                    producto.style.display = 'none';
+                }
+            });
+
+            if (encontrados === 0 && searchTerm !== '') {
+                alert('No se encontraron productos con ese nombre.');
+            }
+        }
+
+        // Búsqueda en tiempo real
+        document.getElementById('searchInput').addEventListener('keyup', function (e) {
+            if (e.key === 'Enter') {
+                buscarProducto();
+            }
+        });
+
+        // Actualizar contador del carrito (simulado - deberías conectarlo con tu backend)
+        function actualizarCarrito() {
+            // Aquí deberías obtener el número real de items del carrito
+            const cartCount = localStorage.getItem('cartCount') || 0;
+            document.getElementById('cartCount').textContent = cartCount;
+        }
+
+        // Función para mostrar carrito
+        function mostrarCarrito() {
+            // Redirigir a la página del carrito
+            alert('Funcionalidad del carrito en desarrollo');
+            // window.location.href = "{{ url_for('cart') }}";
+        }
+
+        // Inicializar al cargar la página
+        document.addEventListener('DOMContentLoaded', function () {
+            actualizarCarrito();
+
+            // Animación suave al hacer scroll
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    const target = document.querySelector(this.getAttribute('href'));
+                    if (target) {
+                        target.scrollIntoView({
+                            behavior: 'smooth'
+                        });
+                    }
+                });
+            });
+
+            // Efecto de hover en las tarjetas
+            const cards = document.querySelectorAll('.producto-card');
+            cards.forEach(card => {
+                card.addEventListener('mouseenter', function () {
+                    this.style.transition = 'all 0.3s ease';
+                });
+            });
+        });
+
+        // Filtro por precio (opcional)
+        function filtrarPorPrecio(min, max) {
+            const productos = document.querySelectorAll('.producto-item');
+            productos.forEach(producto => {
+                const precio = parseFloat(producto.getAttribute('data-precio'));
+                if (precio >= min && precio <= max) {
+                    producto.style.display = 'block';
+                } else {
+                    producto.style.display = 'none';
+                }
+            });
+        }
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+
+</html>
