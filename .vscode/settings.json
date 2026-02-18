@@ -53,7 +53,7 @@
     // Configuración del proyecto
     "workbench.startupEditor": "none",
     "workbench.editor.enablePreview": false,
-    "workbench.iconTheme": "vs-seti",
+    "workbench.iconTheme": "catppuccin-perfect-mocha",
 
     // Debugging
     "debug.console.fontSize": 14,
