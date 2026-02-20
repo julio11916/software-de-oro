@@ -15,7 +15,7 @@ if not os.path.exists('bd/detalle_pedido.xlsx'):
 def home():
     productos = pd.read_excel('bd/producto.xlsx')
     lista_productos = productos.to_dict(orient='records')
-    return render_template('Usuario/Banner usuario/login.html', productos=lista_productos)
+    return render_template('Usuarios/Banner usuario/login.html', productos=lista_productos)
 
 @app.route('/login', methods=['POST'])
 def login():
@@ -102,7 +102,7 @@ def registro():
 
         return redirect(url_for('home'))
 
-    return render_template('Usuario/Info empresa(sobre nosotros)/registro.html')
+    return render_template('Usuarios/Info empresa(sobre nosotros)/registro.html')
 
 @app.route('/logout')
 def logout():
@@ -141,9 +141,9 @@ def admin_orders():
         lista_pedidos = pedidos.to_dict(orient='records')
         lista_pagos = pagos.to_dict(orient='records')
 
-        return render_template('Administrador/admin_orders.html',
-                               pedidos=lista_pedidos,
-                               pagos=lista_pagos)
+        return render_template('Administrador/Banner Adminstrador/admin_orders.html',
+                       pedidos=lista_pedidos,
+                       pagos=lista_pagos)
     return "Acceso denegado"
 
 @app.route('/admin/orders/update/<int:id_pedido>', methods=['POST'])
@@ -195,7 +195,7 @@ def order_details(id_pedido):
     productos = pd.read_excel('bd/producto.xlsx')
     detalles = pd.merge(detalles, productos[['id_producto', 'nombre']], on='id_producto')
     
-    return render_template('Usuario/order_details.html',
+    return render_template('Usuarios/user_order_details.html',
                           pedido=pedido.iloc[0].to_dict(),
                           detalles=detalles.to_dict(orient='records'))
 
@@ -253,7 +253,7 @@ def admin_logs():
             registros = registros[registros['fecha_accion'].astype(str).str.startswith(fecha)]
 
     registros = registros.to_dict(orient='records')
-    return render_template('Administrador/admin_logs.html', registros=registros)
+    return render_template('Administrador/Gestion produdtos/admin_logs.html', registros=registros)
 
 @app.route('/admin/logs/export', methods=['POST'])
 def export_logs():
@@ -480,7 +480,42 @@ def admin_papelera():
     productos['eliminado'] = productos['eliminado'].astype(object)
 
     eliminados = productos[productos['eliminado'] == True].to_dict(orient='records')
-    return render_template('Administrador/admin_papelera.html', productos=eliminados)
+    return render_template('Administrador/Papelera/admin_papelera.html', productos=eliminados)
+
+
+@app.route('/admin/usuarios')
+def admin_usuarios():
+    if session.get('rol') != 'admin':
+        return "Acceso denegado"
+
+    if os.path.exists('bd/usuarios.xlsx'):
+        usuarios = pd.read_excel('bd/usuarios.xlsx')
+    else:
+        usuarios = pd.DataFrame(columns=['id_usuario', 'nombre', 'email', 'password_hash', 'rol', 'fecha_registro'])
+
+    lista_usuarios = usuarios.to_dict(orient='records')
+    return render_template('Administrador/Gestion usuarios/admin_usuario.html', usuarios=lista_usuarios)
+
+
+@app.route('/admin/ajustes')
+def admin_ajustes():
+    if session.get('rol') != 'admin':
+        return "Acceso denegado"
+    return render_template('Administrador/Ajustes/admin_ajustes_dashboard.html')
+
+
+@app.route('/admin/informes')
+def admin_informes():
+    if session.get('rol') != 'admin':
+        return "Acceso denegado"
+    return render_template('Administrador/Informes/admin_infor_dashboard.html')
+
+
+@app.route('/admin/pos')
+def admin_pos():
+    if session.get('rol') != 'admin':
+        return "Acceso denegado"
+    return render_template('Administrador/Sistema POS/admin_pos_dashboard.html')
 
 
 @app.route('/admin/editar/<int:id_producto>', methods=['GET', 'POST'])
@@ -503,20 +538,10 @@ def editar_producto(id_producto):
         productos.to_excel('bd/producto.xlsx', index=False)
         return redirect(url_for('admin_dashboard'))
 
-    # Note: editar_producto.html template doesn't exist
-    return render_template('Administrador/editar_producto.html', producto=producto.iloc[0])
+    # Render formulario de edición (plantilla propia en Gestion produdtos)
+    return render_template('Administrador/Gestion produdtos/editar_producto.html', producto=producto.iloc[0])
 
-    # Filtros por usuario y fecha
-    usuario = request.form.get('usuario')
-    fecha = request.form.get('fecha')
-
-    if usuario:
-        registros = registros[registros['id_usuario'].astype(str).str.contains(usuario, case=False, na=False)]
-    if fecha:
-        registros = registros[registros['fecha_accion'].astype(str).str.startswith(fecha)]
-
-    registros = registros.to_dict(orient='records')
-    return render_template('Administrador/admin_logs.html', registros=registros)
+    
 
 @app.route('/user')
 def user_dashboard():
@@ -529,7 +554,7 @@ def user_dashboard():
 
         productos = productos[productos['eliminado'] == False]
         lista_productos = productos.to_dict(orient='records')
-        return render_template('Usuario/user_dashboard.html', productos=lista_productos)
+        return render_template('Usuarios/user_dashboard.html', productos=lista_productos)
     return "Acceso denegado"
 
 
@@ -563,7 +588,7 @@ def cart():
     if session.get('rol') == 'normal':
         carrito = session.get('carrito', [])
         total = sum(item['subtotal'] for item in carrito)
-        return render_template('Usuario/Carrito/cart.html', carrito=carrito, total=total)
+        return render_template('Usuarios/Carrito/cart.html', carrito=carrito, total=total)
     return "Acceso denegado"
 
 @app.route('/cart/remove/<int:index>', methods=['POST'])
@@ -681,7 +706,7 @@ def user_orders():
                                    on='id_pedido', how='left')
     
     lista_pedidos = pedidos_usuario.to_dict(orient='records')
-    return render_template('Usuario/user_orders.html', pedidos=lista_pedidos)
+    return render_template('Usuarios/Carrito/user_orders.html', pedidos=lista_pedidos)
 
 @app.route('/user/orders/details/<int:id_pedido>')
 def user_order_details(id_pedido):
@@ -702,9 +727,18 @@ def user_order_details(id_pedido):
     productos = pd.read_excel('bd/producto.xlsx')
     detalles = pd.merge(detalles, productos[['id_producto', 'nombre', 'precio']], on='id_producto')
     
-    return render_template('Usuario/user_order_details.html',
+    return render_template('Usuarios/user_order_details.html',
                           pedido=pedido.iloc[0].to_dict(),
                           detalles=detalles.to_dict(orient='records'))
+
+
+@app.route('/producto/<int:id_producto>')
+def producto_detalle(id_producto):
+    productos = pd.read_excel('bd/producto.xlsx') if os.path.exists('bd/producto.xlsx') else pd.DataFrame()
+    producto = productos[productos['id_producto'] == id_producto]
+    if producto.empty:
+        return "Producto no encontrado"
+    return render_template('Usuarios/product_detail.html', producto=producto.iloc[0].to_dict())
 
 @app.route('/admin/charts')
 def admin_charts():
@@ -722,10 +756,15 @@ def admin_charts():
         ventas_por_mes = pd.merge(ventas_por_mes, pedidos[['id_pedido','mes']], on='id_pedido')
         ventas_por_mes = ventas_por_mes.groupby('mes')['subtotal'].sum().reset_index()
 
-        return render_template('Administrador/admin_charts.html',
-                               ventas_producto=ventas_por_producto.to_dict(orient='records'),
-                               ventas_mes=ventas_por_mes.to_dict(orient='records'))
+        return render_template('Administrador/Gestion pedidos/admin_charts_dashboard.html',
+                       ventas_producto=ventas_por_producto.to_dict(orient='records'),
+                       ventas_mes=ventas_por_mes.to_dict(orient='records'))
     return "Acceso denegado"
 
 if __name__ == '__main__':
     app.run(debug=True)
+
+
+
+
+###hhdyjdjtrdytdfy###
