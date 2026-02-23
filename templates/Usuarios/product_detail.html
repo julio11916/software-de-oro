@@ -3,22 +3,370 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>Producto - {{ producto.nombre }}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ producto.nombre }} - Ropa Militar</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #ffc107;
+        }
+
+        body {
+            background-color: #f8f9fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .top-bar {
+            background-color: var(--primary-color);
+            padding: 1rem 0;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .logo-brand {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: white;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .logo-brand:hover {
+            color: var(--secondary-color);
+        }
+
+        .product-detail-container {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            margin-top: 2rem;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .carousel img {
+            height: 500px;
+            object-fit: cover;
+            border-radius: 10px;
+        }
+
+        .product-info {
+            padding: 2rem;
+        }
+
+        .product-title {
+            color: var(--primary-color);
+            font-weight: bold;
+            font-size: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        .product-price {
+            font-size: 2.5rem;
+            color: #28a745;
+            font-weight: bold;
+            margin-bottom: 1rem;
+        }
+
+        .product-description {
+            font-size: 1.1rem;
+            color: #666;
+            line-height: 1.8;
+            margin-bottom: 2rem;
+        }
+
+        .stock-info {
+            font-size: 1.2rem;
+            color: #666;
+            margin-bottom: 2rem;
+        }
+
+        .btn-add-cart {
+            background-color: var(--secondary-color);
+            color: var(--primary-color);
+            border: none;
+            padding: 1rem 3rem;
+            font-size: 1.2rem;
+            font-weight: bold;
+            border-radius: 50px;
+            transition: all 0.3s;
+        }
+
+        .btn-add-cart:hover {
+            background-color: #ffb300;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 193, 7, 0.4);
+        }
+
+        .btn-back {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 0.8rem 2rem;
+            font-size: 1rem;
+            border-radius: 50px;
+            transition: all 0.3s;
+        }
+
+        .btn-back:hover {
+            background-color: #34495e;
+            color: white;
+        }
+
+        .thumbnail-container {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .thumbnail {
+            width: 100px;
+            height: 100px;
+            object-fit: cover;
+            border-radius: 10px;
+            cursor: pointer;
+            border: 3px solid transparent;
+            transition: all 0.3s;
+        }
+
+        .thumbnail:hover {
+            border-color: var(--secondary-color);
+            transform: scale(1.05);
+        }
+
+        .thumbnail.active {
+            border-color: var(--primary-color);
+        }
+
+        .icon-btn {
+            color: white;
+            text-decoration: none;
+            font-size: 1.3rem;
+            position: relative;
+            transition: color 0.3s;
+            margin-left: 1.5rem;
+        }
+
+        .icon-btn:hover {
+            color: var(--secondary-color);
+        }
+
+        .cart-badge {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background-color: #dc3545;
+            color: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            font-size: 0.7rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+    </style>
 </head>
 
 <body>
-    <h1>{{ producto.nombre }}</h1>
-    <p>{{ producto.descripcion }}</p>
-    <p>Precio: ${{ producto.precio }}</p>
-    <p>Stock: {{ producto.stock }}</p>
 
-    <form method="POST" action="{{ url_for('add_to_cart', id_producto=producto.id_producto) }}">
-        <label>Cantidad</label>
-        <input type="number" name="cantidad" value="1" min="1">
-        <button type="submit">Agregar al carrito</button>
-    </form>
+    <!-- Barra Superior -->
+    <div class="top-bar">
+        <div class="container">
+            <div class="d-flex align-items-center justify-content-between">
+                <a href="{{ url_for('user_dashboard') }}" class="logo-brand">
+                    <i class="fas fa-shield-alt"></i>
+                    Ropa Militar
+                </a>
+                <div class="d-flex align-items-center">
+                    <a href="{{ url_for('user_orders') }}" class="icon-btn">
+                        <i class="fas fa-box"></i>
+                    </a>
+                    <a href="{{ url_for('cart') }}" class="icon-btn">
+                        <i class="fas fa-shopping-cart"></i>
+                        <span class="cart-badge" id="cartCount">0</span>
+                    </a>
+                    <a href="{{ url_for('logout') }}" class="icon-btn">
+                        <i class="fas fa-sign-out-alt"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
 
-    <p><a href="{{ url_for('user_dashboard') }}">Volver al catálogo</a></p>
+    <!-- Mensajes Flash -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    <div class="container mt-3">
+        {% for category, message in messages %}
+        <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+            <i class="fas fa-check-circle"></i> {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    {% endwith %}
+
+    <!-- Detalle del Producto -->
+    <div class="container">
+        <div class="product-detail-container">
+            <div class="row">
+                <!-- Galería de Imágenes -->
+                <div class="col-md-6">
+                    <div id="productCarousel" class="carousel slide" data-bs-ride="false">
+                        <div class="carousel-inner">
+                            {% if producto.imagen_url %}
+                            <div class="carousel-item active">
+                                <img src="{{ url_for('static', filename=producto.imagen_url) }}" class="d-block w-100"
+                                    alt="{{ producto.nombre }}">
+                            </div>
+                            <!-- Imágenes adicionales de ejemplo -->
+                            <div class="carousel-item">
+                                <img src="{{ url_for('static', filename=producto.imagen_url) }}" class="d-block w-100"
+                                    alt="{{ producto.nombre }} - Vista 2">
+                            </div>
+                            <div class="carousel-item">
+                                <img src="{{ url_for('static', filename=producto.imagen_url) }}" class="d-block w-100"
+                                    alt="{{ producto.nombre }} - Vista 3">
+                            </div>
+                            {% else %}
+                            <div class="carousel-item active">
+                                <img src="{{ url_for('static', filename='img/default.jpg') }}" class="d-block w-100"
+                                    alt="{{ producto.nombre }}">
+                            </div>
+                            {% endif %}
+                        </div>
+                        <button class="carousel-control-prev" type="button" data-bs-target="#productCarousel"
+                            data-bs-slide="prev">
+                            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                            <span class="visually-hidden">Anterior</span>
+                        </button>
+                        <button class="carousel-control-next" type="button" data-bs-target="#productCarousel"
+                            data-bs-slide="next">
+                            <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                            <span class="visually-hidden">Siguiente</span>
+                        </button>
+                    </div>
+
+                    <!-- Miniaturas -->
+                    <div class="thumbnail-container">
+                        {% if producto.imagen_url %}
+                        <img src="{{ url_for('static', filename=producto.imagen_url) }}" class="thumbnail active"
+                            onclick="changeSlide(0)" alt="Vista 1">
+                        <img src="{{ url_for('static', filename=producto.imagen_url) }}" class="thumbnail"
+                            onclick="changeSlide(1)" alt="Vista 2">
+                        <img src="{{ url_for('static', filename=producto.imagen_url) }}" class="thumbnail"
+                            onclick="changeSlide(2)" alt="Vista 3">
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Información del Producto -->
+                <div class="col-md-6">
+                    <div class="product-info">
+                        <h1 class="product-title">{{ producto.nombre }}</h1>
+                        <p class="product-price">${{ producto.precio }}</p>
+                        <p class="product-description">{{ producto.descripcion }}</p>
+                        <p class="stock-info">
+                            <i class="fas fa-box"></i>
+                            <strong>Stock disponible:</strong> {{ producto.stock }} unidades
+                        </p>
+
+                        <!-- Formulario de agregar al carrito -->
+                        <form method="POST" action="{{ url_for('add_to_cart', id_producto=producto.id_producto) }}">
+                            <div class="mb-4">
+                                <label class="form-label" style="font-size: 1.1rem; font-weight: bold;">
+                                    <i class="fas fa-shopping-basket"></i> Cantidad:
+                                </label>
+                                <input type="number" name="cantidad" class="form-control form-control-lg" value="1"
+                                    min="1" max="{{ producto.stock }}" style="max-width: 150px;">
+                            </div>
+                            <div class="d-flex gap-3">
+                                <button type="submit" class="btn btn-add-cart">
+                                    <i class="fas fa-cart-plus"></i> Agregar al Carrito
+                                </button>
+                                <a href="{{ url_for('user_dashboard') }}" class="btn btn-back">
+                                    <i class="fas fa-arrow-left"></i> Volver al Catálogo
+                                </a>
+                            </div>
+                        </form>
+
+                        <!-- Características adicionales -->
+                        <div class="mt-4 pt-4 border-top">
+                            <h5 style="color: var(--primary-color); font-weight: bold;">
+                                <i class="fas fa-check-circle"></i> Características
+                            </h5>
+                            <ul class="list-unstyled mt-3" style="font-size: 1rem;">
+                                <li class="mb-2"><i class="fas fa-shield-alt text-success"></i> Material de alta calidad
+                                </li>
+                                <li class="mb-2"><i class="fas fa-truck text-primary"></i> Envío gratuito en compras
+                                    superiores a $50</li>
+                                <li class="mb-2"><i class="fas fa-undo text-warning"></i> 30 días de garantía de
+                                    devolución</li>
+                                <li class="mb-2"><i class="fas fa-award text-info"></i> Certificado de autenticidad</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Cambiar slide del carousel
+        function changeSlide(index) {
+            const carousel = document.getElementById('productCarousel');
+            const bsCarousel = new bootstrap.Carousel(carousel);
+            bsCarousel.to(index);
+
+            // Actualizar thumbnails activos
+            document.querySelectorAll('.thumbnail').forEach((thumb, i) => {
+                if (i === index) {
+                    thumb.classList.add('active');
+                } else {
+                    thumb.classList.remove('active');
+                }
+            });
+        }
+
+        // Actualizar contador del carrito
+        function actualizarCarrito() {
+            fetch('/get_cart_count')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.count !== undefined) {
+                        document.getElementById('cartCount').textContent = data.count;
+                    }
+                })
+                .catch(() => {
+                    document.getElementById('cartCount').textContent = '0';
+                });
+        }
+
+        // Actualizar el thumbnail activo cuando cambia el slide
+        document.getElementById('productCarousel').addEventListener('slid.bs.carousel', function (e) {
+            const activeIndex = Array.from(e.target.querySelectorAll('.carousel-item')).indexOf(e.relatedTarget);
+            document.querySelectorAll('.thumbnail').forEach((thumb, i) => {
+                if (i === activeIndex) {
+                    thumb.classList.add('active');
+                } else {
+                    thumb.classList.remove('active');
+                }
+            });
+        });
+
+        // Inicializar al cargar la página
+        document.addEventListener('DOMContentLoaded', function () {
+            actualizarCarrito();
+        });
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 
 </html>
