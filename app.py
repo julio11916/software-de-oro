@@ -258,7 +258,7 @@ def admin_logs():
             registros = registros[registros['fecha_accion'].astype(str).str.startswith(fecha)]
 
     registros = registros.to_dict(orient='records')
-    return render_template('Administrador/Gestion produdtos/admin_logs.html', registros=registros)
+    return render_template('Administrador/Gestion productos/admin_logs.html', registros=registros)
 
 @app.route('/admin/logs/export', methods=['POST'])
 def export_logs():

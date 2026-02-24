@@ -5,55 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Detalles del Pedido #{{ pedido.id_pedido }}</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
-        }
-
-        table {
-            border-collapse: collapse;
-            width: 100%;
-            margin: 20px 0;
-        }
-
-        th,
-        td {
-            border: 1px solid #ddd;
-            padding: 8px;
-            text-align: left;
-        }
-
-        th {
-            background-color: #4CAF50;
-            color: white;
-        }
-
-        tr:hover {
-            background-color: #f5f5f5;
-        }
-
-        .info-pedido {
-            background-color: #f0f0f0;
-            padding: 15px;
-            margin: 20px 0;
-            border-radius: 5px;
-        }
-
-        .btn-back {
-            padding: 10px 20px;
-            background-color: #2196F3;
-            color: white;
-            text-decoration: none;
-            display: inline-block;
-        }
-
-        .total {
-            font-size: 18px;
-            font-weight: bold;
-            color: #4CAF50;
-        }
-    </style>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/usuario/user_order_details.css') }}">
 </head>
 
 <body>
