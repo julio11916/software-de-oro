@@ -1,6 +1,6 @@
 import os
 import pandas as pd
-from flask import Flask, render_template, request, redirect, url_for, session, Response
+from flask import Flask, render_template, request, redirect, url_for, session, Response, flash
 from datetime import datetime
 
 app = Flask(__name__)
@@ -100,7 +100,12 @@ def registro():
         registros = pd.concat([registros, pd.DataFrame([nuevo_registro])], ignore_index=True)
         registros.to_excel('bd/registros.xlsx', index=False)
 
-        return redirect(url_for('home'))
+        # Iniciar sesión automáticamente después del registro
+        session['usuario'] = email
+        session['id_usuario'] = int(nuevo_id)
+        session['rol'] = rol
+
+        return redirect(url_for('user_dashboard'))
 
     return render_template('Usuarios/Info empresa(sobre nosotros)/registro.html')
 
@@ -567,6 +572,20 @@ def user_dashboard():
     return "Acceso denegado"
 
 
+@app.route('/product/<int:id_producto>')
+def product_detail(id_producto):
+    if session.get('rol') == 'normal':
+        productos = pd.read_excel('bd/producto.xlsx')
+        producto = productos[productos['id_producto'] == id_producto]
+        
+        if producto.empty:
+            return "Producto no encontrado"
+        
+        producto_dict = producto.iloc[0].to_dict()
+        return render_template('Usuarios/product_detail.html', producto=producto_dict)
+    return "Acceso denegado"
+
+
 @app.route('/add_to_cart/<int:id_producto>', methods=['POST'])
 def add_to_cart(id_producto):
     if 'carrito' not in session:
@@ -590,6 +609,14 @@ def add_to_cart(id_producto):
     session['carrito'].append(item_carrito)
     session.modified = True
     
+    # Mensaje de éxito
+    flash(f'¡{producto["nombre"]} agregado al carrito exitosamente!', 'success')
+    
+    # Verificar si viene de la página de detalles
+    referer = request.referrer
+    if referer and 'product' in referer:
+        return redirect(url_for('product_detail', id_producto=id_producto))
+    
     return redirect(url_for('user_dashboard'))
 
 @app.route('/cart')
@@ -599,6 +626,12 @@ def cart():
         total = sum(item['subtotal'] for item in carrito)
         return render_template('Usuarios/Carrito/cart.html', carrito=carrito, total=total)
     return "Acceso denegado"
+
+@app.route('/get_cart_count')
+def get_cart_count():
+    carrito = session.get('carrito', [])
+    count = len(carrito)
+    return {'count': count}
 
 @app.route('/cart/remove/<int:index>', methods=['POST'])
 def remove_from_cart(index):
