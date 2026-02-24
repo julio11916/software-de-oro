@@ -121,7 +121,8 @@ def admin_dashboard():
 
         productos = productos[productos['eliminado'] == False]
         lista_productos = productos.to_dict(orient='records')
-        return render_template('Administrador/admin_dashboard.html', productos=lista_productos)
+        # plantilla actual en el proyecto
+        return render_template('Administrador/admin_dashboard_principal.html', productos=lista_productos)
     return "Acceso denegado"
 
 
@@ -144,6 +145,14 @@ def admin_orders():
         return render_template('Administrador/Banner Adminstrador/admin_orders.html',
                        pedidos=lista_pedidos,
                        pagos=lista_pagos)
+    return "Acceso denegado"
+
+
+@app.route('/admin/banner')
+def admin_banner():
+    if session.get('rol') == 'admin':
+        # redirigir a la página de orders porque no existe admin_banner.html
+        return redirect(url_for('admin_orders'))
     return "Acceso denegado"
 
 @app.route('/admin/orders/update/<int:id_pedido>', methods=['POST'])
