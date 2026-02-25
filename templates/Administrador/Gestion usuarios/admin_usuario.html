@@ -1,48 +1,141 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="es">
 
 <head>
     <meta charset="UTF-8">
     <title>Gestión de Usuarios</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='img/css/admin_dashboard_principal.css') }}">
+
     <style>
-        table {
-            border-collapse: collapse;
-            width: 100%
+        .users-panel {
+            background: #ffffff;
+            border-radius: 14px;
+            box-shadow: 0 8px 24px rgba(19, 53, 106, 0.08);
+            overflow: hidden;
         }
 
-        th,
-        td {
-            border: 1px solid #ddd;
-            padding: 8px
+        .users-header {
+            background: linear-gradient(90deg, #0a2962, #1882a9);
+            color: #fff;
+            padding: 16px 20px;
+        }
+
+        .users-table {
+            margin: 0;
+        }
+
+        .users-table thead th {
+            background-color: #eff5ff;
+            color: #0a2962;
+            border-bottom: 1px solid #dce7fb;
+            font-weight: 600;
+        }
+
+        .users-table td,
+        .users-table th {
+            vertical-align: middle;
         }
     </style>
 </head>
 
 <body>
-    <h1>Usuarios</h1>
-    <a href="{{ url_for('admin_dashboard') }}">Volver al Dashboard</a>
-    {% if usuarios %}
-    <table>
-        <tr>
-            <th>ID</th>
-            <th>Nombre</th>
-            <th>Email</th>
-            <th>Rol</th>
-            <th>Fecha</th>
-        </tr>
-        {% for u in usuarios %}
-        <tr>
-            <td>{{ u.id_usuario }}</td>
-            <td>{{ u.nombre }}</td>
-            <td>{{ u.email }}</td>
-            <td>{{ u.rol }}</td>
-            <td>{{ u.fecha_registro }}</td>
-        </tr>
-        {% endfor %}
-    </table>
-    {% else %}
-    <p>No hay usuarios.</p>
-    {% endif %}
+    <div class="d-flex">
+        <div class="sidebar">
+            <div class="logo-section text-center">
+                <h4 class="logo-text">DC</h4>
+                <small>Diana Cedano</small>
+            </div>
+
+            <div class="user-section text-center">
+                <small>Administrador</small>
+                <h6 class="fw-bold">sebary</h6>
+            </div>
+
+            <ul class="nav flex-column mt-4">
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('admin_dashboard') }}">Dashboard</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link active" href="{{ url_for('admin_usuarios') }}">Usuarios</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#">Reservaciones</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('admin_dashboard') }}">Productos</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('admin_orders') }}">Pedidos</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('admin_pos') }}">Sistema POS</a>
+                </li>
+            </ul>
+
+            <div class="sidebar-bottom mt-auto">
+                <a href="{{ url_for('home') }}" class="btn btn-success w-100 mb-2">Volver al Sitio</a>
+                <a href="{{ url_for('logout') }}" class="btn btn-danger w-100">Cerrar Sesión</a>
+            </div>
+        </div>
+
+        <div class="main-content w-100">
+            <div class="topbar d-flex justify-content-between align-items-center">
+                <div>
+                    <h4 class="mb-0">Gestión de Usuarios</h4>
+                    <small>Listado actual de cuentas registradas</small>
+                </div>
+                <div id="fechaHora"></div>
+            </div>
+
+            <div class="content-area">
+                <div class="users-panel">
+                    <div class="users-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Usuarios del sistema</h5>
+                        <span class="badge bg-light text-dark">Total: {{ usuarios|length }}</span>
+                    </div>
+
+                    {% if usuarios %}
+                    <div class="table-responsive">
+                        <table class="table users-table table-hover mb-0">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>ID</th>
+                                    <th>Nombre</th>
+                                    <th>Email</th>
+                                    <th>Rol</th>
+                                    <th>Fecha de registro</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for u in usuarios %}
+                                <tr>
+                                    <td>{{ loop.index }}</td>
+                                    <td>{{ u.id_usuario }}</td>
+                                    <td>{{ u.nombre }}</td>
+                                    <td>{{ u.email }}</td>
+                                    <td><span class="badge bg-primary-subtle text-primary-emphasis">{{ u.rol }}</span></td>
+                                    <td>{{ u.fecha_registro }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="p-4">
+                        <p class="mb-0 text-muted">No hay usuarios registrados en este momento.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{{ url_for('static', filename='img/js/admin_dashboard_principal.js') }}"></script>
 </body>
 
 </html>
