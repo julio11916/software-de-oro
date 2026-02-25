@@ -1,15 +1,61 @@
 import os
 import pandas as pd
-from flask import Flask, render_template, request, redirect, url_for, session, Response, flash
+from io import BytesIO
+from flask import Flask, render_template, request, redirect, url_for, session, Response, flash, send_file
 from datetime import datetime
 
 app = Flask(__name__)
 app.secret_key = "clave"  # Necesario para manejar sesiones
 
+USUARIO_COLUMNS = ['id_usuario', 'nombre', 'email', 'password_hash', 'rol', 'fecha_registro']
+REGISTRO_COLUMNS = ['id_registro', 'id_usuario', 'accion', 'fecha_accion']
+
 # Si no existe detalle_pedido.xlsx, crear uno vacío
 if not os.path.exists('bd/detalle_pedido.xlsx'):
     detalle_pedido = pd.DataFrame(columns=['id_detalle','id_pedido','id_producto','cantidad','subtotal'])
     detalle_pedido.to_excel('bd/detalle_pedido.xlsx', index=False)
+
+
+def cargar_usuarios_df():
+    if os.path.exists('bd/usuarios.xlsx'):
+        usuarios = pd.read_excel('bd/usuarios.xlsx')
+    else:
+        usuarios = pd.DataFrame(columns=USUARIO_COLUMNS)
+
+    for col in USUARIO_COLUMNS:
+        if col not in usuarios.columns:
+            usuarios[col] = ''
+    return usuarios[USUARIO_COLUMNS]
+
+
+def guardar_usuarios_df(usuarios):
+    usuarios.to_excel('bd/usuarios.xlsx', index=False)
+
+
+def cargar_registros_df():
+    if os.path.exists('bd/registros.xlsx'):
+        registros = pd.read_excel('bd/registros.xlsx')
+    else:
+        registros = pd.DataFrame(columns=REGISTRO_COLUMNS)
+
+    for col in REGISTRO_COLUMNS:
+        if col not in registros.columns:
+            registros[col] = ''
+    return registros[REGISTRO_COLUMNS]
+
+
+def registrar_actividad(accion):
+    registros = cargar_registros_df()
+    nuevo_id = int(pd.to_numeric(registros['id_registro'], errors='coerce').max() + 1) if not registros.empty else 1
+    actor = session.get('usuario', 'admin')
+    nuevo_registro = {
+        'id_registro': nuevo_id,
+        'id_usuario': actor,
+        'accion': accion,
+        'fecha_accion': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    }
+    registros = pd.concat([registros, pd.DataFrame([nuevo_registro])], ignore_index=True)
+    registros.to_excel('bd/registros.xlsx', index=False)
 
 @app.route('/')
 def home():
@@ -502,13 +548,193 @@ def admin_usuarios():
     if session.get('rol') != 'admin':
         return "Acceso denegado"
 
-    if os.path.exists('bd/usuarios.xlsx'):
-        usuarios = pd.read_excel('bd/usuarios.xlsx')
-    else:
-        usuarios = pd.DataFrame(columns=['id_usuario', 'nombre', 'email', 'password_hash', 'rol', 'fecha_registro'])
+    usuarios = cargar_usuarios_df()
+    usuarios['id_usuario'] = pd.to_numeric(usuarios['id_usuario'], errors='coerce')
 
-    lista_usuarios = usuarios.to_dict(orient='records')
-    return render_template('Administrador/Gestion usuarios/admin_usuario.html', usuarios=lista_usuarios)
+    buscar = request.args.get('buscar', '').strip()
+    rol = request.args.get('rol', '').strip()
+    orden = request.args.get('orden', 'reciente').strip()
+    edit_id = request.args.get('edit_id', type=int)
+
+    filtrados = usuarios.copy()
+    if buscar:
+        mask = (
+            filtrados['nombre'].astype(str).str.contains(buscar, case=False, na=False) |
+            filtrados['email'].astype(str).str.contains(buscar, case=False, na=False)
+        )
+        filtrados = filtrados[mask]
+
+    if rol:
+        filtrados = filtrados[filtrados['rol'].astype(str).str.lower() == rol.lower()]
+
+    if orden == 'antiguo':
+        filtrados = filtrados.sort_values(by='id_usuario', ascending=True, na_position='last')
+    elif orden == 'nombre':
+        filtrados = filtrados.sort_values(by='nombre', ascending=True, na_position='last')
+    else:
+        filtrados = filtrados.sort_values(by='id_usuario', ascending=False, na_position='last')
+
+    usuario_editar = None
+    if edit_id is not None:
+        candidato = usuarios[usuarios['id_usuario'] == edit_id]
+        if not candidato.empty:
+            usuario_editar = candidato.iloc[0].to_dict()
+            if pd.notna(usuario_editar.get('id_usuario')):
+                usuario_editar['id_usuario'] = int(usuario_editar['id_usuario'])
+
+    lista_usuarios = filtrados.fillna('').to_dict(orient='records')
+    for usuario in lista_usuarios:
+        if usuario.get('id_usuario') != '':
+            usuario['id_usuario'] = int(usuario['id_usuario'])
+
+    filtros = {'buscar': buscar, 'rol': rol, 'orden': orden}
+    return render_template(
+        'Administrador/Gestion usuarios/admin_usuario.html',
+        usuarios=lista_usuarios,
+        usuario_editar=usuario_editar,
+        filtros=filtros
+    )
+
+
+@app.route('/admin/usuarios/guardar', methods=['POST'])
+def admin_guardar_usuario():
+    if session.get('rol') != 'admin':
+        return "Acceso denegado"
+
+    id_usuario_raw = request.form.get('id_usuario', '').strip()
+    nombre = request.form.get('nombre', '').strip()
+    email = request.form.get('email', '').strip()
+    password = request.form.get('password', '').strip()
+    rol = request.form.get('rol', 'normal').strip().lower()
+
+    if rol not in ['admin', 'normal']:
+        rol = 'normal'
+
+    if not nombre or not email:
+        flash('Nombre y email son obligatorios.', 'danger')
+        return redirect(url_for('admin_usuarios'))
+
+    usuarios = cargar_usuarios_df()
+    usuarios['id_usuario'] = pd.to_numeric(usuarios['id_usuario'], errors='coerce')
+    usuarios['email'] = usuarios['email'].astype(str)
+
+    edit_id = None
+    if id_usuario_raw:
+        try:
+            edit_id = int(float(id_usuario_raw))
+        except ValueError:
+            flash('ID de usuario invalido.', 'danger')
+            return redirect(url_for('admin_usuarios'))
+
+    if edit_id is None and not password:
+        flash('La contrasena es obligatoria para crear usuarios.', 'danger')
+        return redirect(url_for('admin_usuarios'))
+
+    existe_email = usuarios[usuarios['email'].str.lower() == email.lower()]
+    if edit_id is not None:
+        existe_email = existe_email[existe_email['id_usuario'] != edit_id]
+    if not existe_email.empty:
+        flash('Ese email ya esta registrado por otro usuario.', 'danger')
+        return redirect(url_for('admin_usuarios'))
+
+    if edit_id is not None:
+        idx = usuarios[usuarios['id_usuario'] == edit_id].index
+        if idx.empty:
+            flash('Usuario no encontrado para edicion.', 'danger')
+            return redirect(url_for('admin_usuarios'))
+
+        usuarios.at[idx[0], 'nombre'] = nombre
+        usuarios.at[idx[0], 'email'] = email
+        usuarios.at[idx[0], 'rol'] = rol
+        if password:
+            usuarios.at[idx[0], 'password_hash'] = password
+
+        guardar_usuarios_df(usuarios[USUARIO_COLUMNS])
+        registrar_actividad(f"Actualizo usuario {email} (ID {edit_id})")
+        flash('Usuario actualizado correctamente.', 'success')
+    else:
+        ultimo_id = pd.to_numeric(usuarios['id_usuario'], errors='coerce').max()
+        nuevo_id = int(ultimo_id + 1) if pd.notna(ultimo_id) else 1
+
+        nuevo_usuario = {
+            'id_usuario': nuevo_id,
+            'nombre': nombre,
+            'email': email,
+            'password_hash': password,
+            'rol': rol,
+            'fecha_registro': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        }
+        usuarios = pd.concat([usuarios, pd.DataFrame([nuevo_usuario])], ignore_index=True)
+        guardar_usuarios_df(usuarios[USUARIO_COLUMNS])
+        registrar_actividad(f"Creo usuario {email} (ID {nuevo_id})")
+        flash('Usuario creado correctamente.', 'success')
+
+    return redirect(url_for('admin_usuarios'))
+
+
+@app.route('/admin/registros')
+def admin_registros():
+    if session.get('rol') != 'admin':
+        return "Acceso denegado"
+
+    registros = cargar_registros_df()
+
+    filtro_usuario = request.args.get('usuario', '').strip()
+    filtro_fecha = request.args.get('fecha', '').strip()
+
+    if filtro_usuario:
+        registros = registros[
+            registros['id_usuario'].astype(str).str.contains(filtro_usuario, case=False, na=False) |
+            registros['accion'].astype(str).str.contains(filtro_usuario, case=False, na=False)
+        ]
+
+    if filtro_fecha:
+        registros = registros[registros['fecha_accion'].astype(str).str.startswith(filtro_fecha)]
+
+    registros['id_registro'] = pd.to_numeric(registros['id_registro'], errors='coerce')
+    registros = registros.sort_values(by='id_registro', ascending=False, na_position='last')
+
+    lista_registros = registros.fillna('').to_dict(orient='records')
+    for registro in lista_registros:
+        if registro.get('id_registro') != '':
+            registro['id_registro'] = int(registro['id_registro'])
+
+    filtros = {'usuario': filtro_usuario, 'fecha': filtro_fecha}
+    return render_template(
+        'Administrador/Gestion usuarios/admin_registros.html',
+        registros=lista_registros,
+        filtros=filtros
+    )
+
+
+@app.route('/admin/registros/export_excel')
+def admin_registros_export_excel():
+    if session.get('rol') != 'admin':
+        return "Acceso denegado"
+
+    registros = cargar_registros_df()
+    filtro_usuario = request.args.get('usuario', '').strip()
+    filtro_fecha = request.args.get('fecha', '').strip()
+
+    if filtro_usuario:
+        registros = registros[
+            registros['id_usuario'].astype(str).str.contains(filtro_usuario, case=False, na=False) |
+            registros['accion'].astype(str).str.contains(filtro_usuario, case=False, na=False)
+        ]
+    if filtro_fecha:
+        registros = registros[registros['fecha_accion'].astype(str).str.startswith(filtro_fecha)]
+
+    buffer = BytesIO()
+    registros.to_excel(buffer, index=False)
+    buffer.seek(0)
+
+    nombre_archivo = f"registros_bd_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx"
+    return send_file(
+        buffer,
+        as_attachment=True,
+        download_name=nombre_archivo,
+        mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    )
 
 
 @app.route('/admin/ajustes')
