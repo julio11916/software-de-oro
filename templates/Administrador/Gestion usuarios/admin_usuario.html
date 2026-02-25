@@ -3,46 +3,200 @@
 
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gestión de Usuarios</title>
-    <style>
-        table {
-            border-collapse: collapse;
-            width: 100%
-        }
-
-        th,
-        td {
-            border: 1px solid #ddd;
-            padding: 8px
-        }
-    </style>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/administrador/admin_usuario.css') }}?v=2.0">
 </head>
 
 <body>
-    <h1>Usuarios</h1>
-    <a href="{{ url_for('admin_dashboard') }}">Volver al Dashboard</a>
-    {% if usuarios %}
-    <table>
-        <tr>
-            <th>ID</th>
-            <th>Nombre</th>
-            <th>Email</th>
-            <th>Rol</th>
-            <th>Fecha</th>
-        </tr>
-        {% for u in usuarios %}
-        <tr>
-            <td>{{ u.id_usuario }}</td>
-            <td>{{ u.nombre }}</td>
-            <td>{{ u.email }}</td>
-            <td>{{ u.rol }}</td>
-            <td>{{ u.fecha_registro }}</td>
-        </tr>
-        {% endfor %}
-    </table>
-    {% else %}
-    <p>No hay usuarios.</p>
-    {% endif %}
+    <!-- Header -->
+    <div class="header">
+        <div class="header-content">
+            <h1>👥 Gestión de Usuarios</h1>
+            <div class="header-actions">
+                <a href="{{ url_for('admin_dashboard') }}" class="btn btn-back">🏠 Volver al Dashboard</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        {% if usuarios %}
+        <!-- Estadísticas -->
+        <div class="stats-section">
+            <div class="stat-card total">
+                <div class="stat-icon">👤</div>
+                <div class="stat-info">
+                    <h3>{{ usuarios|length }}</h3>
+                    <p>Total Usuarios</p>
+                </div>
+            </div>
+            <div class="stat-card admin">
+                <div class="stat-icon">🔑</div>
+                <div class="stat-info">
+                    <h3>{{ usuarios|selectattr('rol', 'equalto', 'administrador')|list|length }}</h3>
+                    <p>Administradores</p>
+                </div>
+            </div>
+            <div class="stat-card client">
+                <div class="stat-icon">🛒</div>
+                <div class="stat-info">
+                    <h3>{{ usuarios|selectattr('rol', 'equalto', 'cliente')|list|length }}</h3>
+                    <p>Clientes</p>
+                </div>
+            </div>
+            <div class="stat-card new">
+                <div class="stat-icon">✨</div>
+                <div class="stat-info">
+                    <h3>{{ usuarios[-5:]|length if usuarios|length >= 5 else usuarios|length }}</h3>
+                    <p>Nuevos (últimos 5)</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filtros y Búsqueda -->
+        <div class="filters-section">
+            <div class="search-box">
+                <input type="text" id="searchInput" placeholder="🔍 Buscar por nombre, email o ID..."
+                    onkeyup="filterTable()">
+            </div>
+            <div class="filter-buttons">
+                <button class="filter-btn active" onclick="filterByRole('all')">Todos</button>
+                <button class="filter-btn" onclick="filterByRole('administrador')">Administradores</button>
+                <button class="filter-btn" onclick="filterByRole('cliente')">Clientes</button>
+            </div>
+        </div>
+
+        <!-- Tabla de Usuarios -->
+        <div class="table-section">
+            <div class="table-header">
+                <h2>📋 Lista de Usuarios</h2>
+                <button class="btn btn-add">➕ Agregar Usuario</button>
+            </div>
+            <div class="table-container">
+                <table id="usersTable">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Nombre</th>
+                            <th>Email</th>
+                            <th>Rol</th>
+                            <th>Fecha Registro</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for u in usuarios %}
+                        <tr data-role="{{ u.rol }}">
+                            <td class="user-id">#{{ u.id_usuario }}</td>
+                            <td class="user-name">
+                                <div class="user-avatar">{{ u.nombre[0]|upper }}</div>
+                                <span>{{ u.nombre }}</span>
+                            </td>
+                            <td class="user-email">{{ u.email }}</td>
+                            <td>
+                                <span class="badge badge-{{ u.rol }}">
+                                    {% if u.rol == 'administrador' %}🔑{% else %}🛒{% endif %}
+                                    {{ u.rol|upper }}
+                                </span>
+                            </td>
+                            <td class="user-date">{{ u.fecha_registro }}</td>
+                            <td class="actions">
+                                <button class="btn-action btn-edit" title="Editar usuario">✏️</button>
+                                <button class="btn-action btn-delete" title="Eliminar usuario">🗑️</button>
+                                <button class="btn-action btn-view" title="Ver detalles">👁️</button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% else %}
+        <!-- Estado Vacío -->
+        <div class="empty-state">
+            <div class="empty-icon">👥</div>
+            <h2>No hay usuarios registrados</h2>
+            <p>Aún no se han registrado usuarios en el sistema.</p>
+            <button class="btn btn-primary">➕ Agregar Primer Usuario</button>
+        </div>
+        {% endif %}
+    </div>
+
+    <script>
+        // Función de búsqueda
+        function filterTable() {
+            const input = document.getElementById('searchInput');
+            const filter = input.value.toLowerCase();
+            const table = document.getElementById('usersTable');
+            const rows = table.getElementsByTagName('tr');
+
+            for (let i = 1; i < rows.length; i++) {
+                const row = rows[i];
+                const cells = row.getElementsByTagName('td');
+                let found = false;
+
+                for (let j = 0; j < cells.length - 1; j++) {
+                    const cell = cells[j];
+                    if (cell) {
+                        const text = cell.textContent || cell.innerText;
+                        if (text.toLowerCase().indexOf(filter) > -1) {
+                            found = true;
+                            break;
+                        }
+                    }
+                }
+
+                row.style.display = found ? '' : 'none';
+            }
+        }
+
+        // Función de filtro por rol
+        function filterByRole(role) {
+            const table = document.getElementById('usersTable');
+            const rows = table.getElementsByTagName('tr');
+            const buttons = document.querySelectorAll('.filter-btn');
+
+            // Actualizar botones activos
+            buttons.forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+
+            // Filtrar filas
+            for (let i = 1; i < rows.length; i++) {
+                const row = rows[i];
+                const rowRole = row.getAttribute('data-role');
+
+                if (role === 'all' || rowRole === role) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            }
+        }
+
+        // Confirmación para eliminar
+        document.querySelectorAll('.btn-delete').forEach(btn => {
+            btn.addEventListener('click', function () {
+                if (confirm('¿Estás seguro de que deseas eliminar este usuario?')) {
+                    // Aquí iría la lógica para eliminar
+                    alert('Funcionalidad de eliminación pendiente de implementar');
+                }
+            });
+        });
+
+        // Botones de acción
+        document.querySelectorAll('.btn-edit').forEach(btn => {
+            btn.addEventListener('click', function () {
+                alert('Funcionalidad de edición pendiente de implementar');
+            });
+        });
+
+        document.querySelectorAll('.btn-view').forEach(btn => {
+            btn.addEventListener('click', function () {
+                alert('Funcionalidad de vista de detalles pendiente de implementar');
+            });
+        });
+    </script>
+
 </body>
 
 </html>
