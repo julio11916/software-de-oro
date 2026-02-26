@@ -1,0 +1,13 @@
+body {
+    background-color: #f8f9fa;
+}
+
+.registro-card {
+    max-width: 500px;
+    margin: auto;
+    margin-top: 3rem;
+    padding: 2rem;
+    background-color: white;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}

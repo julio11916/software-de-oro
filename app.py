@@ -61,7 +61,7 @@ def registrar_actividad(accion):
 def home():
     productos = pd.read_excel('bd/producto.xlsx')
     lista_productos = productos.to_dict(orient='records')
-    return render_template('Usuarios/Banner usuario/login.html', productos=lista_productos)
+    return render_template('Usuarios/Autenticacion/login.html', productos=lista_productos)
 
 @app.route('/login', methods=['POST'])
 def login():
@@ -153,7 +153,7 @@ def registro():
 
         return redirect(url_for('user_dashboard'))
 
-    return render_template('Usuarios/Info empresa(sobre nosotros)/registro.html')
+    return render_template('Usuarios/Autenticacion/registro.html')
 
 @app.route('/logout')
 def logout():
@@ -193,7 +193,7 @@ def admin_orders():
         lista_pedidos = pedidos.to_dict(orient='records')
         lista_pagos = pagos.to_dict(orient='records')
 
-        return render_template('Administrador/Banner Adminstrador/admin_orders.html',
+        return render_template('Administrador/Gestion pedidos/admin_orders.html',
                        pedidos=lista_pedidos,
                        pagos=lista_pagos)
     return "Acceso denegado"
@@ -1024,7 +1024,7 @@ def admin_charts():
         ventas_por_mes = pd.merge(ventas_por_mes, pedidos[['id_pedido','mes']], on='id_pedido')
         ventas_por_mes = ventas_por_mes.groupby('mes')['subtotal'].sum().reset_index()
 
-        return render_template('Administrador/Gestion pedidos/admin_charts_dashboard.html',
+        return render_template('Administrador/Informes/admin_charts_dashboard.html',
                        ventas_producto=ventas_por_producto.to_dict(orient='records'),
                        ventas_mes=ventas_por_mes.to_dict(orient='records'))
     return "Acceso denegado"
