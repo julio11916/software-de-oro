@@ -1,0 +1,101 @@
+/* ======= FONDO GENERAL ======= */
+body {
+    margin: 0;
+    font-family: 'Segoe UI', sans-serif;
+    background: url("../img/fondo.jpg") no-repeat center center fixed;
+    background-size: cover;
+}
+
+/* Oscurecer fondo */
+body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(10, 20, 40, 0.9), rgba(0, 150, 200, 0.6));
+    z-index: -1;
+}
+
+/* ======= NAVBAR ======= */
+.custom-navbar {
+    background: linear-gradient(90deg, #0f2027, #203a43, #2c5364);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+}
+
+.btn-menu {
+    background: linear-gradient(45deg, #00c6ff, #0072ff);
+    border: none;
+    color: white;
+}
+
+/* ======= BANNER ======= */
+.banner {
+    height: 60vh;
+    background: linear-gradient(135deg, rgba(0, 0, 0, 0.6), rgba(0, 200, 255, 0.4));
+    backdrop-filter: blur(3px);
+}
+
+/* ======= SIDEBAR ======= */
+.sidebar {
+    position: fixed;
+    top: 0;
+    left: -260px;
+    width: 260px;
+    height: 100%;
+    background: linear-gradient(180deg, #0f2027, #2c5364);
+    padding: 20px;
+    transition: all 0.3s ease;
+    z-index: 999;
+}
+
+.sidebar.active {
+    left: 0;
+}
+
+.sidebar a {
+    color: white;
+    text-decoration: none;
+    display: block;
+    padding: 10px;
+    margin: 5px 0;
+    border-radius: 8px;
+    transition: 0.3s;
+}
+
+.sidebar a:hover {
+    background: linear-gradient(45deg, #00c6ff, #0072ff);
+}
+
+/* ======= CONTENIDO ======= */
+#content {
+    transition: margin-left 0.3s;
+}
+
+#content.shift {
+    margin-left: 260px;
+}
+
+/* ======= TARJETAS ======= */
+.producto-card {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border: none;
+    color: white;
+    border-radius: 15px;
+    overflow: hidden;
+    transition: 0.3s;
+}
+
+.producto-card:hover {
+    transform: translateY(-8px);
+}
+
+/* BOTÓN DEGRADADO */
+.btn-gradiente {
+    background: linear-gradient(45deg, #00c6ff, #0072ff);
+    border: none;
+    color: white;
+}
+
+.btn-gradiente:hover {
+    opacity: 0.8;
+}
