@@ -5,30 +5,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Editar Producto</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
-        }
-
-        label {
-            display: block;
-            margin-top: 10px;
-        }
-
-        input,
-        textarea {
-            width: 100%;
-            padding: 8px;
-        }
-
-        button {
-            margin-top: 12px;
-            padding: 8px 16px;
-        }
-    </style>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/administrador/editar_producto.css') }}">
 </head>
-
 <body>
     <h1>Editar Producto #{{ producto.id_producto }}</h1>
     <form method="POST" action="{{ url_for('editar_producto', id_producto=producto.id_producto) }}">
