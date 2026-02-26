@@ -1,0 +1,39 @@
+.records-panel {
+    background: #ffffff;
+    border-radius: 14px;
+    box-shadow: 0 8px 24px rgba(19, 53, 106, 0.08);
+    overflow: hidden;
+}
+
+.records-header {
+    background: linear-gradient(90deg, #0a2962, #1882a9);
+    color: #fff;
+    padding: 16px 20px;
+}
+
+.records-body {
+    padding: 20px;
+    border-bottom: 1px solid #eef2f8;
+}
+
+.records-table {
+    margin: 0;
+}
+
+.records-table thead th {
+    background-color: #eff5ff;
+    color: #0a2962;
+    border-bottom: 1px solid #dce7fb;
+    font-weight: 600;
+}
+
+.records-table td,
+.records-table th {
+    vertical-align: middle;
+}
+
+.top-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
