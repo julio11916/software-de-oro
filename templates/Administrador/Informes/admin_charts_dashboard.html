@@ -1,0 +1,26 @@
+<h1>Dashboard de Ventas</h1>
+
+<!-- Datos desde Flask -->
+<div id="chartData" data-productos='{{ ventas_producto|tojson }}' data-meses='{{ ventas_mes|tojson }}'
+    style="display:none;"></div>
+
+<h2>Ventas por Producto</h2>
+<canvas id="chartProductos"></canvas>
+
+<h2>Ventas por Mes</h2>
+<canvas id="chartMeses"></canvas>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="{{ url_for('static', filename='js/administrador/admin_charts_dashboard.js') }}"></script>
+<script>
+    // Inicializar gráficos cuando el DOM esté listo
+    document.addEventListener('DOMContentLoaded', function () {
+        const chartData = document.getElementById('chartData');
+        const ventasProducto = JSON.parse(chartData.dataset.productos);
+        const ventasMes = JSON.parse(chartData.dataset.meses);
+        initCharts(ventasProducto, ventasMes);
+    });
+</script>
+
+<a href="{{ url_for('admin_dashboard') }}">Volver al dashboard</a> |
+<a href="{{ url_for('logout') }}">Cerrar sesión</a>
