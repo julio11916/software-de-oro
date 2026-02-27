@@ -34,6 +34,14 @@
 
                 <!-- Iconos de Usuario y Carrito -->
                 <div class="top-icons">
+                    <!-- Carrito -->
+                    <a href="{{ url_for('cart') }}" class="icon-btn cart-btn">
+                        <i class="fas fa-shopping-cart"></i>
+                        {% if cart_count > 0 %}
+                        <span class="cart-badge">{{ cart_count }}</span>
+                        {% endif %}
+                    </a>
+
                     <!-- Usuario con dropdown -->
                     <div class="user-dropdown">
                         <button class="user-dropdown-btn icon-btn" onclick="toggleUserMenu()">
@@ -47,6 +55,7 @@
                                 <i class="fas fa-sign-out-alt me-2"></i>Cerrar sesión
                             </a>
                         </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -180,6 +189,7 @@
             </div>
         </div>
     </div>
+    </div>
 
     <!-- Footer -->
     <footer class="footer">
@@ -188,7 +198,8 @@
                 <!-- Sobre Nosotros -->
                 <div class="col-md-3 mb-4">
                     <h5><i class="fas fa-shield-alt"></i> Ropa Militar</h5>
-                    <p>Tu tienda de confianza para equipamiento militar de alta calidad. Vestimos profesionales desde
+                    <p>Tu tienda de confianza para equipamiento militar de alta calidad. Vestimos profesionales
+                        desde
                         2020.</p>
                     <div class="social-icons">
                         <a href="#"><i class="fab fa-facebook"></i></a>

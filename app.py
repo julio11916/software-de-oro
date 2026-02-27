@@ -177,88 +177,6 @@ def admin_dashboard():
     return "Acceso denegado"
 
 
-@app.route('/admin/orders')
-def admin_orders():
-    if session.get('rol') == 'admin':
-        if os.path.exists('bd/pedidos.xlsx'):
-            pedidos = pd.read_excel('bd/pedidos.xlsx')
-        else:
-            pedidos = pd.DataFrame(columns=['id_pedido', 'id_usuario', 'fecha_pedido', 'estado'])
-        
-        if os.path.exists('bd/pagos.xlsx'):
-            pagos = pd.read_excel('bd/pagos.xlsx')
-        else:
-            pagos = pd.DataFrame(columns=['id_pago', 'id_pedido', 'monto', 'metodo_pago', 'fecha_pago', 'estado_pago'])
-
-        lista_pedidos = pedidos.to_dict(orient='records')
-        lista_pagos = pagos.to_dict(orient='records')
-
-        return render_template('Administrador/Gestion pedidos/admin_orders.html',
-                       pedidos=lista_pedidos,
-                       pagos=lista_pagos)
-    return "Acceso denegado"
-
-
-@app.route('/admin/banner')
-def admin_banner():
-    if session.get('rol') == 'admin':
-        # redirigir a la página de orders porque no existe admin_banner.html
-        return redirect(url_for('admin_orders'))
-    return "Acceso denegado"
-
-@app.route('/admin/orders/update/<int:id_pedido>', methods=['POST'])
-def update_order(id_pedido):
-    if session.get('rol') != 'admin':
-        return "Acceso denegado"
-    
-    pedidos = pd.read_excel('bd/pedidos.xlsx')
-    nuevo_estado = request.form['estado']
-    
-    idx = pedidos[pedidos['id_pedido'] == id_pedido].index
-    if not idx.empty:
-        estado_anterior = pedidos.at[idx[0], 'estado']
-        pedidos.at[idx[0], 'estado'] = nuevo_estado
-        pedidos.to_excel('bd/pedidos.xlsx', index=False)
-        
-        # Registrar acción
-        if os.path.exists('bd/registros.xlsx'):
-            registros = pd.read_excel('bd/registros.xlsx')
-        else:
-            registros = pd.DataFrame(columns=['id_registro', 'id_usuario', 'accion', 'fecha_accion'])
-        
-        nuevo_registro = {
-            'id_registro': len(registros) + 1,
-            'id_usuario': session['usuario'],
-            'accion': f"Actualizó pedido #{id_pedido} de '{estado_anterior}' a '{nuevo_estado}'",
-            'fecha_accion': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        }
-        
-        registros = pd.concat([registros, pd.DataFrame([nuevo_registro])], ignore_index=True)
-        registros.to_excel('bd/registros.xlsx', index=False)
-    
-    return redirect(url_for('admin_orders'))
-
-@app.route('/admin/orders/details/<int:id_pedido>')
-def order_details(id_pedido):
-    if session.get('rol') != 'admin':
-        return "Acceso denegado"
-    
-    pedidos = pd.read_excel('bd/pedidos.xlsx')
-    pedido = pedidos[pedidos['id_pedido'] == id_pedido]
-    
-    if pedido.empty:
-        return "Pedido no encontrado"
-    
-    detalle_pedido = pd.read_excel('bd/detalle_pedido.xlsx')
-    detalles = detalle_pedido[detalle_pedido['id_pedido'] == id_pedido]
-    
-    productos = pd.read_excel('bd/producto.xlsx')
-    detalles = pd.merge(detalles, productos[['id_producto', 'nombre']], on='id_producto')
-    
-    return render_template('Usuarios/user_order_details.html',
-                          pedido=pedido.iloc[0].to_dict(),
-                          detalles=detalles.to_dict(orient='records'))
-
 @app.route('/admin/agregar_producto', methods=['POST'])
 def agregar_producto():
     if session.get('rol') == 'admin':
@@ -313,7 +231,7 @@ def admin_logs():
             registros = registros[registros['fecha_accion'].astype(str).str.startswith(fecha)]
 
     registros = registros.to_dict(orient='records')
-    return render_template('Administrador/Gestion produdtos/admin_logs.html', registros=registros)
+    return render_template('Administrador/Gestion productos/admin_logs.html', registros=registros)
 
 @app.route('/admin/logs/export', methods=['POST'])
 def export_logs():
@@ -778,8 +696,8 @@ def editar_producto(id_producto):
         productos.to_excel('bd/producto.xlsx', index=False)
         return redirect(url_for('admin_dashboard'))
 
-    # Render formulario de edición (plantilla propia en Gestion produdtos)
-    return render_template('Administrador/Gestion produdtos/editar_producto.html', producto=producto.iloc[0])
+    # Render formulario de edición (plantilla propia en Gestion productos)
+    return render_template('Administrador/Gestion productos/editar_producto.html', producto=producto.iloc[0])
 
     
 
@@ -794,7 +712,12 @@ def user_dashboard():
 
         productos = productos[productos['eliminado'] == False]
         lista_productos = productos.to_dict(orient='records')
-        return render_template('Usuarios/user_dashboard.html', productos=lista_productos)
+        
+        # Obtener el contador del carrito
+        carrito = session.get('carrito', [])
+        cart_count = len(carrito)
+        
+        return render_template('Usuarios/user_dashboard.html', productos=lista_productos, cart_count=cart_count)
     return "Acceso denegado"
 
 
@@ -808,7 +731,12 @@ def product_detail(id_producto):
             return "Producto no encontrado"
         
         producto_dict = producto.iloc[0].to_dict()
-        return render_template('Usuarios/product_detail.html', producto=producto_dict)
+        
+        # Obtener el contador del carrito
+        carrito = session.get('carrito', [])
+        cart_count = len(carrito)
+        
+        return render_template('Usuarios/product_detail.html', producto=producto_dict, cart_count=cart_count)
     return "Acceso denegado"
 
 

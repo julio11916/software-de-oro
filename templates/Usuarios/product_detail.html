@@ -26,7 +26,9 @@
                     </a>
                     <a href="{{ url_for('cart') }}" class="icon-btn">
                         <i class="fas fa-shopping-cart"></i>
-                        <span class="cart-badge" id="cartCount">0</span>
+                        {% if cart_count > 0 %}
+                        <span class="cart-badge" id="cartCount">{{ cart_count }}</span>
+                        {% endif %}
                     </a>
                     <a href="{{ url_for('logout') }}" class="icon-btn">
                         <i class="fas fa-sign-out-alt"></i>
