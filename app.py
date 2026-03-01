@@ -956,10 +956,13 @@ def admin_charts():
                        ventas_producto=ventas_por_producto.to_dict(orient='records'),
                        ventas_mes=ventas_por_mes.to_dict(orient='records'))
     return "Acceso denegado"
+#orden personalizada
+@app.route('/orden-personalizada')
+def orden_personalizada():
+    return render_template('Usuarios/orden_personalizada/orden.html')
 
 if __name__ == '__main__':
     app.run(debug=True)
-
 
 
 
