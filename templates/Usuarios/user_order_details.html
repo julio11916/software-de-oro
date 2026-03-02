@@ -5,52 +5,110 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Detalles del Pedido #{{ pedido.id_pedido }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/usuario/user_order_details.css') }}">
 </head>
 
 <body>
-    <h1>Detalles de tu Pedido #{{ pedido.id_pedido }}</h1>
+    <!-- Barra Superior -->
+    <div class="top-bar">
+        <div class="container">
+            <div class="d-flex align-items-center justify-content-between">
+                <!-- Logo -->
+                <a href="{{ url_for('user_dashboard') }}" class="logo-brand">
+                    <i class="fas fa-shield-alt"></i>
+                    Ropa Militar
+                </a>
 
-    <a href="{{ url_for('user_orders') }}" class="btn-back">← Volver a Mis Pedidos</a> |
-    <a href="{{ url_for('user_dashboard') }}">Dashboard</a>
-
-    <div class="info-pedido">
-        <h2>Información del Pedido</h2>
-        <p><strong>Número de Pedido:</strong> #{{ pedido.id_pedido }}</p>
-        <p><strong>Fecha de Compra:</strong> {{ pedido.fecha_pedido }}</p>
-        <p><strong>Estado:</strong>
-            <span class="estado-{{ pedido.estado }}">
-                {{ pedido.estado }}
-            </span>
-        </p>
+                <!-- Iconos de navegación -->
+                <div class="top-icons d-flex gap-2">
+                    <a href="{{ url_for('cart') }}" class="icon-btn">
+                        <i class="fas fa-shopping-cart"></i>
+                    </a>
+                    <div class="user-dropdown">
+                        <button class="user-dropdown-btn icon-btn">
+                            <i class="fas fa-user"></i>
+                        </button>
+                        <div class="dropdown-menu-custom" id="userDropdown">
+                            <a href="{{ url_for('user_profile') }}">
+                                <i class="fas fa-user-circle me-2"></i>Mi Perfil
+                            </a>
+                            <a href="{{ url_for('user_orders') }}">
+                                <i class="fas fa-box me-2"></i>Mis Pedidos
+                            </a>
+                            <a href="{{ url_for('logout') }}">
+                                <i class="fas fa-sign-out-alt me-2"></i>Cerrar sesión
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <h2>Productos</h2>
-    {% if detalles %}
-    <table>
-        <tr>
-            <th>Producto</th>
-            <th>Precio Unitario</th>
-            <th>Cantidad</th>
-            <th>Subtotal</th>
-        </tr>
-        {% for detalle in detalles %}
-        <tr>
-            <td>{{ detalle.nombre }}</td>
-            <td>${{ "%.2f"|format(detalle.precio) }}</td>
-            <td>{{ detalle.cantidad }}</td>
-            <td>${{ "%.2f"|format(detalle.subtotal) }}</td>
-        </tr>
-        {% endfor %}
-        <tr>
-            <td colspan="3" style="text-align: right; font-size: 16px;"><strong>TOTAL:</strong></td>
-            <td class="total">${{ "%.2f"|format(detalles|sum(attribute='subtotal')) }}</td>
-        </tr>
-    </table>
-    {% else %}
-    <p>No hay información disponible sobre los productos de este pedido.</p>
-    {% endif %}
+    <div class="container my-4">
+        <h1>Detalles de tu Pedido #{{ pedido.id_pedido }}</h1>
 
+        <a href="{{ url_for('user_orders') }}" class="btn btn-secondary mb-3">
+            <i class="fas fa-arrow-left"></i> Volver a Mis Pedidos
+        </a>
+
+        <div class="info-pedido">
+            <h2>Información del Pedido</h2>
+            <p><strong>Número de Pedido:</strong> #{{ pedido.id_pedido }}</p>
+            <p><strong>Fecha de Compra:</strong> {{ pedido.fecha_pedido }}</p>
+            <p><strong>Estado:</strong>
+                <span class="estado-{{ pedido.estado }}">
+                    {{ pedido.estado }}
+                </span>
+            </p>
+        </div>
+
+        <h2>Productos</h2>
+        {% if detalles %}
+        <table>
+            <tr>
+                <th>Producto</th>
+                <th>Precio Unitario</th>
+                <th>Cantidad</th>
+                <th>Subtotal</th>
+            </tr>
+            {% for detalle in detalles %}
+            <tr>
+                <td>{{ detalle.nombre }}</td>
+                <td>${{ "%.2f"|format(detalle.precio) }}</td>
+                <td>{{ detalle.cantidad }}</td>
+                <td>${{ "%.2f"|format(detalle.subtotal) }}</td>
+            </tr>
+            {% endfor %}
+            <tr>
+                <td colspan="3" style="text-align: right; font-size: 16px;"><strong>TOTAL:</strong></td>
+                <td class="total">${{ "%.2f"|format(detalles|sum(attribute='subtotal')) }}</td>
+            </tr>
+        </table>
+        {% else %}
+        <p>No hay información disponible sobre los productos de este pedido.</p>
+        {% endif %}
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Toggle del menú de usuario
+        document.querySelector('.user-dropdown-btn').addEventListener('click', function () {
+            document.getElementById('userDropdown').classList.toggle('show');
+        });
+
+        // Cerrar dropdown al hacer clic fuera
+        window.addEventListener('click', function (e) {
+            if (!e.target.matches('.user-dropdown-btn') && !e.target.closest('.user-dropdown')) {
+                var dropdown = document.getElementById('userDropdown');
+                if (dropdown && dropdown.classList.contains('show')) {
+                    dropdown.classList.remove('show');
+                }
+            }
+        });
+    </script>
 </body>
 
 </html>

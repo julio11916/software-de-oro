@@ -934,6 +934,122 @@ def user_order_details(id_pedido):
                           pedido=pedido.iloc[0].to_dict(),
                           detalles=detalles.to_dict(orient='records'))
 
+@app.route('/user/profile')
+def user_profile():
+    if session.get('rol') != 'normal':
+        return "Acceso denegado"
+    
+    # Cargar información del usuario
+    usuarios = cargar_usuarios_df()
+    usuario_email = session.get('usuario')
+    usuario = usuarios[usuarios['email'] == usuario_email]
+    
+    if usuario.empty:
+        return "Usuario no encontrado"
+    
+    usuario_dict = usuario.iloc[0].to_dict()
+    
+    # Asegurar que existan las columnas telefono y direccion
+    if 'telefono' not in usuario_dict:
+        usuario_dict['telefono'] = ''
+    if 'direccion' not in usuario_dict:
+        usuario_dict['direccion'] = ''
+    
+    # Obtener estadísticas del usuario
+    pedidos_total = 0
+    gasto_total = 0.0
+    
+    if os.path.exists('bd/pedidos.xlsx'):
+        pedidos = pd.read_excel('bd/pedidos.xlsx')
+        id_usuario = session.get('id_usuario', usuario_email)
+        pedidos_usuario = pedidos[pedidos['id_usuario'] == id_usuario]
+        pedidos_total = len(pedidos_usuario)
+        
+        if os.path.exists('bd/pagos.xlsx') and not pedidos_usuario.empty:
+            pagos = pd.read_excel('bd/pagos.xlsx')
+            pagos_usuario = pagos[pagos['id_pedido'].isin(pedidos_usuario['id_pedido'])]
+            gasto_total = pagos_usuario['monto'].sum() if not pagos_usuario.empty else 0.0
+    
+    return render_template('Usuarios/user_profile.html', 
+                          usuario=usuario_dict,
+                          pedidos_total=pedidos_total,
+                          gasto_total=gasto_total)
+
+@app.route('/user/profile/update', methods=['POST'])
+def update_profile():
+    if session.get('rol') != 'normal':
+        flash('Acceso denegado', 'danger')
+        return redirect(url_for('home'))
+    
+    # Obtener datos del formulario
+    nombre = request.form.get('nombre')
+    telefono = request.form.get('telefono', '')
+    direccion = request.form.get('direccion', '')
+    
+    # Cargar usuarios
+    usuarios = cargar_usuarios_df()
+    usuario_email = session.get('usuario')
+    
+    # Asegurar que existan las columnas
+    if 'telefono' not in usuarios.columns:
+        usuarios['telefono'] = ''
+    if 'direccion' not in usuarios.columns:
+        usuarios['direccion'] = ''
+    
+    # Actualizar información
+    idx = usuarios[usuarios['email'] == usuario_email].index
+    if not idx.empty:
+        usuarios.loc[idx, 'nombre'] = nombre
+        usuarios.loc[idx, 'telefono'] = telefono
+        usuarios.loc[idx, 'direccion'] = direccion
+        
+        guardar_usuarios_df(usuarios)
+        registrar_actividad(f"Usuario {usuario_email} actualizó su perfil")
+        flash('Perfil actualizado correctamente', 'success')
+    else:
+        flash('Error al actualizar el perfil', 'danger')
+    
+    return redirect(url_for('user_profile'))
+
+@app.route('/user/profile/change-password', methods=['POST'])
+def change_password():
+    if session.get('rol') != 'normal':
+        flash('Acceso denegado', 'danger')
+        return redirect(url_for('home'))
+    
+    # Obtener datos del formulario
+    current_password = request.form.get('current_password')
+    new_password = request.form.get('new_password')
+    confirm_password = request.form.get('confirm_password')
+    
+    # Validar que las contraseñas coincidan
+    if new_password != confirm_password:
+        flash('Las contraseñas nuevas no coinciden', 'danger')
+        return redirect(url_for('user_profile'))
+    
+    # Cargar usuarios
+    usuarios = cargar_usuarios_df()
+    usuario_email = session.get('usuario')
+    usuario = usuarios[usuarios['email'] == usuario_email]
+    
+    if usuario.empty:
+        flash('Usuario no encontrado', 'danger')
+        return redirect(url_for('user_profile'))
+    
+    # Verificar contraseña actual
+    if usuario.iloc[0]['password_hash'] != current_password:
+        flash('La contraseña actual es incorrecta', 'danger')
+        return redirect(url_for('user_profile'))
+    
+    # Actualizar contraseña
+    idx = usuarios[usuarios['email'] == usuario_email].index
+    usuarios.loc[idx, 'password_hash'] = new_password
+    
+    guardar_usuarios_df(usuarios)
+    registrar_actividad(f"Usuario {usuario_email} cambió su contraseña")
+    flash('Contraseña cambiada correctamente', 'success')
+    
+    return redirect(url_for('user_profile'))
 
 @app.route('/producto/<int:id_producto>')
 def producto_detalle(id_producto):

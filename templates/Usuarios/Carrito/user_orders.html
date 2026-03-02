@@ -36,6 +36,11 @@
                             <i class="fas fa-user"></i>
                         </button>
                         <div class="dropdown-menu-custom" id="userDropdown">
+                            <a href="{{ url_for('user_profile') }}">
+                                <i class="fas fa-user-circle me-2"></i>Mi Perfil
+                            </a>
+                            <a href="{{ url_for('user_orders') }}">
+                                <i class="fas fa-box me-2"></i>Mis Pedidos
                             </a>
                             <a href="{{ url_for('logout') }}">
                                 <i class="fas fa-sign-out-alt me-2"></i>Cerrar sesión
