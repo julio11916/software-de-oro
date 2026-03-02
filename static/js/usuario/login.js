@@ -81,9 +81,25 @@ function actualizarCarrito() {
 
 // Función para mostrar carrito
 function mostrarCarrito() {
-    // Redirigir a la página del carrito
-    alert('Funcionalidad del carrito en desarrollo');
-    // window.location.href = "{{ url_for('cart') }}";
+    // Mostrar mensaje y modal de login
+    const loginModal = new bootstrap.Modal(document.getElementById('loginModal'));
+    loginModal.show();
+    // Opcional: mostrar un mensaje dentro del modal
+    const modalBody = document.querySelector('#loginModal .modal-body');
+    if (modalBody && !document.getElementById('cartLoginMessage')) {
+        const mensaje = document.createElement('div');
+        mensaje.id = 'cartLoginMessage';
+        mensaje.className = 'alert alert-info alert-dismissible fade show mb-3';
+        mensaje.innerHTML = '<i class="fas fa-info-circle"></i> Inicia sesión para acceder a tu carrito de compras <button type="button" class="btn-close" data-bs-dismiss="alert"></button>';
+        modalBody.insertBefore(mensaje, modalBody.firstChild);
+        
+        // Eliminar el mensaje después de 5 segundos
+        setTimeout(() => {
+            if (document.getElementById('cartLoginMessage')) {
+                mensaje.remove();
+            }
+        }, 5000);
+    }
 }
 
 // Inicializar al cargar la página
