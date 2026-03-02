@@ -19,12 +19,19 @@ body {
 }
 
 .logo-section {
-    margin-bottom: 30px;
+    margin-bottom: 22px;
+    display: flex;
+    justify-content: flex-start;
 }
 
-.logo-text {
-    font-weight: bold;
-    letter-spacing: 2px;
+.sidebar-logo {
+    width: 230px;
+    max-width: 100%;
+    max-height: 110px;
+    height: auto;
+    display: block;
+    object-fit: contain;
+    filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.22));
 }
 
 .user-section {
@@ -57,6 +64,11 @@ body {
 
 .sidebar-bottom {
     margin-top: auto;
+    padding-top: 14px;
+}
+
+.sidebar .nav {
+    flex: 1 1 auto;
 }
 
 /* Botones sidebar */
@@ -113,4 +125,21 @@ body {
     flex: 1;
     padding: 40px;
     background-color: #f4f7fb;
+}
+
+/* Ajuste solo para el Dashboard principal:
+   permite que el sidebar crezca hasta el final del contenido */
+.dashboard-layout {
+    align-items: stretch;
+    min-height: 100vh;
+}
+
+.dashboard-layout .sidebar {
+    height: auto;
+    min-height: 100%;
+}
+
+.dashboard-layout .main-content {
+    height: auto;
+    min-height: 100vh;
 }

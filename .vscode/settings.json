@@ -53,7 +53,7 @@
     // Configuración del proyecto
     "workbench.startupEditor": "none",
     "workbench.editor.enablePreview": false,
-    "workbench.iconTheme": "catppuccin-perfect-mocha",
+    "workbench.iconTheme": "catppuccin-perfect-aura",
 
     // Debugging
     "debug.console.fontSize": 14,

@@ -12,16 +12,15 @@
 </head>
 
 <body>
-    <div class="d-flex">
+    <div class="d-flex dashboard-layout">
         <div class="sidebar">
-            <div class="logo-section text-center">
-                <h4 class="logo-text">DC</h4>
-                <small>Diana Cedano</small>
+            <div class="logo-section">
+                <img src="{{ url_for('static', filename='img/logo_transparente.png') }}" alt="Logo del proyecto" class="sidebar-logo">
             </div>
 
             <div class="user-section text-center">
                 <small>Administrador</small>
-                <h6 class="fw-bold">sebary</h6>
+                <h6 class="fw-bold">{{ admin_nombre or 'Administrador' }}</h6>
             </div>
 
             <ul class="nav flex-column mt-4">
@@ -32,10 +31,10 @@
                     <a class="nav-link active" href="{{ url_for('admin_usuarios') }}">Usuarios</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="#">Reservaciones</a>
+                    <a class="nav-link" href="{{ url_for('admin_charts') }}">Graficas</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('admin_dashboard') }}">Productos</a>
+                    <a class="nav-link" href="{{ url_for('admin_productos') }}">Productos</a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" href="{{ url_for('admin_pos') }}">Sistema POS</a>
@@ -43,7 +42,7 @@
             </ul>
 
             <div class="sidebar-bottom mt-auto">
-                <a href="{{ url_for('home') }}" class="btn btn-success w-100 mb-2">Volver al Sitio</a>
+                <a href="{{ url_for('home') }}" class="btn btn-success w-100 mb-2" onclick="if (window.history.length > 1) { window.history.back(); } else { window.location.href='{{ url_for('home') }}'; } return false;">Volver</a>
                 <a href="{{ url_for('logout') }}" class="btn btn-danger w-100">Cerrar Sesion</a>
             </div>
         </div>

@@ -1,0 +1,45 @@
+.charts-content {
+    background:
+        radial-gradient(circle at 100% 0%, rgba(24, 130, 169, 0.16), transparent 36%),
+        radial-gradient(circle at 0% 100%, rgba(10, 41, 98, 0.10), transparent 40%),
+        #f4f7fb;
+}
+
+.charts-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 20px;
+}
+
+.chart-card {
+    border: 1px solid #d9e5f6;
+    border-radius: 16px;
+    overflow: hidden;
+    background: #ffffff;
+    box-shadow: 0 12px 30px rgba(18, 63, 108, 0.08);
+}
+
+.chart-head {
+    padding: 14px 18px;
+    border-bottom: 1px solid #e7eef9;
+    background: linear-gradient(90deg, #f8fbff, #eff6ff);
+}
+
+.chart-body {
+    padding: 16px;
+}
+
+.chart-body canvas {
+    width: 100% !important;
+    min-height: 340px;
+}
+
+@media (max-width: 991px) {
+    .charts-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .chart-body canvas {
+        min-height: 280px;
+    }
+}
