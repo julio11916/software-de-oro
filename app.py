@@ -57,6 +57,35 @@ def registrar_actividad(accion):
     registros = pd.concat([registros, pd.DataFrame([nuevo_registro])], ignore_index=True)
     registros.to_excel('bd/registros.xlsx', index=False)
 
+
+def obtener_nombre_sesion():
+    nombre = str(session.get('nombre', '')).strip()
+    if nombre:
+        return nombre
+
+    email = str(session.get('usuario', '')).strip()
+    if not email:
+        return 'Administrador'
+
+    if os.path.exists('bd/usuarios.xlsx'):
+        usuarios = pd.read_excel('bd/usuarios.xlsx')
+        if {'email', 'nombre'}.issubset(usuarios.columns):
+            coincidencia = usuarios[usuarios['email'].astype(str).str.lower() == email.lower()]
+            if not coincidencia.empty:
+                nombre_excel = str(coincidencia.iloc[0].get('nombre', '')).strip()
+                if nombre_excel:
+                    session['nombre'] = nombre_excel
+                    return nombre_excel
+
+    return email.split('@')[0] if '@' in email else email
+
+
+@app.context_processor
+def inyectar_nombre_admin():
+    if session.get('rol') == 'admin':
+        return {'admin_nombre': obtener_nombre_sesion()}
+    return {'admin_nombre': ''}
+
 @app.route('/')
 def home():
     productos = pd.read_excel('bd/producto.xlsx')
@@ -74,9 +103,11 @@ def login():
     if not usuario.empty:
         rol = usuario.iloc[0]['rol']
         id_usuario = usuario.iloc[0]['id_usuario']
+        nombre = str(usuario.iloc[0].get('nombre', '')).strip()
         session['usuario'] = email
         session['id_usuario'] = int(id_usuario)
         session['rol'] = rol
+        session['nombre'] = nombre
 
         # Registrar el login
         if os.path.exists('bd/registros.xlsx'):
@@ -150,6 +181,7 @@ def registro():
         session['usuario'] = email
         session['id_usuario'] = int(nuevo_id)
         session['rol'] = rol
+        session['nombre'] = nombre
 
         return redirect(url_for('user_dashboard'))
 
@@ -172,9 +204,29 @@ def admin_dashboard():
 
         productos = productos[productos['eliminado'] == False]
         lista_productos = productos.to_dict(orient='records')
+        admin_nombre = obtener_nombre_sesion()
         # plantilla actual en el proyecto
-        return render_template('Administrador/admin_dashboard_principal.html', productos=lista_productos)
+        return render_template(
+            'Administrador/admin_dashboard_principal.html',
+            productos=lista_productos,
+            admin_nombre=admin_nombre
+        )
     return "Acceso denegado"
+
+
+@app.route('/admin/productos')
+def admin_productos():
+    if session.get('rol') != 'admin':
+        return "Acceso denegado"
+
+    productos = pd.read_excel('bd/producto.xlsx')
+    if 'eliminado' not in productos.columns:
+        productos['eliminado'] = False
+    productos['eliminado'] = productos['eliminado'].fillna(False).astype(bool)
+
+    productos = productos[productos['eliminado'] == False]
+    lista_productos = productos.to_dict(orient='records')
+    return render_template('Administrador/Gestion productos/admin_prod_dashboard.html', productos=lista_productos)
 
 
 @app.route('/admin/agregar_producto', methods=['POST'])
@@ -211,53 +263,8 @@ def agregar_producto():
         registros = pd.concat([registros, pd.DataFrame([nuevo_registro])], ignore_index=True)
         registros.to_excel('bd/registros.xlsx', index=False)
 
-        return redirect(url_for('admin_dashboard'))
+        return redirect(url_for('admin_productos'))
     return "Acceso denegado"
-
-@app.route('/admin/logs', methods=['GET', 'POST'])
-def admin_logs():
-    if session.get('rol') != 'admin':
-        return "Acceso denegado"
-
-    registros = pd.read_excel('bd/registros.xlsx') if os.path.exists('bd/registros.xlsx') else pd.DataFrame(columns=['id_registro', 'id_usuario', 'accion', 'fecha_accion'])
-
-    if request.method == 'POST':
-        usuario = request.form.get('usuario')
-        fecha = request.form.get('fecha')
-
-        if usuario:
-            registros = registros[registros['id_usuario'].astype(str).str.contains(usuario, case=False, na=False)]
-        if fecha:
-            registros = registros[registros['fecha_accion'].astype(str).str.startswith(fecha)]
-
-    registros = registros.to_dict(orient='records')
-    return render_template('Administrador/Gestion productos/admin_logs.html', registros=registros)
-
-@app.route('/admin/logs/export', methods=['POST'])
-def export_logs():
-    if session.get('rol') != 'admin':
-        return "Acceso denegado"
-    
-    registros = pd.read_excel('bd/registros.xlsx') if os.path.exists('bd/registros.xlsx') else pd.DataFrame(columns=['id_registro', 'id_usuario', 'accion', 'fecha_accion'])
-    
-    # Aplicar filtros si existen
-    usuario = request.form.get('usuario')
-    fecha = request.form.get('fecha')
-    
-    if usuario:
-        registros = registros[registros['id_usuario'].astype(str).str.contains(usuario, case=False, na=False)]
-    if fecha:
-        registros = registros[registros['fecha_accion'].astype(str).str.startswith(fecha)]
-    
-    # Convertir a CSV
-    csv_data = registros.to_csv(index=False)
-    
-    # Crear respuesta con descarga
-    return Response(
-        csv_data,
-        mimetype='text/csv',
-        headers={'Content-Disposition': f'attachment; filename=registros_{datetime.now().strftime("%Y%m%d_%H%M%S")}.csv'}
-    )
 
 @app.route('/admin/sales/export')
 def export_sales():
@@ -312,7 +319,7 @@ def subir_imagen(id_producto):
         extension = imagen.filename.rsplit('.', 1)[-1].lower()
         if extension not in extensiones_permitidas:
             flash("Formato de imagen no permitido. Usa .jpg, .jpeg, .png, .gif o .webp.")
-            return redirect(url_for('admin_dashboard'))
+            return redirect(url_for('admin_productos'))
 
         # Validar tamaño (máx. 2MB)
         imagen.seek(0, os.SEEK_END)
@@ -320,7 +327,7 @@ def subir_imagen(id_producto):
         imagen.seek(0)
         if tamaño > 2 * 1024 * 1024:
             flash("La imagen excede el tamaño máximo permitido (2MB).")
-            return redirect(url_for('admin_dashboard'))
+            return redirect(url_for('admin_productos'))
 
         # Guardar imagen
         carpeta_destino = os.path.join('static', 'img')
@@ -340,7 +347,7 @@ def subir_imagen(id_producto):
     else:
         flash("No se seleccionó ninguna imagen.")
 
-    return redirect(url_for('admin_dashboard'))
+    return redirect(url_for('admin_productos'))
 
 
 
@@ -379,7 +386,7 @@ def eliminar_producto(id_producto):
         registros = pd.concat([registros, pd.DataFrame([nuevo_registro])], ignore_index=True)
         registros.to_excel('bd/registros.xlsx', index=False)
 
-    return redirect(url_for('admin_dashboard'))
+    return redirect(url_for('admin_productos'))
 
 @app.route('/admin/eliminar_definitivo/<int:id_producto>', methods=['POST'])
 def eliminar_definitivo(id_producto):
@@ -694,7 +701,7 @@ def editar_producto(id_producto):
         productos.at[idx, 'precio'] = float(request.form['precio'])
         productos.at[idx, 'stock'] = int(request.form['stock'])
         productos.to_excel('bd/producto.xlsx', index=False)
-        return redirect(url_for('admin_dashboard'))
+        return redirect(url_for('admin_productos'))
 
     # Render formulario de edición (plantilla propia en Gestion productos)
     return render_template('Administrador/Gestion productos/editar_producto.html', producto=producto.iloc[0])
