@@ -14,9 +14,11 @@
 <body>
     <div class="d-flex dashboard-layout">
         <div class="sidebar">
-            <div class="logo-section">
-                <img src="{{ url_for('static', filename='img/logo_transparente.png') }}" alt="Logo del proyecto" class="sidebar-logo">
-            </div>
+
+            <a href="{{ url_for('admin_dashboard') }}">
+                <img src="{{ url_for('static', filename='img/logo_transparente.png') }}" alt="Logo del proyecto"
+                 class="sidebar-logo">
+            </a>
 
             <div class="user-section text-center">
                 <small>Administrador</small>
@@ -25,19 +27,22 @@
 
             <ul class="nav flex-column mt-4">
                 <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('admin_dashboard') }}">Dashboard</a>
-                </li>
-                <li class="nav-item">
                     <a class="nav-link" href="{{ url_for('admin_usuarios') }}">Usuarios</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link active" href="{{ url_for('admin_charts') }}">Graficas</a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" href="{{ url_for('admin_productos') }}">Productos</a>
                 </li>
                 <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('admin_promo') }}">Promociones</a>
+                </li>
+                <li class="nav-item">
                     <a class="nav-link" href="{{ url_for('admin_pos') }}">Sistema POS</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link active" href="{{ url_for('admin_charts') }}">Graficas</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('admin_ajustes') }}">Ajustes</a>
                 </li>
             </ul>
 

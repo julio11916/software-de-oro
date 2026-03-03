@@ -10,6 +10,9 @@ app.secret_key = "clave"  # Necesario para manejar sesiones
 USUARIO_COLUMNS = ['id_usuario', 'nombre', 'email', 'password_hash', 'rol', 'fecha_registro']
 REGISTRO_COLUMNS = ['id_registro', 'id_usuario', 'accion', 'fecha_accion']
 
+# Column definitions for promociones
+PROMO_COLUMNS = ['id_promo', 'nombre', 'descripcion', 'descuento', 'fecha_inicio', 'fecha_fin', 'activo']
+
 # Si no existe detalle_pedido.xlsx, crear uno vacío
 if not os.path.exists('bd/detalle_pedido.xlsx'):
     detalle_pedido = pd.DataFrame(columns=['id_detalle','id_pedido','id_producto','cantidad','subtotal'])
@@ -42,6 +45,30 @@ def cargar_registros_df():
         if col not in registros.columns:
             registros[col] = ''
     return registros[REGISTRO_COLUMNS]
+
+
+def cargar_promociones_df():
+    """Carga el DataFrame de promociones desde bd/promociones.xlsx.
+    Si el archivo no existe se crea con columnas definidas.
+    """
+    if os.path.exists('bd/promociones.xlsx'):
+        promos = pd.read_excel('bd/promociones.xlsx')
+    else:
+        promos = pd.DataFrame(columns=PROMO_COLUMNS)
+
+    for col in PROMO_COLUMNS:
+        if col not in promos.columns:
+            promos[col] = ''
+
+    # asegurar tipos
+    promos['descuento'] = pd.to_numeric(promos['descuento'], errors='coerce').fillna(0)
+    promos['activo'] = promos['activo'].astype(bool)
+    return promos[PROMO_COLUMNS]
+
+
+def guardar_promociones_df(promos):
+    """Guarda las promociones en bd/promociones.xlsx"""
+    promos.to_excel('bd/promociones.xlsx', index=False)
 
 
 def registrar_actividad(accion):
@@ -1058,6 +1085,66 @@ def producto_detalle(id_producto):
     if producto.empty:
         return "Producto no encontrado"
     return render_template('Usuarios/product_detail.html', producto=producto.iloc[0].to_dict())
+
+@app.route('/admin/promo', methods=['GET','POST'])
+def admin_promo():
+    # página de gestión de promociones para administradores
+    if session.get('rol') != 'admin':
+        return "Acceso denegado"
+
+    if request.method == 'POST':
+        nombre = request.form.get('nombre', '').strip()
+        descripcion = request.form.get('descripcion', '').strip()
+        try:
+            descuento = float(request.form.get('descuento', 0))
+        except ValueError:
+            descuento = 0
+        fecha_inicio = request.form.get('fecha_inicio', '')
+        fecha_fin = request.form.get('fecha_fin', '')
+        activo = request.form.get('activo') == 'on'
+
+        promos = cargar_promociones_df()
+        next_id = int(pd.to_numeric(promos['id_promo'], errors='coerce').max() + 1) if not promos.empty else 1
+        nuevo = {
+            'id_promo': next_id,
+            'nombre': nombre,
+            'descripcion': descripcion,
+            'descuento': descuento,
+            'fecha_inicio': fecha_inicio,
+            'fecha_fin': fecha_fin,
+            'activo': activo
+        }
+        promos = pd.concat([promos, pd.DataFrame([nuevo])], ignore_index=True)
+        guardar_promociones_df(promos)
+        registrar_actividad(f"Promoción creada: {nombre}")
+        return redirect(url_for('admin_promo'))
+
+    promos = cargar_promociones_df()
+    lista_promos = promos.to_dict(orient='records')
+    return render_template('Administrador/Promociones/adim_promo.html', promos=lista_promos)
+
+
+@app.route('/admin/promo/toggle/<int:id_promo>', methods=['POST'])
+def admin_promo_toggle(id_promo):
+    if session.get('rol') != 'admin':
+        return "Acceso denegado"
+    promos = cargar_promociones_df()
+    idx = promos[promos['id_promo'] == id_promo].index
+    if not idx.empty:
+        promos.loc[idx, 'activo'] = ~promos.loc[idx, 'activo']
+        guardar_promociones_df(promos)
+        registrar_actividad(f"Promoción {'activada' if promos.loc[idx, 'activo'].iloc[0] else 'desactivada'}: {promos.loc[idx, 'nombre'].iloc[0]}")
+    return redirect(url_for('admin_promo'))
+
+
+@app.route('/promociones')
+def promociones():
+    # página pública que muestra promociones activas
+    promos = cargar_promociones_df()
+    promos = promos[promos['activo'] == True]
+    lista_promos = promos.to_dict(orient='records')
+    return render_template('Usuarios/promociones.html', promos=lista_promos)
+
 
 @app.route('/admin/charts')
 def admin_charts():
