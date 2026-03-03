@@ -18,6 +18,23 @@ body {
     padding: 20px;
 }
 
+body {
+    transition: opacity 0.3s ease;
+}
+
+.fade-out {
+    opacity: 0;
+}
+
+.sidebar-logo {
+    transition: transform 0.3s ease;
+    cursor: pointer;
+}
+
+.sidebar-logo:hover {
+    transform: scale(1.1);
+}
+
 .logo-section {
     margin-bottom: 22px;
     display: flex;
