@@ -1,87 +1,159 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="es">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestión de Pedidos</title>
+    <title>Gestion de Pedidos</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/administrador/admin_dashboard_principal.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/administrador/admin_orders.css') }}">
 </head>
+
 <body>
-    <h1>Panel de Administración - Pedidos</h1>
+    <div class="d-flex dashboard-layout">
+        <div class="sidebar">
+            <a href="{{ url_for('admin_dashboard') }}">
+                <img src="{{ url_for('static', filename='img/logo_transparente.png') }}" alt="Logo del proyecto"
+                    class="sidebar-logo">
+            </a>
 
-    <a href="{{ url_for('admin_dashboard') }}">Volver al Dashboard</a> |
-    <a href="{{ url_for('admin_registros') }}">Ver Registros</a> |
-    <a href="{{ url_for('export_sales') }}" class="exportar">📥 Exportar Ventas (CSV)</a> |
-    <a href="{{ url_for('logout') }}">Cerrar sesión</a>
+            <div class="user-section text-center">
+                <small>Administrador</small>
+                <h6 class="fw-bold">{{ admin_nombre or 'Administrador' }}</h6>
+            </div>
 
-    <h2>Pedidos</h2>
-    {% if pedidos %}
-    <table>
-        <tr>
-            <th>ID Pedido</th>
-            <th>Usuario</th>
-            <th>Fecha</th>
-            <th>Estado</th>
-            <th>Acción</th>
-            <th>Detalles</th>
-        </tr>
-        {% for pedido in pedidos %}
-        <tr>
-            <td>{{ pedido.id_pedido }}</td>
-            <td>{{ pedido.id_usuario }}</td>
-            <td>{{ pedido.fecha_pedido }}</td>
-            <td class="{{ pedido.estado }}">{{ pedido.estado }}</td>
-            <td>
-                <form method="POST" action="{{ url_for('update_order', id_pedido=pedido.id_pedido) }}"
-                    style="display: inline;">
-                    <select name="estado">
-                        <option value="pendiente" {% if pedido.estado=='pendiente' %}selected{% endif %}>Pendiente
-                        </option>
-                        <option value="enviado" {% if pedido.estado=='enviado' %}selected{% endif %}>Enviado</option>
-                        <option value="entregado" {% if pedido.estado=='entregado' %}selected{% endif %}>Entregado
-                        </option>
-                        <option value="cancelado" {% if pedido.estado=='cancelado' %}selected{% endif %}>Cancelado
-                        </option>
-                    </select>
-                    <button type="submit" class="btn">Actualizar</button>
-                </form>
-            </td>
-            <td>
-                <a href="{{ url_for('order_details', id_pedido=pedido.id_pedido) }}" class="btn">Ver Detalles</a>
-            </td>
-        </tr>
-        {% endfor %}
-    </table>
-    {% else %}
-    <p>No hay pedidos registrados.</p>
-    {% endif %}
+            <ul class="nav flex-column mt-4">
+                <li class="nav-item"><a class="nav-link" href="{{ url_for('admin_usuarios') }}">Usuarios</a></li>
+                <li class="nav-item"><a class="nav-link" href="{{ url_for('admin_productos') }}">Productos</a></li>
+                <li class="nav-item"><a class="nav-link" href="{{ url_for('admin_promo') }}">Promociones</a></li>
+                <li class="nav-item"><a class="nav-link" href="{{ url_for('admin_pos') }}">Sistema POS</a></li>
+                <li class="nav-item"><a class="nav-link active" href="{{ url_for('admin_pedidos') }}">Pedidos</a></li>
+                <li class="nav-item"><a class="nav-link" href="{{ url_for('admin_charts') }}">Ventas y Graficas</a></li>
+                <li class="nav-item"><a class="nav-link" href="{{ url_for('admin_ajustes') }}">Ajustes</a></li>
+            </ul>
 
-    <h2>Pagos</h2>
-    {% if pagos %}
-    <table>
-        <tr>
-            <th>ID Pago</th>
-            <th>ID Pedido</th>
-            <th>Monto</th>
-            <th>Método</th>
-            <th>Fecha</th>
-            <th>Estado</th>
-        </tr>
-        {% for pago in pagos %}
-        <tr>
-            <td>{{ pago.id_pago }}</td>
-            <td>{{ pago.id_pedido }}</td>
-            <td>${{ "%.2f"|format(pago.monto) }}</td>
-            <td>{{ pago.metodo_pago }}</td>
-            <td>{{ pago.fecha_pago }}</td>
-            <td>{{ pago.estado_pago }}</td>
-        </tr>
-        {% endfor %}
-    </table>
-    {% else %}
-    <p>No hay pagos registrados.</p>
-    {% endif %}
+            <div class="sidebar-bottom mt-auto">
+                <a href="{{ url_for('home') }}" class="btn btn-success w-100 mb-2" onclick="if (window.history.length > 1) { window.history.back(); } else { window.location.href='{{ url_for('home') }}'; } return false;">Volver</a>
+                <a href="{{ url_for('logout') }}" class="btn btn-danger w-100">Cerrar Sesion</a>
+            </div>
+        </div>
+
+        <div class="main-content w-100">
+            <div class="topbar d-flex justify-content-between align-items-center">
+                <div>
+                    <h4 class="mb-0">Gestion de Pedidos</h4>
+                    <small>Control de estados y seguimiento de ventas</small>
+                </div>
+                <div id="fechaHora"></div>
+            </div>
+
+            <div class="content-area orders-content">
+                {% with mensajes = get_flashed_messages(with_categories=true) %}
+                {% if mensajes %}
+                <div class="mb-3">
+                    {% for categoria, mensaje in mensajes %}
+                    <div class="alert alert-{{ 'warning' if categoria == 'message' else categoria }} mb-2">{{ mensaje }}</div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+                {% endwith %}
+
+                <section class="orders-panel mb-4">
+                    <div class="panel-head d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Pedidos</h5>
+                        <span class="badge bg-light text-dark">Total: {{ pedidos|length }}</span>
+                    </div>
+                    <div class="panel-body">
+                        {% if pedidos %}
+                        <div class="table-responsive">
+                            <table class="table table-sm orders-table align-middle mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Usuario</th>
+                                        <th>Fecha</th>
+                                        <th>Total</th>
+                                        <th>Estado actual</th>
+                                        <th>Actualizar estado</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for pedido in pedidos %}
+                                    <tr>
+                                        <td>#{{ pedido.id_pedido }}</td>
+                                        <td>{{ pedido.usuario_nombre }}</td>
+                                        <td>{{ pedido.fecha_pedido }}</td>
+                                        <td>{{ pedido.monto|cop if pedido.monto else pedido.total_productos|cop }}</td>
+                                        <td>
+                                            <span class="status-badge status-{{ pedido.estado }}">{{ pedido.estado }}</span>
+                                        </td>
+                                        <td>
+                                            <form method="POST" action="{{ url_for('admin_pedidos_estado', id_pedido=pedido.id_pedido) }}" class="d-flex gap-2">
+                                                <select name="estado" class="form-select form-select-sm" style="min-width: 140px;">
+                                                    <option value="pendiente" {% if pedido.estado == 'pendiente' %}selected{% endif %}>pendiente</option>
+                                                    <option value="enviado" {% if pedido.estado == 'enviado' %}selected{% endif %}>enviado</option>
+                                                    <option value="entregado" {% if pedido.estado == 'entregado' %}selected{% endif %}>entregado</option>
+                                                    <option value="cancelado" {% if pedido.estado == 'cancelado' %}selected{% endif %}>cancelado</option>
+                                                </select>
+                                                <button type="submit" class="btn btn-sm btn-outline-primary">Guardar</button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        {% else %}
+                        <p class="mb-0 text-muted">No hay pedidos registrados.</p>
+                        {% endif %}
+                    </div>
+                </section>
+
+                <section class="orders-panel">
+                    <div class="panel-head d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Pagos</h5>
+                        <span class="badge bg-light text-dark">Total: {{ pagos|length }}</span>
+                    </div>
+                    <div class="panel-body">
+                        {% if pagos %}
+                        <div class="table-responsive">
+                            <table class="table table-sm orders-table align-middle mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>ID Pago</th>
+                                        <th>ID Pedido</th>
+                                        <th>Monto</th>
+                                        <th>Metodo</th>
+                                        <th>Fecha</th>
+                                        <th>Estado</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for pago in pagos %}
+                                    <tr>
+                                        <td>{{ pago.id_pago }}</td>
+                                        <td>#{{ pago.id_pedido }}</td>
+                                        <td>{{ pago.monto|cop }}</td>
+                                        <td>{{ pago.metodo_pago }}</td>
+                                        <td>{{ pago.fecha_pago }}</td>
+                                        <td>{{ pago.estado_pago }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        {% else %}
+                        <p class="mb-0 text-muted">No hay pagos registrados.</p>
+                        {% endif %}
+                    </div>
+                </section>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{{ url_for('static', filename='js/administrador/admin_dashboard_principal.js') }}"></script>
 </body>
 
 </html>

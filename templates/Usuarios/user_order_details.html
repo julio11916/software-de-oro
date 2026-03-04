@@ -77,14 +77,14 @@
             {% for detalle in detalles %}
             <tr>
                 <td>{{ detalle.nombre }}</td>
-                <td>${{ "%.2f"|format(detalle.precio) }}</td>
+                <td>{{ detalle.precio|cop }}</td>
                 <td>{{ detalle.cantidad }}</td>
-                <td>${{ "%.2f"|format(detalle.subtotal) }}</td>
+                <td>{{ detalle.subtotal|cop }}</td>
             </tr>
             {% endfor %}
             <tr>
                 <td colspan="3" style="text-align: right; font-size: 16px;"><strong>TOTAL:</strong></td>
-                <td class="total">${{ "%.2f"|format(detalles|sum(attribute='subtotal')) }}</td>
+                <td class="total">{{ (detalles|sum(attribute='subtotal'))|cop }}</td>
             </tr>
         </table>
         {% else %}

@@ -112,7 +112,7 @@
                             <i class="fas fa-money-bill-wave"></i>
                             <div class="info-content">
                                 <span class="info-label">Monto Total</span>
-                                <span class="info-value price">${{ "%.2f"|format(pedido.monto) if pedido.monto else
+                                <span class="info-value price">{{ pedido.monto|cop if pedido.monto else
                                     'N/A' }}</span>
                             </div>
                         </div>

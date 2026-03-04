@@ -137,13 +137,16 @@
                         <div class="card-body">
                             <h5 class="card-title">{{ producto.nombre }}</h5>
                             <p class="card-text text-muted">{{ producto.descripcion }}</p>
-                            <p class="price">${{ producto.precio }}</p>
+                            <p class="price">{{ producto.precio|cop }}</p>
+                            {% if producto.stock|int <= 0 %}
+                            <p class="text-danger fw-bold mb-2">Agotado</p>
+                            {% endif %}
 
                             <form method="POST" action="{{ url_for('add_to_cart', id_producto=producto.id_producto) }}">
                                 <div class="input-group">
                                     <input type="number" name="cantidad" class="form-control" value="1" min="1"
-                                        max="{{ producto.stock }}">
-                                    <button type="submit" class="btn btn-primary">
+                                        max="{{ producto.stock|int }}" {% if producto.stock|int <=0 %}disabled{% endif %}>
+                                    <button type="submit" class="btn btn-primary" {% if producto.stock|int <=0 %}disabled{% endif %}>
                                         <i class="fas fa-cart-plus"></i> Agregar
                                     </button>
                                 </div>

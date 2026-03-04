@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="es">
 
 <head>
@@ -49,7 +49,10 @@
                     <a class="nav-link" href="{{ url_for('admin_pos') }}">Sistema POS</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('admin_charts') }}">Graficas</a>
+                    <a class="nav-link" href="{{ url_for('admin_pedidos') }}">Pedidos</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('admin_charts') }}">Ventas y Graficas</a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" href="{{ url_for('admin_ajustes') }}">Ajustes</a>
@@ -101,9 +104,19 @@
                                     <input type="text" name="descripcion" class="form-control">
                                 </div>
                                 <div class="col-md-2">
-                                    <label class="form-label">Descuento (%)</label>
-                                    <input type="number" name="descuento" class="form-control" min="0" max="100"
-                                        step="0.1">
+                                    <label class="form-label">Tipo</label>
+                                    <select name="tipo_descuento" class="form-control">
+                                        <option value="porcentaje">Porcentaje (%)</option>
+                                        <option value="valor_fijo">Valor fijo (COP)</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label">Valor descuento</label>
+                                    <input type="number" name="valor_descuento" class="form-control" min="0" step="0.1">
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label">Codigo (opcional)</label>
+                                    <input type="text" name="codigo" class="form-control" maxlength="30" placeholder="EJ: ORO10">
                                 </div>
                                 <div class="col-md-2">
                                     <label class="form-label">Activo</label><br>
@@ -140,7 +153,10 @@
                                         <th>ID</th>
                                         <th>Nombre</th>
                                         <th>Descuento</th>
+                                        <th>Codigo</th>
                                         <th>Vigencia</th>
+                                        <th>Estado</th>
+                                        <th>Impacto</th>
                                         <th>Activo</th>
                                         <th>Acciones</th>
                                     </tr>
@@ -150,9 +166,29 @@
                                     <tr>
                                         <td>{{ p.id_promo }}</td>
                                         <td>{{ p.nombre }}</td>
-                                        <td>{{ p.descuento }}%</td>
+                                        <td>
+                                            {% if p.tipo_descuento == 'valor_fijo' %}
+                                            {{ p.valor_descuento|cop }}
+                                            {% else %}
+                                            {{ p.valor_descuento }}%
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ p.codigo or '-' }}</td>
                                         <td>{{ p.fecha_inicio }} - {{ p.fecha_fin }}</td>
-                                        <td>{{ 'Sí' if p.activo else 'No' }}</td>
+                                        <td>
+                                            {% if p.estado_vigencia == 'vigente' %}
+                                            <span class="badge bg-success">Vigente</span>
+                                            {% elif p.estado_vigencia == 'programada' %}
+                                            <span class="badge bg-info text-dark">Programada</span>
+                                            {% else %}
+                                            <span class="badge bg-secondary">Vencida</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <small>Usos: <strong>{{ p.usos }}</strong></small><br>
+                                            <small>Descuento: <strong>{{ p.descuento_total|cop }}</strong></small>
+                                        </td>
+                                        <td>{{ 'Si' if p.activo else 'No' }}</td>
                                         <td>
                                             <form method="POST"
                                                 action="{{ url_for('admin_promo_toggle', id_promo=p.id_promo) }}">
@@ -183,3 +219,4 @@
 </body>
 
 </html>
+

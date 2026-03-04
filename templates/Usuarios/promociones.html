@@ -111,7 +111,17 @@
                     <div class="card-body">
                         <h5 class="card-title">{{ promo.nombre }}</h5>
                         {% if promo.descripcion %}<p class="card-text">{{ promo.descripcion }}</p>{% endif %}
-                        <p class="card-text"><strong>Descuento:</strong> {{ promo.descuento }}%</p>
+                        <p class="card-text">
+                            <strong>Descuento:</strong>
+                            {% if promo.tipo_descuento == 'valor_fijo' %}
+                            {{ promo.valor_descuento|cop }}
+                            {% else %}
+                            {{ promo.valor_descuento }}%
+                            {% endif %}
+                        </p>
+                        {% if promo.codigo %}
+                        <p class="card-text"><strong>Codigo:</strong> {{ promo.codigo }}</p>
+                        {% endif %}
                         {% if promo.fecha_inicio or promo.fecha_fin %}
                         <p class="card-text text-muted">
                             Vigencia: {{ promo.fecha_inicio or '---' }} &ndash; {{ promo.fecha_fin or '---' }}
