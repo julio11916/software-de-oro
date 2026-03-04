@@ -4,7 +4,7 @@ import os
 os.makedirs('bd', exist_ok=True)
 
 tablas = {
-    'usuarios.xlsx': ['id_usuario', 'nombre', 'email', 'password_hash', 'rol', 'fecha_registro'],
+    'usuarios.xlsx': ['id_usuario', 'nombre', 'email', 'password_hash', 'rol', 'estado', 'fecha_registro'],
     'registros.xlsx': ['id_registro', 'id_usuario', 'accion', 'fecha_accion'],
     'categoria_producto.xlsx': ['id_categoria', 'nombre_categoria', 'descripcion'],
     'producto.xlsx': ['id_producto', 'nombre', 'descripcion', 'precio', 'stock', 'id_categoria'],

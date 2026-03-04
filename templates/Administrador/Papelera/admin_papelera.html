@@ -39,7 +39,10 @@
                     <a class="nav-link" href="{{ url_for('admin_pos') }}">Sistema POS</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('admin_charts') }}">Graficas</a>
+                    <a class="nav-link" href="{{ url_for('admin_pedidos') }}">Pedidos</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('admin_charts') }}">Ventas y Graficas</a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" href="{{ url_for('admin_ajustes') }}">Ajustes</a>
@@ -83,7 +86,7 @@
                             <div class="card-body trash-body">
                                 <h5 class="card-title">{{ producto.nombre }}</h5>
                                 <p class="card-text text-muted">{{ producto.descripcion }}</p>
-                                <p class="price mb-3">${{ producto.precio }}</p>
+                                <p class="price mb-3">{{ producto.precio|cop }}</p>
 
                                 <form method="POST" action="{{ url_for('restaurar_producto', id_producto=producto.id_producto) }}">
                                     <button type="submit" class="btn btn-outline-primary w-100">Restaurar</button>

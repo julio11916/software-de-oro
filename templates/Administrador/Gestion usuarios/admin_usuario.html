@@ -39,7 +39,10 @@
                     <a class="nav-link" href="{{ url_for('admin_pos') }}">Sistema POS</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('admin_charts') }}">Graficas</a>
+                    <a class="nav-link" href="{{ url_for('admin_pedidos') }}">Pedidos</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('admin_charts') }}">Ventas y Graficas</a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" href="{{ url_for('admin_ajustes') }}">Ajustes</a>
@@ -67,7 +70,6 @@
                         <div class="panel-header d-flex justify-content-between align-items-center">
                             <h5 class="mb-0">{% if usuario_editar %}Editar usuario{% else %}Crear usuario{% endif %}
                             </h5>
-                            <a class="btn btn-light btn-sm" href="{{ url_for('admin_registros') }}">Ver registros BD</a>
                         </div>
 
                         <div class="panel-body">
@@ -107,6 +109,13 @@
                                                 %}selected{% endif %}>normal</option>
                                             <option value="admin" {% if usuario_editar and usuario_editar.rol=='admin'
                                                 %}selected{% endif %}>admin</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Estado</label>
+                                        <select class="form-select" name="estado">
+                                            <option value="activo" {% if (usuario_editar and usuario_editar.estado=='activo') or (not usuario_editar) %}selected{% endif %}>activo</option>
+                                            <option value="inactivo" {% if usuario_editar and usuario_editar.estado=='inactivo' %}selected{% endif %}>inactivo</option>
                                         </select>
                                     </div>
                                 </div>
@@ -158,6 +167,14 @@
                                                 Nombre A-Z</option>
                                         </select>
                                     </div>
+                                    <div class="col-md-2">
+                                        <label class="form-label">Estado</label>
+                                        <select class="form-select" name="estado">
+                                            <option value="" {% if not filtros.estado %}selected{% endif %}>Todos</option>
+                                            <option value="activo" {% if filtros.estado=='activo' %}selected{% endif %}>activo</option>
+                                            <option value="inactivo" {% if filtros.estado=='inactivo' %}selected{% endif %}>inactivo</option>
+                                        </select>
+                                    </div>
                                     <div class="col-md-1 d-flex align-items-end">
                                         <button class="btn btn-primary w-100" type="submit">Filtrar</button>
                                     </div>
@@ -182,6 +199,7 @@
                                         <th>Nombre</th>
                                         <th>Email</th>
                                         <th>Rol</th>
+                                        <th>Estado</th>
                                         <th>Fecha de registro</th>
                                         <th>Acciones</th>
                                     </tr>
@@ -195,10 +213,17 @@
                                         <td>{{ u.email }}</td>
                                         <td><span class="badge bg-primary-subtle text-primary-emphasis">{{ u.rol
                                                 }}</span></td>
+                                        <td>
+                                            {% if u.estado == 'inactivo' %}
+                                            <span class="badge bg-danger-subtle text-danger-emphasis">inactivo</span>
+                                            {% else %}
+                                            <span class="badge bg-success-subtle text-success-emphasis">activo</span>
+                                            {% endif %}
+                                        </td>
                                         <td>{{ u.fecha_registro }}</td>
                                         <td>
                                             <a class="btn btn-sm btn-outline-primary"
-                                                href="{{ url_for('admin_usuarios', edit_id=u.id_usuario, buscar=filtros.buscar, rol=filtros.rol, orden=filtros.orden) }}#form-usuario">Editar</a>
+                                                href="{{ url_for('admin_usuarios', edit_id=u.id_usuario, buscar=filtros.buscar, rol=filtros.rol, estado=filtros.estado, orden=filtros.orden) }}#form-usuario">Editar</a>
                                         </td>
                                     </tr>
                                     {% endfor %}

@@ -140,7 +140,7 @@
                             <div class="card-body">
                                 <h5 class="card-title">{{ producto.nombre }}</h5>
                                 <p class="card-text text-muted">{{ producto.descripcion }}</p>
-                                <p class="price">${{ producto.precio }}</p>
+                                <p class="price">{{ producto.precio|cop }}</p>
                                 <p class="text-muted mb-3">
                                     <i class="fas fa-box"></i> Stock: {{ producto.stock }}
                                 </p>

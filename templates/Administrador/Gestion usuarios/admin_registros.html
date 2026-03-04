@@ -39,7 +39,10 @@
                     <a class="nav-link" href="{{ url_for('admin_pos') }}">Sistema POS</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('admin_charts') }}">Graficas</a>
+                    <a class="nav-link" href="{{ url_for('admin_pedidos') }}">Pedidos</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('admin_charts') }}">Ventas y Graficas</a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" href="{{ url_for('admin_ajustes') }}">Ajustes</a>
@@ -116,7 +119,7 @@
                                     <td>{{ loop.index }}</td>
                                     <td>{{ reg.id_registro }}</td>
                                     <td>{{ reg.id_usuario }}</td>
-                                    <td>{{ reg.accion }}</td>
+                                    <td class="accion-cell">{{ reg.accion }}</td>
                                     <td>{{ reg.fecha_accion }}</td>
                                 </tr>
                                 {% endfor %}

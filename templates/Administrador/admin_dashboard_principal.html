@@ -44,7 +44,10 @@
                     <a class="nav-link" href="{{ url_for('admin_pos') }}">Sistema POS</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('admin_charts') }}">Graficas</a>
+                    <a class="nav-link" href="{{ url_for('admin_pedidos') }}">Pedidos</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('admin_charts') }}">Ventas y Graficas</a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" href="{{ url_for('admin_ajustes') }}">Ajustes</a>
@@ -72,7 +75,31 @@
 
             <!-- Centro vacío -->
             <div class="content-area">
-                <!-- Aquí irá el contenido después -->
+                <div class="alerts-panel">
+                    <div class="alerts-header">
+                        <h5 class="mb-0">Notificaciones de Inventario</h5>
+                        <span class="alerts-count">{{ productos_agotados|length }}</span>
+                    </div>
+
+                    {% if productos_agotados %}
+                    <p class="text-muted mb-3">Productos agotados (stock en 0):</p>
+                    <ul class="alerts-list">
+                        {% for p in productos_agotados %}
+                        <li>
+                            <strong>{{ p.nombre }}</strong>
+                            <small>ID {{ p.id_producto }}</small>
+                            <span class="badge bg-danger">Agotado</span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    {% else %}
+                    <p class="mb-0 text-success">No hay productos agotados en este momento.</p>
+                    {% endif %}
+
+                    <a class="btn btn-outline-primary mt-3" href="{{ url_for('admin_productos') }}">
+                        Ir a Gestion de Productos
+                    </a>
+                </div>
             </div>
 
         </div>

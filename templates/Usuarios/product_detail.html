@@ -125,12 +125,15 @@
                 <div class="col-md-6">
                     <div class="product-info">
                         <h1 class="product-title">{{ producto.nombre }}</h1>
-                        <p class="product-price">${{ producto.precio }}</p>
+                        <p class="product-price">{{ producto.precio|cop }}</p>
                         <p class="product-description">{{ producto.descripcion }}</p>
                         <p class="stock-info">
                             <i class="fas fa-box"></i>
                             <strong>Stock disponible:</strong> {{ producto.stock }} unidades
                         </p>
+                        {% if producto.stock|int <= 0 %}
+                        <p class="text-danger fw-bold">Producto agotado</p>
+                        {% endif %}
 
                         <!-- Formulario de agregar al carrito -->
                         <form method="POST" action="{{ url_for('add_to_cart', id_producto=producto.id_producto) }}">
@@ -139,10 +142,10 @@
                                     <i class="fas fa-shopping-basket"></i> Cantidad:
                                 </label>
                                 <input type="number" name="cantidad" class="form-control form-control-lg" value="1"
-                                    min="1" max="{{ producto.stock }}" style="max-width: 150px;">
+                                    min="1" max="{{ producto.stock|int }}" style="max-width: 150px;" {% if producto.stock|int <=0 %}disabled{% endif %}>
                             </div>
                             <div class="d-flex gap-3">
-                                <button type="submit" class="btn btn-add-cart">
+                                <button type="submit" class="btn btn-add-cart" {% if producto.stock|int <=0 %}disabled{% endif %}>
                                     <i class="fas fa-cart-plus"></i> Agregar al Carrito
                                 </button>
                                 <a href="{{ url_for('user_dashboard') }}" class="btn btn-back">
@@ -160,7 +163,7 @@
                                 <li class="mb-2"><i class="fas fa-shield-alt text-success"></i> Material de alta calidad
                                 </li>
                                 <li class="mb-2"><i class="fas fa-truck text-primary"></i> Envío gratuito en compras
-                                    superiores a $50</li>
+                                    superiores a COP 50.000</li>
                                 <li class="mb-2"><i class="fas fa-undo text-warning"></i> 30 días de garantía de
                                     devolución</li>
                                 <li class="mb-2"><i class="fas fa-award text-info"></i> Certificado de autenticidad</li>

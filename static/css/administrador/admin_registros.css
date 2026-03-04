@@ -32,6 +32,12 @@
     vertical-align: middle;
 }
 
+.accion-cell {
+    white-space: pre-line;
+    line-height: 1.35;
+    min-width: 460px;
+}
+
 .top-actions {
     display: flex;
     gap: 10px;
