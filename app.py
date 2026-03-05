@@ -4,17 +4,30 @@ import pandas as pd
 from io import BytesIO
 from openpyxl.chart import BarChart, LineChart, PieChart, Reference
 from openpyxl.chart.series import DataPoint
-from flask import Flask, render_template, request, redirect, url_for, session, Response, flash, send_file
+from flask import Flask, render_template, request, redirect, url_for, session, Response, flash, send_file, jsonify
 from datetime import datetime, timedelta, date
 from typing import Any, Mapping, Optional
+from email_service import mail, generar_codigo_verificacion, enviar_codigo_verificacion
+import config_email
 
 app = Flask(__name__)
 app.secret_key = "clave"  # Necesario para manejar sesiones
 
+# Configuración de Flask-Mail para Gmail
+app.config['MAIL_SERVER'] = config_email.MAIL_SERVER
+app.config['MAIL_PORT'] = config_email.MAIL_PORT
+app.config['MAIL_USE_TLS'] = config_email.MAIL_USE_TLS
+app.config['MAIL_USERNAME'] = config_email.MAIL_USERNAME
+app.config['MAIL_PASSWORD'] = config_email.MAIL_PASSWORD
+app.config['MAIL_DEFAULT_SENDER'] = config_email.MAIL_DEFAULT_SENDER
+
+# Inicializar Flask-Mail
+mail.init_app(app)
+
 CURRENCY_CODE = "COP"
 CURRENCY_NAME = "Peso colombiano"
 
-USUARIO_COLUMNS = ['id_usuario', 'nombre', 'email', 'password_hash', 'rol', 'estado', 'fecha_registro']
+USUARIO_COLUMNS = ['id_usuario', 'nombre', 'email', 'password_hash', 'rol', 'estado', 'fecha_registro', 'email_verified', 'verification_code', 'verification_code_expiry']
 REGISTRO_COLUMNS = ['id_registro', 'id_usuario', 'accion', 'fecha_accion']
 
 # Column definitions for promociones
@@ -42,14 +55,30 @@ def cargar_usuarios_df():
         if col not in usuarios.columns:
             if col == 'estado':
                 usuarios[col] = 'activo'
+            elif col == 'email_verified':
+                usuarios[col] = False
             else:
                 usuarios[col] = ''
+    
+    # Asegurar que las columnas de verificación sean tipo string
+    if 'verification_code' in usuarios.columns:
+        usuarios['verification_code'] = usuarios['verification_code'].fillna('').astype(str)
+    if 'verification_code_expiry' in usuarios.columns:
+        usuarios['verification_code_expiry'] = usuarios['verification_code_expiry'].fillna('').astype(str)
+    if 'email_verified' in usuarios.columns:
+        usuarios['email_verified'] = usuarios['email_verified'].fillna(False).astype(bool)
+    
     usuarios['estado'] = usuarios['estado'].fillna('activo').astype(str).str.strip().str.lower()
     usuarios.loc[~usuarios['estado'].isin(['activo', 'inactivo']), 'estado'] = 'activo'
     return usuarios[USUARIO_COLUMNS]
 
 
 def guardar_usuarios_df(usuarios):
+    # Convertir columnas de verificación a string antes de guardar
+    if 'verification_code' in usuarios.columns:
+        usuarios['verification_code'] = usuarios['verification_code'].astype(str)
+    if 'verification_code_expiry' in usuarios.columns:
+        usuarios['verification_code_expiry'] = usuarios['verification_code_expiry'].astype(str)
     usuarios.to_excel('bd/usuarios.xlsx', index=False)
 
 
@@ -1464,6 +1493,27 @@ def remove_from_cart(index):
             session.modified = True
     return redirect(url_for('cart'))
 
+@app.route('/checkout')
+def checkout():
+    if session.get('rol') == 'normal':
+        carrito = session.get('carrito', [])
+        if not carrito:
+            flash('No hay productos en el carrito.', 'warning')
+            return redirect(url_for('cart'))
+        
+        carrito_limpio, cambios = normalizar_carrito_por_stock(carrito)
+        if carrito_limpio != carrito:
+            session['carrito'] = carrito_limpio
+            session.modified = True
+        for cambio in cambios[:3]:
+            flash(cambio, 'warning')
+        if len(cambios) > 3:
+            flash(f'Se aplicaron {len(cambios)} ajustes de stock en tu carrito.', 'warning')
+        carrito = carrito_limpio
+        total = sum(item['subtotal'] for item in carrito)
+        return render_template('Usuarios/Carrito/checkout.html', carrito=carrito, total=total)
+    return "Acceso denegado"
+
 @app.route('/pay', methods=['POST'])
 def pay():
     if session.get('rol') == 'normal':
@@ -1625,12 +1675,22 @@ def pay():
         session['carrito'] = []
         session.modified = True
 
-        mensaje_ok = f"Pedido #{nuevo_id_pedido} creado y pago registrado con exito. Total: {formatear_cop(total_final)}"
-        if promo_aplicada:
-            mensaje_ok += f". Promo aplicada ({promo_aplicada.get('codigo', '')}): -{formatear_cop(descuento_promo)}"
-        if agotados_en_compra:
-            mensaje_ok += f". Producto(s) agotado(s): {', '.join(agotados_en_compra)}"
-        return mensaje_ok
+        # Preparar datos para la página de confirmación
+        metodo_pago_nombres = {
+            'tarjeta': 'Tarjeta de Crédito/Débito',
+            'transferencia': 'Transferencia Bancaria',
+            'efectivo': 'Efectivo',
+            'paypal': 'PayPal'
+        }
+        
+        return render_template('Usuarios/Carrito/order_confirmation.html',
+            pedido_id=nuevo_id_pedido,
+            metodo_pago=metodo_pago_nombres.get(request.form['metodo_pago'], request.form['metodo_pago']),
+            fecha=datetime.now().strftime("%d/%m/%Y %H:%M"),
+            total=total_final,
+            promo_codigo=promo_aplicada.get('codigo', '') if promo_aplicada else None,
+            descuento=descuento_promo if promo_aplicada else 0
+        )
     return "Acceso denegado"
 
 @app.route('/user/orders')
@@ -1697,6 +1757,24 @@ def user_profile():
         usuario_dict['telefono'] = ''
     if 'direccion' not in usuario_dict:
         usuario_dict['direccion'] = ''
+    
+    # Asegurar que existan las columnas de verificación
+    if 'email_verified' not in usuario_dict:
+        usuario_dict['email_verified'] = False
+    
+    # Asegurar que existan las columnas de configuración con valores por defecto
+    config_defaults = {
+        'notif_email': True,
+        'notif_pedidos': True,
+        'notif_promociones': True,
+        'perfil_publico': False,
+        'mostrar_historial': False,
+        'idioma': 'es',
+        'moneda': 'COP'
+    }
+    for key, default_value in config_defaults.items():
+        if key not in usuario_dict or pd.isna(usuario_dict[key]):
+            usuario_dict[key] = default_value
     
     # Obtener estadísticas del usuario
     pedidos_total = 0
@@ -1793,6 +1871,209 @@ def change_password():
     flash('Contraseña cambiada correctamente', 'success')
     
     return redirect(url_for('user_profile'))
+
+@app.route('/user/profile/settings', methods=['POST'])
+def update_settings():
+    if session.get('rol') != 'normal':
+        flash('Acceso denegado', 'danger')
+        return redirect(url_for('home'))
+    
+    # Obtener datos del formulario
+    notif_email = request.form.get('notif_email') == 'on'
+    notif_pedidos = request.form.get('notif_pedidos') == 'on'
+    notif_promociones = request.form.get('notif_promociones') == 'on'
+    perfil_publico = request.form.get('perfil_publico') == 'on'
+    mostrar_historial = request.form.get('mostrar_historial') == 'on'
+    idioma = request.form.get('idioma', 'es')
+    moneda = request.form.get('moneda', 'COP')
+    
+    # Cargar usuarios
+    usuarios = cargar_usuarios_df()
+    usuario_email = session.get('usuario')
+    
+    # Asegurar que existan las columnas de configuración
+    columnas_config = ['notif_email', 'notif_pedidos', 'notif_promociones', 
+                       'perfil_publico', 'mostrar_historial', 'idioma', 'moneda']
+    for col in columnas_config:
+        if col not in usuarios.columns:
+            usuarios[col] = '' if col in ['idioma', 'moneda'] else False
+    
+    # Actualizar configuración
+    idx = usuarios[usuarios['email'] == usuario_email].index
+    if not idx.empty:
+        usuarios.loc[idx, 'notif_email'] = notif_email
+        usuarios.loc[idx, 'notif_pedidos'] = notif_pedidos
+        usuarios.loc[idx, 'notif_promociones'] = notif_promociones
+        usuarios.loc[idx, 'perfil_publico'] = perfil_publico
+        usuarios.loc[idx, 'mostrar_historial'] = mostrar_historial
+        usuarios.loc[idx, 'idioma'] = idioma
+        usuarios.loc[idx, 'moneda'] = moneda
+        
+        guardar_usuarios_df(usuarios)
+        registrar_actividad(f"Usuario {usuario_email} actualizó sus ajustes")
+        flash('Ajustes guardados correctamente', 'success')
+    else:
+        flash('Error al guardar los ajustes', 'danger')
+    
+    return redirect(url_for('user_profile'))
+
+@app.route('/user/send-verification-code', methods=['POST'])
+def send_verification_code():
+    """Envía un código de verificación al correo del usuario (funciona siempre)"""
+    if session.get('rol') != 'normal':
+        return jsonify({'success': False, 'message': 'Acceso denegado'}), 403
+    
+    try:
+        # Verificar si está en modo desarrollo (sin configuración de Gmail)
+        modo_desarrollo = (config_email.MAIL_USERNAME == 'tu_correo@gmail.com' or 
+                          'xxxx' in config_email.MAIL_PASSWORD)
+        
+        # Cargar usuarios
+        usuarios = cargar_usuarios_df()
+        usuario_email = session.get('usuario')
+        
+        # Asegurar que existan las columnas de verificación
+        if 'email_verified' not in usuarios.columns:
+            usuarios['email_verified'] = False
+        if 'verification_code' not in usuarios.columns:
+            usuarios['verification_code'] = ''
+        if 'verification_code_expiry' not in usuarios.columns:
+            usuarios['verification_code_expiry'] = ''
+        
+        # Verificar si el usuario existe
+        usuario_idx = usuarios[usuarios['email'] == usuario_email].index
+        if usuario_idx.empty:
+            return jsonify({'success': False, 'message': 'Usuario no encontrado'}), 404
+        
+        # Generar código de verificación (sin importar si ya está verificado)
+        codigo = generar_codigo_verificacion()
+        expiry = datetime.now() + timedelta(minutes=10)
+        
+        # Guardar código en la base de datos (forzar como string)
+        usuarios.loc[usuario_idx, 'verification_code'] = str(codigo)
+        usuarios.loc[usuario_idx, 'verification_code_expiry'] = expiry.strftime('%Y-%m-%d %H:%M:%S')
+        
+        # Asegurar que la columna sea tipo string
+        usuarios['verification_code'] = usuarios['verification_code'].astype(str).str.replace('.0', '', regex=False).replace('nan', '')
+        
+        guardar_usuarios_df(usuarios)
+        
+        # MODO DESARROLLO: Mostrar código en consola sin enviar email
+        if modo_desarrollo:
+            print("\n" + "="*60)
+            print("🔐 MODO DESARROLLO - CÓDIGO DE VERIFICACIÓN")
+            print("="*60)
+            print(f"📧 Usuario: {usuario_email}")
+            print(f"🔢 Código: {codigo}")
+            print(f"⏰ Válido hasta: {expiry.strftime('%H:%M:%S')}")
+            print("="*60 + "\n")
+            
+            registrar_actividad(f"Código de autenticación generado para {usuario_email} (modo desarrollo)")
+            return jsonify({
+                'success': True, 
+                'message': f'✅ Código generado: {codigo} (revisa la consola del servidor)'
+            })
+        
+        # MODO PRODUCCIÓN: Enviar email real
+        if enviar_codigo_verificacion(usuario_email, codigo):
+            registrar_actividad(f"Código de autenticación enviado a {usuario_email}")
+            return jsonify({
+                'success': True, 
+                'message': 'Código enviado correctamente. Revisa tu correo.'
+            })
+        else:
+            # Si falla el envío, mostrar en consola como fallback
+            print("\n⚠️ ERROR AL ENVIAR EMAIL - MOSTRANDO CÓDIGO EN CONSOLA:")
+            print(f"Código para {usuario_email}: {codigo}\n")
+            return jsonify({
+                'success': True, 
+                'message': f'⚠️ Email no configurado. Tu código es: {codigo}'
+            })
+            
+    except Exception as e:
+        print(f"Error al enviar código: {str(e)}")
+        return jsonify({
+            'success': False, 
+            'message': f'Error: {str(e)}'
+        }), 500
+
+@app.route('/user/verify-email', methods=['POST'])
+def verify_email():
+    """Verifica el código ingresado por el usuario (funciona siempre)"""
+    if session.get('rol') != 'normal':
+        return jsonify({'success': False, 'message': 'Acceso denegado'}), 403
+    
+    try:
+        codigo_ingresado = request.json.get('code', '').strip()
+        
+        if not codigo_ingresado:
+            return jsonify({'success': False, 'message': 'Debe ingresar un código'}), 400
+        
+        # Cargar usuarios
+        usuarios = cargar_usuarios_df()
+        usuario_email = session.get('usuario')
+        
+        # Asegurar que existan las columnas
+        if 'email_verified' not in usuarios.columns:
+            usuarios['email_verified'] = False
+        if 'verification_code' not in usuarios.columns:
+            usuarios['verification_code'] = ''
+        if 'verification_code_expiry' not in usuarios.columns:
+            usuarios['verification_code_expiry'] = ''
+        
+        usuario_idx = usuarios[usuarios['email'] == usuario_email].index
+        if usuario_idx.empty:
+            return jsonify({'success': False, 'message': 'Usuario no encontrado'}), 404
+        
+        usuario = usuarios.loc[usuario_idx[0]]
+        
+        # Verificar si existe un código
+        if not usuario['verification_code']:
+            return jsonify({'success': False, 'message': 'No hay código de verificación. Solicita uno nuevo.'}), 400
+        
+        # Verificar si el código expiró
+        try:
+            expiry = pd.to_datetime(usuario['verification_code_expiry'])
+            if pd.Timestamp.now() > expiry:
+                return jsonify({'success': False, 'message': 'El código ha expirado. Solicita uno nuevo.'}), 400
+        except:
+            return jsonify({'success': False, 'message': 'Error al verificar la fecha de expiración'}), 500
+        
+        # Verificar el código (limpiar .0 por si acaso)
+        codigo_guardado = str(usuario['verification_code']).replace('.0', '').strip()
+        if codigo_guardado == str(codigo_ingresado):
+            # Código correcto
+            # Marcar como verificado si no lo estaba
+            if not usuario['email_verified']:
+                usuarios.loc[usuario_idx, 'email_verified'] = True
+                mensaje_exito = '¡Correo verificado exitosamente!'
+                actividad = f"Usuario {usuario_email} verificó su correo electrónico"
+            else:
+                mensaje_exito = '¡Autenticación exitosa!'
+                actividad = f"Usuario {usuario_email} se autenticó correctamente"
+            
+            # Limpiar código usado
+            usuarios.loc[usuario_idx, 'verification_code'] = ''
+            usuarios.loc[usuario_idx, 'verification_code_expiry'] = ''
+            guardar_usuarios_df(usuarios)
+            
+            registrar_actividad(actividad)
+            return jsonify({
+                'success': True, 
+                'message': mensaje_exito
+            })
+        else:
+            return jsonify({
+                'success': False, 
+                'message': 'Código incorrecto. Verifica e intenta nuevamente.'
+            }), 400
+            
+    except Exception as e:
+        print(f"Error al verificar código: {str(e)}")
+        return jsonify({
+            'success': False, 
+            'message': 'Error interno del servidor'
+        }), 500
 
 @app.route('/producto/<int:id_producto>')
 def producto_detalle(id_producto):
@@ -2271,6 +2552,11 @@ def admin_charts_export_excel():
 @app.route('/orden-personalizada')
 def orden_personalizada():
     return render_template('Usuarios/orden_personalizada/orden.html')
+
+#sobre nosotros
+@app.route('/sobre-nosotros')
+def sobre_nosotros():
+    return render_template('Usuarios/sobre_nosotros.html')
 
 if __name__ == '__main__':
     app.run(debug=True)

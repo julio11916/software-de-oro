@@ -15,11 +15,16 @@
     <div class="top-bar">
         <div class="container">
             <div class="d-flex align-items-center justify-content-between">
-                <!-- Logo -->
-                <a href="{{ url_for('user_dashboard') }}" class="logo-brand">
-                    <i class="fas fa-shield-alt"></i>
-                    Ropa Militar
-                </a>
+                <!-- Botón de retorno y Logo -->
+                <div class="d-flex align-items-center">
+                    <a href="{{ url_for('user_orders') }}" class="btn btn-outline-light me-3">
+                        <i class="fas fa-arrow-left"></i>
+                    </a>
+                    <a href="{{ url_for('user_dashboard') }}" class="logo-brand">
+                        <i class="fas fa-shield-alt"></i>
+                        Ropa Militar
+                    </a>
+                </div>
 
                 <!-- Iconos de navegación -->
                 <div class="top-icons d-flex gap-2">
@@ -110,5 +115,4 @@
         });
     </script>
 </body>
-
 </html>

@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pedido Confirmado - Ropa Militar</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #ffc107;
+            --success-color: #28a745;
+            --light-bg: #f8f9fa;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: var(--light-bg);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #333;
+        }
+
+        /* Barra Superior */
+        .top-bar {
+            background-color: var(--primary-color);
+            padding: 1rem 0;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .logo-brand {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: white;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .logo-brand:hover {
+            color: var(--secondary-color);
+        }
+
+        .page-title-container {
+            flex-grow: 1;
+            text-align: center;
+        }
+
+        .page-title {
+            color: white;
+            font-size: 1.5rem;
+            margin: 0;
+            font-weight: 600;
+        }
+
+        .page-title i {
+            margin-right: 0.5rem;
+            color: var(--secondary-color);
+        }
+
+        /* Container Principal */
+        .confirmation-container {
+            max-width: 700px;
+            margin: 0 auto;
+            padding: 0 15px;
+        }
+
+        /* Card de Confirmación */
+        .confirmation-card {
+            background: white;
+            border-radius: 12px;
+            padding: 3rem 2rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        /* Icono de Éxito */
+        .success-icon {
+            font-size: 5rem;
+            color: var(--success-color);
+            margin-bottom: 1.5rem;
+            animation: scaleIn 0.5s ease;
+        }
+
+        @keyframes scaleIn {
+            from {
+                transform: scale(0);
+            }
+
+            to {
+                transform: scale(1);
+            }
+        }
+
+        /* Título y Mensaje */
+        .confirmation-title {
+            color: var(--primary-color);
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+        }
+
+        .confirmation-message {
+            color: #666;
+            font-size: 1.1rem;
+            line-height: 1.6;
+            margin-bottom: 2rem;
+        }
+
+        /* Detalles del Pedido */
+        .order-details {
+            background: var(--light-bg);
+            border-radius: 10px;
+            padding: 2rem;
+            margin: 2rem 0;
+            text-align: left;
+        }
+
+        .order-details-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--primary-color);
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .order-details-title i {
+            color: var(--secondary-color);
+        }
+
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.8rem 0;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .detail-row:last-child {
+            border-bottom: none;
+            padding-top: 1rem;
+            font-weight: 700;
+            font-size: 1.2rem;
+        }
+
+        .detail-label {
+            color: #666;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .detail-value {
+            color: var(--primary-color);
+            font-weight: 600;
+        }
+
+        .detail-value.success {
+            color: var(--success-color);
+            font-size: 1.3rem;
+        }
+
+        /* Información Adicional */
+        .additional-info {
+            background: #e8f4f8;
+            border-left: 4px solid #17a2b8;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin: 2rem 0;
+            text-align: left;
+        }
+
+        .additional-info p {
+            margin: 0.5rem 0;
+            color: #666;
+            font-size: 0.95rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .additional-info i {
+            color: #17a2b8;
+        }
+
+        .promo-badge {
+            background: var(--secondary-color);
+            color: var(--primary-color);
+            padding: 0.3rem 0.8rem;
+            border-radius: 5px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            margin-left: 0.5rem;
+        }
+
+        /* Botones */
+        .action-buttons {
+            display: flex;
+            gap: 1rem;
+            margin-top: 2rem;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .btn-primary-action {
+            background: var(--success-color);
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 8px;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-weight: 600;
+            font-size: 1rem;
+            transition: all 0.3s;
+        }
+
+        .btn-primary-action:hover {
+            background: #218838;
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+        }
+
+        .btn-secondary-action {
+            background: white;
+            color: var(--primary-color);
+            border: 2px solid var(--primary-color);
+            padding: 1rem 2rem;
+            border-radius: 8px;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-weight: 600;
+            font-size: 1rem;
+            transition: all 0.3s;
+        }
+
+        .btn-secondary-action:hover {
+            background: var(--primary-color);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        /* Bootstrap utilities */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 15px;
+        }
+
+        .d-flex {
+            display: flex !important;
+        }
+
+        .align-items-center {
+            align-items: center !important;
+        }
+
+        .justify-content-between {
+            justify-content: space-between !important;
+        }
+
+        .me-3 {
+            margin-right: 1rem !important;
+        }
+
+        .my-4 {
+            margin-top: 2rem !important;
+            margin-bottom: 2rem !important;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .confirmation-card {
+                padding: 2rem 1.5rem;
+            }
+
+            .confirmation-title {
+                font-size: 1.5rem;
+            }
+
+            .success-icon {
+                font-size: 4rem;
+            }
+
+            .action-buttons {
+                flex-direction: column;
+            }
+
+            .btn-primary-action,
+            .btn-secondary-action {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Barra Superior -->
+    <div class="top-bar">
+        <div class="container">
+            <div class="d-flex align-items-center justify-content-between">
+                <div class="d-flex align-items-center">
+                    <a href="{{ url_for('user_dashboard') }}" class="logo-brand">
+                        <i class="fas fa-shield-alt"></i>
+                        Ropa Militar
+                    </a>
+                </div>
+
+                <div class="page-title-container">
+                    <h1 class="page-title">
+                        <i class="fas fa-check-circle"></i>
+                        Pedido Confirmado
+                    </h1>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Contenido Principal -->
+    <div class="confirmation-container my-4">
+        <div class="confirmation-card">
+            <!-- Icono de Éxito -->
+            <div class="success-icon">
+                <i class="fas fa-check-circle"></i>
+            </div>
+
+            <!-- Título -->
+            <h2 class="confirmation-title">¡Pedido Creado Exitosamente!</h2>
+
+            <!-- Mensaje -->
+            <p class="confirmation-message">
+                Tu pedido ha sido procesado correctamente y el pago ha sido registrado.
+                Recibirás una confirmación por correo electrónico en breve.
+            </p>
+
+            <!-- Detalles del Pedido -->
+            <div class="order-details">
+                <h3 class="order-details-title">
+                    <i class="fas fa-file-invoice"></i>
+                    Detalles del Pedido
+                </h3>
+
+                <div class="detail-row">
+                    <span class="detail-label">
+                        <i class="fas fa-hashtag"></i>
+                        Número de Pedido:
+                    </span>
+                    <span class="detail-value">#{{ pedido_id }}</span>
+                </div>
+
+                <div class="detail-row">
+                    <span class="detail-label">
+                        <i class="fas fa-credit-card"></i>
+                        Método de Pago:
+                    </span>
+                    <span class="detail-value">{{ metodo_pago }}</span>
+                </div>
+
+                <div class="detail-row">
+                    <span class="detail-label">
+                        <i class="fas fa-calendar-alt"></i>
+                        Fecha:
+                    </span>
+                    <span class="detail-value">{{ fecha }}</span>
+                </div>
+
+                {% if promo_codigo %}
+                <div class="detail-row">
+                    <span class="detail-label">
+                        <i class="fas fa-tag"></i>
+                        Promoción Aplicada:
+                    </span>
+                    <span class="detail-value">
+                        <span class="promo-badge">{{ promo_codigo }}</span>
+                        -{{ descuento|cop }}
+                    </span>
+                </div>
+                {% endif %}
+
+                <div class="detail-row">
+                    <span class="detail-label">
+                        <i class="fas fa-dollar-sign"></i>
+                        Total Pagado:
+                    </span>
+                    <span class="detail-value success">{{ total|cop }}</span>
+                </div>
+            </div>
+
+            <!-- Información Adicional -->
+            <div class="additional-info">
+                <p><i class="fas fa-truck"></i> <strong>Envío:</strong> Tu pedido será enviado en las próximas 24-48
+                    horas.</p>
+                <p><i class="fas fa-box"></i> <strong>Seguimiento:</strong> Podrás rastrear tu pedido desde "Mis
+                    Pedidos".</p>
+                <p><i class="fas fa-phone"></i> <strong>Soporte:</strong> Si tienes dudas, contáctanos en cualquier
+                    momento.</p>
+            </div>
+
+            <!-- Botones de Acción -->
+            <div class="action-buttons">
+                <a href="{{ url_for('user_orders') }}" class="btn-primary-action">
+                    <i class="fas fa-box"></i>
+                    Ver Mis Pedidos
+                </a>
+                <a href="{{ url_for('user_dashboard') }}" class="btn-secondary-action">
+                    <i class="fas fa-store"></i>
+                    Seguir Comprando
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+
+</html>
