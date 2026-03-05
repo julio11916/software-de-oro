@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mi Perfil - Nachoher</title>
+    <title>Mi cuenta- Nachoher</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/usuario/user_profile.css') }}">
@@ -22,7 +22,7 @@
                     </a>
                     <div class="page-title">
                         <i class="fas fa-user-circle"></i>
-                        <span>Mi Perfil</span>
+                        <span>Mi cuenta</span>
                     </div>
                 </div>
 
@@ -67,147 +67,421 @@
 
     <!-- Contenido Principal -->
     <div class="container my-5">
-        <div class="row">
-            <!-- Sidebar de Perfil -->
-            <div class="col-lg-3 mb-4">
-                <div class="profile-sidebar">
-                    <div class="profile-avatar">
-                        <i class="fas fa-user-circle"></i>
+        <!-- Encabezado del Perfil -->
+        <div class="profile-header mb-4">
+            <div class="d-flex align-items-start">
+                <div class="profile-avatar-lg">
+                    {% set nombres = usuario.nombre.split() %}
+                    {% if nombres|length >= 2 %}
+                    {{ nombres[0][0]|upper }}{{ nombres[1][0]|upper }}
+                    {% else %}
+                    {{ usuario.nombre[0:2]|upper }}
+                    {% endif %}
+                </div>
+                <div class="ms-3 flex-grow-1">
+                    <h2 class="mb-1">{{ usuario.nombre }}</h2>
+                    <p class="text-muted mb-2">{{ usuario.email }}</p>
+
+                    {% if usuario.email_verified %}
+                    <!-- Email Verificado -->
+                    <div class="alert alert-success d-flex align-items-center py-2 mb-0"
+                        style="background-color: #d4edda; border-color: #28a745; border-left: 4px solid #28a745;">
+                        <i class="fas fa-shield-alt me-2" style="color: #28a745;"></i>
+                        <span style="color: #155724;">✓ Tu correo está verificado - Autenticación disponible</span>
+                        <button class="btn btn-sm ms-auto" data-bs-toggle="modal" data-bs-target="#modalVerificacion"
+                            style="background-color: #28a745; color: white; border: none; padding: 0.4rem 1rem; border-radius: 6px;">Autenticar</button>
                     </div>
-                    <h5 class="profile-name">{{ usuario.nombre }}</h5>
-                    <p class="profile-email">{{ usuario.email }}</p>
-                    <div class="profile-stats">
-                        <div class="stat-item">
-                            <i class="fas fa-calendar-alt"></i>
-                            <span>Miembro desde</span>
-                            <strong>{{ usuario.fecha_registro }}</strong>
-                        </div>
+                    {% else %}
+                    <!-- Email No Verificado -->
+                    <div class="alert alert-info d-flex align-items-center py-2 mb-0"
+                        style="background-color: #fff3cd; border-color: #ffc107; border-left: 4px solid #ffc107;">
+                        <i class="fas fa-envelope me-2" style="color: #ffc107;"></i>
+                        <span style="color: #856404;">Valida tu e-mail y mantén tu cuenta segura</span>
+                        <button class="btn btn-sm ms-auto" data-bs-toggle="modal" data-bs-target="#modalVerificacion"
+                            style="background-color: #3483fa; color: white; border: none; padding: 0.4rem 1rem; border-radius: 6px;">Validar</button>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Grid de Opciones -->
+        <div class="row g-4">
+            <!-- Tu información -->
+            <div class="col-md-6 col-lg-4">
+                <div class="option-card" data-bs-toggle="modal" data-bs-target="#modalInformacion">
+                    <div class="option-icon">
+                        <i class="fas fa-id-card"></i>
+                    </div>
+                    <div class="option-content">
+                        <h5>Tu información</h5>
+                        <p class="text-muted mb-0">Nombre, apellidos y datos para identificarte</p>
                     </div>
                 </div>
             </div>
 
-            <!-- Formulario de Información -->
-            <div class="col-lg-9">
-                <div class="profile-content">
-                    <!-- Información Personal -->
-                    <div class="section-card">
-                        <div class="section-header">
-                            <h3><i class="fas fa-user-edit"></i> Información Personal</h3>
+            <!-- Datos de tu cuenta -->
+            <div class="col-md-6 col-lg-4">
+                <div class="option-card" data-bs-toggle="modal" data-bs-target="#modalDatosCuenta">
+                    <div class="option-icon">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <div class="option-content">
+                        <h5>Datos de tu cuenta</h5>
+                        <p class="text-muted mb-0">Datos que usas para acceder a la cuenta y tus estad ísticas</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Seguridad -->
+            <div class="col-md-6 col-lg-4">
+                <div class="option-card" data-bs-toggle="modal" data-bs-target="#modalSeguridad">
+                    <div class="option-icon">
+                        <i class="fas fa-lock"></i>
+                    </div>
+                    <div class="option-content">
+                        <h5>Seguridad</h5>
+                        <p class="text-muted mb-0">Activa contraseñas pintables</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Direcciones -->
+            <div class="col-md-6 col-lg-4">
+                <div class="option-card" data-bs-toggle="modal" data-bs-target="#modalDirecciones">
+                    <div class="option-icon">
+                        <i class="fas fa-map-marker-alt"></i>
+                    </div>
+                    <div class="option-content">
+                        <h5>Direcciones</h5>
+                        <p class="text-muted mb-0">Direcciones guardadas en tu cuenta</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Privacidad -->
+            <div class="col-md-6 col-lg-4">
+                <div class="option-card" data-bs-toggle="modal" data-bs-target="#modalPrivacidad">
+                    <div class="option-icon">
+                        <i class="fas fa-shield-alt"></i>
+                    </div>
+                    <div class="option-content">
+                        <h5>Privacidad</h5>
+                        <p class="text-muted mb-0">Preferencias y control sobre el uso de tus datos</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Comunicaciones -->
+            <div class="col-md-6 col-lg-4">
+                <div class="option-card" data-bs-toggle="modal" data-bs-target="#modalComunicaciones">
+                    <div class="option-icon">
+                        <i class="fas fa-comment-dots"></i>
+                    </div>
+                    <div class="option-content">
+                        <h5>Comunicaciones</h5>
+                        <p class="text-muted mb-0">Elige qué tipo de información quieres recibir</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Tu información -->
+    <div class="modal fade" id="modalInformacion" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-id-card me-2"></i>Tu Información</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form method="POST" action="{{ url_for('update_profile') }}">
+                        <div class="mb-3">
+                            <label for="nombre" class="form-label">Nombre Completo</label>
+                            <input type="text" class="form-control" id="nombre" name="nombre"
+                                value="{{ usuario.nombre }}" required>
                         </div>
-                        <form method="POST" action="{{ url_for('update_profile') }}">
-                            <div class="row">
-                                <div class="col-md-6 mb-3">
-                                    <label for="nombre" class="form-label">
-                                        <i class="fas fa-user"></i> Nombre Completo
-                                    </label>
-                                    <input type="text" class="form-control" id="nombre" name="nombre"
-                                        value="{{ usuario.nombre }}" required>
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <label for="email" class="form-label">
-                                        <i class="fas fa-envelope"></i> Correo Electrónico
-                                    </label>
-                                    <input type="email" class="form-control" id="email" name="email"
-                                        value="{{ usuario.email }}" readonly>
-                                    <small class="text-muted">El correo no se puede modificar</small>
-                                </div>
-                            </div>
+                        <div class="mb-3">
+                            <label for="telefono" class="form-label">Teléfono</label>
+                            <input type="tel" class="form-control" id="telefono" name="telefono"
+                                value="{{ usuario.telefono if usuario.telefono else '' }}"
+                                placeholder="+57 300 1234567">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Correo Electrónico</label>
+                            <input type="email" class="form-control" value="{{ usuario.email }}" readonly>
+                            <small class="text-muted">El correo no se puede modificar</small>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Fecha de Registro</label>
+                            <input type="text" class="form-control" value="{{ usuario.fecha_registro }}" readonly>
+                        </div>
+                        <div class="text-end">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                            <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
 
-                            <div class="row">
-                                <div class="col-md-6 mb-3">
-                                    <label for="telefono" class="form-label">
-                                        <i class="fas fa-phone"></i> Teléfono
-                                    </label>
-                                    <input type="tel" class="form-control" id="telefono" name="telefono"
-                                        value="{{ usuario.telefono if usuario.telefono else '' }}"
-                                        placeholder="Ej: +57 300 1234567">
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <label for="direccion" class="form-label">
-                                        <i class="fas fa-map-marker-alt"></i> Dirección
-                                    </label>
-                                    <input type="text" class="form-control" id="direccion" name="direccion"
-                                        value="{{ usuario.direccion if usuario.direccion else '' }}"
-                                        placeholder="Dirección de entrega">
-                                </div>
+    <!-- Modal: Datos de tu cuenta -->
+    <div class="modal fade" id="modalDatosCuenta" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-user me-2"></i>Datos de tu Cuenta</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-4">
+                        <h6 class="text-muted mb-3">Información de la Cuenta</h6>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <strong>Correo:</strong>
+                                <p>{{ usuario.email }}</p>
                             </div>
+                            <div class="col-md-6 mb-3">
+                                <strong>Tipo de Usuario:</strong>
+                                <p>{{ usuario.rol|capitalize }}</p>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <strong>Pedidos Realizados:</strong>
+                                <p>{{ pedidos_total }}</p>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <strong>Total Gastado:</strong>
+                                <p>{{ gasto_total|cop }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
-                            <div class="text-end">
-                                <button type="submit" class="btn-save">
-                                    <i class="fas fa-save"></i> Guardar Cambios
-                                </button>
+    <!-- Modal: Seguridad -->
+    <div class="modal fade" id="modalSeguridad" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-lock me-2"></i>Seguridad</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form method="POST" action="{{ url_for('change_password') }}">
+                        <h6 class="mb-3">Cambiar Contraseña</h6>
+                        <div class="mb-3">
+                            <label for="current_password" class="form-label">Contraseña Actual</label>
+                            <input type="password" class="form-control" id="current_password" name="current_password"
+                                required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="new_password" class="form-label">Nueva Contraseña</label>
+                            <input type="password" class="form-control" id="new_password" name="new_password" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="confirm_password" class="form-label">Confirmar Nueva Contraseña</label>
+                            <input type="password" class="form-control" id="confirm_password" name="confirm_password"
+                                required>
+                        </div>
+                        <div class="text-end">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                            <button type="submit" class="btn btn-primary">Cambiar Contraseña</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Direcciones -->
+    <div class="modal fade" id="modalDirecciones" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-map-marker-alt me-2"></i>Direcciones</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form method="POST" action="{{ url_for('update_profile') }}">
+                        <input type="hidden" name="nombre" value="{{ usuario.nombre }}">
+                        <input type="hidden" name="telefono" value="{{ usuario.telefono if usuario.telefono else '' }}">
+                        <div class="mb-3">
+                            <label for="direccion" class="form-label">Dirección de Entrega</label>
+                            <input type="text" class="form-control" id="direccion" name="direccion"
+                                value="{{ usuario.direccion if usuario.direccion else '' }}"
+                                placeholder="Calle, número, ciudad, etc.">
+                        </div>
+                        <div class="text-end">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                            <button type="submit" class="btn btn-primary">Guardar Dirección</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Privacidad -->
+    <div class="modal fade" id="modalPrivacidad" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-shield-alt me-2"></i>Privacidad</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form method="POST" action="{{ url_for('update_settings') }}">
+                        <h6 class="mb-3">Configuración de Privacidad</h6>
+                        <div class="form-check form-switch mb-3">
+                            <input class="form-check-input" type="checkbox" id="perfil_publico" name="perfil_publico" {%
+                                if usuario.perfil_publico %}checked{% endif %}>
+                            <label class="form-check-label" for="perfil_publico">
+                                Hacer mi perfil público
+                            </label>
+                        </div>
+                        <div class="form-check form-switch mb-3">
+                            <input class="form-check-input" type="checkbox" id="mostrar_historial"
+                                name="mostrar_historial" {% if usuario.mostrar_historial %}checked{% endif %}>
+                            <label class="form-check-label" for="mostrar_historial">
+                                Compartir mi historial de compras
+                            </label>
+                        </div>
+                        <!-- Mantener valores de notificaciones -->
+                        <input type="hidden" name="notif_email" value="{% if usuario.notif_email %}on{% endif %}">
+                        <input type="hidden" name="notif_pedidos" value="{% if usuario.notif_pedidos %}on{% endif %}">
+                        <input type="hidden" name="notif_promociones"
+                            value="{% if usuario.notif_promociones %}on{% endif %}">
+                        <div class="text-end">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                            <button type="submit" class="btn btn-primary">Guardar Preferencias</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Comunicaciones -->
+    <div class="modal fade" id="modalComunicaciones" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-comment-dots me-2"></i>Comunicaciones</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form method="POST" action="{{ url_for('update_settings') }}">
+                        <h6 class="mb-3">Notificaciones</h6>
+                        <div class="form-check form-switch mb-3">
+                            <input class="form-check-input" type="checkbox" id="notif_email" name="notif_email" {% if
+                                usuario.notif_email %}checked{% endif %}>
+                            <label class="form-check-label" for="notif_email">
+                                Recibir notificaciones por correo electrónico
+                            </label>
+                        </div>
+                        <div class="form-check form-switch mb-3">
+                            <input class="form-check-input" type="checkbox" id="notif_pedidos" name="notif_pedidos" {%
+                                if usuario.notif_pedidos %}checked{% endif %}>
+                            <label class="form-check-label" for="notif_pedidos">
+                                Notificarme sobre actualizaciones de pedidos
+                            </label>
+                        </div>
+                        <div class="form-check form-switch mb-3">
+                            <input class="form-check-input" type="checkbox" id="notif_promociones"
+                                name="notif_promociones" {% if usuario.notif_promociones %}checked{% endif %}>
+                            <label class="form-check-label" for="notif_promociones">
+                                Recibir ofertas y promociones especiales
+                            </label>
+                        </div>
+                        <!-- Mantener valores de privacidad -->
+                        <input type="hidden" name="perfil_publico" value="{% if usuario.perfil_publico %}on{% endif %}">
+                        <input type="hidden" name="mostrar_historial"
+                            value="{% if usuario.mostrar_historial %}on{% endif %}">
+                        <div class="text-end">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                            <button type="submit" class="btn btn-primary">Guardar Preferencias</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Verificación de Email -->
+    <div class="modal fade" id="modalVerificacion" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header border-0">
+                    <h5 class="modal-title"><i class="fas fa-shield-alt me-2"></i>Autenticación por Correo
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="stepSendCode">
+                        <div class="text-center mb-4">
+                            <div style="font-size: 64px; color: #3483fa;">
+                                <i class="fas fa-shield-alt"></i>
                             </div>
-                        </form>
+                            <h6 class="mt-3">Autenticación de Seguridad</h6>
+                            <p class="text-muted">Te enviaremos un código de 6 dígitos a tu correo:</p>
+                            <p class="fw-bold">{{ usuario.email }}</p>
+                        </div>
+                        <div class="alert alert-info" style="background-color: #e7f3ff; border-color: #3483fa;">
+                            <i class="fas fa-info-circle me-2"></i>
+                            <small>El código será válido por 10 minutos</small>
+                        </div>
+                        <div class="d-grid gap-2">
+                            <button type="button" class="btn btn-primary" id="btnEnviarCodigo"
+                                onclick="enviarCodigoVerificacion()">
+                                <i class="fas fa-paper-plane me-2"></i>Enviar Código
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary"
+                                data-bs-dismiss="modal">Cancelar</button>
+                        </div>
                     </div>
 
-                    <!-- Cambiar Contraseña -->
-                    <div class="section-card mt-4">
-                        <div class="section-header">
-                            <h3><i class="fas fa-lock"></i> Cambiar Contraseña</h3>
-                        </div>
-                        <form method="POST" action="{{ url_for('change_password') }}">
-                            <div class="row">
-                                <div class="col-md-6 mb-3">
-                                    <label for="current_password" class="form-label">
-                                        <i class="fas fa-key"></i> Contraseña Actual
-                                    </label>
-                                    <input type="password" class="form-control" id="current_password"
-                                        name="current_password" required>
-                                </div>
+                    <div id="stepVerifyCode" style="display: none;">
+                        <div class="text-center mb-4">
+                            <div style="font-size: 64px; color: #28a745;">
+                                <i class="fas fa-envelope"></i>
                             </div>
-                            <div class="row">
-                                <div class="col-md-6 mb-3">
-                                    <label for="new_password" class="form-label">
-                                        <i class="fas fa-lock"></i> Nueva Contraseña
-                                    </label>
-                                    <input type="password" class="form-control" id="new_password" name="new_password"
-                                        required>
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <label for="confirm_password" class="form-label">
-                                        <i class="fas fa-lock"></i> Confirmar Nueva Contraseña
-                                    </label>
-                                    <input type="password" class="form-control" id="confirm_password"
-                                        name="confirm_password" required>
-                                </div>
+                            <h6 class="mt-3">Revisa tu correo</h6>
+                            <p class="text-muted">Ingresa el código de 6 dígitos que enviamos a:</p>
+                            <p class="fw-bold">{{ usuario.email }}</p>
+                        </div>
+
+                        <form id="formVerificarCodigo" onsubmit="verificarCodigo(event)">
+                            <div class="mb-3">
+                                <label for="codigoVerificacion" class="form-label">Código de Verificación</label>
+                                <input type="text" class="form-control form-control-lg text-center"
+                                    id="codigoVerificacion" name="codigo" placeholder="123456" maxlength="6"
+                                    inputmode="numeric" style="font-size: 28px; font-weight: bold;" autocomplete="off"
+                                    required>
+                                <small class="text-muted">Solo números, sin espacios</small>
                             </div>
 
-                            <div class="text-end">
-                                <button type="submit" class="btn-password">
-                                    <i class="fas fa-key"></i> Cambiar Contraseña
+                            <div id="messageContainer" class="mb-3"></div>
+
+                            <div class="d-grid gap-2">
+                                <button type="submit" class="btn btn-success" id="btnVerificar">
+                                    <i class="fas fa-check me-2"></i>Verificar
                                 </button>
+                                <button type="button" class="btn btn-outline-primary" onclick="reenviarCodigo()">
+                                    <i class="fas fa-redo me-2"></i>Reenviar Código
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary"
+                                    data-bs-dismiss="modal">Cancelar</button>
                             </div>
                         </form>
-                    </div>
-
-                    <!-- Estadísticas -->
-                    <div class="section-card mt-4">
-                        <div class="section-header">
-                            <h3><i class="fas fa-chart-line"></i> Mi Actividad</h3>
-                        </div>
-                        <div class="row text-center">
-                            <div class="col-md-4">
-                                <div class="stat-box">
-                                    <i class="fas fa-shopping-bag"></i>
-                                    <h4>{{ pedidos_total }}</h4>
-                                    <p>Pedidos Realizados</p>
-                                </div>
-                            </div>
-                            <div class="col-md-4">
-                                <div class="stat-box">
-                                    <i class="fas fa-dollar-sign"></i>
-                                    <h4>{{ gasto_total|cop }}</h4>
-                                    <p>Total Gastado</p>
-                                </div>
-                            </div>
-                            <div class="col-md-4">
-                                <div class="stat-box">
-                                    <i class="fas fa-star"></i>
-                                    <h4>{{ usuario.rol|capitalize }}</h4>
-                                    <p>Tipo de Usuario</p>
-                                </div>
-                            </div>
-                        </div>
                     </div>
                 </div>
             </div>
@@ -228,6 +502,168 @@
                     dropdown.classList.remove('show');
                 }
             }
+        });
+
+        // Funciones de Verificación de Email
+        function showMessage(message, type) {
+            const container = document.getElementById('messageContainer');
+            const alertClass = type === 'success' ? 'alert-success' : 'alert-danger';
+            const icon = type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle';
+
+            container.innerHTML = `
+                <div class="alert ${alertClass} alert-dismissible fade show" role="alert">
+                    <i class="fas ${icon} me-2"></i>${message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            `;
+        }
+
+        function enviarCodigoVerificacion() {
+            const btn = document.getElementById('btnEnviarCodigo');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Enviando...';
+
+            fetch('/user/send-verification-code', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Mostrar el paso 2
+                        document.getElementById('stepSendCode').style.display = 'none';
+                        document.getElementById('stepVerifyCode').style.display = 'block';
+                        showMessage(data.message, 'success');
+                    } else {
+                        showMessage(data.message, 'error');
+                        btn.disabled = false;
+                        btn.innerHTML = '<i class="fas fa-paper-plane me-2"></i>Enviar Código';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showMessage('Error al enviar el código. Intenta nuevamente.', 'error');
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fas fa-paper-plane me-2"></i>Enviar Código';
+                });
+        }
+
+        function verificarCodigo(event) {
+            event.preventDefault();
+
+            // Obtener código y eliminar todos los espacios
+            const codigoInput = document.getElementById('codigoVerificacion');
+            const codigo = codigoInput.value.replace(/\s/g, '').trim();
+
+            // Validar que tenga exactamente 6 dígitos
+            if (codigo.length !== 6 || !/^\d{6}$/.test(codigo)) {
+                showMessage('El código debe tener exactamente 6 dígitos', 'error');
+                return;
+            }
+
+            const btn = document.getElementById('btnVerificar');
+
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Verificando...';
+
+            fetch('/user/verify-email', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ code: codigo })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        showMessage(data.message, 'success');
+                        setTimeout(() => {
+                            location.reload();
+                        }, 1500);
+                    } else {
+                        showMessage(data.message, 'error');
+                        btn.disabled = false;
+                        btn.innerHTML = '<i class="fas fa-check me-2"></i>Verificar';
+                        codigoInput.value = '';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showMessage('Error al verificar el código. Intenta nuevamente.', 'error');
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fas fa-check me-2"></i>Verificar';
+                });
+        }
+
+        function reenviarCodigo() {
+            document.getElementById('codigoVerificacion').value = '';
+            document.getElementById('messageContainer').innerHTML = '';
+            enviarCodigoVerificacion();
+        }
+
+        // Resetear el modal cuando se cierra
+        document.getElementById('modalVerificacion').addEventListener('hidden.bs.modal', function () {
+            document.getElementById('stepSendCode').style.display = 'block';
+            document.getElementById('stepVerifyCode').style.display = 'none';
+            document.getElementById('codigoVerificacion').value = '';
+            document.getElementById('messageContainer').innerHTML = '';
+            document.getElementById('btnEnviarCodigo').disabled = false;
+            document.getElementById('btnEnviarCodigo').innerHTML = '<i class="fas fa-paper-plane me-2"></i>Enviar Código';
+        });
+
+        // Configurar el campo de código cuando el modal se muestra
+        document.getElementById('modalVerificacion').addEventListener('shown.bs.modal', function () {
+            setupCodigoInput();
+        });
+
+        // Función para configurar el input del código
+        function setupCodigoInput() {
+            const codigoInput = document.getElementById('codigoVerificacion');
+
+            // Limpiar eventos previos
+            codigoInput.removeEventListener('input', handleCodigoInput);
+            codigoInput.removeEventListener('paste', handleCodigoPaste);
+            codigoInput.removeEventListener('keypress', handleCodigoKeypress);
+
+            // Agregar eventos
+            codigoInput.addEventListener('input', handleCodigoInput);
+            codigoInput.addEventListener('paste', handleCodigoPaste);
+            codigoInput.addEventListener('keypress', handleCodigoKeypress);
+        }
+
+        // Manejar entrada de texto
+        function handleCodigoInput(e) {
+            let value = e.target.value.replace(/\D/g, ''); // Solo números
+            if (value.length > 6) {
+                value = value.substring(0, 6);
+            }
+            e.target.value = value;
+        }
+
+        // Manejar pegado
+        function handleCodigoPaste(e) {
+            e.preventDefault();
+            const pastedText = (e.clipboardData || window.clipboardData).getData('text');
+            const cleanedText = pastedText.replace(/\D/g, '').substring(0, 6);
+            e.target.value = cleanedText;
+        }
+
+        // Manejar teclas presionadas
+        function handleCodigoKeypress(e) {
+            // Solo permitir números
+            const charCode = (e.which) ? e.which : e.keyCode;
+            if (charCode > 31 && (charCode < 48 || charCode > 57)) {
+                e.preventDefault();
+                return false;
+            }
+            return true;
+        }
+
+        // Inicializar cuando carga la página
+        document.addEventListener('DOMContentLoaded', function () {
+            setupCodigoInput();
         });
     </script>
 </body>

@@ -26,3 +26,6 @@ Thumbs.db
 # Archivos de Excel (datos)
 *.xlsx
 *.xls
+
+# Configuración sensible (credenciales de email)
+config_email.py

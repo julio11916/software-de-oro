@@ -30,31 +30,23 @@
 
                 <ul class="submenu">
                     <li>Gaula</li>
-                    <li>Inpec</li>
-                    <li>Militar</li>
+                    <li>Ejercito</li>
                     <li>Policia</li>
                 </ul>
             </li>
             </li>
-
             <li>
                 <a href="{{ url_for('orden_personalizada') }}">
                     <i class="fas fa-pencil"></i>
                     Ordena tu prenda personalizada
                 </a>
             </li>
-
             <li>
-                <a href="#">
+                <a href="{{ url_for('sobre_nosotros') }}">
                     <i class="fas fa-person"></i> Sobre nosotros
                 </a>
             </li>
-
             <li>
-                <a href="#">
-                    <i class="fas fa-cog"></i> Ajustes
-                </a>
-            </li>
         </ul>
     </aside>
 
@@ -138,19 +130,21 @@
                             <h5 class="card-title">{{ producto.nombre }}</h5>
                             <p class="card-text text-muted">{{ producto.descripcion }}</p>
                             <p class="price">{{ producto.precio|cop }}</p>
-                            {% if producto.stock|int <= 0 %}
-                            <p class="text-danger fw-bold mb-2">Agotado</p>
-                            {% endif %}
+                            {% if producto.stock|int <= 0 %} <p class="text-danger fw-bold mb-2">Agotado</p>
+                                {% endif %}
 
-                            <form method="POST" action="{{ url_for('add_to_cart', id_producto=producto.id_producto) }}">
-                                <div class="input-group">
-                                    <input type="number" name="cantidad" class="form-control" value="1" min="1"
-                                        max="{{ producto.stock|int }}" {% if producto.stock|int <=0 %}disabled{% endif %}>
-                                    <button type="submit" class="btn btn-primary" {% if producto.stock|int <=0 %}disabled{% endif %}>
-                                        <i class="fas fa-cart-plus"></i> Agregar
-                                    </button>
-                                </div>
-                            </form>
+                                <form method="POST"
+                                    action="{{ url_for('add_to_cart', id_producto=producto.id_producto) }}">
+                                    <div class="input-group">
+                                        <input type="number" name="cantidad" class="form-control" value="1" min="1"
+                                            max="{{ producto.stock|int }}" {% if producto.stock|int <=0 %}disabled{%
+                                            endif %}>
+                                        <button type="submit" class="btn btn-primary" {% if producto.stock|int <=0
+                                            %}disabled{% endif %}>
+                                            <i class="fas fa-cart-plus"></i> Agregar
+                                        </button>
+                                    </div>
+                                </form>
                         </div>
                     </div>
                 </div>

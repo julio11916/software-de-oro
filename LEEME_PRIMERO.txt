@@ -1,0 +1,96 @@
+╔════════════════════════════════════════════════════════════════════════╗
+║                                                                        ║
+║  🔐 CONFIGURACIÓN RÁPIDA - Autenticación por Correo                   ║
+║                                                                        ║
+╚════════════════════════════════════════════════════════════════════════╝
+
+¡IMPORTANTE! Para que el botón "Enviar Código" funcione y te lleguen los 
+correos, debes configurar Gmail primero.
+
+═══════════════════════════════════════════════════════════════════════
+
+📋 PASOS A SEGUIR:
+
+1️⃣  OBTENER CONTRASEÑA DE APLICACIÓN DE GMAIL
+   
+   Opción Rápida (enlace directo):
+   → Ve a: https://myaccount.google.com/apppasswords
+   
+   O paso por paso:
+   a) Ve a: https://myaccount.google.com/
+   b) Haz clic en "Seguridad" (menú izquierdo)
+   c) Activa "Verificación en dos pasos" (si no está activada)
+   d) Busca "Contraseñas de aplicaciones"
+   e) Selecciona: Correo → Otro → Escribe "Flask Nachoher"
+   f) Copia la contraseña de 16 caracteres que Google genera
+   
+   Ejemplo: abcd efgh ijkl mnop
+
+─────────────────────────────────────────────────────────────────────
+
+2️⃣  CONFIGURAR EL ARCHIVO config_email.py
+
+   a) Abre el archivo: config_email.py
+   b) Cambia estas 3 líneas:
+
+   MAIL_USERNAME = 'tu_correo@gmail.com'        ← Tu Gmail aquí
+   MAIL_PASSWORD = 'xxxx xxxx xxxx xxxx'        ← Contraseña de app aquí
+   MAIL_DEFAULT_SENDER = 'tu_correo@gmail.com'  ← Tu Gmail aquí (mismo)
+
+   👉 Ejemplo completo:
+   
+   MAIL_USERNAME = 'davidshop@gmail.com'
+   MAIL_PASSWORD = 'abcd efgh ijkl mnop'
+   MAIL_DEFAULT_SENDER = 'davidshop@gmail.com'
+
+   c) GUARDA el archivo
+
+─────────────────────────────────────────────────────────────────────
+
+3️⃣  PROBAR QUE FUNCIONA
+
+   Opción A - Prueba Rápida:
+   → Ejecuta: python test_email.py
+   → Esto enviará un correo de prueba
+
+   Opción B - Prueba Completa:
+   → Reinicia el servidor: python app.py
+   → Ve al perfil: http://localhost:5000/user/profile
+   → Haz clic en "Autenticar" o "Validar"
+   → Haz clic en "Enviar Código"
+   → Revisa tu correo (puede estar en Spam)
+   → Ingresa el código de 6 dígitos
+
+═══════════════════════════════════════════════════════════════════════
+
+❓ PROBLEMAS COMUNES:
+
+❌ "Username and Password not accepted"
+   → Asegúrate de usar contraseña de APLICACIÓN, no tu contraseña normal
+   → Verifica que la verificación en dos pasos esté activada
+
+❌ No llega el correo
+   → Revisa la carpeta de SPAM
+   → Espera hasta 1 minuto
+   → Verifica que el correo esté bien escrito
+
+❌ Error al conectar
+   → Verifica tu conexión a Internet
+   → Algunos antivirus bloquean el puerto 587
+
+═══════════════════════════════════════════════════════════════════════
+
+📚 MÁS AYUDA:
+
+→ Guía detallada: INSTRUCCIONES_GMAIL.md
+→ Configuración: CONFIG_EMAIL.md
+
+═══════════════════════════════════════════════════════════════════════
+
+✅ ARCHIVOS QUE DEBES EDITAR:
+   • config_email.py  ← ESTE ES EL IMPORTANTE
+
+🚫 NO SUBAS A GITHUB:
+   • config_email.py (ya está en .gitignore)
+
+═══════════════════════════════════════════════════════════════════════
