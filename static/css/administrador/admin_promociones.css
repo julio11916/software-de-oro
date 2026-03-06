@@ -1,0 +1,9 @@
+/* estilos mínimos para este panel */
+.promo-panel .panel-header h5 {
+    margin-bottom: 0;
+}
+
+.promo-form .form-control,
+.promo-form .form-check-label {
+    font-size: .9rem;
+}
