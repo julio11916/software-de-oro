@@ -2,8 +2,8 @@
 Script de Prueba - Envío de Correo Electrónico
 Este script te ayuda a verificar que tu configuración de Gmail funciona correctamente
 """
-import config_email
-from email_service import mail, enviar_codigo_verificacion
+import py.config_email as config_email
+from py.email_service import mail, enviar_codigo_verificacion
 from flask import Flask
 
 # Crear una app de prueba
