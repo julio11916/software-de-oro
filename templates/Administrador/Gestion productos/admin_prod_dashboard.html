@@ -80,7 +80,7 @@
                         <h5 class="mb-0">Agregar nuevo producto</h5>
                     </div>
                     <div class="panel-body">
-                        <form method="POST" action="{{ url_for('agregar_producto') }}">
+                        <form method="POST" action="{{ url_for('agregar_producto') }}" enctype="multipart/form-data">
                             <div class="row g-3">
                                 <div class="col-md-4">
                                     <label class="form-label">Nombre</label>
@@ -97,6 +97,29 @@
                                 <div class="col-md-2">
                                     <label class="form-label">Stock</label>
                                     <input type="number" name="stock" class="form-control" min="0" required>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">Fuerza</label>
+                                    <select name="fuerza" class="form-select" required>
+                                        <option value="">Seleccione</option>
+                                        {% for fuerza in fuerzas %}
+                                        <option value="{{ fuerza }}">{{ fuerza }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">Intendencia</label>
+                                    <select name="intendencia" class="form-select" required>
+                                        <option value="">Seleccione</option>
+                                        {% for item in intendencias %}
+                                        <option value="{{ item }}">{{ item }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Imagen del producto</label>
+                                    <input type="file" name="imagen" class="form-control" accept=".jpg,.jpeg,.png,.gif,.webp">
+                                    <small class="text-muted">Formatos permitidos: jpg, jpeg, png, gif, webp. Recomendado: maximo 2MB.</small>
                                 </div>
                                 <div class="col-12">
                                     <button type="submit" class="btn btn-primary w-100">Agregar producto</button>
@@ -147,6 +170,24 @@
                                                 <div class="col-6">
                                                     <label class="form-label">Stock</label>
                                                     <input type="number" name="stock" class="form-control form-control-sm" value="{{ producto.stock }}" min="0" required>
+                                                </div>
+                                            </div>
+                                            <div class="row g-2 mb-3">
+                                                <div class="col-6">
+                                                    <label class="form-label">Fuerza</label>
+                                                    <select name="fuerza" class="form-select form-select-sm" required>
+                                                        {% for fuerza in fuerzas %}
+                                                        <option value="{{ fuerza }}" {% if producto.fuerza == fuerza %}selected{% endif %}>{{ fuerza }}</option>
+                                                        {% endfor %}
+                                                    </select>
+                                                </div>
+                                                <div class="col-6">
+                                                    <label class="form-label">Intendencia</label>
+                                                    <select name="intendencia" class="form-select form-select-sm" required>
+                                                        {% for item in intendencias %}
+                                                        <option value="{{ item }}" {% if producto.intendencia == item %}selected{% endif %}>{{ item }}</option>
+                                                        {% endfor %}
+                                                    </select>
                                                 </div>
                                             </div>
                                             <button type="submit" class="btn btn-outline-primary w-100">Guardar cambios</button>

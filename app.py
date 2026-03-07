@@ -9,6 +9,7 @@ from datetime import datetime, timedelta, date
 from typing import Any, Mapping, Optional
 from email_service import mail, generar_codigo_verificacion, enviar_codigo_verificacion
 import config_email
+from db_utils import engine  # Inicializa DB y proxys al importar
 
 app = Flask(__name__)
 app.secret_key = "clave"  # Necesario para manejar sesiones
@@ -39,10 +40,14 @@ PROMO_COLUMNS = [
     'activo'
 ]
 
-# Si no existe detalle_pedido.xlsx, crear uno vacío
-if not os.path.exists('bd/detalle_pedido.xlsx'):
-    detalle_pedido = pd.DataFrame(columns=['id_detalle','id_pedido','id_producto','cantidad','subtotal'])
-    detalle_pedido.to_excel('bd/detalle_pedido.xlsx', index=False)
+FUERZAS_OPCIONES = ["Policia", "Ejercito", "Armada", "Gaula"]
+INTENDENCIAS_OPCIONES = [
+    "Busos", "Camibusos", "Gorras", "Panoletas", "Sudaderas",
+    "Pantalonetas", "Colchas", "Tendidos", "Chuspas para ropa sucia",
+    "Fundas para almohadas", "Camuflados"
+]
+
+# DB init y proxys se hacen al importar db_utils
 
 
 def cargar_usuarios_df():
@@ -502,26 +507,72 @@ def admin_productos():
     productos = pd.read_excel('bd/producto.xlsx')
     if 'eliminado' not in productos.columns:
         productos['eliminado'] = False
+    if 'fuerza' not in productos.columns:
+        productos['fuerza'] = ''
+    if 'intendencia' not in productos.columns:
+        productos['intendencia'] = ''
     productos['eliminado'] = productos['eliminado'].fillna(False).astype(bool)
 
     productos = productos[productos['eliminado'] == False]
     lista_productos = productos.to_dict(orient='records')
-    return render_template('Administrador/Gestion productos/admin_prod_dashboard.html', productos=lista_productos)
+    return render_template(
+        'Administrador/Gestion productos/admin_prod_dashboard.html',
+        productos=lista_productos,
+        fuerzas=FUERZAS_OPCIONES,
+        intendencias=INTENDENCIAS_OPCIONES
+    )
 
 
 @app.route('/admin/agregar_producto', methods=['POST'])
 def agregar_producto():
     if session.get('rol') == 'admin':
         productos = pd.read_excel('bd/producto.xlsx')
+        if 'fuerza' not in productos.columns:
+            productos['fuerza'] = ''
+        if 'intendencia' not in productos.columns:
+            productos['intendencia'] = ''
+        if 'imagen_url' not in productos.columns:
+            productos['imagen_url'] = ''
 
         nuevo_id = len(productos) + 1
+        fuerza = request.form.get('fuerza', '').strip()
+        intendencia = request.form.get('intendencia', '').strip()
+        if fuerza not in FUERZAS_OPCIONES or intendencia not in INTENDENCIAS_OPCIONES:
+            flash('Selecciona una fuerza e intendencia validas.', 'danger')
+            return redirect(url_for('admin_productos'))
+
+        imagen_url = ''
+        imagen = request.files.get('imagen')
+        if imagen and imagen.filename:
+            extensiones_permitidas = {'jpg', 'jpeg', 'png', 'gif', 'webp'}
+            extension = imagen.filename.rsplit('.', 1)[-1].lower() if '.' in imagen.filename else ''
+            if extension not in extensiones_permitidas:
+                flash("Formato de imagen no permitido. Usa .jpg, .jpeg, .png, .gif o .webp.", 'danger')
+                return redirect(url_for('admin_productos'))
+
+            imagen.seek(0, os.SEEK_END)
+            tamano = imagen.tell()
+            imagen.seek(0)
+            if tamano > 2 * 1024 * 1024:
+                flash("La imagen excede el tamano maximo permitido (2MB).", 'danger')
+                return redirect(url_for('admin_productos'))
+
+            carpeta_destino = os.path.join('static', 'img')
+            os.makedirs(carpeta_destino, exist_ok=True)
+            ruta = os.path.join(carpeta_destino, f'producto_{nuevo_id}.jpg')
+            imagen.save(ruta)
+            imagen_url = f'img/producto_{nuevo_id}.jpg'
+
         nuevo_producto = {
             'id_producto': nuevo_id,
             'nombre': request.form['nombre'],
             'descripcion': request.form['descripcion'],
             'precio': float(request.form['precio']),
             'stock': int(request.form['stock']),
-            'id_categoria': 1  # Puedes ajustar esto si manejas categorías
+            'id_categoria': 1,  # Se conserva por compatibilidad
+            'fuerza': fuerza,
+            'intendencia': intendencia,
+            'imagen_url': imagen_url
         }
 
         productos = pd.concat([productos, pd.DataFrame([nuevo_producto])], ignore_index=True)
@@ -540,7 +591,8 @@ def agregar_producto():
                 f"Creo producto '{request.form['nombre']}' (ID {nuevo_id})\n"
                 f"- precio: {formatear_cop(float(request.form['precio']))}\n"
                 f"- stock: {int(request.form['stock'])}\n"
-                f"- categoria: 1"
+                f"- fuerza: {fuerza}\n"
+                f"- intendencia: {intendencia}"
             ),
             'fecha_accion': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         }
@@ -1278,6 +1330,10 @@ def editar_producto(id_producto):
         return "Acceso denegado"
 
     productos = pd.read_excel('bd/producto.xlsx')
+    if 'fuerza' not in productos.columns:
+        productos['fuerza'] = ''
+    if 'intendencia' not in productos.columns:
+        productos['intendencia'] = ''
     producto = productos[productos['id_producto'] == id_producto]
 
     if producto.empty:
@@ -1291,13 +1347,20 @@ def editar_producto(id_producto):
             'descripcion': str(productos.at[idx, 'descripcion']) if 'descripcion' in productos.columns else '',
             'precio': float(pd.to_numeric(productos.at[idx, 'precio'], errors='coerce')) if 'precio' in productos.columns else 0.0,
             'stock': int(pd.to_numeric(productos.at[idx, 'stock'], errors='coerce')) if 'stock' in productos.columns else 0,
-            'id_categoria': str(productos.at[idx, 'id_categoria']) if 'id_categoria' in productos.columns else ''
+            'id_categoria': str(productos.at[idx, 'id_categoria']) if 'id_categoria' in productos.columns else '',
+            'fuerza': str(productos.at[idx, 'fuerza']) if 'fuerza' in productos.columns else '',
+            'intendencia': str(productos.at[idx, 'intendencia']) if 'intendencia' in productos.columns else ''
         }
 
         nuevo_nombre = request.form['nombre'].strip()
         nueva_descripcion = request.form['descripcion'].strip()
         nuevo_precio = float(request.form['precio'])
         nuevo_stock = int(request.form['stock'])
+        nueva_fuerza = request.form.get('fuerza', anterior['fuerza']).strip()
+        nueva_intendencia = request.form.get('intendencia', anterior['intendencia']).strip()
+        if nueva_fuerza not in FUERZAS_OPCIONES or nueva_intendencia not in INTENDENCIAS_OPCIONES:
+            flash('Selecciona una fuerza e intendencia validas.', 'danger')
+            return redirect(url_for('admin_productos'))
 
         nueva_categoria = anterior['id_categoria']
         if 'id_categoria' in productos.columns:
@@ -1317,6 +1380,8 @@ def editar_producto(id_producto):
         productos.at[idx, 'descripcion'] = nueva_descripcion
         productos.at[idx, 'precio'] = nuevo_precio
         productos.at[idx, 'stock'] = nuevo_stock
+        productos.at[idx, 'fuerza'] = nueva_fuerza
+        productos.at[idx, 'intendencia'] = nueva_intendencia
         if 'id_categoria' in productos.columns:
             productos.at[idx, 'id_categoria'] = nueva_categoria
 
@@ -1331,6 +1396,10 @@ def editar_producto(id_producto):
             cambios.append(f"- precio: {formatear_cop(anterior['precio'])} -> {formatear_cop(nuevo_precio)}")
         if int(anterior['stock']) != int(nuevo_stock):
             cambios.append(f"- stock: {anterior['stock']} -> {nuevo_stock}")
+        if anterior['fuerza'] != nueva_fuerza:
+            cambios.append(f"- fuerza: {anterior['fuerza']} -> {nueva_fuerza}")
+        if anterior['intendencia'] != nueva_intendencia:
+            cambios.append(f"- intendencia: {anterior['intendencia']} -> {nueva_intendencia}")
         if str(anterior['id_categoria']) != str(nueva_categoria):
             cambios.append(f"- categoria: {anterior['id_categoria']} -> {nueva_categoria}")
 
@@ -1343,7 +1412,12 @@ def editar_producto(id_producto):
         return redirect(url_for('admin_productos'))
 
     # Render formulario de edición (plantilla propia en Gestion productos)
-    return render_template('Administrador/Gestion productos/editar_producto.html', producto=producto.iloc[0])
+    return render_template(
+        'Administrador/Gestion productos/editar_producto.html',
+        producto=producto.iloc[0],
+        fuerzas=FUERZAS_OPCIONES,
+        intendencias=INTENDENCIAS_OPCIONES
+    )
 
     
 
