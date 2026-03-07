@@ -4,7 +4,8 @@ Este documento explica cómo configurar Gmail para que funcione el sistema de au
 
 ## 🔐 Características del Sistema
 
-✅ **Autenticación permanente**: Funciona siempre, incluso si el email ya está verificado
+✅ **Autent}
+icación permanente**: Funciona siempre, incluso si el email ya está verificado
 ✅ **Código de 6 dígitos**: Generado aleatoriamente cada vez
 ✅ **Validez de 10 minutos**: Los códigos expiran automáticamente
 ✅ **Email profesional**: Con diseño responsive y seguro

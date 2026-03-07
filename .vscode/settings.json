@@ -24,7 +24,16 @@
     },
 
     // Terminal
-    "terminal.integrated.defaultProfile.windows": "Command Prompt",
+    "terminal.integrated.defaultProfile.windows": "CMD (venv)",
+    "terminal.integrated.profiles.windows": {
+        "CMD (venv)": {
+            "path": "C:\\Windows\\System32\\cmd.exe",
+            "args": [
+                "/k",
+                "${workspaceFolder}\\venv\\Scripts\\activate.bat"
+            ]
+        }
+    },
     "terminal.integrated.cursorBlinking": true,
     "terminal.integrated.fontSize": 14,
 
