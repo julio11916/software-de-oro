@@ -1,0 +1,444 @@
+--
+-- PostgreSQL database dump
+--
+
+\restrict zfQ1PfGQhuG1b3j5BjO3li0qOk3ZV4lZaaFBq29Uh6kaxvgXqXhjNVBYAye0dFx
+
+-- Dumped from database version 18.3
+-- Dumped by pg_dump version 18.3
+
+SET statement_timeout = 0;
+SET lock_timeout = 0;
+SET idle_in_transaction_session_timeout = 0;
+SET transaction_timeout = 0;
+SET client_encoding = 'UTF8';
+SET standard_conforming_strings = on;
+SELECT pg_catalog.set_config('search_path', '', false);
+SET check_function_bodies = false;
+SET xmloption = content;
+SET client_min_messages = warning;
+SET row_security = off;
+
+SET default_tablespace = '';
+
+SET default_table_access_method = heap;
+
+--
+-- Name: categoria_producto; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.categoria_producto (
+    id_categoria bigint NOT NULL,
+    nombre_categoria text,
+    descripcion text
+);
+
+
+ALTER TABLE public.categoria_producto OWNER TO postgres;
+
+--
+-- Name: categoria_producto_id_categoria_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.categoria_producto_id_categoria_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.categoria_producto_id_categoria_seq OWNER TO postgres;
+
+--
+-- Name: categoria_producto_id_categoria_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.categoria_producto_id_categoria_seq OWNED BY public.categoria_producto.id_categoria;
+
+
+--
+-- Name: detalle_pedido; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.detalle_pedido (
+    id_detalle bigint,
+    id_pedido bigint,
+    id_producto bigint,
+    cantidad bigint,
+    subtotal bigint
+);
+
+
+ALTER TABLE public.detalle_pedido OWNER TO postgres;
+
+--
+-- Name: pagos; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.pagos (
+    id_pago bigint,
+    id_pedido bigint,
+    monto bigint,
+    metodo_pago text,
+    fecha_pago text,
+    estado_pago text,
+    id_promo double precision,
+    codigo_promo double precision,
+    tipo_descuento double precision,
+    valor_descuento bigint,
+    monto_descuento bigint
+);
+
+
+ALTER TABLE public.pagos OWNER TO postgres;
+
+--
+-- Name: pedidos; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.pedidos (
+    id_pedido bigint,
+    id_usuario bigint,
+    fecha_pedido text,
+    estado text
+);
+
+
+ALTER TABLE public.pedidos OWNER TO postgres;
+
+--
+-- Name: producto; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.producto (
+    id_producto bigint,
+    nombre text,
+    descripcion text,
+    precio double precision,
+    stock bigint,
+    id_categoria bigint,
+    imagen_url text,
+    eliminado text,
+    fuerza text,
+    intendencia text
+);
+
+
+ALTER TABLE public.producto OWNER TO postgres;
+
+--
+-- Name: promociones; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.promociones (
+    id_promo bigint NOT NULL,
+    nombre text,
+    descripcion text,
+    tipo_descuento text,
+    valor_descuento numeric(12,2),
+    codigo text,
+    fecha_inicio date,
+    fecha_fin date,
+    activo boolean DEFAULT true
+);
+
+
+ALTER TABLE public.promociones OWNER TO postgres;
+
+--
+-- Name: promociones_id_promo_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.promociones_id_promo_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.promociones_id_promo_seq OWNER TO postgres;
+
+--
+-- Name: promociones_id_promo_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.promociones_id_promo_seq OWNED BY public.promociones.id_promo;
+
+
+--
+-- Name: registros; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.registros (
+    id_registro bigint,
+    id_usuario text,
+    accion text,
+    fecha_accion text
+);
+
+
+ALTER TABLE public.registros OWNER TO postgres;
+
+--
+-- Name: usuarios; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.usuarios (
+    id_usuario bigint,
+    nombre text,
+    email text,
+    password_hash text,
+    rol text,
+    estado text,
+    fecha_registro text,
+    email_verified boolean,
+    verification_code double precision,
+    verification_code_expiry text
+);
+
+
+ALTER TABLE public.usuarios OWNER TO postgres;
+
+--
+-- Name: categoria_producto id_categoria; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.categoria_producto ALTER COLUMN id_categoria SET DEFAULT nextval('public.categoria_producto_id_categoria_seq'::regclass);
+
+
+--
+-- Name: promociones id_promo; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.promociones ALTER COLUMN id_promo SET DEFAULT nextval('public.promociones_id_promo_seq'::regclass);
+
+
+--
+-- Data for Name: categoria_producto; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.categoria_producto (id_categoria, nombre_categoria, descripcion) FROM stdin;
+1	Policia - Busos	Intendencia Policia: Busos
+2	Policia - Camibusos	Intendencia Policia: Camibusos
+3	Policia - Gorras	Intendencia Policia: Gorras
+4	Policia - Panoletas	Intendencia Policia: Panoletas
+5	Policia - Sudaderas	Intendencia Policia: Sudaderas
+6	Policia - Pantalonetas	Intendencia Policia: Pantalonetas
+7	Policia - Colchas	Intendencia Policia: Colchas
+8	Policia - Tendidos	Intendencia Policia: Tendidos
+9	Policia - Chuspas para ropa sucia	Intendencia Policia: Chuspas para ropa sucia
+10	Policia - Fundas para almohadas	Intendencia Policia: Fundas para almohadas
+11	Policia - Camuflados	Intendencia Policia: Camuflados
+12	Ejercito - Busos	Intendencia Ejercito: Busos
+13	Ejercito - Camibusos	Intendencia Ejercito: Camibusos
+14	Ejercito - Gorras	Intendencia Ejercito: Gorras
+15	Ejercito - Panoletas	Intendencia Ejercito: Panoletas
+16	Ejercito - Sudaderas	Intendencia Ejercito: Sudaderas
+17	Ejercito - Pantalonetas	Intendencia Ejercito: Pantalonetas
+18	Ejercito - Colchas	Intendencia Ejercito: Colchas
+19	Ejercito - Tendidos	Intendencia Ejercito: Tendidos
+20	Ejercito - Chuspas para ropa sucia	Intendencia Ejercito: Chuspas para ropa sucia
+21	Ejercito - Fundas para almohadas	Intendencia Ejercito: Fundas para almohadas
+22	Ejercito - Camuflados	Intendencia Ejercito: Camuflados
+23	Armada - Busos	Intendencia Armada: Busos
+24	Armada - Camibusos	Intendencia Armada: Camibusos
+25	Armada - Gorras	Intendencia Armada: Gorras
+26	Armada - Panoletas	Intendencia Armada: Panoletas
+27	Armada - Sudaderas	Intendencia Armada: Sudaderas
+28	Armada - Pantalonetas	Intendencia Armada: Pantalonetas
+29	Armada - Colchas	Intendencia Armada: Colchas
+30	Armada - Tendidos	Intendencia Armada: Tendidos
+31	Armada - Chuspas para ropa sucia	Intendencia Armada: Chuspas para ropa sucia
+32	Armada - Fundas para almohadas	Intendencia Armada: Fundas para almohadas
+33	Armada - Camuflados	Intendencia Armada: Camuflados
+34	Gaula - Busos	Intendencia Gaula: Busos
+35	Gaula - Camibusos	Intendencia Gaula: Camibusos
+36	Gaula - Gorras	Intendencia Gaula: Gorras
+37	Gaula - Panoletas	Intendencia Gaula: Panoletas
+38	Gaula - Sudaderas	Intendencia Gaula: Sudaderas
+39	Gaula - Pantalonetas	Intendencia Gaula: Pantalonetas
+40	Gaula - Colchas	Intendencia Gaula: Colchas
+41	Gaula - Tendidos	Intendencia Gaula: Tendidos
+42	Gaula - Chuspas para ropa sucia	Intendencia Gaula: Chuspas para ropa sucia
+43	Gaula - Fundas para almohadas	Intendencia Gaula: Fundas para almohadas
+44	Gaula - Camuflados	Intendencia Gaula: Camuflados
+\.
+
+
+--
+-- Data for Name: detalle_pedido; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.detalle_pedido (id_detalle, id_pedido, id_producto, cantidad, subtotal) FROM stdin;
+\.
+
+
+--
+-- Data for Name: pagos; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.pagos (id_pago, id_pedido, monto, metodo_pago, fecha_pago, estado_pago, id_promo, codigo_promo, tipo_descuento, valor_descuento, monto_descuento) FROM stdin;
+5	5	120	tarjeta	2026-03-04 19:42:40	aprobado	\N	\N	\N	0	0
+6	6	60	tarjeta	2026-03-04 19:48:18	aprobado	\N	\N	\N	0	0
+7	7	60	tarjeta	2026-03-04 19:49:00	aprobado	\N	\N	\N	0	0
+8	8	60	tarjeta	2026-03-04 19:55:08	aprobado	\N	\N	\N	0	0
+9	9	60	tarjeta	2026-03-04 20:02:08	aprobado	\N	\N	\N	0	0
+10	10	60	transferencia	2026-03-04 20:02:37	aprobado	\N	\N	\N	0	0
+11	11	60	tarjeta	2026-03-04 20:05:34	aprobado	\N	\N	\N	0	0
+12	12	60	tarjeta	2026-03-04 20:06:17	aprobado	\N	\N	\N	0	0
+13	13	200	tarjeta	2026-03-06 14:02:06	aprobado	\N	\N	\N	0	0
+\.
+
+
+--
+-- Data for Name: pedidos; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.pedidos (id_pedido, id_usuario, fecha_pedido, estado) FROM stdin;
+5	8	2026-03-04 19:42:40	pendiente
+6	8	2026-03-04 19:48:18	pendiente
+7	8	2026-03-04 19:49:00	pendiente
+8	8	2026-03-04 19:55:08	pendiente
+9	8	2026-03-04 20:02:08	pendiente
+10	8	2026-03-04 20:02:37	pendiente
+11	8	2026-03-04 20:05:34	pendiente
+12	8	2026-03-04 20:06:17	pendiente
+13	2	2026-03-06 14:02:06	pendiente
+\.
+
+
+--
+-- Data for Name: producto; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.producto (id_producto, nombre, descripcion, precio, stock, id_categoria, imagen_url, eliminado, fuerza, intendencia) FROM stdin;
+1	Camiseta mallada	Damn	60	10	1	img/producto_1.jpg	\N	Policia	Busos
+2	Armando Estaban Quito	puro de corazon	100000	100	1	img/producto_2.jpg	\N	Gaula	Camibusos
+\.
+
+
+--
+-- Data for Name: promociones; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.promociones (id_promo, nombre, descripcion, tipo_descuento, valor_descuento, codigo, fecha_inicio, fecha_fin, activo) FROM stdin;
+\.
+
+
+--
+-- Data for Name: registros; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.registros (id_registro, id_usuario, accion, fecha_accion) FROM stdin;
+1	julio@gmail.com	Inicio de sesión exitoso	2026-03-07 01:04:11
+2	nico@gmail.com	Inicio de sesión exitoso	2026-03-07 01:19:16
+3	nico@gmail.com	Creo producto 'Camiseta mallada' (ID 1)\n- precio: COP 60,00\n- stock: 10\n- fuerza: Policia\n- intendencia: Busos	2026-03-07 01:25:52
+4	nico@gmail.com	Actualizo producto 'Camiseta mallada' (ID 1)\n- sin cambios detectados	2026-03-07 01:26:25
+5	nico@gmail.com	Creo producto 'Armando Estaban Quito' (ID 2)\n- precio: COP 100.000,00\n- stock: 100\n- fuerza: Gaula\n- intendencia: Camibusos	2026-03-07 01:45:18
+6	nico@gmail.com	Inicio de sesión exitoso	2026-03-07 16:33:28
+7	julio@gmail.com	Inicio de sesión exitoso	2026-03-07 16:35:29
+8	julio@gmail.com	Inicio de sesión exitoso	2026-03-07 17:41:23
+9	julio@gmail.com	Inicio de sesión exitoso	2026-03-07 17:41:58
+10	julio@gmail.com	Inicio de sesión exitoso	2026-03-07 17:43:19
+11	julio@gmail.com	Inicio de sesión exitoso	2026-03-07 17:43:19
+\.
+
+
+--
+-- Data for Name: usuarios; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.usuarios (id_usuario, nombre, email, password_hash, rol, estado, fecha_registro, email_verified, verification_code, verification_code_expiry) FROM stdin;
+1	Nico	nico@gmail.com	admin	admin	activo	2026-02-06 14:55:32	f	\N	\N
+2	Julio	julio@gmail.com	admin	normal	activo	2026-02-06 14:55:32	f	801703	2026-03-06 14:07:29
+3	Alvaréx Freo	alv@gmail.com	admin	normal	activo	2026-02-06 16:40:07	f	\N	\N
+4	jilmer	hola@gmail.com	admin	admin	activo	2026-02-20 15:47:06	f	\N	\N
+5	Isabel	hola3@gmail.com	123456789	normal	activo	2026-02-20 15:47:36	f	\N	\N
+6	Tatiana Rivera	tatis@gmail.com	admin	normal	activo	2026-02-25 22:35:53	f	\N	\N
+7	Tatiana Rivera	tr3303419@gmail.com	admin	normal	inactivo	2026-02-26 22:54:23	f	\N	\N
+8	David	david@gmail.com	4321	normal	activo	2026-03-04 19:37:39	f	\N	\N
+9	David	rodriguezsierradavidsantiago@gmail.com	54321	normal	activo	2026-03-04 22:56:35	t	844313	2026-03-04 23:45:18
+\.
+
+
+--
+-- Name: categoria_producto_id_categoria_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.categoria_producto_id_categoria_seq', 44, true);
+
+
+--
+-- Name: promociones_id_promo_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.promociones_id_promo_seq', 1, false);
+
+
+--
+-- Name: categoria_producto categoria_producto_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.categoria_producto
+    ADD CONSTRAINT categoria_producto_pkey PRIMARY KEY (id_categoria);
+
+
+--
+-- Name: promociones promociones_codigo_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.promociones
+    ADD CONSTRAINT promociones_codigo_key UNIQUE (codigo);
+
+
+--
+-- Name: promociones promociones_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.promociones
+    ADD CONSTRAINT promociones_pkey PRIMARY KEY (id_promo);
+
+
+--
+-- Name: idx_detalle_id_pedido; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX idx_detalle_id_pedido ON public.detalle_pedido USING btree (id_pedido);
+
+
+--
+-- Name: idx_detalle_id_producto; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX idx_detalle_id_producto ON public.detalle_pedido USING btree (id_producto);
+
+
+--
+-- Name: idx_pagos_id_pedido; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX idx_pagos_id_pedido ON public.pagos USING btree (id_pedido);
+
+
+--
+-- Name: idx_pagos_id_promo; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX idx_pagos_id_promo ON public.pagos USING btree (id_promo);
+
+
+--
+-- Name: idx_pedidos_id_usuario; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX idx_pedidos_id_usuario ON public.pedidos USING btree (id_usuario);
+
+
+--
+-- PostgreSQL database dump complete
+--
+
+\unrestrict zfQ1PfGQhuG1b3j5BjO3li0qOk3ZV4lZaaFBq29Uh6kaxvgXqXhjNVBYAye0dFx
+
