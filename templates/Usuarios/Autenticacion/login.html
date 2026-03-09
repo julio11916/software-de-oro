@@ -21,7 +21,7 @@
                 </button>
 
                 <a class="brand-logo" href="{{ url_for('home') }}">
-                    <img src="{{ url_for('static', filename='img/logo_transparente.png') }}" alt="Logo Nachoher">
+                    <img src="{{ url_for('static', filename='img/Pagina/logo_transparente.png') }}" alt="Logo Nachoher">
                 </a>
 
                 <div class="header-actions">
@@ -52,7 +52,7 @@
             <button type="button" class="btn-close-custom" data-bs-dismiss="offcanvas" aria-label="Close">
                 <i class="fas fa-xmark"></i>
             </button>
-            <img src="{{ url_for('static', filename='img/logo_transparente.png') }}" class="offcanvas-logo" alt="Logo">
+            <img src="{{ url_for('static', filename='img/Pagina/logo_transparente.png') }}" class="offcanvas-logo" alt="Logo">
             <span></span>
         </div>
         <div class="offcanvas-body">
@@ -77,8 +77,11 @@
     <section class="hero">
         <div class="hero-overlay"></div>
         <div class="hero-content text-center">
-            <p class="hero-kicker">BIENVENIDOS A</p><br><br><br><br><br>
-            <br><br><br>
+            <p class="hero-kicker">BIENVENIDOS A</p>
+                        <a href="{{ url_for('user_dashboard') }}">
+                <img src="{{ url_for('static', filename='img/Pagina/logo_transparente_2.png') }}" alt="Logo del proyecto"
+                class="logo">
+            </a>
             <p class="hero-subtitle">Catalogo premium de prendas y accesorios</p>
             <a href="#catalogo" class="hero-cta">Ver catalogo</a>
         </div>
@@ -98,7 +101,7 @@
                             <img src="{{ url_for('static', filename=producto.imagen_url) }}" class="card-img-top"
                                 alt="{{ producto.nombre }}">
                             {% else %}
-                            <img src="{{ url_for('static', filename='img/default.jpg') }}" class="card-img-top"
+                            <img src="{{ url_for('static', filename='img/Pagina/logo.jpeg') }}" class="card-img-top"
                                 alt="Imagen por defecto">
                             {% endif %}
                         </a>

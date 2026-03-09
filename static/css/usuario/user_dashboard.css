@@ -1,1 +1,31 @@
 /* Ajustes especificos del dashboard autenticado */
+
+.hero-content {
+    min-height: 88vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    text-align: center;
+}
+
+.hero-content .hero-kicker,
+.hero-content .hero-subtitle,
+.hero-content .hero-cta {
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.hero-content .logo {
+    width: min(48vw, 420px);
+    max-width: 420px;
+    min-width: 180px;
+    margin: 0 auto;
+}
+
+@media (max-width: 768px) {
+    .hero-content .logo {
+        width: min(72vw, 300px);
+    }
+}
