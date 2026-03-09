@@ -17,6 +17,10 @@ body {
     font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
 }
 
+.page-with-catalog-header {
+    padding-top: 88px;
+}
+
 .store-header {
     position: fixed;
     top: 0;
@@ -126,7 +130,7 @@ body {
 
 .hero {
     position: relative;
-    min-height: 89vh;
+    min-height: 90vh;
     margin-top: 74px;
     background-image: url("../../img/Pagina/nachoher_fondo_logo.jpg");
     background-size: cover;
@@ -389,5 +393,9 @@ body {
 
     .offcanvas-link {
         font-size: 1.3rem;
+    }
+
+    .page-with-catalog-header {
+        padding-top: 78px;
     }
 }

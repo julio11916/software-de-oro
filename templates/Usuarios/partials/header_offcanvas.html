@@ -1,0 +1,65 @@
+<header class="store-header">
+    <div class="container-fluid px-3 px-lg-4">
+        <div class="store-header-inner">
+            <button class="icon-btn-dark" type="button" data-bs-toggle="offcanvas" data-bs-target="#menuCanvas"
+                aria-controls="menuCanvas">
+                <i class="fas fa-bars"></i>
+            </button>
+
+            <a class="brand-logo" href="{{ url_for('user_dashboard') }}">
+                <img src="{{ url_for('static', filename='img/Pagina/logo_transparente.png') }}" alt="Logo Nachoher">
+            </a>
+
+            <div class="header-actions">
+                <a href="{{ url_for('cart') }}" class="icon-btn-dark">
+                    <i class="fas fa-bag-shopping"></i>
+                </a>
+
+                <div class="user-dropdown">
+                    <button class="icon-btn-dark" type="button" onclick="toggleUserMenu()">
+                        <i class="far fa-user"></i>
+                    </button>
+                    <div class="dropdown-menu-custom" id="userDropdown">
+                        <a href="{{ url_for('user_profile') }}">
+                            <i class="fas fa-user-circle me-2"></i> Mi Perfil
+                        </a>
+                        <a href="{{ url_for('user_orders') }}">
+                            <i class="fas fa-box me-2"></i> Mis Pedidos
+                        </a>
+                        <a href="{{ url_for('logout') }}">
+                            <i class="fas fa-sign-out-alt me-2"></i> Cerrar sesion
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</header>
+
+<div class="offcanvas offcanvas-start menu-canvas" tabindex="-1" id="menuCanvas" aria-labelledby="menuCanvasLabel">
+    <div class="offcanvas-header">
+        <button type="button" class="btn-close-custom" data-bs-dismiss="offcanvas" aria-label="Close">
+            <i class="fas fa-xmark"></i>
+        </button>
+        <img src="{{ url_for('static', filename='img/Pagina/logo_transparente.png') }}" class="offcanvas-logo" alt="Logo">
+        <span></span>
+    </div>
+    <div class="offcanvas-body">
+        <nav class="offcanvas-nav">
+            <a class="offcanvas-link active" href="{{ url_for('user_dashboard') }}">Home</a>
+            <a class="offcanvas-link" href="{{ url_for('promociones') }}">Valentines</a>
+            <a class="offcanvas-link" href="{{ url_for('promociones') }}">Throwback Originals</a>
+            <a class="offcanvas-link" href="{{ url_for('promociones') }}">Rubiuscorp</a>
+            <a class="offcanvas-link" href="{{ url_for('promociones') }}">Old School Madkat</a>
+            <a class="offcanvas-link" href="{{ url_for('promociones') }}">Accesorios</a>
+        </nav>
+
+        <div class="offcanvas-divider"></div>
+
+        <nav class="offcanvas-nav">
+            <a class="offcanvas-link" href="{{ url_for('orden_personalizada') }}">Orden personalizada</a>
+            <a class="offcanvas-link" href="{{ url_for('sobre_nosotros') }}">Sobre nosotros</a>
+            <a class="offcanvas-link" href="{{ url_for('cart') }}">Carrito</a>
+        </nav>
+    </div>
+</div>
