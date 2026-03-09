@@ -7,36 +7,31 @@
     <title>Catalogo - Software de Oro</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/usuario/login.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/usuario/catalog_base.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/usuario/user_dashboard.css') }}">
 </head>
 
 <body>
-    <div class="top-bar">
-        <div class="container">
-            <div class="top-bar-row">
-                <a href="{{ url_for('home') }}" class="logo-brand" aria-label="Inicio">
-                    <img src="{{ url_for('static', filename='img/logo_transparente.png') }}" alt="Logo de la empresa" class="logo-brand-image">
+    <header class="store-header">
+        <div class="container-fluid px-3 px-lg-4">
+            <div class="store-header-inner">
+                <button class="icon-btn-dark" type="button" data-bs-toggle="offcanvas" data-bs-target="#menuCanvas"
+                    aria-controls="menuCanvas">
+                    <i class="fas fa-bars"></i>
+                </button>
+
+                <a class="brand-logo" href="{{ url_for('home') }}">
+                    <img src="{{ url_for('static', filename='img/logo_transparente.png') }}" alt="Logo Nachoher">
                 </a>
 
-                <div class="search-container">
-                    <div class="search-box">
-                        <input type="text" class="form-control" id="searchInput" placeholder="Buscar productos...">
-                        <button type="button" onclick="buscarProducto()">
-                            <i class="fas fa-search"></i>
-                        </button>
-                    </div>
-                </div>
-
-                <div class="top-icons">
-                    <a href="#" class="icon-btn icon-btn-link" onclick="mostrarCarrito()" aria-label="Carrito">
-                        <i class="fas fa-shopping-cart"></i>
-                        <span class="cart-badge" id="cartCount">0</span>
+                <div class="header-actions">
+                    <a href="#" class="icon-btn-dark" onclick="mostrarCarrito()">
+                        <i class="fas fa-bag-shopping"></i>
                     </a>
 
                     <div class="user-dropdown">
-                        <button class="user-dropdown-btn icon-btn" onclick="toggleUserMenu()" aria-label="Usuario">
-                            <i class="fas fa-user"></i>
+                        <button class="icon-btn-dark" type="button" onclick="toggleUserMenu()">
+                            <i class="far fa-user"></i>
                         </button>
                         <div class="dropdown-menu-custom" id="userDropdown">
                             <a href="#" data-bs-toggle="modal" data-bs-target="#loginModal" onclick="closeUserMenu()">
@@ -50,113 +45,90 @@
                 </div>
             </div>
         </div>
+    </header>
+
+    <div class="offcanvas offcanvas-start menu-canvas" tabindex="-1" id="menuCanvas" aria-labelledby="menuCanvasLabel">
+        <div class="offcanvas-header">
+            <button type="button" class="btn-close-custom" data-bs-dismiss="offcanvas" aria-label="Close">
+                <i class="fas fa-xmark"></i>
+            </button>
+            <img src="{{ url_for('static', filename='img/logo_transparente.png') }}" class="offcanvas-logo" alt="Logo">
+            <span></span>
+        </div>
+        <div class="offcanvas-body">
+            <nav class="offcanvas-nav">
+                <a class="offcanvas-link active" href="{{ url_for('home') }}">Home</a>
+                <a class="offcanvas-link" href="{{ url_for('promociones') }}">Valentines</a>
+                <a class="offcanvas-link" href="{{ url_for('promociones') }}">Throwback Originals</a>
+                <a class="offcanvas-link" href="{{ url_for('promociones') }}">Rubiuscorp</a>
+                <a class="offcanvas-link" href="{{ url_for('promociones') }}">Old School Madkat</a>
+                <a class="offcanvas-link" href="{{ url_for('promociones') }}">Accesorios</a>
+            </nav>
+
+            <div class="offcanvas-divider"></div>
+
+            <nav class="offcanvas-nav">
+                <a class="offcanvas-link" href="{{ url_for('registro') }}">Crear cuenta</a>
+                <a class="offcanvas-link" href="{{ url_for('sobre_nosotros') }}">Sobre nosotros</a>
+            </nav>
+        </div>
     </div>
 
-    <div class="main-layout">
-        <aside class="sidebar">
-            <div class="sidebar-title">
-                <i class="fas fa-bars"></i>
-                Menu de navegacion
-            </div>
-            <ul class="nav-links">
-                <li>
-                    <a href="#" onclick="toggleSubmenu(event, this)">
-                        <span>
-                            <i class="fas fa-book-open icon-left"></i>Catalogo
-                        </span>
-                        <i class="fas fa-chevron-down icon-right"></i>
-                    </a>
-                    <div class="submenu">
-                        <div class="catalog-filter-group">
-                            <div class="catalog-filter-label">1. Selecciona la fuerza</div>
-                            <div class="catalog-filter-buttons">
-                                <button type="button" class="catalog-filter-btn" onclick="seleccionarFuerza('Policia', this)">Policia</button>
-                                <button type="button" class="catalog-filter-btn" onclick="seleccionarFuerza('Ejercito', this)">Ejercito</button>
-                                <button type="button" class="catalog-filter-btn" onclick="seleccionarFuerza('Armada', this)">Armada</button>
-                                <button type="button" class="catalog-filter-btn" onclick="seleccionarFuerza('Gaula', this)">Gaula</button>
-                            </div>
-                        </div>
+    <section class="hero">
+        <div class="hero-overlay"></div>
+        <div class="hero-content text-center">
+            <p class="hero-kicker">BIENVENIDOS A</p><br><br><br><br><br>
+            <br><br><br>
+            <p class="hero-subtitle">Catalogo premium de prendas y accesorios</p>
+            <a href="#catalogo" class="hero-cta">Ver catalogo</a>
+        </div>
+    </section>
 
-                        <div class="catalog-filter-group" id="intendenciaGroup">
-                            <div class="catalog-filter-label">2. Selecciona la intendencia</div>
-                            <div class="catalog-filter-buttons" id="intendenciaButtons">
-                                <button type="button" class="catalog-filter-btn" onclick="limpiarFiltroCatalogo()">Ver todo</button>
-                            </div>
-                        </div>
-                    </div>
-                </li>
+    <main class="main-content" id="catalogo">
+        <div class="container catalog-shell">
+            <h2 class="section-title">Destacados</h2>
 
-                <li>
-                    <a href="{{ url_for('promociones') }}">
-                        <span>
-                            <i class="fas fa-gift icon-left"></i>Promociones especiales
-                        </span>
-                    </a>
-                </li>
-
-                <li>
-                    <a href="{{ url_for('sobre_nosotros') }}">
-                        <span>
-                            <i class="fas fa-users icon-left"></i>Sobre nosotros
-                        </span>
-                    </a>
-                </li>
-            </ul>
-        </aside>
-
-        <div class="main-content">
-            <div class="container catalogo">
-                <h2 class="section-title">Catalogo de productos</h2>
-                <p class="catalog-summary" id="catalogSummary">Explora todos los productos disponibles.</p>
-                <div class="row" id="productosContainer">
-                    {% for producto in productos %}
-                    <div class="col-lg-3 col-md-4 col-sm-6 mb-4 producto-item" data-nombre="{{ producto.nombre|lower }}"
-                        data-precio="{{ producto.precio }}"
-                        data-fuerza="{{ producto.fuerza|default('', true)|lower }}"
-                        data-intendencia="{{ producto.intendencia|default('', true)|lower }}">
-                        <div class="card producto-card">
+            <div class="row g-4" id="productosContainer">
+                {% for producto in productos %}
+                <div class="col-lg-3 col-md-4 col-sm-6 producto-item" data-nombre="{{ producto.nombre|lower }}"
+                    data-precio="{{ producto.precio }}">
+                    <div class="card producto-card h-100">
+                        <a href="#" onclick="mostrarLoginModal(); return false;">
                             {% if producto.imagen_url %}
                             <img src="{{ url_for('static', filename=producto.imagen_url) }}" class="card-img-top"
                                 alt="{{ producto.nombre }}">
                             {% else %}
                             <img src="{{ url_for('static', filename='img/default.jpg') }}" class="card-img-top"
-                                alt="{{ producto.nombre }}">
+                                alt="Imagen por defecto">
                             {% endif %}
-                            <div class="card-body">
-                                <h5 class="card-title">{{ producto.nombre }}</h5>
-                                {% if producto.fuerza or producto.intendencia %}
-                                <p class="product-tags">
-                                    {% if producto.fuerza %}<span>{{ producto.fuerza }}</span>{% endif %}
-                                    {% if producto.intendencia %}<span>{{ producto.intendencia }}</span>{% endif %}
-                                </p>
-                                {% endif %}
-                                <p class="card-text text-muted">{{ producto.descripcion }}</p>
-                                <p class="price">{{ producto.precio|cop }}</p>
-                                <p class="text-muted mb-3">
-                                    <i class="fas fa-box"></i> Stock: {{ producto.stock }}
-                                </p>
-                                <form method="POST"
-                                    action="{{ url_for('add_to_cart', id_producto=producto.id_producto) }}"
-                                    onsubmit="return verificarLogin(event)">
-                                    <div class="input-group mb-2">
-                                        <input type="number" name="cantidad" class="form-control" value="1" min="1"
-                                            max="{{ producto.stock }}">
-                                        <button type="submit" class="btn btn-primary">
-                                            <i class="fas fa-cart-plus"></i> Agregar
-                                        </button>
-                                    </div>
-                                </form>
-                            </div>
+                        </a>
+
+                        <div class="card-body">
+                            <h5 class="card-title">{{ producto.nombre }}</h5>
+                            <p class="card-text text-muted">{{ producto.descripcion }}</p>
+                            <p class="price">{{ producto.precio|cop }}</p>
+                            {% if producto.stock|int <= 0 %}
+                            <p class="text-danger fw-bold mb-2">Agotado</p>
+                            {% endif %}
+
+                            <form method="POST"
+                                action="{{ url_for('add_to_cart', id_producto=producto.id_producto) }}"
+                                onsubmit="return verificarLogin(event)">
+                                <div class="input-group">
+                                    <input type="number" name="cantidad" class="form-control" value="1" min="1"
+                                        max="{{ producto.stock|int }}" {% if producto.stock|int <=0 %}disabled{% endif %}>
+                                    <button type="submit" class="btn btn-primary" {% if producto.stock|int <=0 %}disabled{% endif %}>
+                                        <i class="fas fa-cart-plus"></i> Agregar
+                                    </button>
+                                </div>
+                            </form>
                         </div>
                     </div>
-                    {% endfor %}
                 </div>
-                <div class="empty-filter-state" id="emptyFilterState" style="display:none;">
-                    No hay productos para la seleccion actual.
-                </div>
+                {% endfor %}
             </div>
         </div>
-    </div>
+    </main>
 
     <footer class="footer-compact">
         <div class="container">
@@ -200,8 +172,7 @@
                             <label for="email" class="form-label">
                                 <i class="fas fa-envelope"></i> Correo electronico
                             </label>
-                            <input type="email" class="form-control" name="email" required
-                                placeholder="correo@ejemplo.com">
+                            <input type="email" class="form-control" name="email" required placeholder="correo@ejemplo.com">
                         </div>
                         <div class="mb-3">
                             <label for="password" class="form-label">
@@ -229,7 +200,23 @@
         </div>
     </div>
 
-    <script src="{{ url_for('static', filename='js/usuario/login.js') }}"></script>
+    <script>
+        function mostrarLoginModal() {
+            const loginModal = new bootstrap.Modal(document.getElementById("loginModal"));
+            loginModal.show();
+        }
+
+        function verificarLogin(event) {
+            event.preventDefault();
+            mostrarLoginModal();
+            return false;
+        }
+
+        function mostrarCarrito() {
+            mostrarLoginModal();
+        }
+    </script>
+    <script src="{{ url_for('static', filename='js/usuario/catalog_base.js') }}"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 
