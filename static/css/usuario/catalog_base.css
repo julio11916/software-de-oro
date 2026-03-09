@@ -126,15 +126,23 @@ body {
 
 .hero {
     position: relative;
-    min-height: 88vh;
+    min-height: 89vh;
     margin-top: 74px;
-    background-image: url("../../img/nachoher_fondo_logo.png");
+    background-image: url("../../img/Pagina/nachoher_fondo_logo.jpg");
     background-size: cover;
     background-position: center center;
     display: flex;
     align-items: center;
     justify-content: center;
     background-attachment: fixed;
+    display: block;
+}
+
+.logo {
+    display: block;
+    width: min(92vw, 1000px);
+    height: auto;
+    margin: 0 auto 24px;
 }
 
 .hero-overlay {
@@ -153,7 +161,7 @@ body {
 .hero-kicker {
     font-size: 1.2rem;
     letter-spacing: 0.3em;
-    margin-bottom: 14px;
+    margin-bottom: 0.5px;
     font-family: "Brush Script MT", "Segoe Script", cursive;
 }
 
@@ -165,7 +173,7 @@ body {
 }
 
 .hero-subtitle {
-    font-size: clamp(2rem, 4vw, 1.25rem);
+    font-size: clamp(2rem, 4vw, 1rem);
     color: rgba(255, 255, 255, 0.9);
     font-family: "Brush Script MT", "Segoe Script", cursive;
 }

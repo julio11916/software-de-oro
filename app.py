@@ -138,6 +138,24 @@ def guardar_promociones_df(promos):
     promos.to_excel('bd/promociones.xlsx', index=False)
 
 
+def normalizar_imagen_url(valor):
+    ruta = str(valor or '').strip().replace('\\', '/')
+    if not ruta or ruta.lower() == 'nan':
+        return ''
+    if ruta.startswith('img/Empresa/') or ruta.startswith('img/Pagina/'):
+        return ruta
+    if ruta.startswith('img/'):
+        return f"img/Empresa/{ruta.split('/')[-1]}"
+    return ruta
+
+
+def normalizar_imagenes_productos(productos):
+    if 'imagen_url' not in productos.columns:
+        productos['imagen_url'] = ''
+    productos['imagen_url'] = productos['imagen_url'].apply(normalizar_imagen_url)
+    return productos
+
+
 def parsear_fecha_promocion(valor: Any) -> Optional[date]:
     if valor is None:
         return None
@@ -363,6 +381,7 @@ def inyectar_nombre_admin():
 def home():
     if os.path.exists('bd/producto.xlsx'):
         productos = pd.read_excel('bd/producto.xlsx')
+        productos = normalizar_imagenes_productos(productos)
     else:
         productos = pd.DataFrame(columns=['id_producto', 'nombre', 'precio', 'stock', 'eliminado'])
 
@@ -483,6 +502,7 @@ def logout():
 def admin_dashboard():
     if session.get('rol') == 'admin':
         productos = pd.read_excel('bd/producto.xlsx')
+        productos = normalizar_imagenes_productos(productos)
 
         # Asegurar que la columna 'eliminado' existe y es booleana
         if 'eliminado' not in productos.columns:
@@ -509,6 +529,7 @@ def admin_productos():
         return "Acceso denegado"
 
     productos = pd.read_excel('bd/producto.xlsx')
+    productos = normalizar_imagenes_productos(productos)
     if 'eliminado' not in productos.columns:
         productos['eliminado'] = False
     if 'fuerza' not in productos.columns:
@@ -531,6 +552,7 @@ def admin_productos():
 def agregar_producto():
     if session.get('rol') == 'admin':
         productos = pd.read_excel('bd/producto.xlsx')
+        productos = normalizar_imagenes_productos(productos)
         if 'fuerza' not in productos.columns:
             productos['fuerza'] = ''
         if 'intendencia' not in productos.columns:
@@ -561,11 +583,11 @@ def agregar_producto():
                 flash("La imagen excede el tamano maximo permitido (2MB).", 'danger')
                 return redirect(url_for('admin_productos'))
 
-            carpeta_destino = os.path.join('static', 'img')
+            carpeta_destino = os.path.join('static', 'img', 'Empresa')
             os.makedirs(carpeta_destino, exist_ok=True)
             ruta = os.path.join(carpeta_destino, f'producto_{nuevo_id}.jpg')
             imagen.save(ruta)
-            imagen_url = f'img/producto_{nuevo_id}.jpg'
+            imagen_url = f'img/Empresa/producto_{nuevo_id}.jpg'
 
         nuevo_producto = {
             'id_producto': nuevo_id,
@@ -668,16 +690,17 @@ def subir_imagen(id_producto):
             return redirect(url_for('admin_productos'))
 
         # Guardar imagen
-        carpeta_destino = os.path.join('static', 'img')
+        carpeta_destino = os.path.join('static', 'img', 'Empresa')
         os.makedirs(carpeta_destino, exist_ok=True)
         ruta = os.path.join(carpeta_destino, f'producto_{id_producto}.jpg')
         imagen.save(ruta)
 
         # Registrar ruta en el Excel
         productos = pd.read_excel('bd/producto.xlsx')
+        productos = normalizar_imagenes_productos(productos)
         idx = productos[productos['id_producto'] == id_producto].index
         if not idx.empty:
-            productos.at[idx[0], 'imagen_url'] = f'img/producto_{id_producto}.jpg'
+            productos.at[idx[0], 'imagen_url'] = f'img/Empresa/producto_{id_producto}.jpg'
             productos.to_excel('bd/producto.xlsx', index=False)
 
         flash("Imagen subida correctamente.")
@@ -1031,6 +1054,7 @@ def admin_pos():
 
     if os.path.exists('bd/producto.xlsx'):
         productos = pd.read_excel('bd/producto.xlsx')
+        productos = normalizar_imagenes_productos(productos)
     else:
         productos = pd.DataFrame(columns=['id_producto', 'nombre', 'precio', 'stock', 'eliminado'])
 
@@ -1429,6 +1453,7 @@ def editar_producto(id_producto):
 def user_dashboard():
     if session.get('rol') == 'normal':
         productos = pd.read_excel('bd/producto.xlsx')
+        productos = normalizar_imagenes_productos(productos)
 
         if 'eliminado' not in productos.columns:
             productos['eliminado'] = False
@@ -1494,6 +1519,7 @@ def user_dashboard():
 def product_detail(id_producto):
     if session.get('rol') == 'normal':
         productos = pd.read_excel('bd/producto.xlsx')
+        productos = normalizar_imagenes_productos(productos)
         if 'eliminado' not in productos.columns:
             productos['eliminado'] = False
         productos['eliminado'] = productos['eliminado'].fillna(False).astype(bool)
