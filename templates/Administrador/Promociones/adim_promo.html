@@ -1,30 +1,19 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 
 <head>
     <meta charset="UTF-8">
-    <title>Gestión de Promociones</title>
+    <title>Gestion de Promociones</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/administrador/admin_dashboard_principal.css') }}">
-    <style>
-        /* estilos mínimos para este panel */
-        .promo-panel .panel-header h5 {
-            margin-bottom: 0;
-        }
-
-        .promo-form .form-control,
-        .promo-form .form-check-label {
-            font-size: .9rem;
-        }
-    </style>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/administrador/admin_promociones.css') }}">
 </head>
 
 <body>
     <div class="d-flex dashboard-layout">
         <div class="sidebar">
-
             <a href="{{ url_for('admin_dashboard') }}">
                 <img src="{{ url_for('static', filename='img/logo_transparente.png') }}" alt="Logo del proyecto"
                     class="sidebar-logo">
@@ -36,136 +25,159 @@
             </div>
 
             <ul class="nav flex-column mt-4">
-                <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('admin_usuarios') }}">Usuarios</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('admin_productos') }}">Productos</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link active" href="{{ url_for('admin_promo') }}">Promociones</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('admin_pos') }}">Sistema POS</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('admin_pedidos') }}">Pedidos</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('admin_charts') }}">Ventas y Graficas</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('admin_ajustes') }}">Ajustes</a>
-                </li>
+                <li class="nav-item"><a class="nav-link" href="{{ url_for('admin_usuarios') }}">Usuarios</a></li>
+                <li class="nav-item"><a class="nav-link" href="{{ url_for('admin_productos') }}">Productos</a></li>
+                <li class="nav-item"><a class="nav-link active" href="{{ url_for('admin_promo') }}">Promociones</a></li>
+                <li class="nav-item"><a class="nav-link" href="{{ url_for('admin_pos') }}">Sistema POS</a></li>
+                <li class="nav-item"><a class="nav-link" href="{{ url_for('admin_pedidos') }}">Pedidos</a></li>
+                <li class="nav-item"><a class="nav-link" href="{{ url_for('admin_charts') }}">Ventas y Graficas</a></li>
+                <li class="nav-item"><a class="nav-link" href="{{ url_for('admin_ajustes') }}">Ajustes</a></li>
             </ul>
 
             <div class="sidebar-bottom mt-auto">
                 <a href="{{ url_for('home') }}" class="btn btn-success w-100 mb-2"
                     onclick="if (window.history.length > 1) { window.history.back(); } else { window.location.href='{{ url_for('home') }}'; } return false;">Volver</a>
-                <a href="{{ url_for('logout') }}" class="btn btn-danger w-100">Cerrar Sesión</a>
+                <a href="{{ url_for('logout') }}" class="btn btn-danger w-100">Cerrar Sesion</a>
             </div>
         </div>
+
+        <!-- promocion -->
 
         <div class="main-content w-100">
             <div class="topbar d-flex justify-content-between align-items-center">
                 <div>
-                    <h4 class="mb-0">Gestión de Promociones</h4>
-                    <small>Crear y administrar ofertas</small>
+                    <h4 class="mb-0">Gestion de Promociones por Producto</h4>
+                    <small>Selecciona un producto y crea su promocion desde la misma tarjeta</small>
                 </div>
                 <div id="fechaHora"></div>
             </div>
 
-            <div class="content-area promo-content p-4">
+            <div class="content-area promo-content">
                 {% with mensajes = get_flashed_messages(with_categories=true) %}
                 {% if mensajes %}
                 <div class="mb-3">
                     {% for categoria, mensaje in mensajes %}
-                    <div class="alert alert-{{ 'warning' if categoria == 'message' else categoria }} mb-2">{{ mensaje }}
-                    </div>
+                    <div class="alert alert-{{ 'warning' if categoria == 'message' else categoria }} mb-2">{{ mensaje }}</div>
                     {% endfor %}
                 </div>
                 {% endif %}
                 {% endwith %}
 
-                <!-- formulario de creación -->
-                <section class="promo-panel mb-5">
-                    <div class="panel-header">
-                        <h5 class="mb-0">Agregar nueva promoción</h5>
+                <section class="promo-panel mb-4">
+                    <div class="panel-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Catalogo de productos para promocionar</h5>
+                        <span class="badge bg-light text-dark">Productos: {{ productos|length }}</span>
                     </div>
-                    <div class="panel-body promo-form mt-3">
-                        <form method="POST" action="{{ url_for('admin_promo') }}">
-                            <div class="row g-3">
-                                <div class="col-md-4">
-                                    <label class="form-label">Nombre</label>
-                                    <input type="text" name="nombre" class="form-control" required>
-                                </div>
-                                <div class="col-md-4">
-                                    <label class="form-label">Descripción</label>
-                                    <input type="text" name="descripcion" class="form-control">
-                                </div>
-                                <div class="col-md-2">
-                                    <label class="form-label">Tipo</label>
-                                    <select name="tipo_descuento" class="form-control">
-                                        <option value="porcentaje">Porcentaje (%)</option>
-                                        <option value="valor_fijo">Valor fijo (COP)</option>
-                                    </select>
-                                </div>
-                                <div class="col-md-2">
-                                    <label class="form-label">Valor descuento</label>
-                                    <input type="number" name="valor_descuento" class="form-control" min="0" step="0.1">
-                                </div>
-                                <div class="col-md-2">
-                                    <label class="form-label">Codigo (opcional)</label>
-                                    <input type="text" name="codigo" class="form-control" maxlength="30" placeholder="EJ: ORO10">
-                                </div>
-                                <div class="col-md-2">
-                                    <label class="form-label">Activo</label><br>
-                                    <input class="form-check-input" type="checkbox" name="activo" checked>
-                                </div>
-                                <div class="col-md-3">
-                                    <label class="form-label">Inicio</label>
-                                    <input type="date" name="fecha_inicio" class="form-control">
-                                </div>
-                                <div class="col-md-3">
-                                    <label class="form-label">Fin</label>
-                                    <input type="date" name="fecha_fin" class="form-control">
-                                </div>
-                                <div class="col-12">
-                                    <button type="submit" class="btn btn-primary w-100">Guardar promoción</button>
-                                </div>
+                    <div class="panel-body">
+                        {% if productos %}
+                        <div class="row g-4">
+                            {% for producto in productos %}
+                            <div class="col-lg-6 col-xl-4">
+                                <article class="promo-product-card h-100">
+                                    <div class="promo-image-wrap">
+                                        {% if producto.imagen_url %}
+                                        <img src="{{ url_for('static', filename=producto.imagen_url) }}" alt="{{ producto.nombre }}"
+                                            class="promo-image">
+                                        {% else %}
+                                        <div class="promo-image promo-placeholder">Sin imagen</div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="promo-body">
+                                        <h6 class="product-name mb-1">{{ producto.nombre }}</h6>
+                                        <p class="product-price mb-3">{{ producto.precio|cop }}</p>
+
+                                        <form method="POST" action="{{ url_for('admin_promo') }}" class="row g-2">
+                                            <input type="hidden" name="id_producto" value="{{ producto.id_producto }}">
+                                            <div class="col-12">
+                                                <label class="form-label">Nombre de la promocion</label>
+                                                <input type="text" name="nombre" class="form-control form-control-sm"
+                                                    value="Promo {{ producto.nombre }}" required>
+                                            </div>
+                                            <div class="col-12">
+                                                <label class="form-label">Descripcion</label>
+                                                <input type="text" name="descripcion" class="form-control form-control-sm"
+                                                    placeholder="Ej: Oferta especial por tiempo limitado">
+                                            </div>
+                                            <div class="col-6">
+                                                <label class="form-label">Tipo</label>
+                                                <select name="tipo_descuento" class="form-select form-select-sm">
+                                                    <option value="porcentaje">Porcentaje (%)</option>
+                                                    <option value="valor_fijo">Valor fijo (COP)</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-6">
+                                                <label class="form-label">Valor</label>
+                                                <input type="number" name="valor_descuento" class="form-control form-control-sm"
+                                                    min="0" step="0.01" required>
+                                            </div>
+                                            <div class="col-6">
+                                                <label class="form-label">Inicio</label>
+                                                <input type="date" name="fecha_inicio" class="form-control form-control-sm">
+                                            </div>
+                                            <div class="col-6">
+                                                <label class="form-label">Fin</label>
+                                                <input type="date" name="fecha_fin" class="form-control form-control-sm">
+                                            </div>
+                                            <div class="col-8">
+                                                <label class="form-label">Codigo (opcional)</label>
+                                                <input type="text" name="codigo" class="form-control form-control-sm" maxlength="30"
+                                                    placeholder="Ej: ORO10">
+                                            </div>
+                                            <div class="col-4 d-flex align-items-end">
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" name="activo" checked>
+                                                    <label class="form-check-label">Activa</label>
+                                                </div>
+                                            </div>
+                                            <div class="col-12">
+                                                <button type="submit" class="btn btn-primary w-100 btn-sm">Crear promocion</button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </article>
                             </div>
-                        </form>
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                        <div class="empty-state">
+                            <h6 class="mb-1">No hay productos disponibles</h6>
+                            <p class="mb-0 text-muted">Primero crea productos en el modulo de Gestion de Productos.</p>
+                        </div>
+                        {% endif %}
                     </div>
                 </section>
 
-                <!-- lista de promociones -->
                 <section class="promo-panel">
                     <div class="panel-header d-flex justify-content-between align-items-center">
-                        <h5 class="mb-0">Promociones existentes</h5>
+                        <h5 class="mb-0">Promociones registradas</h5>
                         <span class="badge bg-light text-dark">Total: {{ promos|length }}</span>
                     </div>
-                    <div class="panel-body mt-3">
+                    <div class="panel-body">
                         {% if promos %}
                         <div class="table-responsive">
-                            <table class="table table-bordered align-middle">
-                                <thead class="table-light">
+                            <table class="table table-hover align-middle promo-table">
+                                <thead>
                                     <tr>
                                         <th>ID</th>
-                                        <th>Nombre</th>
+                                        <th>Producto</th>
+                                        <th>Promocion</th>
                                         <th>Descuento</th>
                                         <th>Codigo</th>
                                         <th>Vigencia</th>
                                         <th>Estado</th>
                                         <th>Impacto</th>
-                                        <th>Activo</th>
-                                        <th>Acciones</th>
+                                        <th>Accion</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {% for p in promos %}
                                     <tr>
-                                        <td>{{ p.id_promo }}</td>
-                                        <td>{{ p.nombre }}</td>
+                                        <td>#{{ p.id_promo }}</td>
+                                        <td>{{ p.producto_nombre }}</td>
+                                        <td>
+                                            <strong>{{ p.nombre }}</strong><br>
+                                            <small class="text-muted">{{ p.descripcion or 'Sin descripcion' }}</small>
+                                        </td>
                                         <td>
                                             {% if p.tipo_descuento == 'valor_fijo' %}
                                             {{ p.valor_descuento|cop }}
@@ -174,7 +186,7 @@
                                             {% endif %}
                                         </td>
                                         <td>{{ p.codigo or '-' }}</td>
-                                        <td>{{ p.fecha_inicio }} - {{ p.fecha_fin }}</td>
+                                        <td>{{ p.fecha_inicio or '-' }} a {{ p.fecha_fin or '-' }}</td>
                                         <td>
                                             {% if p.estado_vigencia == 'vigente' %}
                                             <span class="badge bg-success">Vigente</span>
@@ -188,10 +200,8 @@
                                             <small>Usos: <strong>{{ p.usos }}</strong></small><br>
                                             <small>Descuento: <strong>{{ p.descuento_total|cop }}</strong></small>
                                         </td>
-                                        <td>{{ 'Si' if p.activo else 'No' }}</td>
                                         <td>
-                                            <form method="POST"
-                                                action="{{ url_for('admin_promo_toggle', id_promo=p.id_promo) }}">
+                                            <form method="POST" action="{{ url_for('admin_promo_toggle', id_promo=p.id_promo) }}">
                                                 <button type="submit"
                                                     class="btn btn-sm btn-{{ 'warning' if p.activo else 'success' }}">
                                                     {{ 'Desactivar' if p.activo else 'Activar' }}
@@ -204,8 +214,9 @@
                             </table>
                         </div>
                         {% else %}
-                        <div class="empty-state text-center text-muted">
-                            <p>No hay promociones registradas.</p>
+                        <div class="empty-state">
+                            <h6 class="mb-1">No hay promociones registradas</h6>
+                            <p class="mb-0 text-muted">Crea una promocion desde las tarjetas de productos.</p>
                         </div>
                         {% endif %}
                     </div>
@@ -219,4 +230,3 @@
 </body>
 
 </html>
-

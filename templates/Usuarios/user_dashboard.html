@@ -7,69 +7,32 @@
     <title>Nachoher</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="../../static/css/usuario/user_dashboard.css">
-    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/usuario/catalog_base.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/usuario/user_dashboard.css') }}">
 </head>
 
 <body>
-    <div id="overlay" onclick="toggleSidebar()"></div>
-    <aside class="sidebar" id="sidebar">
-        <div class="sidebar-header">
-            <button class="close-sidebar" onclick="toggleSidebar()">
-                <i class="fas fa-times"></i>
-            </button>
-            <img src="{{ url_for('static', filename='img/logo.jpeg') }}" class="logo-circular">
-        </div>
+    <header class="store-header">
+        <div class="container-fluid px-3 px-lg-4">
+            <div class="store-header-inner">
+                <button class="icon-btn-dark" type="button" data-bs-toggle="offcanvas" data-bs-target="#menuCanvas"
+                    aria-controls="menuCanvas">
+                    <i class="fas fa-bars"></i>
+                </button>
 
-        <ul class="nav-links">
-            <li class="menu-item">
-                <a href="#" onclick="event.preventDefault(); toggleSubmenu(this);">
-                    <span><i class="fas fa-book"></i> Catálogo</span>
-                    <i class="fas fa-chevron-down"></i>
+                <a class="brand-logo" href="{{ url_for('user_dashboard') }}">
+                    <img src="{{ url_for('static', filename='img/logo_transparente.png') }}" alt="Logo Nachoher">
                 </a>
 
-                <ul class="submenu">
-                    <li>Gaula</li>
-                    <li>Ejercito</li>
-                    <li>Policia</li>
-                </ul>
-            </li>
-            </li>
-            <li>
-                <a href="{{ url_for('orden_personalizada') }}">
-                    <i class="fas fa-pencil"></i>
-                    Ordena tu prenda personalizada
-                </a>
-            </li>
-            <li>
-                <a href="{{ url_for('sobre_nosotros') }}">
-                    <i class="fas fa-person"></i> Sobre nosotros
-                </a>
-            </li>
-            <li>
-        </ul>
-    </aside>
-
-    <!-- == HEADER == -->
-    <div class="top-bar">
-        <div class="container-fluid px-2">
-            <div class="d-flex align-items-center justify-content-between">
-                <div class="header-left d-flex align-items-center">
-                    <button class="menu-toggle" onclick="toggleSidebar()">
-                        <i class="fas fa-bars"></i>
-                    </button>
-                </div>
-
-                <div class="top-icons">
-                    <a href="{{ url_for('cart') }}" class="icon-btn">
-                        <i class="fas fa-shopping-cart"></i>
+                <div class="header-actions">
+                    <a href="{{ url_for('cart') }}" class="icon-btn-dark">
+                        <i class="fas fa-bag-shopping"></i>
                     </a>
 
                     <div class="user-dropdown">
-                        <button class="user-dropdown-btn icon-btn" onclick="toggleUserMenu()">
-                            <i class="fas fa-user"></i>
+                        <button class="icon-btn-dark" type="button" onclick="toggleUserMenu()">
+                            <i class="far fa-user"></i>
                         </button>
-
                         <div class="dropdown-menu-custom" id="userDropdown">
                             <a href="{{ url_for('user_profile') }}">
                                 <i class="fas fa-user-circle me-2"></i> Mi Perfil
@@ -78,19 +41,57 @@
                                 <i class="fas fa-box me-2"></i> Mis Pedidos
                             </a>
                             <a href="{{ url_for('logout') }}">
-                                <i class="fas fa-sign-out-alt me-2"></i> Cerrar sesión
+                                <i class="fas fa-sign-out-alt me-2"></i> Cerrar sesion
                             </a>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
+    </header>
+
+    <div class="offcanvas offcanvas-start menu-canvas" tabindex="-1" id="menuCanvas" aria-labelledby="menuCanvasLabel">
+        <div class="offcanvas-header">
+            <button type="button" class="btn-close-custom" data-bs-dismiss="offcanvas" aria-label="Close">
+                <i class="fas fa-xmark"></i>
+            </button>
+            <img src="{{ url_for('static', filename='img/logo_transparente.png') }}" class="offcanvas-logo" alt="Logo">
+            <span></span>
+        </div>
+        <div class="offcanvas-body">
+            <nav class="offcanvas-nav">
+                <a class="offcanvas-link active" href="{{ url_for('user_dashboard') }}">Home</a>
+                <a class="offcanvas-link" href="{{ url_for('promociones') }}">Valentines</a>
+                <a class="offcanvas-link" href="{{ url_for('promociones') }}">Throwback Originals</a>
+                <a class="offcanvas-link" href="{{ url_for('promociones') }}">Rubiuscorp</a>
+                <a class="offcanvas-link" href="{{ url_for('promociones') }}">Old School Madkat</a>
+                <a class="offcanvas-link" href="{{ url_for('promociones') }}">Accesorios</a>
+            </nav>
+
+            <div class="offcanvas-divider"></div>
+
+            <nav class="offcanvas-nav">
+                <a class="offcanvas-link" href="{{ url_for('orden_personalizada') }}">Orden personalizada</a>
+                <a class="offcanvas-link" href="{{ url_for('sobre_nosotros') }}">Sobre nosotros</a>
+                <a class="offcanvas-link" href="{{ url_for('cart') }}">Carrito</a>
+            </nav>
+        </div>
     </div>
 
-    <!-- ================= MENSAJES FLASH ================= -->
+    <section class="hero">
+        <div class="hero-overlay"></div>
+        <div class="hero-content text-center">
+            <p class="hero-kicker">BIENVENIDOS A</p><br><br><br><br><br>
+            <!-- <h1 class="hero-title">Nachoher Store</h1> -->
+             <br><br><br>
+            <p class="hero-subtitle">Catalogo premium de prendas y accesorios</p>
+            <a href="#catalogo" class="hero-cta">Ver catalogo</a>
+        </div>
+    </section>
+
     {% with messages = get_flashed_messages(with_categories=true) %}
     {% if messages %}
-    <div class="container mt-3">
+    <div class="container mt-4">
         {% for category, message in messages %}
         <div class="alert alert-{{ category }} alert-dismissible fade show">
             {{ message }}
@@ -101,21 +102,15 @@
     {% endif %}
     {% endwith %}
 
-    <!-- == LOGO PRINCIPAL REDUCIDO == -->
-    <div class="logo-container">
-        <img src="{{ url_for('static', filename='img/logo.jpeg') }}" class="logo-principal" alt="Logo Nachoher">
-    </div>
-
-    <!-- ==CONTENIDO PRINCIPAL== -->
-    <div class="main-content">
-        <div class="container catalogo">
+    <main class="main-content" id="catalogo">
+        <div class="container catalog-shell">
             <h2 class="section-title">Destacados</h2>
 
-            <div class="row" id="productosContainer">
+            <div class="row g-4" id="productosContainer">
                 {% for producto in productos %}
-                <div class="col-lg-3 col-md-4 col-sm-6 mb-4 producto-item" data-nombre="{{ producto.nombre|lower }}"
+                <div class="col-lg-3 col-md-4 col-sm-6 producto-item" data-nombre="{{ producto.nombre|lower }}"
                     data-precio="{{ producto.precio }}">
-                    <div class="card producto-card">
+                    <div class="card producto-card h-100">
                         <a href="{{ url_for('product_detail', id_producto=producto.id_producto) }}">
                             {% if producto.imagen_url %}
                             <img src="{{ url_for('static', filename=producto.imagen_url) }}" class="card-img-top"
@@ -129,29 +124,39 @@
                         <div class="card-body">
                             <h5 class="card-title">{{ producto.nombre }}</h5>
                             <p class="card-text text-muted">{{ producto.descripcion }}</p>
-                            <p class="price">{{ producto.precio|cop }}</p>
-                            {% if producto.stock|int <= 0 %} <p class="text-danger fw-bold mb-2">Agotado</p>
-                                {% endif %}
 
-                                <form method="POST"
-                                    action="{{ url_for('add_to_cart', id_producto=producto.id_producto) }}">
-                                    <div class="input-group">
-                                        <input type="number" name="cantidad" class="form-control" value="1" min="1"
-                                            max="{{ producto.stock|int }}" {% if producto.stock|int <=0 %}disabled{%
-                                            endif %}>
-                                        <button type="submit" class="btn btn-primary" {% if producto.stock|int <=0
-                                            %}disabled{% endif %}>
-                                            <i class="fas fa-cart-plus"></i> Agregar
-                                        </button>
-                                    </div>
-                                </form>
+                            {% if producto.promo_activa %}
+                            <div class="promo-badge mb-2">
+                                <span class="promo-tag">{{ producto.promo_etiqueta }}</span>
+                                <small>{{ producto.promo_nombre }}</small>
+                            </div>
+                            <p class="price mb-1">{{ producto.precio_con_descuento|cop }}</p>
+                            <p class="price-original">{{ producto.precio_original|cop }}</p>
+                            {% else %}
+                            <p class="price">{{ producto.precio|cop }}</p>
+                            {% endif %}
+
+                            {% if producto.stock|int <= 0 %}
+                            <p class="text-danger fw-bold mb-2">Agotado</p>
+                            {% endif %}
+
+                            <form method="POST" action="{{ url_for('add_to_cart', id_producto=producto.id_producto) }}">
+                                <div class="input-group">
+                                    <input type="number" name="cantidad" class="form-control" value="1" min="1"
+                                        max="{{ producto.stock|int }}" {% if producto.stock|int <=0 %}disabled{% endif %}>
+                                    <button type="submit" class="btn btn-primary" {% if producto.stock|int <=0 %}disabled{% endif %}>
+                                        <i class="fas fa-cart-plus"></i> Agregar
+                                    </button>
+                                </div>
+                            </form>
                         </div>
                     </div>
                 </div>
                 {% endfor %}
             </div>
         </div>
-    </div>
+    </main>
+
     <footer class="footer-compact">
         <div class="container">
             <div class="footer-content">
@@ -159,13 +164,13 @@
                     <i class="fas fa-crown"></i> <strong>Nachoher</strong>
                 </div>
                 <div class="footer-item">
-                    <i class="fas fa-map-marker-alt"></i> Urbanización Pablo Sexto
+                    <i class="fas fa-map-marker-alt"></i> Urbanizacion Pablo Sexto
                 </div>
                 <div class="footer-item">
                     <i class="fas fa-phone"></i> +57 313 2484017
                 </div>
                 <div class="footer-item">
-                    <i class="fas fa-clock"></i> Lun–Vie 8:00–19:30 / Sab 8:00-14:00
+                    <i class="fas fa-clock"></i> Lun-Vie 8:00-19:30 / Sab 8:00-14:00
                 </div>
                 <div class="footer-social">
                     <a href="#" aria-label="Facebook"><i class="fab fa-facebook"></i></a>
@@ -178,7 +183,10 @@
             </div>
         </div>
     </footer>
-    <script src="../../static/js/usuario/user_dashboard.js"></script>
+
+    <script src="{{ url_for('static', filename='js/usuario/catalog_base.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/usuario/user_dashboard.js') }}"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 
-</html
+</html>

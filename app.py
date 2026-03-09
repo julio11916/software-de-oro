@@ -35,6 +35,7 @@ REGISTRO_COLUMNS = ['id_registro', 'id_usuario', 'accion', 'fecha_accion']
 PROMO_COLUMNS = [
     'id_promo', 'nombre', 'descripcion',
     'tipo_descuento', 'valor_descuento',
+    'id_producto',
     'codigo',
     'fecha_inicio', 'fecha_fin',
     'activo'
@@ -119,11 +120,14 @@ def cargar_promociones_df():
         promos['tipo_descuento'] = 'porcentaje'
     if 'codigo' not in promos.columns:
         promos['codigo'] = ''
+    if 'id_producto' not in promos.columns:
+        promos['id_producto'] = pd.Series(dtype='float')
 
     # asegurar tipos
     promos['valor_descuento'] = pd.to_numeric(promos['valor_descuento'], errors='coerce').fillna(0)
     promos['tipo_descuento'] = promos['tipo_descuento'].astype(str).str.strip().str.lower()
     promos.loc[~promos['tipo_descuento'].isin(['porcentaje', 'valor_fijo']), 'tipo_descuento'] = 'porcentaje'
+    promos['id_producto'] = pd.to_numeric(promos['id_producto'], errors='coerce')
     promos['codigo'] = promos['codigo'].fillna('').astype(str).str.strip().str.upper()
     promos['activo'] = promos['activo'].astype(bool)
     return promos[PROMO_COLUMNS]
@@ -1433,6 +1437,50 @@ def user_dashboard():
 
         productos = productos[productos['eliminado'] == False]
         lista_productos = productos.to_dict(orient='records')
+
+        # Promocion vigente por producto para mostrar en catalogo
+        promos = cargar_promociones_df()
+        hoy = datetime.now().date()
+        mejor_promo_por_producto = {}
+        mejor_descuento_por_producto = {}
+        for _, row in promos.iterrows():
+            promo = row.to_dict()
+            if not promocion_esta_aplicable(promo, hoy):
+                continue
+            id_producto_promo = pd.to_numeric(promo.get('id_producto'), errors='coerce')
+            if pd.isna(id_producto_promo):
+                continue
+            id_prod_int = int(id_producto_promo)
+            precio_ref = float(pd.to_numeric(
+                productos.loc[productos['id_producto'] == id_prod_int, 'precio'].iloc[0]
+                if not productos[productos['id_producto'] == id_prod_int].empty else 0,
+                errors='coerce'
+            ) or 0)
+            descuento_actual = calcular_descuento_promocion(precio_ref, promo)
+            if descuento_actual > mejor_descuento_por_producto.get(id_prod_int, -1):
+                mejor_descuento_por_producto[id_prod_int] = descuento_actual
+                mejor_promo_por_producto[id_prod_int] = promo
+
+        for producto in lista_productos:
+            precio_base = float(pd.to_numeric(producto.get('precio', 0), errors='coerce') or 0)
+            promo = mejor_promo_por_producto.get(int(producto.get('id_producto', 0)))
+            if promo:
+                descuento = calcular_descuento_promocion(precio_base, promo)
+                producto['precio_original'] = precio_base
+                producto['precio_con_descuento'] = max(0.0, precio_base - descuento)
+                producto['promo_activa'] = True
+                producto['promo_nombre'] = promo.get('nombre', '')
+                if promo.get('tipo_descuento') == 'valor_fijo':
+                    producto['promo_etiqueta'] = f"-{formatear_cop(promo.get('valor_descuento', 0))}"
+                else:
+                    valor_pct = float(pd.to_numeric(promo.get('valor_descuento', 0), errors='coerce') or 0)
+                    producto['promo_etiqueta'] = f"-{valor_pct:g}%"
+            else:
+                producto['precio_original'] = precio_base
+                producto['precio_con_descuento'] = precio_base
+                producto['promo_activa'] = False
+                producto['promo_nombre'] = ''
+                producto['promo_etiqueta'] = ''
         
         # Obtener el contador del carrito
         carrito = session.get('carrito', [])
@@ -1462,7 +1510,7 @@ def product_detail(id_producto):
         carrito = session.get('carrito', [])
         cart_count = len(carrito)
         
-        return render_template('Usuarios/product_detail.html', producto=producto_dict, cart_count=cart_count)
+        return render_template('Usuarios/Detalle pedido/product_detail.html', producto=producto_dict, cart_count=cart_count)
     return "Acceso denegado"
 
 
@@ -1807,7 +1855,7 @@ def user_order_details(id_pedido):
     productos = pd.read_excel('bd/producto.xlsx')
     detalles = pd.merge(detalles, productos[['id_producto', 'nombre', 'precio']], on='id_producto')
     
-    return render_template('Usuarios/user_order_details.html',
+    return render_template('Usuarios/Informacion compras pedido/user_order_details.html',
                           pedido=pedido.iloc[0].to_dict(),
                           detalles=detalles.to_dict(orient='records'))
 
@@ -1865,7 +1913,7 @@ def user_profile():
             pagos_usuario = pagos[pagos['id_pedido'].isin(pedidos_usuario['id_pedido'])]
             gasto_total = pagos_usuario['monto'].sum() if not pagos_usuario.empty else 0.0
     
-    return render_template('Usuarios/user_profile.html', 
+    return render_template('Usuarios/Ajustes/user_profile.html', 
                           usuario=usuario_dict,
                           pedidos_total=pedidos_total,
                           gasto_total=gasto_total)
@@ -2163,7 +2211,7 @@ def producto_detalle(id_producto):
 
     carrito = session.get('carrito', [])
     cart_count = len(carrito)
-    return render_template('Usuarios/product_detail.html', producto=producto.iloc[0].to_dict(), cart_count=cart_count)
+    return render_template('Usuarios/Detalle pedido/product_detail.html', producto=producto.iloc[0].to_dict(), cart_count=cart_count)
 
 @app.route('/admin/promo', methods=['GET','POST'])
 def admin_promo():
@@ -2172,6 +2220,7 @@ def admin_promo():
         return "Acceso denegado"
 
     if request.method == 'POST':
+        id_producto = pd.to_numeric(request.form.get('id_producto', ''), errors='coerce')
         nombre = request.form.get('nombre', '').strip()
         descripcion = request.form.get('descripcion', '').strip()
         tipo_descuento = request.form.get('tipo_descuento', 'porcentaje').strip().lower()
@@ -2195,6 +2244,22 @@ def admin_promo():
         if inicio_date and fin_date and inicio_date > fin_date:
             flash('La fecha de inicio no puede ser mayor que la fecha fin.', 'warning')
             return redirect(url_for('admin_promo'))
+        if pd.isna(id_producto):
+            flash('Debes seleccionar un producto para la promocion.', 'warning')
+            return redirect(url_for('admin_promo'))
+        if os.path.exists('bd/producto.xlsx'):
+            productos_ref = pd.read_excel('bd/producto.xlsx')
+            if 'eliminado' not in productos_ref.columns:
+                productos_ref['eliminado'] = False
+            productos_ref['eliminado'] = productos_ref['eliminado'].fillna(False).astype(bool)
+            id_producto_num = int(id_producto)
+            existe_producto = not productos_ref[
+                (pd.to_numeric(productos_ref.get('id_producto', 0), errors='coerce') == id_producto_num)
+                & (productos_ref['eliminado'] == False)
+            ].empty
+            if not existe_producto:
+                flash('El producto seleccionado no existe o esta inactivo.', 'warning')
+                return redirect(url_for('admin_promo'))
 
         promos = cargar_promociones_df()
         if codigo:
@@ -2209,6 +2274,7 @@ def admin_promo():
             'descripcion': descripcion,
             'tipo_descuento': tipo_descuento,
             'valor_descuento': valor_descuento,
+            'id_producto': int(id_producto),
             'codigo': codigo,
             'fecha_inicio': fecha_inicio,
             'fecha_fin': fecha_fin,
@@ -2217,11 +2283,24 @@ def admin_promo():
         promos = pd.concat([promos, pd.DataFrame([nuevo])], ignore_index=True)
         guardar_promociones_df(promos)
         detalle_desc = formatear_cop(valor_descuento) if tipo_descuento == 'valor_fijo' else f"{valor_descuento:.2f}%"
-        registrar_actividad(f"Promocion creada: {nombre}\n- descuento: {detalle_desc}\n- codigo: {codigo or 'N/A'}")
+        registrar_actividad(
+            f"Promocion creada: {nombre}\n"
+            f"- producto ID: {int(id_producto)}\n"
+            f"- descuento: {detalle_desc}\n"
+            f"- codigo: {codigo or 'N/A'}"
+        )
         return redirect(url_for('admin_promo'))
 
     promos = cargar_promociones_df()
     hoy = datetime.now().date()
+    productos = pd.read_excel('bd/producto.xlsx') if os.path.exists('bd/producto.xlsx') else pd.DataFrame()
+    if 'eliminado' not in productos.columns:
+        productos['eliminado'] = False
+    productos['eliminado'] = productos['eliminado'].fillna(False).astype(bool)
+    productos = productos[productos['eliminado'] == False].copy()
+    productos['id_producto'] = pd.to_numeric(productos.get('id_producto', 0), errors='coerce').fillna(0).astype(int)
+    productos['precio'] = pd.to_numeric(productos.get('precio', 0), errors='coerce').fillna(0)
+    lista_productos = productos.to_dict(orient='records')
     pagos = pd.read_excel('bd/pagos.xlsx') if os.path.exists('bd/pagos.xlsx') else pd.DataFrame()
     if not pagos.empty:
         if 'id_promo' not in pagos.columns:
@@ -2247,11 +2326,19 @@ def admin_promo():
     for p in lista_promos:
         p['estado_vigencia'] = estado_vigencia_promocion(p, hoy)
         p['es_aplicable'] = promocion_esta_aplicable(p, hoy)
+        p['id_producto'] = int(pd.to_numeric(p.get('id_producto'), errors='coerce') or 0)
         key = int(pd.to_numeric(p.get('id_promo'), errors='coerce') or 0)
         metrica = impacto_map.get(key, {'usos': 0, 'descuento_total': 0.0})
         p['usos'] = metrica['usos']
         p['descuento_total'] = metrica['descuento_total']
-    return render_template('Administrador/Promociones/adim_promo.html', promos=lista_promos)
+    nombre_producto = {int(row['id_producto']): str(row.get('nombre', 'Producto')) for _, row in productos.iterrows()}
+    for p in lista_promos:
+        p['producto_nombre'] = nombre_producto.get(p['id_producto'], 'Producto no encontrado')
+    return render_template(
+        'Administrador/Promociones/adim_promo.html',
+        promos=lista_promos,
+        productos=lista_productos
+    )
 
 
 @app.route('/admin/promo/toggle/<int:id_promo>', methods=['POST'])
@@ -2278,7 +2365,7 @@ def promociones():
         if promocion_esta_aplicable(p, hoy):
             p['estado_vigencia'] = estado_vigencia_promocion(p, hoy)
             lista_promos.append(p)
-    return render_template('Usuarios/promociones.html', promos=lista_promos)
+    return render_template('Usuarios/Promociones/promociones.html', promos=lista_promos)
 
 
 @app.route('/admin/charts')
@@ -2630,7 +2717,7 @@ def orden_personalizada():
 #sobre nosotros
 @app.route('/sobre-nosotros')
 def sobre_nosotros():
-    return render_template('Usuarios/sobre_nosotros.html')
+    return render_template('Usuarios/Informacion empresa/sobre_nosotros.html')
 
 if __name__ == '__main__':
     app.run(debug=True)
