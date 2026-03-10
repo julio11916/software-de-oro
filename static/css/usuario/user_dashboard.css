@@ -29,3 +29,18 @@
         width: min(72vw, 300px);
     }
 }
+.menu-normal {
+    font-weight: normal !important;
+}
+.offcanvas-link {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 500;
+}
+
+.offcanvas-link i {
+    width: 20px;
+    text-align: center;
+    font-size: 16px;
+}

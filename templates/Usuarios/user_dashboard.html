@@ -60,12 +60,27 @@
         </div>
         <div class="offcanvas-body">
             <nav class="offcanvas-nav">
-                <a class="offcanvas-link active" href="{{ url_for('user_dashboard') }}">Home</a>
-                <a class="offcanvas-link" href="{{ url_for('promociones') }}">Valentines</a>
-                <a class="offcanvas-link" href="{{ url_for('promociones') }}">Throwback Originals</a>
-                <a class="offcanvas-link" href="{{ url_for('promociones') }}">Rubiuscorp</a>
-                <a class="offcanvas-link" href="{{ url_for('promociones') }}">Old School Madkat</a>
-                <a class="offcanvas-link" href="{{ url_for('promociones') }}">Accesorios</a>
+                <a class="offcanvas-link active" href="{{ url_for('user_dashboard') }}">
+                     <i class="fas fa-house"></i> Home
+                </a>
+                <a class="offcanvas-link" href="{{ url_for('promociones') }}">
+                    <i class="fas fa-shirt"></i> Catálogo
+                </a>
+                <a class="offcanvas-link menu-normal" href="{{ url_for('promociones') }}">
+                    <i class="fas fa-anchor"></i> Armada
+                </a>
+                <a class="offcanvas-link menu-normal" href="{{ url_for('promociones') }}">
+                     <i class="fas fa-shield-halved"></i> Ejército
+                </a>
+                <a class="offcanvas-link menu-normal" href="{{ url_for('promociones') }}">
+                     <i class="fas fa-user-shield"></i> Gaula
+                </a>
+                <a class="offcanvas-link menu-normal" href="{{ url_for('promociones') }}">
+                    <i class="fas fa-badge"></i> Policía
+                </a>
+                <a class="offcanvas-link" href="{{ url_for('promociones') }}">
+                    <i class="fas fa-glasses"></i> Accesorios
+                </a>
             </nav>
 
             <div class="offcanvas-divider"></div>
@@ -73,7 +88,6 @@
             <nav class="offcanvas-nav">
                 <a class="offcanvas-link" href="{{ url_for('orden_personalizada') }}">Orden personalizada</a>
                 <a class="offcanvas-link" href="{{ url_for('sobre_nosotros') }}">Sobre nosotros</a>
-                <a class="offcanvas-link" href="{{ url_for('cart') }}">Carrito</a>
             </nav>
         </div>
     </div>
