@@ -1,13 +1,35 @@
-body {
-    background-color: #f8f9fa;
+body.auth-page {
+    min-height: 100vh;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-image: url("../../img/Pagina/nachoher_fondo_logo.jpg");
+    background-size: cover;
+    background-position: center center;
+    background-attachment: fixed;
 }
 
-.registro-card {
-    max-width: 500px;
-    margin: auto;
-    margin-top: 3rem;
+.auth-card {
+    width: min(520px, 92vw);
     padding: 2rem;
-    background-color: white;
-    border-radius: 10px;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    background: rgba(255, 255, 255, 0.92);
+    border-radius: 12px;
+    border: 1px solid #000;
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.18);
+    text-align: center;
+}
+
+.auth-card form {
+    text-align: left;
+}
+
+.auth-input {
+    border: 1px solid #000;
+    text-align: left;
+}
+
+.auth-input:focus {
+    border-color: #000;
+    box-shadow: 0 0 0 0.2rem rgba(0, 0, 0, 0.15);
 }
