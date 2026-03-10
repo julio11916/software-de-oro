@@ -108,8 +108,15 @@
             {% for promo in promos %}
             <div class="col-md-6">
                 <div class="card">
+                    {% if promo.producto_imagen_url %}
+                    <img src="{{ url_for('static', filename=promo.producto_imagen_url) }}" class="card-img-top" alt="{{ promo.producto_nombre }}">
+                    {% endif %}
                     <div class="card-body">
                         <h5 class="card-title">{{ promo.nombre }}</h5>
+                        <p class="card-text"><strong>Producto:</strong> {{ promo.producto_nombre }}</p>
+                        {% if promo.producto_precio %}
+                        <p class="card-text"><strong>Precio base:</strong> {{ promo.producto_precio|cop }}</p>
+                        {% endif %}
                         {% if promo.descripcion %}<p class="card-text">{{ promo.descripcion }}</p>{% endif %}
                         <p class="card-text">
                             <strong>Descuento:</strong>

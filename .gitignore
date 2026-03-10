@@ -23,6 +23,11 @@ ENV/
 .DS_Store
 Thumbs.db
 
+# Temp
+.tmp/
+.tmp_env/
+.tmp_py/
+
 # Archivos de Excel (datos)
 *.xlsx
 *.xls
