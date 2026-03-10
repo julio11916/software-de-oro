@@ -393,8 +393,10 @@ def home():
     lista_productos = productos.to_dict(orient='records')
     return render_template('Usuarios/Autenticacion/login.html', productos=lista_productos)
 
-@app.route('/login', methods=['POST'])
+@app.route('/login', methods=['GET', 'POST'])
 def login():
+    if request.method == 'GET':
+        return render_template('Usuarios/Autenticacion/login_form.html')
     usuarios = cargar_usuarios_df()  # leer cada vez
     email = request.form['email']
     password = request.form['password']

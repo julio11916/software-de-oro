@@ -8,30 +8,60 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/usuario/registro.css') }}">
 </head>
 
-<body>
-    <div class="registro-card">
+<body class="auth-page">
+    <div class="auth-card">
         <h3 class="mb-4 text-center">Crear cuenta</h3>
-        <form method="POST" action="{{ url_for('registro') }}">
+        <form method="POST" action="{{ url_for('registro') }}" id="registroForm">
             <div class="mb-3">
                 <label for="nombre" class="form-label">Nombre completo</label>
-                <input type="text" class="form-control" name="nombre" required>
+                <input type="text" class="form-control auth-input" name="nombre" id="nombre" required>
             </div>
             <div class="mb-3">
-                <label for="email" class="form-label">Correo electrónico</label>
-                <input type="email" class="form-control" name="email" required>
+                <label for="email" class="form-label">Correo electronico</label>
+                <input type="email" class="form-control auth-input" name="email" id="email" required>
             </div>
             <div class="mb-3">
-                <label for="password" class="form-label">Contraseña</label>
-                <input type="password" class="form-control" name="password" required>
+                <label for="password" class="form-label">Contrasena</label>
+                <input type="password" class="form-control auth-input" name="password" id="password"
+                    required minlength="8"
+                    pattern="(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}"
+                    title="Minimo 8 caracteres, con mayuscula, minuscula, numero y un caracter especial.">
             </div>
-            <div class="d-grid">
-                <button type="submit" class="btn btn-warning">Registrarme</button>
+            <div class="mb-3">
+                <label for="confirm_password" class="form-label">Verificar contrasena</label>
+                <input type="password" class="form-control auth-input" id="confirm_password" required>
+            </div>
+            <div class="mb-3 form-check">
+                <input type="checkbox" class="form-check-input" id="terms" required>
+                <label class="form-check-label" for="terms">
+                    He leido y aceptado todos los terminos del servicio y politicas de privacidad
+                </label>
+            </div>
+            <div class="d-grid gap-2 d-md-flex">
+                <button type="submit" class="btn btn-dark flex-fill">Registrarme</button>
+                <a href="{{ url_for('home') }}" class="btn btn-dark flex-fill">Cancelar</a>
             </div>
         </form>
-        <div class="mt-3 text-center">
-            <a href="{{ url_for('home') }}">¿Ya tienes cuenta? Inicia sesión</a>
+        <div class="mt-4 text-center">
+            <h6 class="mb-3">¿Ya tienes cuenta?</h6>
+            <a href="{{ url_for('login') }}" class="btn btn-dark w-100">Iniciar sesion</a>
         </div>
     </div>
+    <script>
+        const passwordInput = document.getElementById("password");
+        const confirmInput = document.getElementById("confirm_password");
+
+        function validarConfirmacion() {
+            if (confirmInput.value && confirmInput.value !== passwordInput.value) {
+                confirmInput.setCustomValidity("Las contrasenas no coinciden.");
+            } else {
+                confirmInput.setCustomValidity("");
+            }
+        }
+
+        passwordInput.addEventListener("input", validarConfirmacion);
+        confirmInput.addEventListener("input", validarConfirmacion);
+    </script>
 </body>
 
 </html>
