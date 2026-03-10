@@ -1091,6 +1091,11 @@ def admin_pedidos():
     else:
         detalle = pd.DataFrame(columns=['id_detalle', 'id_pedido', 'id_producto', 'cantidad', 'subtotal'])
 
+    if os.path.exists('bd/producto.xlsx'):
+        productos = pd.read_excel('bd/producto.xlsx')
+    else:
+        productos = pd.DataFrame(columns=['id_producto', 'nombre'])
+
     usuarios = cargar_usuarios_df()
 
     if 'id_pedido' not in pedidos.columns:
@@ -1117,15 +1122,27 @@ def admin_pedidos():
 
     if 'id_pedido' not in detalle.columns:
         detalle['id_pedido'] = pd.Series(dtype='int')
+    if 'id_producto' not in detalle.columns:
+        detalle['id_producto'] = pd.Series(dtype='int')
+    if 'cantidad' not in detalle.columns:
+        detalle['cantidad'] = 0
     if 'subtotal' not in detalle.columns:
         detalle['subtotal'] = 0
+
+    if 'id_producto' not in productos.columns:
+        productos['id_producto'] = pd.Series(dtype='int')
+    if 'nombre' not in productos.columns:
+        productos['nombre'] = ''
 
     pedidos['id_pedido'] = pd.to_numeric(pedidos['id_pedido'], errors='coerce')
     pagos['id_pedido'] = pd.to_numeric(pagos['id_pedido'], errors='coerce')
     pagos['id_pago'] = pd.to_numeric(pagos['id_pago'], errors='coerce')
     pagos['monto'] = pd.to_numeric(pagos['monto'], errors='coerce').fillna(0)
     detalle['id_pedido'] = pd.to_numeric(detalle['id_pedido'], errors='coerce')
+    detalle['id_producto'] = pd.to_numeric(detalle['id_producto'], errors='coerce')
+    detalle['cantidad'] = pd.to_numeric(detalle['cantidad'], errors='coerce').fillna(0)
     detalle['subtotal'] = pd.to_numeric(detalle['subtotal'], errors='coerce').fillna(0)
+    productos['id_producto'] = pd.to_numeric(productos['id_producto'], errors='coerce')
 
     totales_pedido = detalle.groupby('id_pedido', as_index=False)['subtotal'].sum()
     totales_pedido = totales_pedido.rename(columns={'subtotal': 'total_productos'})
@@ -1153,7 +1170,43 @@ def admin_pedidos():
             return f"Usuario #{uid}"
         return str(valor) if str(valor).strip() else 'N/A'
 
+    productos_map = {}
+    for _, producto in productos.iterrows():
+        pid = pd.to_numeric(producto.get('id_producto'), errors='coerce')
+        if pd.notna(pid):
+            productos_map[int(pid)] = str(producto.get('nombre', '')).strip()
+
+    productos_por_pedido = {}
+    for id_pedido, grupo in detalle.groupby('id_pedido'):
+        if pd.isna(id_pedido):
+            continue
+
+        items = []
+        for _, item in grupo.iterrows():
+            pid = pd.to_numeric(item.get('id_producto'), errors='coerce')
+            cantidad = pd.to_numeric(item.get('cantidad'), errors='coerce')
+            nombre_producto = ''
+
+            if pd.notna(pid):
+                nombre_producto = productos_map.get(int(pid), f"Producto #{int(pid)}")
+            if not nombre_producto:
+                nombre_producto = 'Producto sin nombre'
+
+            if pd.notna(cantidad) and int(cantidad) > 1:
+                items.append(f"{nombre_producto} x{int(cantidad)}")
+            else:
+                items.append(nombre_producto)
+
+        vistos = []
+        for item in items:
+            if item not in vistos:
+                vistos.append(item)
+        productos_por_pedido[int(id_pedido)] = ', '.join(vistos) if vistos else 'Sin productos'
+
     pedidos_view['usuario_nombre'] = pedidos_view['id_usuario'].apply(resolver_usuario)
+    pedidos_view['productos_pedido'] = pedidos_view['id_pedido'].apply(
+        lambda valor: productos_por_pedido.get(int(valor), 'Sin productos') if pd.notna(valor) else 'Sin productos'
+    )
     pedidos_view = pedidos_view.sort_values(by='id_pedido', ascending=False, na_position='last')
 
     pagos_view = pagos.sort_values(by='id_pago', ascending=False, na_position='last')
@@ -2326,6 +2379,7 @@ def admin_promo():
         productos['eliminado'] = False
     productos['eliminado'] = productos['eliminado'].fillna(False).astype(bool)
     productos = productos[productos['eliminado'] == False].copy()
+    productos = normalizar_imagenes_productos(productos)
     productos['id_producto'] = pd.to_numeric(productos.get('id_producto', 0), errors='coerce').fillna(0).astype(int)
     productos['precio'] = pd.to_numeric(productos.get('precio', 0), errors='coerce').fillna(0)
     lista_productos = productos.to_dict(orient='records')
@@ -2387,10 +2441,41 @@ def promociones():
     # pagina publica que muestra promociones activas y vigentes
     promos = cargar_promociones_df()
     hoy = datetime.now().date()
+    productos = pd.read_excel('bd/producto.xlsx') if os.path.exists('bd/producto.xlsx') else pd.DataFrame()
+    if 'eliminado' not in productos.columns:
+        productos['eliminado'] = False
+    productos['eliminado'] = productos['eliminado'].fillna(False).astype(bool)
+    productos = productos[productos['eliminado'] == False].copy()
+    productos = normalizar_imagenes_productos(productos)
+    productos['id_producto'] = pd.to_numeric(productos.get('id_producto', 0), errors='coerce')
+
+    productos_map = {}
+    for _, row in productos.iterrows():
+        id_producto = pd.to_numeric(row.get('id_producto'), errors='coerce')
+        if pd.notna(id_producto):
+            productos_map[int(id_producto)] = {
+                'nombre': str(row.get('nombre', '')).strip(),
+                'imagen_url': str(row.get('imagen_url', '')).strip(),
+                'precio': float(pd.to_numeric(row.get('precio', 0), errors='coerce') or 0),
+                'descripcion': str(row.get('descripcion', '')).strip()
+            }
+
     lista_promos = []
     for _, row in promos.iterrows():
         p = row.to_dict()
         if promocion_esta_aplicable(p, hoy):
+            id_producto = pd.to_numeric(p.get('id_producto'), errors='coerce')
+            producto = productos_map.get(int(id_producto), None) if pd.notna(id_producto) else None
+            if producto:
+                p['producto_nombre'] = producto['nombre'] or p.get('nombre', 'Producto')
+                p['producto_imagen_url'] = producto['imagen_url']
+                p['producto_precio'] = producto['precio']
+                if not str(p.get('descripcion', '')).strip() and producto['descripcion']:
+                    p['descripcion'] = producto['descripcion']
+            else:
+                p['producto_nombre'] = 'Producto no disponible'
+                p['producto_imagen_url'] = ''
+                p['producto_precio'] = 0.0
             p['estado_vigencia'] = estado_vigencia_promocion(p, hoy)
             lista_promos.append(p)
     return render_template('Usuarios/Promociones/promociones.html', promos=lista_promos)

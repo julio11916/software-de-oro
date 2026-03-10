@@ -72,6 +72,7 @@
                                     <tr>
                                         <th>ID</th>
                                         <th>Usuario</th>
+                                        <th>Producto(s)</th>
                                         <th>Fecha</th>
                                         <th>Total</th>
                                         <th>Estado actual</th>
@@ -83,6 +84,7 @@
                                     <tr>
                                         <td>#{{ pedido.id_pedido }}</td>
                                         <td>{{ pedido.usuario_nombre }}</td>
+                                        <td>{{ pedido.productos_pedido }}</td>
                                         <td>{{ pedido.fecha_pedido }}</td>
                                         <td>{{ pedido.monto|cop if pedido.monto else pedido.total_productos|cop }}</td>
                                         <td>
