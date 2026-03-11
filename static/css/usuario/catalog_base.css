@@ -118,6 +118,10 @@ body {
 }
 
 .offcanvas-link.active {
+    text-decoration: none;
+}
+
+.offcanvas-link.active span{
     text-decoration: underline;
     text-decoration-thickness: 3px;
     text-underline-offset: 8px;

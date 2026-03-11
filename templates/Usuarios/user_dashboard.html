@@ -61,33 +61,34 @@
         <div class="offcanvas-body">
             <nav class="offcanvas-nav">
                 <a class="offcanvas-link active" href="{{ url_for('user_dashboard') }}">
-                     <i class="fas fa-house"></i> Home
+                    <i class="fas fa-house"></i>
+                    <span>Home</span>
                 </a>
-                <a class="offcanvas-link" href="{{ url_for('promociones') }}">
-                    <i class="fas fa-shirt"></i> Catálogo
+                <a class="offcanvas-link active">
+                    <i class="fas fa-shirt"></i>
+                    <span>Catálogo</span>
                 </a>
-                <a class="offcanvas-link menu-normal" href="{{ url_for('promociones') }}">
-                    <i class="fas fa-anchor"></i> Armada
-                </a>
-                <a class="offcanvas-link menu-normal" href="{{ url_for('promociones') }}">
-                     <i class="fas fa-shield-halved"></i> Ejército
-                </a>
-                <a class="offcanvas-link menu-normal" href="{{ url_for('promociones') }}">
-                     <i class="fas fa-user-shield"></i> Gaula
-                </a>
-                <a class="offcanvas-link menu-normal" href="{{ url_for('promociones') }}">
-                    <i class="fas fa-badge"></i> Policía
-                </a>
-                <a class="offcanvas-link" href="{{ url_for('promociones') }}">
-                    <i class="fas fa-glasses"></i> Accesorios
+                <a class="offcanvas-link menu-normal" href="{{ url_for('promociones') }}">  Armada</a>
+                <a class="offcanvas-link menu-normal" href="{{ url_for('promociones') }}">  Ejército</a>
+                <a class="offcanvas-link menu-normal" href="{{ url_for('promociones') }}">  Gaula</a>
+                <a class="offcanvas-link menu-normal" href="{{ url_for('promociones') }}">  Policía</a>
+                <a class="offcanvas-link active" href="{{ url_for('promociones') }}">
+                    <i class="fa-solid fa-glasses" style="color: rgb(29, 42, 51);"></i>
+                    <span>Accesorios</span>
                 </a>
             </nav>
 
             <div class="offcanvas-divider"></div>
 
             <nav class="offcanvas-nav">
-                <a class="offcanvas-link" href="{{ url_for('orden_personalizada') }}">Orden personalizada</a>
-                <a class="offcanvas-link" href="{{ url_for('sobre_nosotros') }}">Sobre nosotros</a>
+                <a class="offcanvas-link active" href="{{ url_for('orden_personalizada') }}">
+                    <i class="fas fa-clipboard-list"></i>
+                    <span>Orden personalizada</span>
+                </a>
+                <a class="offcanvas-link active" href="{{ url_for('sobre_nosotros') }}">
+                    <i class="fas fa-user-gear"></i>
+                    <span>Sobre nosotros</span>
+                </a>
             </nav>
         </div>
     </div>

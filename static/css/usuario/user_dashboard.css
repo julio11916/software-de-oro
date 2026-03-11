@@ -30,17 +30,22 @@
     }
 }
 .menu-normal {
-    font-weight: normal !important;
+    font-weight: normal;
 }
 .offcanvas-link {
     display: flex;
     align-items: center;
     gap: 10px;
     font-weight: 500;
+    padding-left: 10px;
+    text-decoration: none;
 }
 
 .offcanvas-link i {
     width: 20px;
     text-align: center;
     font-size: 16px;
+    text-decoration: none;
+    border-bottom: none;
+    display: inline-block;
 }
