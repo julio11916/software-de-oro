@@ -1,107 +1,141 @@
-/* Asegurar que el body tenga fondo blanco */
 body {
-    background-color: white !important;
+    background: #f4f4f2;
 }
 
-/* Mostrar el logo grande centrado */
+.store-header {
+    z-index: 1200;
+}
+
+.store-header-inner {
+    display: grid;
+    grid-template-columns: 42px 1fr auto;
+    align-items: center;
+}
+
+.header-spacer {
+    width: 42px;
+    height: 42px;
+}
+
+.brand-logo {
+    justify-self: center;
+}
+
+.about-hero {
+    position: relative;
+    margin-top: 74px;
+    background-image: url("../../img/Pagina/nachoher_fondo_logo.jpg");
+    background-size: cover;
+    background-position: center center;
+    background-attachment: fixed;
+    min-height: calc(100vh - 74px);
+    padding: 2.5rem 0 3rem;
+}
+
+.about-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.22) 0%, rgba(255, 255, 255, 0.14) 48%, rgba(255, 255, 255, 0.08) 100%);
+}
+
+.about-content {
+    position: relative;
+    z-index: 1;
+}
+
 .logo-container {
     text-align: center;
-    margin: 20px 0;
+    margin: 2.8rem 0 1.8rem;
 }
 
 .logo-principal {
-    width: 150px;
+    width: min(62vw, 340px);
     height: auto;
-    margin: 20px auto;
-    display: block;
 }
 
 .sobre-nosotros-container {
-    max-width: 1200px;
+    max-width: 1080px;
     margin: 0 auto;
-    padding: 3rem 2rem;
-    margin-top: 0;
 }
 
 .section-header {
     text-align: center;
-    margin-bottom: 3rem;
+    margin-bottom: 2.4rem;
+    color: #fff;
 }
 
 .section-header h1 {
-    font-size: 2.5rem;
-    font-weight: bold;
-    color: var(--primary-color);
-    margin-bottom: 1rem;
+    font-size: clamp(2rem, 4vw, 2.8rem);
+    font-weight: 700;
+    margin-bottom: 0.6rem;
 }
 
 .section-header p {
-    font-size: 1.2rem;
-    color: #666;
+    font-size: 1.1rem;
+    margin-bottom: 0;
+    color: rgba(255, 255, 255, 0.9);
 }
 
 .info-card {
-    background: white;
-    border-radius: 15px;
-    padding: 2.5rem;
-    margin-bottom: 2rem;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-    transition: transform 0.3s, box-shadow 0.3s;
+    background: rgba(255, 255, 255, 0.72);
+    border-radius: 16px;
+    padding: 2.2rem;
+    margin-bottom: 1.6rem;
+    border: 1px solid rgba(255, 255, 255, 0.45);
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.18);
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
 }
 
 .info-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    transform: translateY(-6px);
+    box-shadow: 0 18px 30px rgba(0, 0, 0, 0.2);
 }
 
 .info-card-header {
     display: flex;
     align-items: center;
-    margin-bottom: 1.5rem;
-    padding-bottom: 1rem;
-    border-bottom: 3px solid var(--primary-color);
+    margin-bottom: 1.3rem;
+    padding-bottom: 0.85rem;
+    border-bottom: 2px solid rgba(20, 20, 20, 0.12);
 }
 
 .info-card-icon {
-    font-size: 2.5rem;
-    color: var(--primary-color);
-    margin-right: 1rem;
-    width: 60px;
-    height: 60px;
+    font-size: 2rem;
+    color: #1f3644;
+    margin-right: 0.9rem;
+    width: 54px;
+    height: 54px;
     display: flex;
     align-items: center;
     justify-content: center;
-    background: rgba(70, 98, 120, 0.1);
+    background: rgba(31, 54, 68, 0.1);
     border-radius: 50%;
 }
 
 .info-card-title {
-    font-size: 1.8rem;
-    font-weight: bold;
-    color: var(--primary-color);
+    font-size: 1.65rem;
+    font-weight: 700;
+    color: #101820;
     margin: 0;
 }
 
 .info-card-content {
-    font-size: 1.1rem;
-    line-height: 1.8;
-    color: #555;
+    font-size: 1.04rem;
+    line-height: 1.72;
+    color: #151515;
     text-align: justify;
 }
 
 .objetivos-list {
     list-style: none;
     padding: 0;
-    margin-top: 1rem;
+    margin: 0;
 }
 
 .objetivos-list li {
-    padding: 0.8rem 0;
-    padding-left: 2.5rem;
+    padding: 0.62rem 0 0.62rem 2.2rem;
     position: relative;
-    font-size: 1.05rem;
-    line-height: 1.6;
-    color: #555;
+    line-height: 1.5;
 }
 
 .objetivos-list li:before {
@@ -110,22 +144,35 @@ body {
     font-weight: 900;
     position: absolute;
     left: 0;
-    color: var(--primary-color);
-    font-size: 1.2rem;
+    color: #101820;
 }
 
-.back-button {
-    display: inline-block;
-    margin-bottom: 2rem;
-    padding: 0.8rem 1.5rem;
-    background: var(--primary-color);
-    color: white;
-    border-radius: 8px;
-    text-decoration: none;
-    transition: background 0.3s;
-}
+@media (max-width: 991px) {
+    .store-header-inner {
+        grid-template-columns: 42px 1fr auto;
+    }
 
-.back-button:hover {
-    background: #354f5f;
-    color: white;
+    .about-hero {
+        margin-top: 66px;
+        min-height: calc(100vh - 66px);
+        background-attachment: scroll;
+        padding-top: 2rem;
+    }
+
+    .logo-container {
+        margin-top: 2.2rem;
+    }
+
+    .info-card {
+        padding: 1.5rem;
+    }
+
+    .info-card-title {
+        font-size: 1.35rem;
+    }
+
+    .info-card-content {
+        font-size: 1rem;
+        text-align: left;
+    }
 }
