@@ -156,6 +156,37 @@ def normalizar_imagenes_productos(productos):
     return productos
 
 
+def cargar_productos_por_fuerza(fuerza):
+    if not os.path.exists('bd/producto.xlsx'):
+        return []
+
+    productos = pd.read_excel('bd/producto.xlsx')
+    productos = normalizar_imagenes_productos(productos)
+    if 'eliminado' not in productos.columns:
+        productos['eliminado'] = False
+    if 'fuerza' not in productos.columns:
+        productos['fuerza'] = ''
+
+    productos['eliminado'] = productos['eliminado'].fillna(False).astype(bool)
+    productos['fuerza'] = productos['fuerza'].fillna('').astype(str)
+    productos = productos[productos['eliminado'] == False]
+
+    fuerza_norm = fuerza.strip().lower()
+    productos = productos[productos['fuerza'].str.strip().str.lower() == fuerza_norm]
+    return productos.to_dict(orient='records')
+
+
+def mapear_catalogo_ids(productos):
+    catalogo_ids = {}
+    for producto in productos:
+        nombre = str(producto.get('nombre', '')).strip()
+        id_producto = pd.to_numeric(producto.get('id_producto'), errors='coerce')
+        if not nombre or pd.isna(id_producto):
+            continue
+        catalogo_ids[nombre] = int(id_producto)
+    return catalogo_ids
+
+
 def parsear_fecha_promocion(valor: Any) -> Optional[date]:
     if valor is None:
         return None
@@ -2277,6 +2308,34 @@ def verify_email():
             'success': False, 
             'message': 'Error interno del servidor'
         }), 500
+
+#ruta para el redireccionamiento para ver el catalogo
+@app.route('/armada')
+def armada():
+    productos = cargar_productos_por_fuerza('Armada')
+    catalogo_ids = mapear_catalogo_ids(productos)
+    return render_template('Usuarios/catalogo/armada.html', productos=productos, catalogo_ids=catalogo_ids)
+
+
+@app.route('/policia')
+def policia():
+    productos = cargar_productos_por_fuerza('Policia')
+    catalogo_ids = mapear_catalogo_ids(productos)
+    return render_template('Usuarios/catalogo/policia.html', productos=productos, catalogo_ids=catalogo_ids)
+
+
+@app.route('/gaula')
+def gaula():
+    productos = cargar_productos_por_fuerza('Gaula')
+    catalogo_ids = mapear_catalogo_ids(productos)
+    return render_template('Usuarios/catalogo/gaula.html', productos=productos, catalogo_ids=catalogo_ids)
+
+
+@app.route('/ejercito')
+def ejercito():
+    productos = cargar_productos_por_fuerza('Ejercito')
+    catalogo_ids = mapear_catalogo_ids(productos)
+    return render_template('Usuarios/catalogo/ejercito.html', productos=productos, catalogo_ids=catalogo_ids)
 
 @app.route('/producto/<int:id_producto>')
 def producto_detalle(id_producto):
