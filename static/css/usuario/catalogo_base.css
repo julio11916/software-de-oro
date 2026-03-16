@@ -1,0 +1,382 @@
+:root {
+    --ink-900: #141414;
+    --ink-700: #2c2c2c;
+    --paper: #f6f6f4;
+    --gold: #b8933f;
+    --line: #dbdbd7;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    color: var(--ink-900);
+    background: #f4f4f2;
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.page-with-catalog-header {
+    padding-top: 88px;
+}
+
+.main-content {
+    flex: 1;
+}
+
+.store-header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1100;
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid rgba(20, 20, 20, 0.12);
+}
+
+.store-header-inner {
+    height: 74px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.brand-logo img {
+    height: 28px;
+    width: auto;
+    filter: brightness(0) saturate(0);
+}
+
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.icon-btn-dark {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    border: 1px solid rgba(20, 20, 20, 0.18);
+    background: #fff;
+    color: var(--ink-900);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+
+.store-header .icon-btn-dark,
+.store-header .icon-btn-dark i {
+    color: #000;
+}
+
+.icon-btn-dark:hover {
+    border-color: var(--ink-900);
+    color: var(--ink-900);
+    transform: translateY(-1px);
+}
+
+.menu-canvas {
+    width: min(420px, 92vw);
+    background: var(--paper);
+}
+
+.menu-canvas .offcanvas-header {
+    padding: 20px 24px 12px;
+    display: grid;
+    grid-template-columns: 36px 1fr 36px;
+    align-items: center;
+}
+
+.offcanvas-logo {
+    height: 30px;
+    justify-self: center;
+    filter: brightness(0) saturate(0);
+}
+
+.btn-close-custom {
+    background: transparent;
+    border: 0;
+    color: var(--ink-900);
+    font-size: 1.5rem;
+    line-height: 1;
+}
+
+.offcanvas-body {
+    padding: 8px 24px 28px;
+}
+
+.offcanvas-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.offcanvas-link {
+    text-decoration: none;
+    color: var(--ink-900);
+    font-size: 1.7rem;
+    line-height: 1.2;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    padding: 8px 0;
+}
+
+.offcanvas-link.active {
+    text-decoration: none;
+}
+
+.offcanvas-link.active span{
+    text-decoration: underline;
+    text-decoration-thickness: 3px;
+    text-underline-offset: 8px;
+}
+
+.offcanvas-divider {
+    margin: 22px 0;
+    border-top: 1px solid var(--line);
+}
+
+.user-dropdown {
+    position: relative;
+}
+
+.dropdown-menu-custom {
+    position: absolute;
+    top: 48px;
+    right: 0;
+    background: #fff;
+    min-width: 220px;
+    border-radius: 12px;
+    border: 1px solid #e4e4e4;
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.14);
+    display: none;
+    padding: 8px 0;
+    z-index: 1200;
+}
+
+.dropdown-menu-custom a {
+    padding: 10px 14px;
+    text-decoration: none;
+    color: #202020;
+    display: block;
+}
+
+.dropdown-menu-custom a:hover {
+    background: #f6f6f6;
+}
+
+.dropdown-menu-custom.show {
+    display: block;
+}
+
+.footer-compact {
+    background: #121212;
+    color: #fff;
+    padding: 2rem 0 1rem;
+    margin-top: 2.2rem;
+}
+
+.footer-content {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+}
+
+.footer-brand {
+    font-size: 1.15rem;
+}
+
+.footer-item {
+    font-size: 0.95rem;
+    opacity: 0.9;
+}
+
+.footer-social a {
+    color: #fff;
+    margin-left: 12px;
+    font-size: 1.1rem;
+}
+
+.footer-bottom {
+    text-align: center;
+    margin-top: 1rem;
+    font-size: 0.85rem;
+    opacity: 0.75;
+}
+
+/* GRID DE PRODUCTOS */
+
+.products-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(240px,1fr));
+    gap:28px;
+    margin-top:30px;
+}
+
+/* TARJETA PRODUCTO */
+
+.product-card{
+    background:white;
+    border-radius:18px;
+    overflow:hidden;
+    border:1px solid #ecebe7;
+    transition:all .25s ease;
+}
+
+.product-card:hover{
+    transform:translateY(-5px);
+    box-shadow:0 14px 28px rgba(0,0,0,.08);
+}
+
+/* IMAGEN */
+
+.product-card img{
+    width:100%;
+    height:240px;
+    object-fit:cover;
+}
+
+/* INFO */
+
+.product-info{
+    padding:16px;
+}
+
+.product-info h3{
+    font-size:1rem;
+    margin-bottom:6px;
+}
+
+/* PRECIO */
+
+.price{
+    font-weight:700;
+    margin-bottom:12px;
+}
+
+/* ===== Catalogo Armada estilo listado ===== */
+.catalog-hero {
+    padding: 26px 0 10px;
+}
+
+.catalog-title {
+    font-size: clamp(1.9rem, 3.6vw, 2.7rem);
+    font-weight: 700;
+    color: #0b2b4c;
+    margin-bottom: 8px;
+}
+
+.catalog-subtitle {
+    max-width: 720px;
+    color: #4a4a4a;
+    font-size: 1rem;
+    line-height: 1.6;
+}
+
+.catalog-list {
+    padding: 10px 0 40px;
+}
+
+.catalog-row {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 28px;
+    align-items: center;
+    margin: 32px 0;
+}
+
+.catalog-row.is-reverse .catalog-media {
+    order: 2;
+}
+
+.catalog-row.is-reverse .catalog-details {
+    order: 1;
+}
+
+.catalog-media {
+    background: #d8d6c6;
+    border-radius: 20px;
+    padding: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.catalog-media img {
+    width: 100%;
+    height: 320px;
+    object-fit: contain;
+}
+
+.catalog-details {
+    padding: 8px 6px;
+}
+
+.item-title {
+    font-size: 1.6rem;
+    font-weight: 700;
+    margin-bottom: 10px;
+    color: #1f1f1f;
+}
+
+.item-meta {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 18px;
+    color: #2a2a2a;
+}
+
+.item-meta li {
+    margin-bottom: 6px;
+}
+
+.btn-costs {
+    background: #a9f05e;
+    border: 0;
+    color: #1b1b1b;
+    font-weight: 600;
+    padding: 10px 20px;
+    border-radius: 10px;
+    box-shadow: 0 10px 18px rgba(120, 170, 60, 0.25);
+}
+
+.btn-costs:hover {
+    background: #98e84e;
+}
+
+@media (max-width: 991px) {
+    .store-header-inner {
+        height: 66px;
+    }
+
+    .brand-logo img {
+        height: 24px;
+    }
+
+    .page-with-catalog-header {
+        padding-top: 78px;
+    }
+
+    .offcanvas-link {
+        font-size: 1.3rem;
+    }
+
+    .catalog-row {
+        grid-template-columns: 1fr;
+        gap: 18px;
+    }
+
+    .catalog-media img {
+        height: 260px;
+    }
+}

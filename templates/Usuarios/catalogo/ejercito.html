@@ -1,0 +1,116 @@
+﻿{% extends "Usuarios/catalogo_base.html" %}
+
+{% block content %}
+
+<section class="catalog-hero">
+    <div class="container">
+        <h1 class="catalog-title">Catálogo Ejercito</h1>
+        <p class="catalog-subtitle">
+            Aquí podrás ver el catálogo del Ejercito Nacional de Colombia
+        </p>
+    </div>
+</section>
+
+<section class="catalog-list">
+    <div class="container">
+        <div class="catalog-row">
+            <div class="catalog-media">
+                <img src="{{ url_for('static', filename='img/catalogo/armada/t-shirt_short_estampada.png') }}"
+                     alt="Camiseta unisex">
+            </div>
+            <div class="catalog-details">
+                <h2 class="item-title">Camiseta unisex con estampado</h2>
+                <ul class="item-meta">
+                    <li>Costo: $20.000</li>
+                    <li><p>Camiseta unisex, diseñada para brindar comodidad y estilo en cualquier ocasión.
+                         Disponible en versiones con estampado, que incluyen diseños representativos y gráficos alusivos a la institución.</p></li>
+                </ul>
+                <button class="btn-costs">  Agregar al carrito</button>
+            </div>
+        </div>
+
+        <div class="catalog-row is-reverse">
+            <div class="catalog-media">
+                <img src="{{ url_for('static', filename='img/catalogo/armada/t-shirt_short_green.png') }}"
+                     alt="Camiseta sin estampado">
+            </div>
+            <div class="catalog-details">
+                <h2 class="item-title">Camiseta unisex sin estampado</h2>
+                <ul class="item-meta">
+                    <li>Costo: $20.000</li>
+                    <li><p>Camiseta unisex sin estampado, diseñada para brindar comodidad y 
+                    estilo en cualquier ocasión. Ideal para uso diario.</p></li>
+                </ul>
+                <button class="btn-costs">  Agregar al carrito</button>
+            </div>
+        </div>
+
+        <div class="catalog-row">
+            <div class="catalog-media">
+                <img src="{{ url_for('static', filename='img/catalogo/armada/t-shirt_long_black.png') }}"
+                     alt="Gorra de camionero de espuma">
+            </div>
+            <div class="catalog-details">
+                <h2 class="item-title">Camiseta manga larga</h2>
+                <ul class="item-meta">
+                    <li>Costo: $20.000</li>
+                    <li><p>Camiseta manga larga cómoda y resistente inspirada en el Ejército Nacional de Colombia. 
+                        Ideal para climas frescos y actividades diarias.</p></li>
+                </ul>
+                <button class="btn-costs">  Agregar al carrito</button>
+            </div>
+        </div>
+
+        <div class="catalog-row is-reverse">
+            <div class="catalog-media">
+                <img src="{{ url_for('static', filename='img/catalogo/armada/guerrera_ejercito.png' ) }}"
+                     alt="Guerrera">
+            </div>
+            <div class="catalog-details">
+                <h2 class="item-title">Guerrera</h2>
+                <ul class="item-meta">
+                    <li>Costo: $80.000</li>
+                    <li><p>Prenda superior destacada por su diseño estructurado,
+                    resistente y funcional, ofreciendo una apariencia formal y representativa.</p></li>
+                </ul>
+                <button class="btn-costs">Ver costos base</button>
+            </div>
+        </div>
+
+         <div class="catalog-row">
+            <div class="catalog-media">
+                <img src="{{ url_for('static', filename='img/catalogo/armada/pantalon_ejercito.png') }}"
+                     alt="Gorra de camionero de espuma">
+            </div>
+            <div class="catalog-details">
+                <h2 class="item-title">Pantalón</h2>
+                <ul class="item-meta">
+                    <li>Costo: $100.000</li>
+                    <li><p>Pantalón inspirado en el uniforme del Ejército Nacional de Colombia, diseñado para brindar 
+                    resistencia, comodidad y funcionalidad en actividades diarias.</p></li>
+                </ul>
+                <button class="btn-costs">  Agregar al carrito</button>
+            </div>
+        </div>
+
+        {% for producto in productos %}
+        <div class="catalog-row {% if loop.index0 % 2 == 1 %}is-reverse{% endif %}">
+            <div class="catalog-media">
+                <img src="{{ url_for('static', filename='img/Empresa/producto_2.jpg' ) }}"
+                     alt="{{ producto.nombre }}">
+            </div>
+            <div class="catalog-details">
+                <h2 class="item-title">{{ producto.nombre }}</h2>
+                <ul class="item-meta">
+                    <li>Costo: ${{ producto.precio }}</li>
+                    <li>Precio de venta sugerido: ${{ producto.precio }}</li>
+                    <li>Beneficio estimado: $0</li>
+                </ul>
+                <button class="btn-costs">Ver costos base</button>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</section>
+
+{% endblock %}
