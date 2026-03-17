@@ -4,6 +4,77 @@ body {
     background-color: #f4f7fb;
 }
 
+/* Gradient section title */
+.gradient-section-title {
+    background: linear-gradient(90deg, #0b2f64 0%, #0c4c82 45%, #0e8ab4 100%);
+    color: #fff;
+    padding: 14px 20px;
+    border-radius: 12px 12px 1px 1px;
+    font-weight: 700;
+    margin-bottom: 12px;
+    box-shadow: 0 6px 18px rgba(9, 34, 80, 0.18);
+}
+
+/* Balance cards */
+.balance-card {
+    background: #fff;
+    border: 1px solid #e4e9f3;
+    border-radius: 16px;
+    box-shadow: 0 10px 26px rgba(12, 34, 70, 0.08);
+    margin-bottom: 18px;
+    overflow: hidden;
+}
+
+.balance-body {
+    padding: 16px 18px 18px;
+}
+
+.balance-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 12px;
+    margin-bottom: 8px;
+}
+
+.balance-tile {
+    padding: 12px 14px;
+    border: 1px solid #e8edf5;
+    border-radius: 12px;
+    background: #f9fbff;
+}
+
+.balance-label {
+    font-size: 0.9rem;
+    color: #51607a;
+    margin-bottom: 4px;
+}
+
+.balance-value {
+    font-weight: 700;
+    font-size: 1.1rem;
+    color: #0b2f64;
+}
+
+.delta-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px;
+    border-radius: 999px;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.delta-positive {
+    background: #e8f5e9;
+    color: #1b5e20;
+}
+
+.delta-negative {
+    background: #fdecea;
+    color: #b71c1c;
+}
+
 /* =========================
    SIDEBAR
 ========================= */

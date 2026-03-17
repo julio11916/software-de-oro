@@ -546,12 +546,51 @@ def admin_dashboard():
         lista_productos = productos.to_dict(orient='records')
         productos_agotados = obtener_productos_agotados()
         admin_nombre = obtener_nombre_sesion()
+
+        # Métricas de usuarios y ventas últimos 30 días
+        hoy = datetime.now()
+        hace_30 = hoy - timedelta(days=30)
+
+        usuarios_df = pd.read_excel('bd/usuarios.xlsx') if os.path.exists('bd/usuarios.xlsx') else pd.DataFrame()
+        if not usuarios_df.empty and 'fecha_registro' in usuarios_df.columns:
+            # Normaliza la zona horaria para evitar comparaciones entre tz-aware y tz-naive
+            usuarios_df['fecha_registro_dt'] = (
+                pd.to_datetime(usuarios_df['fecha_registro'], errors='coerce', utc=True)
+                .dt.tz_convert(None)
+            )
+            usuarios_ult_mes = usuarios_df[usuarios_df['fecha_registro_dt'] >= hace_30]['id_usuario'].nunique()
+        else:
+            usuarios_ult_mes = 0
+
+        pedidos_df = pd.read_excel('bd/pedidos.xlsx') if os.path.exists('bd/pedidos.xlsx') else pd.DataFrame()
+        usuarios_compraron_ult_mes = 0
+        if not pedidos_df.empty:
+            pedidos_df['fecha_pedido_dt'] = (
+                pd.to_datetime(pedidos_df['fecha_pedido'], dayfirst=True, errors='coerce', utc=True)
+                .dt.tz_convert(None)
+            )
+            pedidos_ult_mes = pedidos_df[pedidos_df['fecha_pedido_dt'] >= hace_30]
+            usuarios_compraron_ult_mes = pedidos_ult_mes['id_usuario'].nunique()
+
+        # Top productos vendidos (totales)
+        detalle_df = pd.read_excel('bd/detalle_pedido.xlsx') if os.path.exists('bd/detalle_pedido.xlsx') else pd.DataFrame()
+        top_productos = []
+        if not detalle_df.empty:
+            detalle_df['cantidad'] = pd.to_numeric(detalle_df.get('cantidad', 0), errors='coerce').fillna(0)
+            top_df = detalle_df.groupby('id_producto', as_index=False)['cantidad'].sum().sort_values('cantidad', ascending=False).head(5)
+            prod_ref = productos[['id_producto', 'nombre']] if not productos.empty else pd.DataFrame(columns=['id_producto', 'nombre'])
+            top_df = pd.merge(top_df, prod_ref, on='id_producto', how='left')
+            top_productos = top_df.to_dict(orient='records')
+
         # plantilla actual en el proyecto
         return render_template(
             'Administrador/admin_dashboard_principal.html',
             productos=lista_productos,
             admin_nombre=admin_nombre,
-            productos_agotados=productos_agotados
+            productos_agotados=productos_agotados,
+            usuarios_ult_mes=usuarios_ult_mes,
+            usuarios_compraron_ult_mes=usuarios_compraron_ult_mes,
+            top_productos=top_productos
         )
     return "Acceso denegado"
 
