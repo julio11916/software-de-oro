@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="es">
 
 <head>
@@ -50,7 +50,7 @@
                     <div class="alert alert-success d-flex align-items-center py-2 mb-0"
                         style="background-color: #d4edda; border-color: #28a745; border-left: 4px solid #28a745;">
                         <i class="fas fa-shield-alt me-2" style="color: #28a745;"></i>
-                        <span style="color: #155724;">✓ Tu correo está verificado - Autenticación disponible</span>
+                        <span style="color: #155724;">OK Tu correo esta verificado - Autenticacion disponible</span>
                         <button class="btn btn-sm ms-auto" data-bs-toggle="modal" data-bs-target="#modalVerificacion"
                             style="background-color: #28a745; color: white; border: none; padding: 0.4rem 1rem; border-radius: 6px;">Autenticar</button>
                     </div>
@@ -59,7 +59,7 @@
                     <div class="alert alert-info d-flex align-items-center py-2 mb-0"
                         style="background-color: #fff3cd; border-color: #ffc107; border-left: 4px solid #ffc107;">
                         <i class="fas fa-envelope me-2" style="color: #ffc107;"></i>
-                        <span style="color: #856404;">Valida tu e-mail y mantén tu cuenta segura</span>
+                        <span style="color: #856404;">Valida tu e-mail y manten tu cuenta segura</span>
                         <button class="btn btn-sm ms-auto" data-bs-toggle="modal" data-bs-target="#modalVerificacion"
                             style="background-color: #3483fa; color: white; border: none; padding: 0.4rem 1rem; border-radius: 6px;">Validar</button>
                     </div>
@@ -70,14 +70,14 @@
 
         <!-- Grid de Opciones -->
         <div class="row g-4">
-            <!-- Tu información -->
+            <!-- Tu informacion -->
             <div class="col-md-6 col-lg-4">
                 <div class="option-card" data-bs-toggle="modal" data-bs-target="#modalInformacion">
                     <div class="option-icon">
                         <i class="fas fa-id-card"></i>
                     </div>
                     <div class="option-content">
-                        <h5>Tu información</h5>
+                        <h5>Tu informacion</h5>
                         <p class="text-muted mb-0">Nombre, apellidos y datos para identificarte</p>
                     </div>
                 </div>
@@ -91,7 +91,7 @@
                     </div>
                     <div class="option-content">
                         <h5>Datos de tu cuenta</h5>
-                        <p class="text-muted mb-0">Datos que usas para acceder a la cuenta y tus estad ísticas</p>
+                        <p class="text-muted mb-0">Datos que usas para acceder a la cuenta y tus estadisticas</p>
                     </div>
                 </div>
             </div>
@@ -104,7 +104,7 @@
                     </div>
                     <div class="option-content">
                         <h5>Seguridad</h5>
-                        <p class="text-muted mb-0">Activa contraseñas pintables</p>
+                        <p class="text-muted mb-0">Activa contrasenas visibles</p>
                     </div>
                 </div>
             </div>
@@ -143,19 +143,19 @@
                     </div>
                     <div class="option-content">
                         <h5>Comunicaciones</h5>
-                        <p class="text-muted mb-0">Elige qué tipo de información quieres recibir</p>
+                        <p class="text-muted mb-0">Elige que tipo de informacion quieres recibir</p>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Modal: Tu información -->
+    <!-- Modal: Tu informacion -->
     <div class="modal fade" id="modalInformacion" tabindex="-1">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title"><i class="fas fa-id-card me-2"></i>Tu Información</h5>
+                    <h5 class="modal-title"><i class="fas fa-id-card me-2"></i>Tu Informacion</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
@@ -166,13 +166,13 @@
                                 value="{{ usuario.nombre }}" required>
                         </div>
                         <div class="mb-3">
-                            <label for="telefono" class="form-label">Teléfono</label>
+                            <label for="telefono" class="form-label">Telefono</label>
                             <input type="tel" class="form-control" id="telefono" name="telefono"
                                 value="{{ usuario.telefono if usuario.telefono else '' }}"
                                 placeholder="+57 300 1234567">
                         </div>
                         <div class="mb-3">
-                            <label class="form-label">Correo Electrónico</label>
+                            <label class="form-label">Correo Electronico</label>
                             <input type="email" class="form-control" value="{{ usuario.email }}" readonly>
                             <small class="text-muted">El correo no se puede modificar</small>
                         </div>
@@ -200,7 +200,7 @@
                 </div>
                 <div class="modal-body">
                     <div class="mb-4">
-                        <h6 class="text-muted mb-3">Información de la Cuenta</h6>
+                        <h6 class="text-muted mb-3">Informacion de la Cuenta</h6>
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <strong>Correo:</strong>
@@ -240,24 +240,24 @@
                 </div>
                 <div class="modal-body">
                     <form method="POST" action="{{ url_for('change_password') }}">
-                        <h6 class="mb-3">Cambiar Contraseña</h6>
+                        <h6 class="mb-3">Cambiar Contrasena</h6>
                         <div class="mb-3">
-                            <label for="current_password" class="form-label">Contraseña Actual</label>
+                            <label for="current_password" class="form-label">Contrasena Actual</label>
                             <input type="password" class="form-control" id="current_password" name="current_password"
                                 required>
                         </div>
                         <div class="mb-3">
-                            <label for="new_password" class="form-label">Nueva Contraseña</label>
+                            <label for="new_password" class="form-label">Nueva Contrasena</label>
                             <input type="password" class="form-control" id="new_password" name="new_password" required>
                         </div>
                         <div class="mb-3">
-                            <label for="confirm_password" class="form-label">Confirmar Nueva Contraseña</label>
+                            <label for="confirm_password" class="form-label">Confirmar Nueva Contrasena</label>
                             <input type="password" class="form-control" id="confirm_password" name="confirm_password"
                                 required>
                         </div>
                         <div class="text-end">
                             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                            <button type="submit" class="btn btn-primary">Cambiar Contraseña</button>
+                            <button type="submit" class="btn btn-primary">Cambiar Contrasena</button>
                         </div>
                     </form>
                 </div>
@@ -278,14 +278,14 @@
                         <input type="hidden" name="nombre" value="{{ usuario.nombre }}">
                         <input type="hidden" name="telefono" value="{{ usuario.telefono if usuario.telefono else '' }}">
                         <div class="mb-3">
-                            <label for="direccion" class="form-label">Dirección de Entrega</label>
+                            <label for="direccion" class="form-label">Direccion de Entrega</label>
                             <input type="text" class="form-control" id="direccion" name="direccion"
                                 value="{{ usuario.direccion if usuario.direccion else '' }}"
-                                placeholder="Calle, número, ciudad, etc.">
+                                placeholder="Calle, numero, ciudad, etc.">
                         </div>
                         <div class="text-end">
                             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                            <button type="submit" class="btn btn-primary">Guardar Dirección</button>
+                            <button type="submit" class="btn btn-primary">Guardar Direccion</button>
                         </div>
                     </form>
                 </div>
@@ -303,12 +303,12 @@
                 </div>
                 <div class="modal-body">
                     <form method="POST" action="{{ url_for('update_settings') }}">
-                        <h6 class="mb-3">Configuración de Privacidad</h6>
+                        <h6 class="mb-3">Configuracion de Privacidad</h6>
                         <div class="form-check form-switch mb-3">
                             <input class="form-check-input" type="checkbox" id="perfil_publico" name="perfil_publico" {%
                                 if usuario.perfil_publico %}checked{% endif %}>
                             <label class="form-check-label" for="perfil_publico">
-                                Hacer mi perfil público
+                                Hacer mi perfil publico
                             </label>
                         </div>
                         <div class="form-check form-switch mb-3">
@@ -348,7 +348,7 @@
                             <input class="form-check-input" type="checkbox" id="notif_email" name="notif_email" {% if
                                 usuario.notif_email %}checked{% endif %}>
                             <label class="form-check-label" for="notif_email">
-                                Recibir notificaciones por correo electrónico
+                                Recibir notificaciones por correo electronico
                             </label>
                         </div>
                         <div class="form-check form-switch mb-3">
@@ -379,12 +379,12 @@
         </div>
     </div>
 
-    <!-- Modal: Verificación de Email -->
+    <!-- Modal: Verificacion de Email -->
     <div class="modal fade" id="modalVerificacion" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header border-0">
-                    <h5 class="modal-title"><i class="fas fa-shield-alt me-2"></i>Autenticación por Correo
+                    <h5 class="modal-title"><i class="fas fa-shield-alt me-2"></i>Autenticacion por Correo
                     </h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
@@ -394,18 +394,18 @@
                             <div style="font-size: 64px; color: #3483fa;">
                                 <i class="fas fa-shield-alt"></i>
                             </div>
-                            <h6 class="mt-3">Autenticación de Seguridad</h6>
-                            <p class="text-muted">Te enviaremos un código de 6 dígitos a tu correo:</p>
+                            <h6 class="mt-3">Autenticacion de Seguridad</h6>
+                            <p class="text-muted">Te enviaremos un codigo de 6 digitos a tu correo:</p>
                             <p class="fw-bold">{{ usuario.email }}</p>
                         </div>
                         <div class="alert alert-info" style="background-color: #e7f3ff; border-color: #3483fa;">
                             <i class="fas fa-info-circle me-2"></i>
-                            <small>El código será válido por 10 minutos</small>
+                            <small>El codigo sera valido por 10 minutos</small>
                         </div>
                         <div class="d-grid gap-2">
                             <button type="button" class="btn btn-primary" id="btnEnviarCodigo"
                                 onclick="enviarCodigoVerificacion()">
-                                <i class="fas fa-paper-plane me-2"></i>Enviar Código
+                                <i class="fas fa-paper-plane me-2"></i>Enviar Codigo
                             </button>
                             <button type="button" class="btn btn-outline-secondary"
                                 data-bs-dismiss="modal">Cancelar</button>
@@ -418,18 +418,18 @@
                                 <i class="fas fa-envelope"></i>
                             </div>
                             <h6 class="mt-3">Revisa tu correo</h6>
-                            <p class="text-muted">Ingresa el código de 6 dígitos que enviamos a:</p>
+                            <p class="text-muted">Ingresa el codigo de 6 digitos que enviamos a:</p>
                             <p class="fw-bold">{{ usuario.email }}</p>
                         </div>
 
                         <form id="formVerificarCodigo" onsubmit="verificarCodigo(event)">
                             <div class="mb-3">
-                                <label for="codigoVerificacion" class="form-label">Código de Verificación</label>
+                                <label for="codigoVerificacion" class="form-label">Codigo de Verificacion</label>
                                 <input type="text" class="form-control form-control-lg text-center"
                                     id="codigoVerificacion" name="codigo" placeholder="123456" maxlength="6"
                                     inputmode="numeric" style="font-size: 28px; font-weight: bold;" autocomplete="off"
                                     required>
-                                <small class="text-muted">Solo números, sin espacios</small>
+                                <small class="text-muted">Solo numeros, sin espacios</small>
                             </div>
 
                             <div id="messageContainer" class="mb-3"></div>
@@ -439,7 +439,7 @@
                                     <i class="fas fa-check me-2"></i>Verificar
                                 </button>
                                 <button type="button" class="btn btn-outline-primary" onclick="reenviarCodigo()">
-                                    <i class="fas fa-redo me-2"></i>Reenviar Código
+                                    <i class="fas fa-redo me-2"></i>Reenviar Codigo
                                 </button>
                                 <button type="button" class="btn btn-outline-secondary"
                                     data-bs-dismiss="modal">Cancelar</button>
@@ -453,183 +453,7 @@
 
     <script src="{{ url_for('static', filename='js/usuario/catalog_base.js') }}"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
-        function toggleUserMenu() {
-            document.getElementById('userDropdown').classList.toggle('show');
-        }
-
-        // Cerrar dropdown al hacer clic fuera
-        window.addEventListener('click', function (e) {
-            if (!e.target.matches('.user-dropdown-btn') && !e.target.closest('.user-dropdown')) {
-                var dropdown = document.getElementById('userDropdown');
-                if (dropdown.classList.contains('show')) {
-                    dropdown.classList.remove('show');
-                }
-            }
-        });
-
-        // Funciones de Verificación de Email
-        function showMessage(message, type) {
-            const container = document.getElementById('messageContainer');
-            const alertClass = type === 'success' ? 'alert-success' : 'alert-danger';
-            const icon = type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle';
-
-            container.innerHTML = `
-                <div class="alert ${alertClass} alert-dismissible fade show" role="alert">
-                    <i class="fas ${icon} me-2"></i>${message}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                </div>
-            `;
-        }
-
-        function enviarCodigoVerificacion() {
-            const btn = document.getElementById('btnEnviarCodigo');
-            btn.disabled = true;
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Enviando...';
-
-            fetch('/user/send-verification-code', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                }
-            })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        // Mostrar el paso 2
-                        document.getElementById('stepSendCode').style.display = 'none';
-                        document.getElementById('stepVerifyCode').style.display = 'block';
-                        showMessage(data.message, 'success');
-                    } else {
-                        showMessage(data.message, 'error');
-                        btn.disabled = false;
-                        btn.innerHTML = '<i class="fas fa-paper-plane me-2"></i>Enviar Código';
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    showMessage('Error al enviar el código. Intenta nuevamente.', 'error');
-                    btn.disabled = false;
-                    btn.innerHTML = '<i class="fas fa-paper-plane me-2"></i>Enviar Código';
-                });
-        }
-
-        function verificarCodigo(event) {
-            event.preventDefault();
-
-            // Obtener código y eliminar todos los espacios
-            const codigoInput = document.getElementById('codigoVerificacion');
-            const codigo = codigoInput.value.replace(/\s/g, '').trim();
-
-            // Validar que tenga exactamente 6 dígitos
-            if (codigo.length !== 6 || !/^\d{6}$/.test(codigo)) {
-                showMessage('El código debe tener exactamente 6 dígitos', 'error');
-                return;
-            }
-
-            const btn = document.getElementById('btnVerificar');
-
-            btn.disabled = true;
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Verificando...';
-
-            fetch('/user/verify-email', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ code: codigo })
-            })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        showMessage(data.message, 'success');
-                        setTimeout(() => {
-                            location.reload();
-                        }, 1500);
-                    } else {
-                        showMessage(data.message, 'error');
-                        btn.disabled = false;
-                        btn.innerHTML = '<i class="fas fa-check me-2"></i>Verificar';
-                        codigoInput.value = '';
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    showMessage('Error al verificar el código. Intenta nuevamente.', 'error');
-                    btn.disabled = false;
-                    btn.innerHTML = '<i class="fas fa-check me-2"></i>Verificar';
-                });
-        }
-
-        function reenviarCodigo() {
-            document.getElementById('codigoVerificacion').value = '';
-            document.getElementById('messageContainer').innerHTML = '';
-            enviarCodigoVerificacion();
-        }
-
-        // Resetear el modal cuando se cierra
-        document.getElementById('modalVerificacion').addEventListener('hidden.bs.modal', function () {
-            document.getElementById('stepSendCode').style.display = 'block';
-            document.getElementById('stepVerifyCode').style.display = 'none';
-            document.getElementById('codigoVerificacion').value = '';
-            document.getElementById('messageContainer').innerHTML = '';
-            document.getElementById('btnEnviarCodigo').disabled = false;
-            document.getElementById('btnEnviarCodigo').innerHTML = '<i class="fas fa-paper-plane me-2"></i>Enviar Código';
-        });
-
-        // Configurar el campo de código cuando el modal se muestra
-        document.getElementById('modalVerificacion').addEventListener('shown.bs.modal', function () {
-            setupCodigoInput();
-        });
-
-        // Función para configurar el input del código
-        function setupCodigoInput() {
-            const codigoInput = document.getElementById('codigoVerificacion');
-
-            // Limpiar eventos previos
-            codigoInput.removeEventListener('input', handleCodigoInput);
-            codigoInput.removeEventListener('paste', handleCodigoPaste);
-            codigoInput.removeEventListener('keypress', handleCodigoKeypress);
-
-            // Agregar eventos
-            codigoInput.addEventListener('input', handleCodigoInput);
-            codigoInput.addEventListener('paste', handleCodigoPaste);
-            codigoInput.addEventListener('keypress', handleCodigoKeypress);
-        }
-
-        // Manejar entrada de texto
-        function handleCodigoInput(e) {
-            let value = e.target.value.replace(/\D/g, ''); // Solo números
-            if (value.length > 6) {
-                value = value.substring(0, 6);
-            }
-            e.target.value = value;
-        }
-
-        // Manejar pegado
-        function handleCodigoPaste(e) {
-            e.preventDefault();
-            const pastedText = (e.clipboardData || window.clipboardData).getData('text');
-            const cleanedText = pastedText.replace(/\D/g, '').substring(0, 6);
-            e.target.value = cleanedText;
-        }
-
-        // Manejar teclas presionadas
-        function handleCodigoKeypress(e) {
-            // Solo permitir números
-            const charCode = (e.which) ? e.which : e.keyCode;
-            if (charCode > 31 && (charCode < 48 || charCode > 57)) {
-                e.preventDefault();
-                return false;
-            }
-            return true;
-        }
-
-        // Inicializar cuando carga la página
-        document.addEventListener('DOMContentLoaded', function () {
-            setupCodigoInput();
-        });
-    </script>
+    <script src="{{ url_for('static', filename='js/usuario/user_profile.js') }}"></script>
 </body>
 
 </html>

@@ -12,6 +12,12 @@
 </head>
 
 <body>
+    <script id="chartsData"
+        type="application/json"
+        data-productos='{{ ventas_producto | tojson }}'
+        data-meses='{{ ventas_mes | tojson }}'
+        data-metodos='{{ metodos_pago | tojson }}'></script>
+
     <div class="d-flex dashboard-layout">
         <div class="sidebar">
 
@@ -51,7 +57,7 @@
 
             <div class="sidebar-bottom mt-auto">
                 <a id="backBtn" href="{{ url_for('home') }}" class="btn btn-success w-100 mb-2" onclick="if (window.history.length > 1) { window.history.back(); } else { window.location.href='{{ url_for('home') }}'; } return false;">Volver</a>
-                <a href="{{ url_for('logout') }}" class="btn btn-danger w-100">Cerrar Sesion</a>
+                <a href="{{ url_for('logout') }}" class="btn btn-danger w-100">Cerrar sesion</a>
             </div>
         </div>
 
@@ -106,8 +112,6 @@
                         <p class="mb-0 mt-1 text-muted"><strong>Comparacion:</strong> {{ comparacion_texto }}</p>
                     </div>
                 </section>
-
-                <div id="chartData" data-productos='{{ ventas_producto|tojson }}' data-meses='{{ ventas_mes|tojson }}' data-metodos='{{ metodos_pago|tojson }}' class="d-none"></div>
 
                 <div class="kpi-grid mb-4">
                     <article class="kpi-card">
@@ -203,28 +207,6 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="{{ url_for('static', filename='js/administrador/admin_dashboard_principal.js') }}"></script>
     <script src="{{ url_for('static', filename='js/administrador/admin_charts_dashboard.js') }}"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            const chartData = document.getElementById('chartData');
-            const ventasProducto = JSON.parse(chartData.dataset.productos || '[]');
-            const ventasMes = JSON.parse(chartData.dataset.meses || '[]');
-            const metodosPago = JSON.parse(chartData.dataset.metodos || '[]');
-            initCharts(ventasProducto, ventasMes, metodosPago);
-
-            const periodoSelect = document.getElementById('periodoSelect');
-            const fechaDesde = document.getElementById('fechaDesde');
-            const fechaHasta = document.getElementById('fechaHasta');
-
-            function toggleRango() {
-                const habilitar = periodoSelect.value === 'range';
-                fechaDesde.disabled = !habilitar;
-                fechaHasta.disabled = !habilitar;
-            }
-
-            periodoSelect.addEventListener('change', toggleRango);
-            toggleRango();
-        });
-    </script>
 </body>
 
 </html>

@@ -43,25 +43,11 @@
             </div>
         </form>
         <div class="mt-4 text-center">
-            <h6 class="mb-3">¿Ya tienes cuenta?</h6>
+            <h6 class="mb-3">Ya tienes cuenta?</h6>
             <a href="{{ url_for('login') }}" class="btn btn-dark w-100">Iniciar sesion</a>
         </div>
     </div>
-    <script>
-        const passwordInput = document.getElementById("password");
-        const confirmInput = document.getElementById("confirm_password");
-
-        function validarConfirmacion() {
-            if (confirmInput.value && confirmInput.value !== passwordInput.value) {
-                confirmInput.setCustomValidity("Las contrasenas no coinciden.");
-            } else {
-                confirmInput.setCustomValidity("");
-            }
-        }
-
-        passwordInput.addEventListener("input", validarConfirmacion);
-        confirmInput.addEventListener("input", validarConfirmacion);
-    </script>
+    <script src="{{ url_for('static', filename='js/usuario/registro.js') }}"></script>
 </body>
 
 </html>

@@ -1,79 +1,54 @@
 {% extends "Usuarios/catalogo_base.html" %}
 
 {% block content %}
-
 <section class="catalog-hero">
     <div class="container">
-        <h1 class="catalog-title">Catálogo Armada</h1>
+        <h1 class="catalog-title">Catalogo Armada</h1>
         <p class="catalog-subtitle">
-            Comprenda r&aacute;pidamente sus m&aacute;rgenes en los art&iacute;culos m&aacute;s vendidos antes de dise&ntilde;arlos, publicarlos o venderlos.
+            Explora los productos disponibles para Armada con informacion real del sistema.
         </p>
     </div>
 </section>
 
 <section class="catalog-list">
     <div class="container">
-        <div class="catalog-row">
-            <div class="catalog-media">
-                <img src="{{ url_for('static', filename='img/Empresa/producto_1.jpg') }}"
-                     alt="Camiseta unisex">
-            </div>
-            <div class="catalog-details">
-                <h2 class="item-title">Camiseta unisex con estampado</h2>
-                <ul class="item-meta">
-                    <li>Costo: $20.000</li>
-                    <li><p>Camiseta unisex para la armada con estampado</p></li>
-                </ul>
-                <button class="btn-costs">  Agregar al carrito</button>
-            </div>
-        </div>
-
-        <div class="catalog-row is-reverse">
-            <div class="catalog-media">
-                <img src="{{ url_for('static', filename='img/Empresa/producto_2.jpg') }}"
-                     alt="Camiseta manga larga con capucha">
-            </div>
-            <div class="catalog-details">
-                <h2 class="item-title">Camiseta unisex sin estampado</h2>
-                <ul class="item-meta">
-                    <li>Costo: $20.000</li>
-                </ul>
-                <button class="btn-costs">  Agregar al carrito</button>
-            </div>
-        </div>
-
-        <div class="catalog-row">
-            <div class="catalog-media">
-                <img src="{{ url_for('static', filename='img/Empresa/producto_3.jpg') }}"
-                     alt="Gorra de camionero de espuma">
-            </div>
-            <div class="catalog-details">
-                <h2 class="item-title">Gorra</h2>
-                <ul class="item-meta">
-                    <li>Costo: $20.000</li>
-                </ul>
-                <button class="btn-costs">  Agregar al carrito</button>
-            </div>
-        </div>
-
+        {% if productos %}
         {% for producto in productos %}
         <div class="catalog-row {% if loop.index0 % 2 == 1 %}is-reverse{% endif %}">
             <div class="catalog-media">
-                <img src="{{ url_for('static', filename='img/Empresa/producto_2.jpg' ) }}"
-                     alt="{{ producto.nombre }}">
+                <img src="{{ url_for('static', filename=producto.imagen_url if producto.imagen_url else 'img/Pagina/logo.jpeg') }}"
+                    alt="{{ producto.nombre }}">
             </div>
             <div class="catalog-details">
                 <h2 class="item-title">{{ producto.nombre }}</h2>
                 <ul class="item-meta">
-                    <li>Costo: ${{ producto.precio }}</li>
-                    <li>Precio de venta sugerido: ${{ producto.precio }}</li>
-                    <li>Beneficio estimado: $0</li>
+                    <li>Precio: {{ producto.precio|cop }}</li>
+                    <li>{{ producto.descripcion or 'Producto disponible para Armada.' }}</li>
+                    <li>
+                        {% if producto.stock|int > 0 %}
+                        Stock disponible: {{ producto.stock|int }}
+                        {% else %}
+                        Agotado
+                        {% endif %}
+                    </li>
                 </ul>
-                <button class="btn-costs">Ver costos base</button>
+                <a class="btn-costs" href="{{ url_for('producto_detalle', id_producto=producto.id_producto) }}">
+                    Ver producto
+                </a>
             </div>
         </div>
         {% endfor %}
+        {% else %}
+        <div class="catalog-row">
+            <div class="catalog-details">
+                <h2 class="item-title">No hay productos disponibles</h2>
+                <ul class="item-meta">
+                    <li>No encontramos productos activos para Armada en este momento.</li>
+                </ul>
+                <a class="btn-costs" href="{{ url_for('user_dashboard') }}">Volver al catalogo general</a>
+            </div>
+        </div>
+        {% endif %}
     </div>
 </section>
-
 {% endblock %}

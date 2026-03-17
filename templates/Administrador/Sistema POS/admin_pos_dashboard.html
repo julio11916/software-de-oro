@@ -12,6 +12,11 @@
 </head>
 
 <body>
+    <script id="posData"
+        type="application/json"
+        data-currency-code='{{ currency_code | tojson }}'
+        data-productos='{{ productos | tojson }}'></script>
+
     <div class="d-flex dashboard-layout">
         <div class="sidebar">
             <a href="{{ url_for('admin_dashboard') }}">
@@ -50,7 +55,7 @@
 
             <div class="sidebar-bottom mt-auto">
                 <button class="btn btn-success w-100 mb-2" id="backBtn">Volver</button>
-                <a href="{{ url_for('logout') }}" class="btn btn-danger w-100">Cerrar Sesion</a>
+                <a href="{{ url_for('logout') }}" class="btn btn-danger w-100">Cerrar sesion</a>
             </div>
         </div>
 
@@ -179,15 +184,6 @@
     </div>
     <script src="{{ url_for('static', filename='js/administrador/admin_dashboard_principal.js') }}"></script>
     <script src="{{ url_for('static', filename='js/administrador/admin_pos_dashboard.js') }}"></script>
-    <script>
-        // Inicializar el sistema POS con los datos del backend
-        document.addEventListener('DOMContentLoaded', function () {
-            const currencyCode = {{ currency_code| tojson
-        }};
-        const productos = {{ productos| tojson }};
-        initPOS(currencyCode, productos);
-        });
-    </script>
 </body>
 
 </html>

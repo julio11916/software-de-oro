@@ -9,7 +9,7 @@ from datetime import datetime, timedelta, date
 from typing import Any, Mapping, Optional
 from email_service import mail, generar_codigo_verificacion, enviar_codigo_verificacion
 import config_email
-from db_utils import engine  # Inicializa DB y proxys al importar
+from db_utils import engine, read_table_df, replace_table_df, next_id  # Inicializa DB y proxys al importar
 
 app = Flask(__name__)
 app.secret_key = "clave"  # Necesario para manejar sesiones
@@ -30,6 +30,10 @@ CURRENCY_NAME = "Peso colombiano"
 
 USUARIO_COLUMNS = ['id_usuario', 'nombre', 'email', 'password_hash', 'rol', 'estado', 'fecha_registro', 'email_verified', 'verification_code', 'verification_code_expiry']
 REGISTRO_COLUMNS = ['id_registro', 'id_usuario', 'accion', 'fecha_accion']
+PRODUCTO_COLUMNS = ['id_producto', 'nombre', 'descripcion', 'precio', 'stock', 'id_categoria', 'fuerza', 'intendencia', 'imagen_url', 'eliminado']
+PEDIDO_COLUMNS = ['id_pedido', 'id_usuario', 'fecha_pedido', 'estado']
+DETALLE_PEDIDO_COLUMNS = ['id_detalle', 'id_pedido', 'id_producto', 'cantidad', 'subtotal']
+PAGO_COLUMNS = ['id_pago', 'id_pedido', 'monto', 'metodo_pago', 'fecha_pago', 'estado_pago', 'id_promo', 'codigo_promo', 'tipo_descuento', 'valor_descuento', 'monto_descuento']
 
 # Column definitions for promociones
 PROMO_COLUMNS = [
@@ -52,9 +56,8 @@ INTENDENCIAS_OPCIONES = [
 
 
 def cargar_usuarios_df():
-    if os.path.exists('bd/usuarios.xlsx'):
-        usuarios = pd.read_excel('bd/usuarios.xlsx')
-    else:
+    usuarios = read_table_df('usuarios')
+    if usuarios.empty:
         usuarios = pd.DataFrame(columns=USUARIO_COLUMNS)
 
     for col in USUARIO_COLUMNS:
@@ -85,28 +88,32 @@ def guardar_usuarios_df(usuarios):
         usuarios['verification_code'] = usuarios['verification_code'].astype(str)
     if 'verification_code_expiry' in usuarios.columns:
         usuarios['verification_code_expiry'] = usuarios['verification_code_expiry'].astype(str)
-    usuarios.to_excel('bd/usuarios.xlsx', index=False)
+    replace_table_df('usuarios', usuarios[USUARIO_COLUMNS])
 
 
 def cargar_registros_df():
-    if os.path.exists('bd/registros.xlsx'):
-        registros = pd.read_excel('bd/registros.xlsx')
-    else:
+    registros = read_table_df('registros')
+    if registros.empty:
         registros = pd.DataFrame(columns=REGISTRO_COLUMNS)
 
     for col in REGISTRO_COLUMNS:
         if col not in registros.columns:
             registros[col] = ''
+    registros['id_registro'] = pd.to_numeric(registros['id_registro'], errors='coerce')
+    registros['id_usuario'] = registros['id_usuario'].fillna('')
+    registros['accion'] = registros['accion'].fillna('')
+    registros['fecha_accion'] = registros['fecha_accion'].fillna('')
     return registros[REGISTRO_COLUMNS]
 
 
+def guardar_registros_df(registros):
+    replace_table_df('registros', registros[REGISTRO_COLUMNS])
+
+
 def cargar_promociones_df():
-    """Carga el DataFrame de promociones desde bd/promociones.xlsx.
-    Si el archivo no existe se crea con columnas definidas.
-    """
-    if os.path.exists('bd/promociones.xlsx'):
-        promos = pd.read_excel('bd/promociones.xlsx')
-    else:
+    """Carga el DataFrame de promociones desde la tabla SQL."""
+    promos = read_table_df('promociones')
+    if promos.empty:
         promos = pd.DataFrame(columns=PROMO_COLUMNS)
 
     for col in PROMO_COLUMNS:
@@ -134,8 +141,8 @@ def cargar_promociones_df():
 
 
 def guardar_promociones_df(promos):
-    """Guarda las promociones en bd/promociones.xlsx"""
-    promos.to_excel('bd/promociones.xlsx', index=False)
+    """Guarda las promociones en la tabla SQL."""
+    replace_table_df('promociones', promos[PROMO_COLUMNS])
 
 
 def normalizar_imagen_url(valor):
@@ -156,35 +163,152 @@ def normalizar_imagenes_productos(productos):
     return productos
 
 
-def cargar_productos_por_fuerza(fuerza):
-    if not os.path.exists('bd/producto.xlsx'):
-        return []
+def cargar_productos_df():
+    productos = read_table_df('producto')
+    for column in PRODUCTO_COLUMNS:
+        if column not in productos.columns:
+            if column == 'eliminado':
+                productos[column] = False
+            elif column in {'precio'}:
+                productos[column] = 0.0
+            elif column in {'stock', 'id_categoria'}:
+                productos[column] = 0
+            else:
+                productos[column] = ''
 
-    productos = pd.read_excel('bd/producto.xlsx')
     productos = normalizar_imagenes_productos(productos)
-    if 'eliminado' not in productos.columns:
-        productos['eliminado'] = False
-    if 'fuerza' not in productos.columns:
-        productos['fuerza'] = ''
-
+    productos['id_producto'] = pd.to_numeric(productos['id_producto'], errors='coerce')
+    productos['precio'] = pd.to_numeric(productos['precio'], errors='coerce').fillna(0.0).astype(float)
+    productos['stock'] = pd.to_numeric(productos['stock'], errors='coerce').fillna(0).astype(int)
+    productos['id_categoria'] = pd.to_numeric(productos['id_categoria'], errors='coerce').fillna(0).astype(int)
     productos['eliminado'] = productos['eliminado'].fillna(False).astype(bool)
     productos['fuerza'] = productos['fuerza'].fillna('').astype(str)
-    productos = productos[productos['eliminado'] == False]
+    productos['intendencia'] = productos['intendencia'].fillna('').astype(str)
+    productos['nombre'] = productos['nombre'].fillna('').astype(str)
+    productos['descripcion'] = productos['descripcion'].fillna('').astype(str)
+    productos['imagen_url'] = productos['imagen_url'].fillna('').astype(str)
+    return productos[PRODUCTO_COLUMNS]
 
+
+def guardar_productos_df(productos):
+    productos = productos.copy()
+    for column in PRODUCTO_COLUMNS:
+        if column not in productos.columns:
+            if column == 'eliminado':
+                productos[column] = False
+            elif column in {'precio'}:
+                productos[column] = 0.0
+            elif column in {'stock', 'id_categoria'}:
+                productos[column] = 0
+            else:
+                productos[column] = ''
+
+    replace_table_df('producto', productos[PRODUCTO_COLUMNS])
+
+
+def cargar_productos_activos_df():
+    productos = cargar_productos_df()
+    return productos[productos['eliminado'] == False].copy()
+
+
+def cargar_pedidos_df():
+    pedidos = read_table_df('pedidos')
+    for column in PEDIDO_COLUMNS:
+        if column not in pedidos.columns:
+            pedidos[column] = '' if column in {'id_usuario', 'fecha_pedido', 'estado'} else 0
+    pedidos['id_pedido'] = pd.to_numeric(pedidos['id_pedido'], errors='coerce')
+    pedidos['id_usuario'] = pedidos['id_usuario'].fillna('')
+    pedidos['fecha_pedido'] = pedidos['fecha_pedido'].fillna('')
+    pedidos['estado'] = pedidos['estado'].fillna('pendiente')
+    return pedidos[PEDIDO_COLUMNS]
+
+
+def guardar_pedidos_df(pedidos):
+    pedidos = pedidos.copy()
+    for column in PEDIDO_COLUMNS:
+        if column not in pedidos.columns:
+            pedidos[column] = '' if column in {'id_usuario', 'fecha_pedido', 'estado'} else 0
+    replace_table_df('pedidos', pedidos[PEDIDO_COLUMNS])
+
+
+def cargar_detalle_pedido_df():
+    detalle = read_table_df('detalle_pedido')
+    for column in DETALLE_PEDIDO_COLUMNS:
+        if column not in detalle.columns:
+            detalle[column] = 0
+    detalle['id_detalle'] = pd.to_numeric(detalle['id_detalle'], errors='coerce')
+    detalle['id_pedido'] = pd.to_numeric(detalle['id_pedido'], errors='coerce')
+    detalle['id_producto'] = pd.to_numeric(detalle['id_producto'], errors='coerce')
+    detalle['cantidad'] = pd.to_numeric(detalle['cantidad'], errors='coerce').fillna(0)
+    detalle['subtotal'] = pd.to_numeric(detalle['subtotal'], errors='coerce').fillna(0.0)
+    return detalle[DETALLE_PEDIDO_COLUMNS]
+
+
+def guardar_detalle_pedido_df(detalle):
+    detalle = detalle.copy()
+    for column in DETALLE_PEDIDO_COLUMNS:
+        if column not in detalle.columns:
+            detalle[column] = 0
+    replace_table_df('detalle_pedido', detalle[DETALLE_PEDIDO_COLUMNS])
+
+
+def cargar_pagos_df():
+    pagos = read_table_df('pagos')
+    defaults = {
+        'id_pago': 0,
+        'id_pedido': 0,
+        'monto': 0.0,
+        'metodo_pago': '',
+        'fecha_pago': '',
+        'estado_pago': '',
+        'id_promo': '',
+        'codigo_promo': '',
+        'tipo_descuento': '',
+        'valor_descuento': 0.0,
+        'monto_descuento': 0.0,
+    }
+    for column, default_value in defaults.items():
+        if column not in pagos.columns:
+            pagos[column] = default_value
+    pagos['id_pago'] = pd.to_numeric(pagos['id_pago'], errors='coerce')
+    pagos['id_pedido'] = pd.to_numeric(pagos['id_pedido'], errors='coerce')
+    pagos['monto'] = pd.to_numeric(pagos['monto'], errors='coerce').fillna(0.0)
+    pagos['valor_descuento'] = pd.to_numeric(pagos['valor_descuento'], errors='coerce').fillna(0.0)
+    pagos['monto_descuento'] = pd.to_numeric(pagos['monto_descuento'], errors='coerce').fillna(0.0)
+    pagos['metodo_pago'] = pagos['metodo_pago'].fillna('')
+    pagos['fecha_pago'] = pagos['fecha_pago'].fillna('')
+    pagos['estado_pago'] = pagos['estado_pago'].fillna('')
+    pagos['codigo_promo'] = pagos['codigo_promo'].fillna('')
+    pagos['tipo_descuento'] = pagos['tipo_descuento'].fillna('')
+    return pagos[PAGO_COLUMNS]
+
+
+def guardar_pagos_df(pagos):
+    pagos = pagos.copy()
+    defaults = {
+        'id_pago': 0,
+        'id_pedido': 0,
+        'monto': 0.0,
+        'metodo_pago': '',
+        'fecha_pago': '',
+        'estado_pago': '',
+        'id_promo': '',
+        'codigo_promo': '',
+        'tipo_descuento': '',
+        'valor_descuento': 0.0,
+        'monto_descuento': 0.0,
+    }
+    for column, default_value in defaults.items():
+        if column not in pagos.columns:
+            pagos[column] = default_value
+    replace_table_df('pagos', pagos[PAGO_COLUMNS])
+
+
+def cargar_productos_por_fuerza(fuerza):
+    productos = cargar_productos_activos_df()
     fuerza_norm = fuerza.strip().lower()
     productos = productos[productos['fuerza'].str.strip().str.lower() == fuerza_norm]
     return productos.to_dict(orient='records')
-
-
-def mapear_catalogo_ids(productos):
-    catalogo_ids = {}
-    for producto in productos:
-        nombre = str(producto.get('nombre', '')).strip()
-        id_producto = pd.to_numeric(producto.get('id_producto'), errors='coerce')
-        if not nombre or pd.isna(id_producto):
-            continue
-        catalogo_ids[nombre] = int(id_producto)
-    return catalogo_ids
 
 
 def parsear_fecha_promocion(valor: Any) -> Optional[date]:
@@ -258,7 +382,7 @@ def registrar_actividad(accion):
         'fecha_accion': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     }
     registros = pd.concat([registros, pd.DataFrame([nuevo_registro])], ignore_index=True)
-    registros.to_excel('bd/registros.xlsx', index=False)
+    guardar_registros_df(registros)
 
 
 def obtener_nombre_sesion():
@@ -270,15 +394,14 @@ def obtener_nombre_sesion():
     if not email:
         return 'Administrador'
 
-    if os.path.exists('bd/usuarios.xlsx'):
-        usuarios = pd.read_excel('bd/usuarios.xlsx')
-        if {'email', 'nombre'}.issubset(usuarios.columns):
-            coincidencia = usuarios[usuarios['email'].astype(str).str.lower() == email.lower()]
-            if not coincidencia.empty:
-                nombre_excel = str(coincidencia.iloc[0].get('nombre', '')).strip()
-                if nombre_excel:
-                    session['nombre'] = nombre_excel
-                    return nombre_excel
+    usuarios = cargar_usuarios_df()
+    if {'email', 'nombre'}.issubset(usuarios.columns):
+        coincidencia = usuarios[usuarios['email'].astype(str).str.lower() == email.lower()]
+        if not coincidencia.empty:
+            nombre_excel = str(coincidencia.iloc[0].get('nombre', '')).strip()
+            if nombre_excel:
+                session['nombre'] = nombre_excel
+                return nombre_excel
 
     return email.split('@')[0] if '@' in email else email
 
@@ -293,24 +416,9 @@ def formatear_cop(valor):
 
 
 def obtener_productos_agotados():
-    if not os.path.exists('bd/producto.xlsx'):
-        return []
-
-    productos = pd.read_excel('bd/producto.xlsx')
+    productos = cargar_productos_df()
     if productos.empty:
         return []
-
-    if 'stock' not in productos.columns:
-        productos['stock'] = 0
-    if 'eliminado' not in productos.columns:
-        productos['eliminado'] = False
-    if 'nombre' not in productos.columns:
-        productos['nombre'] = ''
-    if 'id_producto' not in productos.columns:
-        productos['id_producto'] = 0
-
-    productos['stock'] = pd.to_numeric(productos['stock'], errors='coerce').fillna(0).astype(int)
-    productos['eliminado'] = productos['eliminado'].fillna(False).astype(bool)
 
     agotados = productos[(productos['eliminado'] == False) & (productos['stock'] <= 0)].copy()
     if agotados.empty:
@@ -324,25 +432,9 @@ def normalizar_carrito_por_stock(carrito):
     if not carrito:
         return [], []
 
-    if not os.path.exists('bd/producto.xlsx'):
-        return carrito, []
-
-    productos = pd.read_excel('bd/producto.xlsx')
+    productos = cargar_productos_df()
     if 'id_producto' not in productos.columns:
         return carrito, []
-    if 'eliminado' not in productos.columns:
-        productos['eliminado'] = False
-    if 'stock' not in productos.columns:
-        productos['stock'] = 0
-    if 'precio' not in productos.columns:
-        productos['precio'] = 0
-    if 'nombre' not in productos.columns:
-        productos['nombre'] = ''
-
-    productos['id_producto'] = pd.to_numeric(productos['id_producto'], errors='coerce')
-    productos['stock'] = pd.to_numeric(productos['stock'], errors='coerce').fillna(0).astype(int)
-    productos['precio'] = pd.to_numeric(productos['precio'], errors='coerce').fillna(0.0).astype(float)
-    productos['eliminado'] = productos['eliminado'].fillna(False).astype(bool)
 
     inventario = {}
     for _, row in productos.iterrows():
@@ -410,17 +502,7 @@ def inyectar_nombre_admin():
 
 @app.route('/')
 def home():
-    if os.path.exists('bd/producto.xlsx'):
-        productos = pd.read_excel('bd/producto.xlsx')
-        productos = normalizar_imagenes_productos(productos)
-    else:
-        productos = pd.DataFrame(columns=['id_producto', 'nombre', 'precio', 'stock', 'eliminado'])
-
-    if 'eliminado' not in productos.columns:
-        productos['eliminado'] = False
-    productos['eliminado'] = productos['eliminado'].fillna(False).astype(bool)
-    productos = productos[productos['eliminado'] == False]
-
+    productos = cargar_productos_activos_df()
     lista_productos = productos.to_dict(orient='records')
     return render_template('Usuarios/Autenticacion/login.html', productos=lista_productos)
 
@@ -437,7 +519,7 @@ def login():
     if not usuario.empty:
         estado = str(usuario.iloc[0].get('estado', 'activo')).strip().lower()
         if estado != 'activo':
-            return "Tu usuario est? inactivo. Contacta al administrador."
+            return "Tu usuario esta inactivo. Contacta al administrador."
 
         rol = usuario.iloc[0]['rol']
         id_usuario = usuario.iloc[0]['id_usuario']
@@ -447,21 +529,7 @@ def login():
         session['rol'] = rol
         session['nombre'] = nombre
 
-        # Registrar el login
-        if os.path.exists('bd/registros.xlsx'):
-            registros = pd.read_excel('bd/registros.xlsx')
-        else:
-            registros = pd.DataFrame(columns=['id_registro', 'id_usuario', 'accion', 'fecha_accion'])
-
-        nuevo_registro = {
-            'id_registro': len(registros) + 1,
-            'id_usuario': email,
-            'accion': f"Inicio de sesión exitoso",
-            'fecha_accion': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        }
-
-        registros = pd.concat([registros, pd.DataFrame([nuevo_registro])], ignore_index=True)
-        registros.to_excel('bd/registros.xlsx', index=False)
+        registrar_actividad("Inicio de sesion exitoso")
 
         if rol == 'admin':
             return redirect(url_for('admin_dashboard'))
@@ -478,15 +546,13 @@ def registro():
         password = request.form['password']
         rol = 'normal'
 
-        if os.path.exists('bd/usuarios.xlsx'):
-            usuarios = pd.read_excel('bd/usuarios.xlsx')
-        else:
-            usuarios = pd.DataFrame(columns=['id_usuario', 'nombre', 'email', 'password_hash', 'rol', 'estado', 'fecha_registro'])
+        usuarios = cargar_usuarios_df()
 
         if email in usuarios['email'].values:
-            return "Este correo ya est? registrado."
+            return "Este correo ya esta registrado."
 
-        nuevo_id = len(usuarios) + 1
+        ultimo_id = pd.to_numeric(usuarios['id_usuario'], errors='coerce').max()
+        nuevo_id = int(ultimo_id + 1) if pd.notna(ultimo_id) else 1
         nuevo_usuario = {
             'id_usuario': nuevo_id,
             'nombre': nombre,
@@ -498,23 +564,8 @@ def registro():
         }
 
         usuarios = pd.concat([usuarios, pd.DataFrame([nuevo_usuario])], ignore_index=True)
-        usuarios.to_excel('bd/usuarios.xlsx', index=False)
-
-        # Registrar el nuevo usuario en registros
-        if os.path.exists('bd/registros.xlsx'):
-            registros = pd.read_excel('bd/registros.xlsx')
-        else:
-            registros = pd.DataFrame(columns=['id_registro', 'id_usuario', 'accion', 'fecha_accion'])
-
-        nuevo_registro = {
-            'id_registro': len(registros) + 1,
-            'id_usuario': email,
-            'accion': f"Nuevo usuario registrado: {nombre}",
-            'fecha_accion': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        }
-
-        registros = pd.concat([registros, pd.DataFrame([nuevo_registro])], ignore_index=True)
-        registros.to_excel('bd/registros.xlsx', index=False)
+        guardar_usuarios_df(usuarios)
+        registrar_actividad(f"Nuevo usuario registrado: {nombre}")
 
         # Iniciar sesión automáticamente después del registro
         session['usuario'] = email
@@ -534,15 +585,7 @@ def logout():
 @app.route('/admin')
 def admin_dashboard():
     if session.get('rol') == 'admin':
-        productos = pd.read_excel('bd/producto.xlsx')
-        productos = normalizar_imagenes_productos(productos)
-
-        # Asegurar que la columna 'eliminado' existe y es booleana
-        if 'eliminado' not in productos.columns:
-            productos['eliminado'] = False
-        productos['eliminado'] = productos['eliminado'].fillna(False).astype(bool)
-
-        productos = productos[productos['eliminado'] == False]
+        productos = cargar_productos_activos_df()
         lista_productos = productos.to_dict(orient='records')
         productos_agotados = obtener_productos_agotados()
         admin_nombre = obtener_nombre_sesion()
@@ -551,7 +594,7 @@ def admin_dashboard():
         hoy = datetime.now()
         hace_30 = hoy - timedelta(days=30)
 
-        usuarios_df = pd.read_excel('bd/usuarios.xlsx') if os.path.exists('bd/usuarios.xlsx') else pd.DataFrame()
+        usuarios_df = cargar_usuarios_df()
         if not usuarios_df.empty and 'fecha_registro' in usuarios_df.columns:
             # Normaliza la zona horaria para evitar comparaciones entre tz-aware y tz-naive
             usuarios_df['fecha_registro_dt'] = (
@@ -562,7 +605,7 @@ def admin_dashboard():
         else:
             usuarios_ult_mes = 0
 
-        pedidos_df = pd.read_excel('bd/pedidos.xlsx') if os.path.exists('bd/pedidos.xlsx') else pd.DataFrame()
+        pedidos_df = cargar_pedidos_df()
         usuarios_compraron_ult_mes = 0
         if not pedidos_df.empty:
             pedidos_df['fecha_pedido_dt'] = (
@@ -573,7 +616,7 @@ def admin_dashboard():
             usuarios_compraron_ult_mes = pedidos_ult_mes['id_usuario'].nunique()
 
         # Top productos vendidos (totales)
-        detalle_df = pd.read_excel('bd/detalle_pedido.xlsx') if os.path.exists('bd/detalle_pedido.xlsx') else pd.DataFrame()
+        detalle_df = cargar_detalle_pedido_df()
         top_productos = []
         if not detalle_df.empty:
             detalle_df['cantidad'] = pd.to_numeric(detalle_df.get('cantidad', 0), errors='coerce').fillna(0)
@@ -600,17 +643,7 @@ def admin_productos():
     if session.get('rol') != 'admin':
         return "Acceso denegado"
 
-    productos = pd.read_excel('bd/producto.xlsx')
-    productos = normalizar_imagenes_productos(productos)
-    if 'eliminado' not in productos.columns:
-        productos['eliminado'] = False
-    if 'fuerza' not in productos.columns:
-        productos['fuerza'] = ''
-    if 'intendencia' not in productos.columns:
-        productos['intendencia'] = ''
-    productos['eliminado'] = productos['eliminado'].fillna(False).astype(bool)
-
-    productos = productos[productos['eliminado'] == False]
+    productos = cargar_productos_activos_df()
     lista_productos = productos.to_dict(orient='records')
     return render_template(
         'Administrador/Gestion productos/admin_prod_dashboard.html',
@@ -623,16 +656,8 @@ def admin_productos():
 @app.route('/admin/agregar_producto', methods=['POST'])
 def agregar_producto():
     if session.get('rol') == 'admin':
-        productos = pd.read_excel('bd/producto.xlsx')
-        productos = normalizar_imagenes_productos(productos)
-        if 'fuerza' not in productos.columns:
-            productos['fuerza'] = ''
-        if 'intendencia' not in productos.columns:
-            productos['intendencia'] = ''
-        if 'imagen_url' not in productos.columns:
-            productos['imagen_url'] = ''
-
-        nuevo_id = len(productos) + 1
+        productos = cargar_productos_df()
+        nuevo_id = next_id('producto', 'id_producto')
         fuerza = request.form.get('fuerza', '').strip()
         intendencia = request.form.get('intendencia', '').strip()
         if fuerza not in FUERZAS_OPCIONES or intendencia not in INTENDENCIAS_OPCIONES:
@@ -651,8 +676,8 @@ def agregar_producto():
             imagen.seek(0, os.SEEK_END)
             tamano = imagen.tell()
             imagen.seek(0)
-            if tamano > 2 * 1024 * 1024:
-                flash("La imagen excede el tamano maximo permitido (2MB).", 'danger')
+            if tamano > 3 * 1024 * 1024:
+                flash("La imagen excede el tamano maximo permitido (3MB).", 'danger')
                 return redirect(url_for('admin_productos'))
 
             carpeta_destino = os.path.join('static', 'img', 'Empresa')
@@ -670,33 +695,20 @@ def agregar_producto():
             'id_categoria': 1,  # Se conserva por compatibilidad
             'fuerza': fuerza,
             'intendencia': intendencia,
-            'imagen_url': imagen_url
+            'imagen_url': imagen_url,
+            'eliminado': False
         }
 
         productos = pd.concat([productos, pd.DataFrame([nuevo_producto])], ignore_index=True)
-        productos.to_excel('bd/producto.xlsx', index=False)
+        guardar_productos_df(productos)
 
-        # Registrar acción en registros.xlsx
-        if os.path.exists('bd/registros.xlsx'):
-            registros = pd.read_excel('bd/registros.xlsx')
-        else:
-            registros = pd.DataFrame(columns=['id_registro', 'id_usuario', 'accion', 'fecha_accion'])
-
-        nuevo_registro = {
-            'id_registro': len(registros) + 1,
-            'id_usuario': session['usuario'],
-            'accion': (
-                f"Creo producto '{request.form['nombre']}' (ID {nuevo_id})\n"
-                f"- precio: {formatear_cop(float(request.form['precio']))}\n"
-                f"- stock: {int(request.form['stock'])}\n"
-                f"- fuerza: {fuerza}\n"
-                f"- intendencia: {intendencia}"
-            ),
-            'fecha_accion': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        }
-
-        registros = pd.concat([registros, pd.DataFrame([nuevo_registro])], ignore_index=True)
-        registros.to_excel('bd/registros.xlsx', index=False)
+        registrar_actividad(
+            f"Creo producto '{request.form['nombre']}' (ID {nuevo_id})\n"
+            f"- precio: {formatear_cop(float(request.form['precio']))}\n"
+            f"- stock: {int(request.form['stock'])}\n"
+            f"- fuerza: {fuerza}\n"
+            f"- intendencia: {intendencia}"
+        )
 
         return redirect(url_for('admin_productos'))
     return "Acceso denegado"
@@ -706,20 +718,9 @@ def export_sales():
     if session.get('rol') != 'admin':
         return "Acceso denegado"
     
-    if os.path.exists('bd/pedidos.xlsx'):
-        pedidos = pd.read_excel('bd/pedidos.xlsx')
-    else:
-        pedidos = pd.DataFrame(columns=['id_pedido', 'id_usuario', 'fecha_pedido', 'estado'])
-    
-    if os.path.exists('bd/pagos.xlsx'):
-        pagos = pd.read_excel('bd/pagos.xlsx')
-    else:
-        pagos = pd.DataFrame(columns=['id_pago', 'id_pedido', 'monto', 'metodo_pago', 'fecha_pago', 'estado_pago'])
-    
-    if os.path.exists('bd/detalle_pedido.xlsx'):
-        detalle = pd.read_excel('bd/detalle_pedido.xlsx')
-    else:
-        detalle = pd.DataFrame(columns=['id_detalle', 'id_pedido', 'id_producto', 'cantidad', 'subtotal'])
+    pedidos = cargar_pedidos_df()
+    pagos = cargar_pagos_df()
+    detalle = cargar_detalle_pedido_df()
     
     # Combinar los datos
     informe = pd.merge(pedidos, pagos, on='id_pedido', how='left')
@@ -753,12 +754,12 @@ def subir_imagen(id_producto):
             flash("Formato de imagen no permitido. Usa .jpg, .jpeg, .png, .gif o .webp.")
             return redirect(url_for('admin_productos'))
 
-        # Validar tamano (max. 2MB)
+        # Validar tamano (max. 3MB)
         imagen.seek(0, os.SEEK_END)
         tamano = imagen.tell()
         imagen.seek(0)
-        if tamano > 2 * 1024 * 1024:
-            flash("La imagen excede el tamano maximo permitido (2MB).")
+        if tamano > 3 * 1024 * 1024:
+            flash("La imagen excede el tamano maximo permitido (3MB).")
             return redirect(url_for('admin_productos'))
 
         # Guardar imagen
@@ -767,18 +768,16 @@ def subir_imagen(id_producto):
         ruta = os.path.join(carpeta_destino, f'producto_{id_producto}.jpg')
         imagen.save(ruta)
 
-        # Registrar ruta en el Excel
-        productos = pd.read_excel('bd/producto.xlsx')
-        productos = normalizar_imagenes_productos(productos)
+        productos = cargar_productos_df()
         idx = productos[productos['id_producto'] == id_producto].index
         if not idx.empty:
             productos.at[idx[0], 'imagen_url'] = f'img/Empresa/producto_{id_producto}.jpg'
-            productos.to_excel('bd/producto.xlsx', index=False)
+            guardar_productos_df(productos)
 
         flash("Imagen subida correctamente.")
 
     else:
-        flash("No se seleccion? ninguna imagen.")
+        flash("No se selecciono ninguna imagen.")
 
     return redirect(url_for('admin_productos'))
 
@@ -789,35 +788,16 @@ def eliminar_producto(id_producto):
     if session.get('rol') != 'admin':
         return "Acceso denegado"
 
-    productos = pd.read_excel('bd/producto.xlsx')
-
-    # Asegurar que la columna 'eliminado' existe y es del tipo correcto
-    if 'eliminado' not in productos.columns:
-        productos['eliminado'] = False
-    productos['eliminado'] = productos['eliminado'].astype(object)
+    productos = cargar_productos_df()
 
     idx = productos[productos['id_producto'] == id_producto].index
 
     if not idx.empty:
         productos.at[idx[0], 'eliminado'] = True
-        productos.to_excel('bd/producto.xlsx', index=False)
+        guardar_productos_df(productos)
 
-        # Registrar acción
         nombre = productos.at[idx[0], 'nombre']
-        if os.path.exists('bd/registros.xlsx'):
-            registros = pd.read_excel('bd/registros.xlsx')
-        else:
-            registros = pd.DataFrame(columns=['id_registro', 'id_usuario', 'accion', 'fecha_accion'])
-
-        nuevo_registro = {
-            'id_registro': len(registros) + 1,
-            'id_usuario': session['usuario'],
-            'accion': f"Elimin? producto: {nombre} (ID {id_producto})",
-            'fecha_accion': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        }
-
-        registros = pd.concat([registros, pd.DataFrame([nuevo_registro])], ignore_index=True)
-        registros.to_excel('bd/registros.xlsx', index=False)
+        registrar_actividad(f"Elimino producto: {nombre} (ID {id_producto})")
 
     return redirect(url_for('admin_productos'))
 
@@ -826,29 +806,15 @@ def eliminar_definitivo(id_producto):
     if session.get('rol') != 'admin':
         return "Acceso denegado"
 
-    productos = pd.read_excel('bd/producto.xlsx')
+    productos = cargar_productos_df()
     idx = productos[productos['id_producto'] == id_producto].index
 
     if not idx.empty:
         nombre = productos.at[idx[0], 'nombre']
         productos = productos.drop(index=idx)
-        productos.to_excel('bd/producto.xlsx', index=False)
+        guardar_productos_df(productos)
 
-        # Registrar acción
-        if os.path.exists('bd/registros.xlsx'):
-            registros = pd.read_excel('bd/registros.xlsx')
-        else:
-            registros = pd.DataFrame(columns=['id_registro', 'id_usuario', 'accion', 'fecha_accion'])
-
-        nuevo_registro = {
-            'id_registro': len(registros) + 1,
-            'id_usuario': session['usuario'],
-            'accion': f"Elimin? definitivamente el producto: {nombre} (ID {id_producto})",
-            'fecha_accion': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        }
-
-        registros = pd.concat([registros, pd.DataFrame([nuevo_registro])], ignore_index=True)
-        registros.to_excel('bd/registros.xlsx', index=False)
+        registrar_actividad(f"Elimino definitivamente el producto: {nombre} (ID {id_producto})")
 
     return redirect(url_for('admin_papelera'))
 
@@ -857,30 +823,15 @@ def restaurar_producto(id_producto):
     if session.get('rol') != 'admin':
         return "Acceso denegado"
 
-    productos = pd.read_excel('bd/producto.xlsx')
+    productos = cargar_productos_df()
     idx = productos[productos['id_producto'] == id_producto].index
 
     if not idx.empty:
-        productos['eliminado'] = productos['eliminado'].astype(object)
         productos.at[idx[0], 'eliminado'] = False
-        productos.to_excel('bd/producto.xlsx', index=False)
+        guardar_productos_df(productos)
 
-        # Registrar restauración
         nombre = productos.at[idx[0], 'nombre']
-        if os.path.exists('bd/registros.xlsx'):
-            registros = pd.read_excel('bd/registros.xlsx')
-        else:
-            registros = pd.DataFrame(columns=['id_registro', 'id_usuario', 'accion', 'fecha_accion'])
-
-        nuevo_registro = {
-            'id_registro': len(registros) + 1,
-            'id_usuario': session['usuario'],
-            'accion': f"Restaur? producto: {nombre} (ID {id_producto})",
-            'fecha_accion': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        }
-
-        registros = pd.concat([registros, pd.DataFrame([nuevo_registro])], ignore_index=True)
-        registros.to_excel('bd/registros.xlsx', index=False)
+        registrar_actividad(f"Restauro producto: {nombre} (ID {id_producto})")
 
     return redirect(url_for('admin_papelera'))
 
@@ -890,13 +841,7 @@ def admin_papelera():
     if session.get('rol') != 'admin':
         return "Acceso denegado"
 
-    productos = pd.read_excel('bd/producto.xlsx')
-
-    # Asegurar que la columna 'eliminado' existe y es del tipo correcto
-    if 'eliminado' not in productos.columns:
-        productos['eliminado'] = False
-    productos['eliminado'] = productos['eliminado'].astype(object)
-
+    productos = cargar_productos_df()
     eliminados = productos[productos['eliminado'] == True].to_dict(orient='records')
     return render_template('Administrador/Papelera/admin_papelera.html', productos=eliminados)
 
@@ -1124,20 +1069,8 @@ def admin_pos():
     if session.get('rol') != 'admin':
         return "Acceso denegado"
 
-    if os.path.exists('bd/producto.xlsx'):
-        productos = pd.read_excel('bd/producto.xlsx')
-        productos = normalizar_imagenes_productos(productos)
-    else:
-        productos = pd.DataFrame(columns=['id_producto', 'nombre', 'precio', 'stock', 'eliminado'])
-
-    if 'eliminado' not in productos.columns:
-        productos['eliminado'] = False
-    productos['eliminado'] = productos['eliminado'].fillna(False).astype(bool)
-    productos['stock'] = pd.to_numeric(productos.get('stock', 0), errors='coerce').fillna(0)
-    productos['precio'] = pd.to_numeric(productos.get('precio', 0), errors='coerce').fillna(0)
-
-    productos_activos = productos[productos['eliminado'] == False].copy()
-    lista_productos = productos_activos.to_dict(orient='records')
+    productos = cargar_productos_activos_df()
+    lista_productos = productos.to_dict(orient='records')
     return render_template('Administrador/Sistema POS/admin_pos_dashboard.html', productos=lista_productos)
 
 
@@ -1146,25 +1079,11 @@ def admin_pedidos():
     if session.get('rol') != 'admin':
         return "Acceso denegado"
 
-    if os.path.exists('bd/pedidos.xlsx'):
-        pedidos = pd.read_excel('bd/pedidos.xlsx')
-    else:
-        pedidos = pd.DataFrame(columns=['id_pedido', 'id_usuario', 'fecha_pedido', 'estado'])
+    pedidos = cargar_pedidos_df()
+    pagos = cargar_pagos_df()
+    detalle = cargar_detalle_pedido_df()
 
-    if os.path.exists('bd/pagos.xlsx'):
-        pagos = pd.read_excel('bd/pagos.xlsx')
-    else:
-        pagos = pd.DataFrame(columns=['id_pago', 'id_pedido', 'monto', 'metodo_pago', 'fecha_pago', 'estado_pago'])
-
-    if os.path.exists('bd/detalle_pedido.xlsx'):
-        detalle = pd.read_excel('bd/detalle_pedido.xlsx')
-    else:
-        detalle = pd.DataFrame(columns=['id_detalle', 'id_pedido', 'id_producto', 'cantidad', 'subtotal'])
-
-    if os.path.exists('bd/producto.xlsx'):
-        productos = pd.read_excel('bd/producto.xlsx')
-    else:
-        productos = pd.DataFrame(columns=['id_producto', 'nombre'])
+    productos = cargar_productos_df()[['id_producto', 'nombre']]
 
     usuarios = cargar_usuarios_df()
 
@@ -1313,11 +1232,7 @@ def admin_pedidos_estado(id_pedido):
         flash('Estado de pedido invalido.', 'danger')
         return redirect(url_for('admin_pedidos'))
 
-    if not os.path.exists('bd/pedidos.xlsx'):
-        flash('No existe la base de pedidos.', 'danger')
-        return redirect(url_for('admin_pedidos'))
-
-    pedidos = pd.read_excel('bd/pedidos.xlsx')
+    pedidos = cargar_pedidos_df()
     if 'id_pedido' not in pedidos.columns:
         flash('Estructura de pedidos invalida.', 'danger')
         return redirect(url_for('admin_pedidos'))
@@ -1332,7 +1247,7 @@ def admin_pedidos_estado(id_pedido):
 
     estado_anterior = str(pedidos.at[idx[0], 'estado']).strip().lower()
     pedidos.at[idx[0], 'estado'] = estado_nuevo
-    pedidos.to_excel('bd/pedidos.xlsx', index=False)
+    guardar_pedidos_df(pedidos)
 
     if estado_anterior != estado_nuevo:
         registrar_actividad(f"Actualizo estado de pedido #{id_pedido}: {estado_anterior} -> {estado_nuevo}")
@@ -1364,18 +1279,10 @@ def admin_pos_checkout():
         flash('Agrega al menos un producto para cobrar.', 'warning')
         return redirect(url_for('admin_pos'))
 
-    if os.path.exists('bd/producto.xlsx'):
-        productos = pd.read_excel('bd/producto.xlsx')
-    else:
+    productos = cargar_productos_df()
+    if productos.empty:
         flash('No existe el catalogo de productos.', 'danger')
         return redirect(url_for('admin_pos'))
-
-    if 'eliminado' not in productos.columns:
-        productos['eliminado'] = False
-    productos['eliminado'] = productos['eliminado'].fillna(False).astype(bool)
-    productos['stock'] = pd.to_numeric(productos.get('stock', 0), errors='coerce').fillna(0)
-    productos['precio'] = pd.to_numeric(productos.get('precio', 0), errors='coerce').fillna(0)
-    productos['id_producto'] = pd.to_numeric(productos.get('id_producto', 0), errors='coerce')
 
     carrito_validado = []
     total = 0.0
@@ -1419,24 +1326,13 @@ def admin_pos_checkout():
             'subtotal': subtotal
         })
 
-    productos.to_excel('bd/producto.xlsx', index=False)
+    guardar_productos_df(productos)
 
-    if os.path.exists('bd/pedidos.xlsx'):
-        pedidos = pd.read_excel('bd/pedidos.xlsx')
-    else:
-        pedidos = pd.DataFrame(columns=['id_pedido', 'id_usuario', 'fecha_pedido', 'estado'])
+    pedidos = cargar_pedidos_df()
+    detalle_pedido = cargar_detalle_pedido_df()
+    pagos = cargar_pagos_df()
 
-    if os.path.exists('bd/detalle_pedido.xlsx'):
-        detalle_pedido = pd.read_excel('bd/detalle_pedido.xlsx')
-    else:
-        detalle_pedido = pd.DataFrame(columns=['id_detalle', 'id_pedido', 'id_producto', 'cantidad', 'subtotal'])
-
-    if os.path.exists('bd/pagos.xlsx'):
-        pagos = pd.read_excel('bd/pagos.xlsx')
-    else:
-        pagos = pd.DataFrame(columns=['id_pago', 'id_pedido', 'monto', 'metodo_pago', 'fecha_pago', 'estado_pago'])
-
-    next_pedido_id = int(pd.to_numeric(pedidos.get('id_pedido', pd.Series(dtype='float')), errors='coerce').max() + 1) if not pedidos.empty else 1
+    next_pedido_id = next_id('pedidos', 'id_pedido')
     nuevo_pedido = {
         'id_pedido': next_pedido_id,
         'id_usuario': session.get('usuario', 'admin_pos'),
@@ -1444,9 +1340,9 @@ def admin_pos_checkout():
         'estado': 'completado'
     }
     pedidos = pd.concat([pedidos, pd.DataFrame([nuevo_pedido])], ignore_index=True)
-    pedidos.to_excel('bd/pedidos.xlsx', index=False)
+    guardar_pedidos_df(pedidos)
 
-    next_detalle_id = int(pd.to_numeric(detalle_pedido.get('id_detalle', pd.Series(dtype='float')), errors='coerce').max() + 1) if not detalle_pedido.empty else 1
+    next_detalle_id = next_id('detalle_pedido', 'id_detalle')
     nuevos_detalles = []
     for item in carrito_validado:
         nuevos_detalles.append({
@@ -1458,9 +1354,9 @@ def admin_pos_checkout():
         })
         next_detalle_id += 1
     detalle_pedido = pd.concat([detalle_pedido, pd.DataFrame(nuevos_detalles)], ignore_index=True)
-    detalle_pedido.to_excel('bd/detalle_pedido.xlsx', index=False)
+    guardar_detalle_pedido_df(detalle_pedido)
 
-    next_pago_id = int(pd.to_numeric(pagos.get('id_pago', pd.Series(dtype='float')), errors='coerce').max() + 1) if not pagos.empty else 1
+    next_pago_id = next_id('pagos', 'id_pago')
     nuevo_pago = {
         'id_pago': next_pago_id,
         'id_pedido': next_pedido_id,
@@ -1470,7 +1366,7 @@ def admin_pos_checkout():
         'estado_pago': 'aprobado'
     }
     pagos = pd.concat([pagos, pd.DataFrame([nuevo_pago])], ignore_index=True)
-    pagos.to_excel('bd/pagos.xlsx', index=False)
+    guardar_pagos_df(pagos)
     total_cop = formatear_cop(round(total, 2))
     registrar_actividad(f"POS registro venta #{next_pedido_id} por {total_cop} ({len(carrito_validado)} producto(s))")
     flash(f'Venta POS registrada. Pedido #{next_pedido_id} por {total_cop}.', 'success')
@@ -1482,11 +1378,7 @@ def editar_producto(id_producto):
     if session.get('rol') != 'admin':
         return "Acceso denegado"
 
-    productos = pd.read_excel('bd/producto.xlsx')
-    if 'fuerza' not in productos.columns:
-        productos['fuerza'] = ''
-    if 'intendencia' not in productos.columns:
-        productos['intendencia'] = ''
+    productos = cargar_productos_df()
     producto = productos[productos['id_producto'] == id_producto]
 
     if producto.empty:
@@ -1538,7 +1430,7 @@ def editar_producto(id_producto):
         if 'id_categoria' in productos.columns:
             productos.at[idx, 'id_categoria'] = nueva_categoria
 
-        productos.to_excel('bd/producto.xlsx', index=False)
+        guardar_productos_df(productos)
 
         cambios = []
         if anterior['nombre'] != nuevo_nombre:
@@ -1577,15 +1469,7 @@ def editar_producto(id_producto):
 @app.route('/user')
 def user_dashboard():
     if session.get('rol') == 'normal':
-        productos = pd.read_excel('bd/producto.xlsx')
-        productos = normalizar_imagenes_productos(productos)
-
-        if 'eliminado' not in productos.columns:
-            productos['eliminado'] = False
-        productos['eliminado'] = productos['eliminado'].fillna(False).astype(bool)
-        productos['stock'] = pd.to_numeric(productos.get('stock', 0), errors='coerce').fillna(0).astype(int)
-
-        productos = productos[productos['eliminado'] == False]
+        productos = cargar_productos_activos_df()
         lista_productos = productos.to_dict(orient='records')
 
         # Promocion vigente por producto para mostrar en catalogo
@@ -1643,13 +1527,7 @@ def user_dashboard():
 @app.route('/product/<int:id_producto>')
 def product_detail(id_producto):
     if session.get('rol') == 'normal':
-        productos = pd.read_excel('bd/producto.xlsx')
-        productos = normalizar_imagenes_productos(productos)
-        if 'eliminado' not in productos.columns:
-            productos['eliminado'] = False
-        productos['eliminado'] = productos['eliminado'].fillna(False).astype(bool)
-        productos = productos[productos['eliminado'] == False]
-        productos['stock'] = pd.to_numeric(productos.get('stock', 0), errors='coerce').fillna(0).astype(int)
+        productos = cargar_productos_activos_df()
         producto = productos[productos['id_producto'] == id_producto]
         
         if producto.empty:
@@ -1673,12 +1551,7 @@ def add_to_cart(id_producto):
     if 'carrito' not in session:
         session['carrito'] = []
 
-    productos = pd.read_excel('bd/producto.xlsx')
-    if 'eliminado' not in productos.columns:
-        productos['eliminado'] = False
-    productos['eliminado'] = productos['eliminado'].fillna(False).astype(bool)
-    productos = productos[productos['eliminado'] == False].copy()
-    productos['stock'] = pd.to_numeric(productos.get('stock', 0), errors='coerce').fillna(0).astype(int)
+    productos = cargar_productos_activos_df()
 
     try:
         cantidad = int(request.form.get('cantidad', 1))
@@ -1809,10 +1682,7 @@ def pay():
         promo_aplicada = None
         descuento_promo = 0.0
 
-        if os.path.exists('bd/pagos.xlsx'):
-            pagos = pd.read_excel('bd/pagos.xlsx')
-        else:
-            pagos = pd.DataFrame(columns=['id_pago','id_pedido','monto','metodo_pago','fecha_pago','estado_pago'])
+        pagos = cargar_pagos_df()
 
         if 'id_promo' not in pagos.columns:
             pagos['id_promo'] = pd.Series(dtype='float')
@@ -1825,19 +1695,11 @@ def pay():
         if 'monto_descuento' not in pagos.columns:
             pagos['monto_descuento'] = 0.0
 
-        if os.path.exists('bd/pedidos.xlsx'):
-            pedidos = pd.read_excel('bd/pedidos.xlsx')
-        else:
-            pedidos = pd.DataFrame(columns=['id_pedido','id_usuario','fecha_pedido','estado'])
-        
-        if os.path.exists('bd/detalle_pedido.xlsx'):
-            detalle_pedido = pd.read_excel('bd/detalle_pedido.xlsx')
-        else:
-            detalle_pedido = pd.DataFrame(columns=['id_detalle','id_pedido','id_producto','cantidad','subtotal'])
+        pedidos = cargar_pedidos_df()
+        detalle_pedido = cargar_detalle_pedido_df()
 
-        if os.path.exists('bd/producto.xlsx'):
-            productos = pd.read_excel('bd/producto.xlsx')
-        else:
+        productos = cargar_productos_df()
+        if productos.empty:
             flash('No existe la base de productos.', 'danger')
             return redirect(url_for('cart'))
 
@@ -1850,11 +1712,6 @@ def pay():
             descuento_promo = calcular_descuento_promocion(total, promo_aplicada)
 
         total_final = max(0.0, float(total) - float(descuento_promo))
-
-        if 'eliminado' not in productos.columns:
-            productos['eliminado'] = False
-        productos['eliminado'] = productos['eliminado'].fillna(False).astype(bool)
-        productos['stock'] = pd.to_numeric(productos.get('stock', 0), errors='coerce').fillna(0).astype(int)
 
         for item in carrito:
             id_producto = int(item.get('id_producto', 0))
@@ -1880,10 +1737,10 @@ def pay():
             if stock_anterior > 0 and nuevo_stock == 0:
                 agotados_en_compra.append(str(productos.at[idx, 'nombre']))
 
-        productos.to_excel('bd/producto.xlsx', index=False)
+        guardar_productos_df(productos)
 
         # Crear nuevo pedido
-        nuevo_id_pedido = len(pedidos) + 1 if not pedidos.empty else 1
+        nuevo_id_pedido = next_id('pedidos', 'id_pedido')
         nuevo_pedido = {
             'id_pedido': nuevo_id_pedido,
             'id_usuario': session.get('id_usuario', session['usuario']),
@@ -1891,24 +1748,25 @@ def pay():
             'estado': 'pendiente'
         }
         pedidos = pd.concat([pedidos, pd.DataFrame([nuevo_pedido])], ignore_index=True)
-        pedidos.to_excel('bd/pedidos.xlsx', index=False)
+        guardar_pedidos_df(pedidos)
         
         # Guardar detalles del pedido
+        next_detalle_id = next_id('detalle_pedido', 'id_detalle')
         for item in carrito:
-            nuevo_id_detalle = len(detalle_pedido) + 1 if not detalle_pedido.empty else 1
             nuevo_detalle = {
-                'id_detalle': nuevo_id_detalle,
+                'id_detalle': next_detalle_id,
                 'id_pedido': nuevo_id_pedido,
                 'id_producto': item['id_producto'],
                 'cantidad': item['cantidad'],
                 'subtotal': item['subtotal']
             }
             detalle_pedido = pd.concat([detalle_pedido, pd.DataFrame([nuevo_detalle])], ignore_index=True)
+            next_detalle_id += 1
         
-        detalle_pedido.to_excel('bd/detalle_pedido.xlsx', index=False)
+        guardar_detalle_pedido_df(detalle_pedido)
 
         # Registrar pago
-        nuevo_id_pago = len(pagos) + 1 if not pagos.empty else 1
+        nuevo_id_pago = next_id('pagos', 'id_pago')
         nuevo_pago = {
             'id_pago': nuevo_id_pago,
             'id_pedido': nuevo_id_pedido,
@@ -1923,23 +1781,10 @@ def pay():
             'monto_descuento': float(descuento_promo)
         }
         pagos = pd.concat([pagos, pd.DataFrame([nuevo_pago])], ignore_index=True)
-        pagos.to_excel('bd/pagos.xlsx', index=False)
+        guardar_pagos_df(pagos)
         
         # Registrar acción
-        if os.path.exists('bd/registros.xlsx'):
-            registros = pd.read_excel('bd/registros.xlsx')
-        else:
-            registros = pd.DataFrame(columns=['id_registro', 'id_usuario', 'accion', 'fecha_accion'])
-        
-        nuevo_registro = {
-            'id_registro': len(registros) + 1,
-            'id_usuario': session['usuario'],
-            'accion': f"Cre? pedido #{nuevo_id_pedido} con {len(carrito)} producto(s) por {formatear_cop(total_final)}",
-            'fecha_accion': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        }
-        
-        registros = pd.concat([registros, pd.DataFrame([nuevo_registro])], ignore_index=True)
-        registros.to_excel('bd/registros.xlsx', index=False)
+        registrar_actividad(f"Creo pedido #{nuevo_id_pedido} con {len(carrito)} producto(s) por {formatear_cop(total_final)}")
 
         if agotados_en_compra:
             registrar_actividad("Stock agotado por pedido: " + ", ".join(agotados_en_compra))
@@ -1971,16 +1816,13 @@ def user_orders():
     if session.get('rol') != 'normal':
         return "Acceso denegado"
     
-    if os.path.exists('bd/pedidos.xlsx'):
-        pedidos = pd.read_excel('bd/pedidos.xlsx')
-        id_usuario = session.get('id_usuario')
-        pedidos_usuario = pedidos[pedidos['id_usuario'] == id_usuario]
-    else:
-        pedidos_usuario = pd.DataFrame(columns=['id_pedido', 'id_usuario', 'fecha_pedido', 'estado'])
+    pedidos = cargar_pedidos_df()
+    id_usuario = session.get('id_usuario')
+    pedidos_usuario = pedidos[pedidos['id_usuario'] == id_usuario] if not pedidos.empty else pd.DataFrame(columns=PEDIDO_COLUMNS)
     
     # Obtener montos de pagos
-    if os.path.exists('bd/pagos.xlsx'):
-        pagos = pd.read_excel('bd/pagos.xlsx')
+    if not pedidos_usuario.empty:
+        pagos = cargar_pagos_df()
         pedidos_usuario = pd.merge(pedidos_usuario, pagos[['id_pedido', 'monto', 'metodo_pago']], 
                                    on='id_pedido', how='left')
     
@@ -1993,17 +1835,17 @@ def user_order_details(id_pedido):
         return "Acceso denegado"
     
     # Verificar que el pedido pertenece al usuario
-    pedidos = pd.read_excel('bd/pedidos.xlsx')
+    pedidos = cargar_pedidos_df()
     pedido = pedidos[(pedidos['id_pedido'] == id_pedido) & 
                      (pedidos['id_usuario'] == session.get('id_usuario'))]
     
     if pedido.empty:
         return "Pedido no encontrado o no tienes permiso para verlo"
     
-    detalle_pedido = pd.read_excel('bd/detalle_pedido.xlsx')
+    detalle_pedido = cargar_detalle_pedido_df()
     detalles = detalle_pedido[detalle_pedido['id_pedido'] == id_pedido]
     
-    productos = pd.read_excel('bd/producto.xlsx')
+    productos = cargar_productos_df()
     detalles = pd.merge(detalles, productos[['id_producto', 'nombre', 'precio']], on='id_producto')
     
     return render_template('Usuarios/Informacion compras pedido/user_order_details.html',
@@ -2053,14 +1895,14 @@ def user_profile():
     pedidos_total = 0
     gasto_total = 0.0
     
-    if os.path.exists('bd/pedidos.xlsx'):
-        pedidos = pd.read_excel('bd/pedidos.xlsx')
+    pedidos = cargar_pedidos_df()
+    if not pedidos.empty:
         id_usuario = session.get('id_usuario', usuario_email)
         pedidos_usuario = pedidos[pedidos['id_usuario'] == id_usuario]
         pedidos_total = len(pedidos_usuario)
         
-        if os.path.exists('bd/pagos.xlsx') and not pedidos_usuario.empty:
-            pagos = pd.read_excel('bd/pagos.xlsx')
+        if not pedidos_usuario.empty:
+            pagos = cargar_pagos_df()
             pagos_usuario = pagos[pagos['id_pedido'].isin(pedidos_usuario['id_pedido'])]
             gasto_total = pagos_usuario['monto'].sum() if not pagos_usuario.empty else 0.0
     
@@ -2098,7 +1940,7 @@ def update_profile():
         usuarios.loc[idx, 'direccion'] = direccion
         
         guardar_usuarios_df(usuarios)
-        registrar_actividad(f"Usuario {usuario_email} actualiz? su perfil")
+        registrar_actividad(f"Usuario {usuario_email} actualizo su perfil")
         flash('Perfil actualizado correctamente', 'success')
     else:
         flash('Error al actualizar el perfil', 'danger')
@@ -2352,37 +2194,29 @@ def verify_email():
 @app.route('/armada')
 def armada():
     productos = cargar_productos_por_fuerza('Armada')
-    catalogo_ids = mapear_catalogo_ids(productos)
-    return render_template('Usuarios/catalogo/armada.html', productos=productos, catalogo_ids=catalogo_ids)
+    return render_template('Usuarios/catalogo/armada.html', productos=productos)
 
 
 @app.route('/policia')
 def policia():
     productos = cargar_productos_por_fuerza('Policia')
-    catalogo_ids = mapear_catalogo_ids(productos)
-    return render_template('Usuarios/catalogo/policia.html', productos=productos, catalogo_ids=catalogo_ids)
+    return render_template('Usuarios/catalogo/policia.html', productos=productos)
 
 
 @app.route('/gaula')
 def gaula():
     productos = cargar_productos_por_fuerza('Gaula')
-    catalogo_ids = mapear_catalogo_ids(productos)
-    return render_template('Usuarios/catalogo/gaula.html', productos=productos, catalogo_ids=catalogo_ids)
+    return render_template('Usuarios/catalogo/gaula.html', productos=productos)
 
 
 @app.route('/ejercito')
 def ejercito():
     productos = cargar_productos_por_fuerza('Ejercito')
-    catalogo_ids = mapear_catalogo_ids(productos)
-    return render_template('Usuarios/catalogo/ejercito.html', productos=productos, catalogo_ids=catalogo_ids)
+    return render_template('Usuarios/catalogo/ejercito.html', productos=productos)
 
 @app.route('/producto/<int:id_producto>')
 def producto_detalle(id_producto):
-    productos = pd.read_excel('bd/producto.xlsx') if os.path.exists('bd/producto.xlsx') else pd.DataFrame()
-    if 'eliminado' not in productos.columns:
-        productos['eliminado'] = False
-    productos['eliminado'] = productos['eliminado'].fillna(False).astype(bool)
-    productos = productos[productos['eliminado'] == False]
+    productos = cargar_productos_activos_df()
 
     producto = productos[productos['id_producto'] == id_producto]
     if producto.empty:
@@ -2426,19 +2260,14 @@ def admin_promo():
         if pd.isna(id_producto):
             flash('Debes seleccionar un producto para la promocion.', 'warning')
             return redirect(url_for('admin_promo'))
-        if os.path.exists('bd/producto.xlsx'):
-            productos_ref = pd.read_excel('bd/producto.xlsx')
-            if 'eliminado' not in productos_ref.columns:
-                productos_ref['eliminado'] = False
-            productos_ref['eliminado'] = productos_ref['eliminado'].fillna(False).astype(bool)
-            id_producto_num = int(id_producto)
-            existe_producto = not productos_ref[
-                (pd.to_numeric(productos_ref.get('id_producto', 0), errors='coerce') == id_producto_num)
-                & (productos_ref['eliminado'] == False)
-            ].empty
-            if not existe_producto:
-                flash('El producto seleccionado no existe o esta inactivo.', 'warning')
-                return redirect(url_for('admin_promo'))
+        productos_ref = cargar_productos_activos_df()
+        id_producto_num = int(id_producto)
+        existe_producto = not productos_ref[
+            pd.to_numeric(productos_ref.get('id_producto', 0), errors='coerce') == id_producto_num
+        ].empty
+        if not existe_producto:
+            flash('El producto seleccionado no existe o esta inactivo.', 'warning')
+            return redirect(url_for('admin_promo'))
 
         promos = cargar_promociones_df()
         if codigo:
@@ -2472,16 +2301,10 @@ def admin_promo():
 
     promos = cargar_promociones_df()
     hoy = datetime.now().date()
-    productos = pd.read_excel('bd/producto.xlsx') if os.path.exists('bd/producto.xlsx') else pd.DataFrame()
-    if 'eliminado' not in productos.columns:
-        productos['eliminado'] = False
-    productos['eliminado'] = productos['eliminado'].fillna(False).astype(bool)
-    productos = productos[productos['eliminado'] == False].copy()
-    productos = normalizar_imagenes_productos(productos)
+    productos = cargar_productos_activos_df()
     productos['id_producto'] = pd.to_numeric(productos.get('id_producto', 0), errors='coerce').fillna(0).astype(int)
-    productos['precio'] = pd.to_numeric(productos.get('precio', 0), errors='coerce').fillna(0)
     lista_productos = productos.to_dict(orient='records')
-    pagos = pd.read_excel('bd/pagos.xlsx') if os.path.exists('bd/pagos.xlsx') else pd.DataFrame()
+    pagos = cargar_pagos_df()
     if not pagos.empty:
         if 'id_promo' not in pagos.columns:
             pagos['id_promo'] = pd.Series(dtype='float')
@@ -2539,12 +2362,7 @@ def promociones():
     # pagina publica que muestra promociones activas y vigentes
     promos = cargar_promociones_df()
     hoy = datetime.now().date()
-    productos = pd.read_excel('bd/producto.xlsx') if os.path.exists('bd/producto.xlsx') else pd.DataFrame()
-    if 'eliminado' not in productos.columns:
-        productos['eliminado'] = False
-    productos['eliminado'] = productos['eliminado'].fillna(False).astype(bool)
-    productos = productos[productos['eliminado'] == False].copy()
-    productos = normalizar_imagenes_productos(productos)
+    productos = cargar_productos_activos_df()
     productos['id_producto'] = pd.to_numeric(productos.get('id_producto', 0), errors='coerce')
 
     productos_map = {}
@@ -2603,25 +2421,10 @@ def admin_charts():
 
 
 def obtener_datos_charts(periodo, fecha_desde_raw, fecha_hasta_raw):
-    if os.path.exists('bd/detalle_pedido.xlsx'):
-        detalle = pd.read_excel('bd/detalle_pedido.xlsx')
-    else:
-        detalle = pd.DataFrame(columns=['id_detalle', 'id_pedido', 'id_producto', 'cantidad', 'subtotal'])
-
-    if os.path.exists('bd/producto.xlsx'):
-        productos = pd.read_excel('bd/producto.xlsx')
-    else:
-        productos = pd.DataFrame(columns=['id_producto', 'nombre', 'precio'])
-
-    if os.path.exists('bd/pedidos.xlsx'):
-        pedidos = pd.read_excel('bd/pedidos.xlsx')
-    else:
-        pedidos = pd.DataFrame(columns=['id_pedido', 'id_usuario', 'fecha_pedido', 'estado'])
-
-    if os.path.exists('bd/pagos.xlsx'):
-        pagos = pd.read_excel('bd/pagos.xlsx')
-    else:
-        pagos = pd.DataFrame(columns=['id_pago', 'id_pedido', 'monto', 'metodo_pago', 'fecha_pago', 'estado_pago'])
+    detalle = cargar_detalle_pedido_df()
+    productos = cargar_productos_df()
+    pedidos = cargar_pedidos_df()
+    pagos = cargar_pagos_df()
 
     if 'id_producto' not in detalle.columns:
         detalle['id_producto'] = pd.Series(dtype='int')

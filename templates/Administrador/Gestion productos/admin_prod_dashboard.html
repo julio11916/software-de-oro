@@ -51,7 +51,7 @@
 
             <div class="sidebar-bottom mt-auto">
                 <a href="{{ url_for('home') }}" class="btn btn-success w-100 mb-2" onclick="if (window.history.length > 1) { window.history.back(); } else { window.location.href='{{ url_for('home') }}'; } return false;">Volver</a>
-                <a href="{{ url_for('logout') }}" class="btn btn-danger w-100">Cerrar Sesion</a>
+                <a href="{{ url_for('logout') }}" class="btn btn-danger w-100">Cerrar sesion</a>
             </div>
         </div>
 
@@ -119,7 +119,7 @@
                                 <div class="col-md-6">
                                     <label class="form-label">Imagen del producto</label>
                                     <input type="file" name="imagen" class="form-control" accept=".jpg,.jpeg,.png,.gif,.webp">
-                                    <small class="text-muted">Formatos permitidos: jpg, jpeg, png, gif, webp. Recomendado: maximo 2MB.</small>
+                                    <small class="text-muted">Formatos permitidos: jpg, jpeg, png, gif, webp. Recomendado: maximo 3MB.</small>
                                 </div>
                                 <div class="col-12">
                                     <button type="submit" class="btn btn-primary w-100">Agregar producto</button>
