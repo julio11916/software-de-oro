@@ -86,3 +86,32 @@ function initCharts(ventasProducto, ventasMes, metodosPago) {
     initMonthChart(ventasMes || []);
     initPaymentMethodChart(metodosPago || []);
 }
+
+function initRangeFilter() {
+    const periodoSelect = document.getElementById('periodoSelect');
+    const fechaDesde = document.getElementById('fechaDesde');
+    const fechaHasta = document.getElementById('fechaHasta');
+
+    if (!periodoSelect || !fechaDesde || !fechaHasta) return;
+
+    function toggleRango() {
+        const habilitar = periodoSelect.value === 'range';
+        fechaDesde.disabled = !habilitar;
+        fechaHasta.disabled = !habilitar;
+    }
+
+    periodoSelect.addEventListener('change', toggleRango);
+    toggleRango();
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+    const chartData = document.getElementById('chartsData');
+    if (!chartData) return;
+
+    const ventasProducto = JSON.parse(chartData.dataset.productos || '[]');
+    const ventasMes = JSON.parse(chartData.dataset.meses || '[]');
+    const metodosPago = JSON.parse(chartData.dataset.metodos || '[]');
+
+    initCharts(ventasProducto, ventasMes, metodosPago);
+    initRangeFilter();
+});

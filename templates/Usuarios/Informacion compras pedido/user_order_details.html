@@ -22,8 +22,8 @@
         </a>
 
         <div class="info-pedido">
-            <h2>Información del Pedido</h2>
-            <p><strong>Número de Pedido:</strong> #{{ pedido.id_pedido }}</p>
+            <h2>Informacion del Pedido</h2>
+            <p><strong>Numero de Pedido:</strong> #{{ pedido.id_pedido }}</p>
             <p><strong>Fecha de Compra:</strong> {{ pedido.fecha_pedido }}</p>
             <p><strong>Estado:</strong>
                 <span class="estado-{{ pedido.estado }}">
@@ -55,13 +55,12 @@
             </tr>
         </table>
         {% else %}
-        <p>No hay información disponible sobre los productos de este pedido.</p>
+        <p>No hay informacion disponible sobre los productos de este pedido.</p>
         {% endif %}
     </div>
 
     <script src="{{ url_for('static', filename='js/usuario/catalog_base.js') }}"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-    
 </body>
-</html>
 
+</html>

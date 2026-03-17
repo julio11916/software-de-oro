@@ -3,1036 +3,270 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ordenes Personalizadas - nachohers</title>
+    <title>Orden personalizada - NachoHers</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            background: #f5f5f5;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-
-        .contenedor-principal {
-            background: white;
-            padding: 2rem;
-            margin-top: 70px;
-            min-height: 100vh;
-        }
-
-        .header {
-            margin-bottom: 2rem;
-        }
-
-        .titulo-principal {
-            font-size: 2rem;
-            color: #333;
-            font-weight: 700;
-            margin-bottom: 0.5rem;
-        }
-
-        .subtitulo {
-            font-size: 0.95rem;
-            color: #0066cc;
-        }
-
-        .botones-genero {
-            display: flex;
-            justify-content: center;
-            gap: 1rem;
-            margin: 2rem 0;
-        }
-
-        .btn-genero {
-            padding: 0.8rem 2rem;
-            border: 2px solid #ddd;
-            border-radius: 50px;
-            background: white;
-            color: #333;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s;
-            font-size: 1rem;
-        }
-
-        .btn-genero:hover {
-            border-color: #1ba882;
-        }
-
-        .btn-genero.activo {
-            background: #1ba882;
-            color: white;
-            border-color: #1ba882;
-        }
-
-        .indicadores-pasos {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin: 2rem 0;
-            padding: 1rem 0;
-            border-bottom: 1px solid #e0e0e0;
-        }
-
-        .paso-indicador {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 0.5rem;
-            flex: 1;
-            text-align: center;
-        }
-
-        .numero-paso-header {
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            background: #e0e0e0;
-            color: #999;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            font-size: 1.2rem;
-        }
-
-        .numero-paso-header.activo {
-            background: #1ba882;
-            color: white;
-        }
-
-        .numero-paso-header.completado {
-            background: #4caf50;
-            color: white;
-        }
-
-        .nombre-paso-header {
-            font-size: 0.85rem;
-            color: #999;
-            font-weight: 500;
-        }
-
-        .nombre-paso-header.activo {
-            color: #1ba882;
-            font-weight: 600;
-        }
-
-        .contenedor-flexbox {
-            display: flex;
-            gap: 2rem;
-            margin-top: 2rem;
-        }
-
-        .panel-izquierdo {
-            flex: 1;
-            background: white;
-            padding: 1.5rem;
-            border-radius: 8px;
-            border: 1px solid #e0e0e0;
-        }
-
-        .panel-derecho {
-            flex: 1;
-            background: white;
-            padding: 1.5rem;
-            border-radius: 8px;
-            border: 1px solid #e0e0e0;
-        }
-
-        .titulo-seccion {
-            font-size: 1.3rem;
-            color: #333;
-            font-weight: 600;
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            margin-bottom: 1.5rem;
-        }
-
-        .numero-seccion {
-            background: #1ba882;
-            color: white;
-            width: 40px;
-            height: 40px;
-            border-radius: 6px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-        }
-
-        .grid-productos {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
-            gap: 1rem;
-            margin-bottom: 2rem;
-        }
-
-        .tarjeta-producto {
-            border: 2px solid #e0e0e0;
-            border-radius: 8px;
-            padding: 1rem;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.3s;
-            background: white;
-        }
-
-        .tarjeta-producto:hover {
-            border-color: #1ba882;
-            background: #f8fffe;
-        }
-
-        .tarjeta-producto.seleccionada {
-            border-color: #1ba882;
-            background: #f0f8f4;
-        }
-
-        .icono-producto {
-            font-size: 2.5rem;
-            margin-bottom: 0.5rem;
-        }
-
-        .nombre-producto {
-            font-size: 0.9rem;
-            color: #333;
-            font-weight: 500;
-        }
-
-        .grid-opciones {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 1rem;
-            margin-bottom: 1.5rem;
-        }
-
-        .label-opcion {
-            font-size: 0.9rem;
-            color: #333;
-            font-weight: 600;
-            margin-bottom: 0.75rem;
-            display: block;
-        }
-
-        .btn-opcion {
-            padding: 0.7rem 1rem;
-            border: 2px solid #ddd;
-            border-radius: 6px;
-            background: white;
-            color: #333;
-            cursor: pointer;
-            font-weight: 600;
-            transition: all 0.3s;
-            font-size: 0.9rem;
-        }
-
-        .btn-opcion:hover {
-            border-color: #1ba882;
-            background: #f0f8f4;
-        }
-
-        .btn-opcion.activo {
-            background: #0066cc;
-            color: white;
-            border-color: #0066cc;
-        }
-
-        .grid-colores {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
-            gap: 1rem;
-            margin-bottom: 2rem;
-        }
-
-        .tarjeta-color {
-            border: 2px solid #e0e0e0;
-            border-radius: 8px;
-            padding: 1rem;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-
-        .tarjeta-color:hover {
-            border-color: #1ba882;
-        }
-
-        .tarjeta-color.seleccionada {
-            border-color: #1ba882;
-            background: #f0f8f4;
-        }
-
-        .muestra-color {
-            width: 60px;
-            height: 60px;
-            margin: 0 auto 0.5rem;
-            border-radius: 6px;
-            border: 1px solid #ddd;
-        }
-
-        .nombre-color {
-            font-size: 0.85rem;
-            color: #333;
-            font-weight: 500;
-        }
-
-        .vista-previa-titulo {
-            font-size: 1.2rem;
-            color: #333;
-            font-weight: 600;
-            margin-bottom: 1rem;
-        }
-
-        .botones-vista {
-            display: flex;
-            gap: 0.5rem;
-            margin-bottom: 1.5rem;
-        }
-
-        .btn-vista {
-            flex: 1;
-            padding: 0.6rem;
-            border: 1px solid #ddd;
-            border-radius: 6px;
-            background: white;
-            color: #333;
-            cursor: pointer;
-            font-weight: 600;
-            font-size: 0.85rem;
-            transition: all 0.3s;
-        }
-
-        .btn-vista.activo {
-            background: #1ba882;
-            color: white;
-            border-color: #1ba882;
-        }
-
-        .area-preview {
-            background: #f8f9fa;
-            border-radius: 8px;
-            height: 300px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-bottom: 1.5rem;
-            color: #999;
-        }
-
-        .info-prenda {
-            background: #f8f9fa;
-            padding: 1rem;
-            border-radius: 6px;
-            margin-bottom: 1rem;
-        }
-
-        .info-item {
-            display: flex;
-            justify-content: space-between;
-            padding: 0.5rem 0;
-            border-bottom: 1px solid #e0e0e0;
-            font-size: 0.9rem;
-        }
-
-        .info-item:last-child {
-            border-bottom: none;
-        }
-
-        .info-label {
-            color: #666;
-            font-weight: 500;
-        }
-
-        .info-valor {
-            color: #1ba882;
-            font-weight: 600;
-        }
-
-        .botones-navegacion {
-            display: flex;
-            gap: 1rem;
-            margin-top: 2rem;
-        }
-
-        .btn-nav {
-            flex: 1;
-            padding: 0.75rem 1.5rem;
-            border: 2px solid #ddd;
-            border-radius: 6px;
-            background: white;
-            color: #333;
-            cursor: pointer;
-            font-weight: 600;
-            font-size: 0.95rem;
-            transition: all 0.3s;
-        }
-
-        .btn-nav:hover:not(:disabled) {
-            border-color: #1ba882;
-            color: #1ba882;
-        }
-
-        .btn-nav:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-
-        .btn-siguiente {
-            background: #1ba882;
-            color: white;
-            border-color: #1ba882;
-        }
-
-        .btn-siguiente:hover {
-            background: #158266;
-            border-color: #158266;
-        }
-
-        .seccion-hidden {
-            display: none;
-        }
-
-        .barra-superior {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 0.75rem 2rem;
-            background: #f5f5f5;
-            border-bottom: 2px solid #e0e0e0;
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            z-index: 1000;
-        }
-
-        .barra-superior-izquierda {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-        }
-
-        .btn-hamburguesa {
-            background: none;
-            border: none;
-            font-size: 1.3rem;
-            cursor: pointer;
-            color: #333;
-            padding: 0.5rem;
-            transition: all 0.3s;
-        }
-
-        .btn-hamburguesa:hover {
-            color: #1ba882;
-            transform: scale(1.1);
-        }
-
-        .logo-barra {
-            font-size: 1rem;
-            font-weight: 700;
-            color: #333;
-        }
-
-        .btn-salir {
-            background: white;
-            border: 2px solid #ddd;
-            padding: 0.6rem 1.2rem;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: 600;
-            color: #333;
-            transition: all 0.3s;
-            font-size: 0.9rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .btn-salir:hover {
-            border-color: #dd4444;
-            color: #dd4444;
-            background: #ffe0e0;
-        }
-
-        .barra-pestanas {
-            display: flex;
-            gap: 0.5rem;
-            margin-bottom: 1.5rem;
-            overflow-x: auto;
-            padding-bottom: 0.5rem;
-            border-bottom: 1px solid #e0e0e0;
-        }
-
-        .pestana-item {
-            padding: 0.6rem 1rem;
-            border: 1px solid #ddd;
-            border-radius: 6px;
-            background: white;
-            color: #333;
-            cursor: pointer;
-            font-size: 0.85rem;
-            font-weight: 500;
-            white-space: nowrap;
-            transition: all 0.3s;
-        }
-
-        .pestana-item:hover {
-            border-color: #1ba882;
-            color: #1ba882;
-        }
-
-        .pestana-item.activa {
-            background: #1ba882;
-            color: white;
-            border-color: #1ba882;
-        }
-
-        .pestana-item.oculta {
-            display: none;
-        }
-
-        .badge-nuevo {
-            background: #ff4444;
-            color: white;
-            padding: 0.2rem 0.5rem;
-            border-radius: 4px;
-            font-size: 0.7rem;
-            font-weight: bold;
-            margin-left: 0.3rem;
-        }
-
-        @media (max-width: 1200px) {
-            .contenedor-flexbox {
-                gap: 1rem;
-            }
-            
-            .panel-izquierdo,
-            .panel-derecho {
-                padding: 1rem;
-            }
-        }
-
-        @media (max-width: 992px) {
-            .contenedor-flexbox {
-                flex-direction: column;
-            }
-
-            .grid-productos {
-                grid-template-columns: repeat(3, 1fr);
-            }
-
-            .grid-colores {
-                grid-template-columns: repeat(3, 1fr);
-            }
-        }
-
-        @media (max-width: 768px) {
-            .grid-productos {
-                grid-template-columns: repeat(2, 1fr);
-            }
-
-            .grid-colores {
-                grid-template-columns: repeat(2, 1fr);
-            }
-            
-            .barra-pestanas {
-                flex-wrap: wrap;
-            }
-        }
-    </style>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/usuario/orden_personalizada.css') }}">
 </head>
-<body>
-    <!-- BARRA SUPERIOR DE NAVEGACIÓN -->
-    <div class="barra-superior">
-        <div class="barra-superior-izquierda">
-            <button class="btn-hamburguesa" id="btn-menu">
-
+<body class="orden-page">
+    <header class="orden-topbar">
+        <div class="orden-topbar__left">
+            <button class="orden-icon-button" id="btn-menu" type="button" aria-label="Abrir menu">
+                <i class="fas fa-bars"></i>
             </button>
-            <span class="logo-barra"><i class="fas fa-shopping-bag"></i> Ordenes Personalizadas</span>
+            <a class="orden-topbar__brand" href="{{ url_for('user_dashboard') }}">
+                <i class="fas fa-shirt"></i>
+                <span>Ordenes personalizadas</span>
+            </a>
         </div>
-        <button class="btn-salir" id="btn-salir">
-            <i class="fas fa-sign-out-alt"></i> Salir
+        <button class="orden-exit-button" id="btn-salir" type="button">
+            <i class="fas fa-arrow-left"></i>
+            <span>Volver</span>
         </button>
-    </div>
+    </header>
 
-    <div class="contenedor-principal">
+    <main class="orden-layout">
+        <section class="orden-hero">
+            <p class="orden-kicker">Personalizacion guiada</p>
+            <h1>Disena tu prenda paso a paso</h1>
+            <p class="orden-lead">
+                Configura tipo de producto, color, estampado y talla desde una sola vista.
+            </p>
+        </section>
 
-        <!-- BOTONES DE ACCIÓN SUPERIOR -->
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; gap: 1rem;">
-        </div>
+        <section class="orden-gender-switch" aria-label="Tipo de coleccion">
+            <button class="orden-chip orden-chip--active" data-genero="unisex" type="button">Unisex</button>
+        </section>
 
-        <!-- HEADER -->
-        <div class="header" style="margin-bottom: 1rem; text-align: center;">
-            <p class="subtitulo"><i class="fas fa-info-circle"></i> Diseña tu producto personalizado paso a paso</p>
-        </div>
-      
-        <!-- BOTONES GÉNERO -->
-        <div class="botones-genero">
-            <button class="btn-genero activo" data-genero="hombre">unisex</button>
-        </div>
-
-        <!-- INDICADORES DE PASOS -->
-        <div class="indicadores-pasos">
-            <div class="paso-indicador">
-                <div class="numero-paso-header activo" id="paso1-header">1</div>
-                <div class="nombre-paso-header activo">Producto</div>
+        <section class="orden-steps" aria-label="Progreso de personalizacion">
+            <div class="orden-step">
+                <div class="orden-step__number orden-step__number--active" id="paso1-header">1</div>
+                <span class="orden-step__label orden-step__label--active">Producto</span>
             </div>
-            <div class="paso-indicador">
-                <div class="numero-paso-header" id="paso2-header">2</div>
-                <div class="nombre-paso-header">Color</div>
+            <div class="orden-step">
+                <div class="orden-step__number" id="paso2-header">2</div>
+                <span class="orden-step__label">Color</span>
             </div>
-            <div class="paso-indicador">
-                <div class="numero-paso-header" id="paso3-header">3</div>
-                <div class="nombre-paso-header">Estampado</div>
+            <div class="orden-step">
+                <div class="orden-step__number" id="paso3-header">3</div>
+                <span class="orden-step__label">Estampado</span>
             </div>
-            <div class="paso-indicador">
-                <div class="numero-paso-header" id="paso4-header">4</div>
-                <div class="nombre-paso-header">Talla</div>
+            <div class="orden-step">
+                <div class="orden-step__number" id="paso4-header">4</div>
+                <span class="orden-step__label">Talla</span>
             </div>
-        </div>
+        </section>
 
-        <!-- CONTENEDOR PRINCIPAL -->
-        <div class="contenedor-flexbox">
-            <!-- PANEL IZQUIERDO -->
-            <div class="panel-izquierdo">
-                <!-- PASO 1: TIPO DE PRODUCTO -->
-                <div id="paso1" class="paso-contenido">
-                    <div class="titulo-seccion">
-                        <span class="numero-seccion">1</span>
-                        <span>Selecciona el Tipo de Producto</span>
-                    </div>
-
-                    <div class="grid-productos">
-                        <div class="tarjeta-producto seleccionada" data-producto="camiseta">
-                            <div class="icono-producto">🧥</div>
-                            <div class="nombre-producto">Camiseta</div>
-                        </div>
-                        <div class="tarjeta-producto" data-producto="buso">
-                            <div class="icono-producto">👕</div>
-                            <div class="nombre-producto">Buso</div>
-                        </div>
-                        <div class="tarjeta-producto" data-producto="gorra">
-                            <div class="icono-producto">🧢</div>
-                            <div class="nombre-producto">Gorra</div>
-                        </div>
-                        <div class="tarjeta-producto" data-producto="pañoleta">
-                            <div class="icono-producto">🧣</div>
-                            <div class="nombre-producto">Pañoleta</div>
-                        </div>
-                        <div class="tarjeta-producto" data-producto="buso-manga-larga">
-                            <div class="icono-producto">🥼</div>
-                            <div class="nombre-producto">Buso manga larga</div>
+        <section class="orden-content">
+            <div class="orden-panel orden-panel--builder">
+                <div id="paso1" class="orden-stage">
+                    <div class="orden-section-title">
+                        <span class="orden-section-title__number">1</span>
+                        <div>
+                            <h2>Selecciona el tipo de producto</h2>
+                            <p>Elige la base sobre la que vamos a personalizar la orden.</p>
                         </div>
                     </div>
 
-                    <!-- Género y Técnica dentro del Paso 1 -->
-                    <div style="margin-bottom: 1.5rem; padding-top: 1.5rem; border-top: 1px solid #e0e0e0;">
-                      
+                    <div class="orden-product-grid">
+                        <button class="orden-product-card orden-product-card--selected" data-producto="camiseta" type="button">
+                            <i class="fas fa-shirt"></i>
+                            <span>Camiseta</span>
+                        </button>
+                        <button class="orden-product-card" data-producto="buso" type="button">
+                            <i class="fas fa-person-booth"></i>
+                            <span>Buso</span>
+                        </button>
+                        <button class="orden-product-card" data-producto="gorra" type="button">
+                            <i class="fas fa-hat-cowboy"></i>
+                            <span>Gorra</span>
+                        </button>
+                        <button class="orden-product-card" data-producto="panoleta" type="button">
+                            <i class="fas fa-ribbon"></i>
+                            <span>Panuelo</span>
+                        </button>
+                        <button class="orden-product-card" data-producto="buso-manga-larga" type="button">
+                            <i class="fas fa-person-dress"></i>
+                            <span>Buso manga larga</span>
+                        </button>
+                    </div>
 
-                        <span class="label-opcion" style="margin-top: 1rem;">Técnica</span>
-                        <div class="grid-opciones" style="grid-template-columns: repeat(2, 1fr);">
-                            <button class="btn-opcion activo" data-tecnica="impresion">Impresión</button>
-                            <button class="btn-opcion" data-tecnica="bordado">Bordado</button>
+                    <div class="orden-subsection">
+                        <label class="orden-field-label">Tecnica</label>
+                        <div class="orden-option-grid orden-option-grid--two">
+                            <button class="orden-option-button orden-option-button--active" data-tecnica="impresion" type="button">Impresion</button>
+                            <button class="orden-option-button" data-tecnica="bordado" type="button">Bordado</button>
                         </div>
                     </div>
 
-                    <div class="botones-navegacion">
-                        <button class="btn-nav" disabled style="opacity: 0.5;">← Atrás</button>
-                        <button class="btn-nav btn-siguiente" data-siguiente="2">Siguiente →</button>
+                    <div class="orden-actions">
+                        <button class="orden-nav-button" type="button" disabled>Atras</button>
+                        <button class="orden-nav-button orden-nav-button--primary" data-siguiente="2" type="button">Siguiente</button>
                     </div>
                 </div>
 
-                <!-- PASO 2: COLOR -->
-                <div id="paso2" class="paso-contenido seccion-hidden">
-                    <div class="titulo-seccion">
-                        <span class="numero-seccion">2</span>
-                        <span>Elige tu Color</span>
-                    </div>
-
-                    <div class="grid-colores">
-                        <div class="tarjeta-color seleccionada" data-color="blanco">
-                            <div class="muestra-color" style="background-color: #ffffff; border: 1px solid #999;"></div>
-                            <div class="nombre-color">Blanco</div>
-                        </div>
-                        <div class="tarjeta-color" data-color="negro">
-                            <div class="muestra-color" style="background-color: #000000;"></div>
-                            <div class="nombre-color">Negro</div>
-                        </div>
-                        <div class="tarjeta-color" data-color="verde-oscuro">
-                            <div class="muestra-color" style="background-color: #2D5016;"></div>
-                            <div class="nombre-color">Verde Oscuro</div>
-                        </div>
-                        <div class="tarjeta-color" data-color="beiches">
-                            <div class="muestra-color" style="background-color: #D3C0A3;"></div>
-                            <div class="nombre-color">Beiches</div>
+                <div id="paso2" class="orden-stage orden-stage--hidden">
+                    <div class="orden-section-title">
+                        <span class="orden-section-title__number">2</span>
+                        <div>
+                            <h2>Elige el color</h2>
+                            <p>Selecciona el acabado base de la prenda.</p>
                         </div>
                     </div>
 
-                    <div class="botones-navegacion">
-                        <button class="btn-nav" data-anterior="1">← Atrás</button>
-                        <button class="btn-nav btn-siguiente" data-siguiente="3">Siguiente →</button>
-                    </div>
-                </div>
-
-                <!-- PASO 3: ESTAMPADO -->
-                <div id="paso3" class="paso-contenido seccion-hidden">
-                    <div class="titulo-seccion">
-                        <span class="numero-seccion">3</span>
-                        <span>Elige tu Estampado</span>
-                    </div>
-
-                    <div class="grid-colores">
-                        <div class="tarjeta-color" data-estampado="escudos">
-                            <div class="muestra-color" style="background: repeating-linear-gradient(45deg, #333 0, #333 10px, white 10px, white 20px);"></div>
-                            <div class="nombre-color">Escudos</div>
-                        </div>
-                        <div class="tarjeta-color" data-estampado="nombres">
-                            <div class="muestra-color" style="background: repeating-linear-gradient(90deg, #333 0, #333 2px, white 2px, white 6px);"></div>
-                            <div class="nombre-color">Nombres</div>
-                        </div>
-                        <div class="tarjeta-color" data-estampado="distintivos">
-                            <div class="muestra-color" style="background: radial-gradient(circle, #333 30%, white 30%); background-size: 8px 8px;"></div>
-                            <div class="nombre-color">Distintivos</div>
-                        </div>
-                        <div class="tarjeta-color" data-estampado="parches">
-                            <div class="muestra-color" style="background: repeating-linear-gradient(135deg, #333 0, #333 8px, white 8px, white 16px);"></div>
-                            <div class="nombre-color">Parches</div>
-                        </div>
-                        <div class="tarjeta-color" data-estampado="ninguno">
-                            <div class="muestra-color" style="background-color: #f0f0f0;"></div>
-                            <div class="nombre-color">Sin Estampado</div>
-                        </div>
+                    <div class="orden-color-grid">
+                        <button class="orden-color-card orden-color-card--selected" data-color="blanco" type="button">
+                            <span class="orden-color-card__swatch orden-color-card__swatch--white"></span>
+                            <span>Blanco</span>
+                        </button>
+                        <button class="orden-color-card" data-color="negro" type="button">
+                            <span class="orden-color-card__swatch orden-color-card__swatch--black"></span>
+                            <span>Negro</span>
+                        </button>
+                        <button class="orden-color-card" data-color="verde-oscuro" type="button">
+                            <span class="orden-color-card__swatch orden-color-card__swatch--green"></span>
+                            <span>Verde oscuro</span>
+                        </button>
+                        <button class="orden-color-card" data-color="beige" type="button">
+                            <span class="orden-color-card__swatch orden-color-card__swatch--beige"></span>
+                            <span>Beige</span>
+                        </button>
                     </div>
 
-                    <div class="botones-navegacion">
-                        <button class="btn-nav" data-anterior="2">← Atrás</button>
-                        <button class="btn-nav btn-siguiente" data-siguiente="4">Siguiente →</button>
+                    <div class="orden-actions">
+                        <button class="orden-nav-button" data-anterior="1" type="button">Atras</button>
+                        <button class="orden-nav-button orden-nav-button--primary" data-siguiente="3" type="button">Siguiente</button>
                     </div>
                 </div>
 
-                <!-- PASO 4: TALLA -->
-                <div id="paso4" class="paso-contenido seccion-hidden">
-                    <div class="titulo-seccion">
-                        <span class="numero-seccion">4</span>
-                        <span>Elige tu Talla</span>
+                <div id="paso3" class="orden-stage orden-stage--hidden">
+                    <div class="orden-section-title">
+                        <span class="orden-section-title__number">3</span>
+                        <div>
+                            <h2>Elige el estampado</h2>
+                            <p>Define la intervencion visual principal de la prenda.</p>
+                        </div>
                     </div>
 
-                    <span class="label-opcion">Talla</span>
-                    <div class="grid-opciones">
-                        <button class="btn-opcion" data-talla="XS">XS</button>
-                        <button class="btn-opcion" data-talla="S">S</button>
-                        <button class="btn-opcion" data-talla="M">M</button>
-                        <button class="btn-opcion" data-talla="L">L</button>
-                        <button class="btn-opcion" data-talla="XL">XL</button>
-                        <button class="btn-opcion" data-talla="2XL">2XL</button>
-                        <button class="btn-opcion" data-talla="3XL">3XL</button>
-                        <button class="btn-opcion" data-talla="4XL">4XL</button>
+                    <div class="orden-color-grid">
+                        <button class="orden-color-card" data-estampado="escudos" type="button">
+                            <span class="orden-pattern orden-pattern--shield"></span>
+                            <span>Escudos</span>
+                        </button>
+                        <button class="orden-color-card" data-estampado="nombres" type="button">
+                            <span class="orden-pattern orden-pattern--name"></span>
+                            <span>Nombres</span>
+                        </button>
+                        <button class="orden-color-card" data-estampado="distintivos" type="button">
+                            <span class="orden-pattern orden-pattern--badge"></span>
+                            <span>Distintivos</span>
+                        </button>
+                        <button class="orden-color-card" data-estampado="parches" type="button">
+                            <span class="orden-pattern orden-pattern--patch"></span>
+                            <span>Parches</span>
+                        </button>
+                        <button class="orden-color-card" data-estampado="ninguno" type="button">
+                            <span class="orden-pattern orden-pattern--none"></span>
+                            <span>Sin estampado</span>
+                        </button>
                     </div>
 
-                    <div class="botones-navegacion">
-                        <button class="btn-nav" data-anterior="3">← Atrás</button>
-                        <button class="btn-nav btn-siguiente" id="btn-finalizar">✓ Finalizar →</button>
+                    <div class="orden-actions">
+                        <button class="orden-nav-button" data-anterior="2" type="button">Atras</button>
+                        <button class="orden-nav-button orden-nav-button--primary" data-siguiente="4" type="button">Siguiente</button>
+                    </div>
+                </div>
+
+                <div id="paso4" class="orden-stage orden-stage--hidden">
+                    <div class="orden-section-title">
+                        <span class="orden-section-title__number">4</span>
+                        <div>
+                            <h2>Elige la talla</h2>
+                            <p>Selecciona la talla final de la prenda personalizada.</p>
+                        </div>
+                    </div>
+
+                    <label class="orden-field-label">Talla</label>
+                    <div class="orden-option-grid">
+                        <button class="orden-option-button" data-talla="XS" type="button">XS</button>
+                        <button class="orden-option-button" data-talla="S" type="button">S</button>
+                        <button class="orden-option-button" data-talla="M" type="button">M</button>
+                        <button class="orden-option-button" data-talla="L" type="button">L</button>
+                        <button class="orden-option-button" data-talla="XL" type="button">XL</button>
+                        <button class="orden-option-button" data-talla="2XL" type="button">2XL</button>
+                        <button class="orden-option-button" data-talla="3XL" type="button">3XL</button>
+                        <button class="orden-option-button" data-talla="4XL" type="button">4XL</button>
+                    </div>
+
+                    <div class="orden-actions">
+                        <button class="orden-nav-button" data-anterior="3" type="button">Atras</button>
+                        <button class="orden-nav-button orden-nav-button--primary" id="btn-finalizar" type="button">Finalizar</button>
                     </div>
                 </div>
             </div>
 
-            <!-- PANEL DERECHO -->
-            <div class="panel-derecho">
-                <div class="vista-previa-titulo">Vista Previa de Tu Producto</div>
-                <!-- BARRA DE PESTAÑAS PARA ÁREAS -->
-                <div class="barra-pestanas">
-                    <button class="pestana-item activa" data-area="pecho-izquierdo">Pecho izquierdo</button>
-                    <button class="pestana-item" data-area="centro-pecho">Centro pecho</button>
-                    <button class="pestana-item" data-area="centro-ampliado">Centro ampliado </button>
-                    <button class="pestana-item" data-area="manga-izquierda">Manga izquierda</button>
-                    <button class="pestana-item" data-area="manga-derecha">Manga derecha</button>
-                    <button class="pestana-item" data-area="impresion-trasera">Impresión trasera</button>
-                    <button class="pestana-item" data-area="impresion-delantera">Impresión delantera</button>
+            <aside class="orden-panel orden-panel--preview">
+                <div class="orden-preview-header">
+                    <h2>Vista previa</h2>
+                    <p>Usa esta columna para revisar la configuracion actual.</p>
                 </div>
-                <div class="area-preview" id="area-preview">
-                    <div style="text-align: center;">
-                        <i class="fas fa-palette" style="font-size: 3rem; margin-bottom: 1rem;"></i>
-                        <p>Selecciona un producto para comenzar</p>
+
+                <div class="orden-tabs" aria-label="Areas de personalizacion">
+                    <button class="orden-tab orden-tab--active" data-area="pecho-izquierdo" type="button">Pecho izquierdo</button>
+                    <button class="orden-tab" data-area="centro-pecho" type="button">Centro pecho</button>
+                    <button class="orden-tab" data-area="centro-ampliado" type="button">Centro ampliado</button>
+                    <button class="orden-tab" data-area="manga-izquierda" type="button">Manga izquierda</button>
+                    <button class="orden-tab" data-area="manga-derecha" type="button">Manga derecha</button>
+                    <button class="orden-tab" data-area="impresion-trasera" type="button">Impresion trasera</button>
+                    <button class="orden-tab" data-area="impresion-delantera" type="button">Impresion delantera</button>
+                </div>
+
+                <div class="orden-preview-canvas" id="area-preview">
+                    <div class="orden-preview-canvas__content">
+                        <i class="fas fa-shirt"></i>
+                        <p>Selecciona una configuracion para visualizar tu prenda.</p>
                     </div>
                 </div>
 
-                <div class="info-prenda">
-                    <div class="info-item">
-                        <span class="info-label">Producto:</span>
-                        <span class="info-valor" id="info-producto">Camiseta</span>
+                <div class="orden-summary">
+                    <div class="orden-summary__row">
+                        <span>Producto</span>
+                        <strong id="info-producto">Camiseta</strong>
                     </div>
-                    <div class="info-item">
-                        <span class="info-label">descripcion general:</span>
-                        <span class="info-valor" id="info-informacion"></span>
+                    <div class="orden-summary__row">
+                        <span>Descripcion general</span>
+                        <strong id="info-informacion">Camiseta | Impresion | Paso 1/4</strong>
                     </div>
-                    <div class="info-item">
-                        <span class="info-label">Color:</span>
-                        <span class="info-valor" id="info-color">negro</span>
+                    <div class="orden-summary__row">
+                        <span>Color</span>
+                        <strong id="info-color">Blanco</strong>
                     </div>
-                    <div class="info-item">
-                        <span class="info-label">Estampado:</span>
-                        <span class="info-valor" id="info-estampado">-</span>
+                    <div class="orden-summary__row">
+                        <span>Estampado</span>
+                        <strong id="info-estampado">Pendiente</strong>
                     </div>
-                    <div class="info-item">
-                        <span class="info-label">Talla:</span>
-                        <span class="info-valor" id="info-talla">-</span>
+                    <div class="orden-summary__row">
+                        <span>Talla</span>
+                        <strong id="info-talla">Pendiente</strong>
                     </div>
-                    <div class="info-item">
-                        <span class="info-label">Precio:</span>
-                        <span class="info-valor" id="info-precio">$12.99</span>
+                    <div class="orden-summary__row">
+                        <span>Precio</span>
+                        <strong id="info-precio">$ 45.000</strong>
                     </div>
                 </div>
 
-                <button class="btn-siguiente w-100" style="padding: 0.75rem; border: none; font-size: 1rem;">
-                    <i class="fas fa-shopping-cart"></i> Agregar al Carrito
+                <button class="orden-cart-button" id="btn-agregar-carrito" type="button">
+                    <i class="fas fa-cart-plus"></i>
+                    <span>Agregar al carrito</span>
                 </button>
-            </div>
-        </div>
-    </div>
+            </aside>
+        </section>
+    </main>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
-        let pasoActual = 1;
-        let estado = {
-            genero: 'hombre',
-            producto: 'camiseta',
-            tecnica: 'impresion',
-            color: 'blanco',
-            estampado: null,
-            talla: null
-        };
-
-        // Obtener nombres formateados
-        function formatearNombre(texto) {
-            if (!texto) return 'Pendiente';
-            return texto.split('-').map(p => p.charAt(0).toUpperCase() + p.slice(1)).join(' ');
-        }
-
-        // Actualizar descripción general del proceso
-        function actualizarDescripcionGeneral() {
-            let descripcion = '';
-            let nombreProducto = formatearNombre(estado.producto);
-            let tecnica = estado.tecnica === 'impresion' ? 'Impresión' : 'Bordado';
-            let nombreColor = formatearNombre(estado.color);
-            
-            // Obtener el nombre del estampado seleccionado del botón
-            let nombreEstampado = 'Sin seleccionar';
-            if (estado.estampado) {
-                const botonEstampado = document.querySelector(`[data-estampado="${estado.estampado}"]`);
-                if (botonEstampado) {
-                    nombreEstampado = botonEstampado.querySelector('.nombre-color').textContent;
-                }
-            }
-            
-            let talla = estado.talla || 'Sin seleccionar';
-            
-            if (pasoActual === 1) {
-                // Paso 1: Producto y Técnica
-                descripcion = `📦 ${nombreProducto} | 🔧 Técnica: ${tecnica} | Paso 1/4`;
-            } else if (pasoActual === 2) {
-                // Paso 2: Producto + Color
-                descripcion = `✓ ${nombreProducto} | 🎨 Color: ${nombreColor} | Paso 2/4`;
-            } else if (pasoActual === 3) {
-                // Paso 3: Producto + Color + Estampado
-                descripcion = `✓ ${nombreProducto} | ${nombreColor} | 🖼️ ${nombreEstampado} | Paso 3/4`;
-            } else if (pasoActual === 4) {
-                // Paso 4: Completo
-                descripcion = `✓ ${nombreProducto} | ${nombreColor} | ${nombreEstampado} | 📏 Talla: ${talla} | Paso 4/4`;
-            }
-            
-            document.getElementById('info-informacion').textContent = descripcion;
-        }
-
-        // Cambiar paso
-        function cambiarPaso(numero) {
-            document.querySelectorAll('.paso-contenido').forEach(el => el.classList.add('seccion-hidden'));
-            document.getElementById(`paso${numero}`).classList.remove('seccion-hidden');
-
-            // Actualizar indicadores header
-            for (let i = 1; i <= 4; i++) {
-                const header = document.getElementById(`paso${i}-header`);
-                if (i < numero) {
-                    header.classList.remove('activo');
-                    header.classList.add('completado');
-                } else if (i === numero) {
-                    header.classList.remove('completado');
-                    header.classList.add('activo');
-                } else {
-                    header.classList.remove('activo', 'completado');
-                }
-            }
-            pasoActual = numero;
-            actualizarDescripcionGeneral();
-        }
-
-        // Género principal
-        document.querySelectorAll('.btn-genero').forEach(btn => {
-            btn.addEventListener('click', function() {
-                document.querySelectorAll('.btn-genero').forEach(b => b.classList.remove('activo'));
-                this.classList.add('activo');
-                estado.genero = this.dataset.genero;
-                document.getElementById('info-genero').textContent = this.textContent.trim();
-            });
-        });
-
-        // Seleccionar género en paso 1
-        document.querySelectorAll('[data-genero-select]').forEach(btn => {
-            btn.addEventListener('click', function() {
-                document.querySelectorAll('[data-genero-select]').forEach(b => b.classList.remove('activo'));
-                this.classList.add('activo');
-                estado.genero = this.dataset.generoSelect;
-            });
-        });
-
-        // Seleccionar producto
-        document.querySelectorAll('[data-producto]').forEach(btn => {
-            btn.addEventListener('click', function() {
-                document.querySelectorAll('[data-producto]').forEach(b => b.classList.remove('seleccionada'));
-                this.classList.add('seleccionada');
-                estado.producto = this.dataset.producto;
-                document.getElementById('info-producto').textContent = this.querySelector('.nombre-producto').textContent;
-                
-                // Gestionar visibilidad de pestañas según el producto
-                const todasPestanas = document.querySelectorAll('.pestana-item');
-                const esProductoEspecial = this.dataset.producto === 'pañoleta' || this.dataset.producto === 'gorra';
-                
-                todasPestanas.forEach(pestana => {
-                    const area = pestana.dataset.area;
-                    if (esProductoEspecial) {
-                        // Para pañoleta y gorra: solo mostrar impresión delantera y trasera
-                        if (area === 'impresion-delantera' || area === 'impresion-trasera') {
-                            pestana.classList.remove('oculta');
-                        } else {
-                            pestana.classList.add('oculta');
-                        }
-                    } else {
-                        // Para otros productos: mostrar todas las pestañas
-                        pestana.classList.remove('oculta');
-                    }
-                });
-                
-                // Resetear la pestaña activa a la primera visible
-                todasPestanas.forEach(p => p.classList.remove('activa'));
-                const primeraPestanaVisible = document.querySelector('.pestana-item:not(.oculta)');
-                if (primeraPestanaVisible) {
-                    primeraPestanaVisible.classList.add('activa');
-                }
-                
-                actualizarDescripcionGeneral();
-            });
-        });
-
-        // Seleccionar técnica
-        document.querySelectorAll('[data-tecnica]').forEach(btn => {
-            btn.addEventListener('click', function() {
-                document.querySelectorAll('[data-tecnica]').forEach(b => b.classList.remove('activo'));
-                this.classList.add('activo');
-                estado.tecnica = this.dataset.tecnica;
-                actualizarDescripcionGeneral();
-            });
-        });
-
-        // Seleccionar color
-        document.querySelectorAll('[data-color]').forEach(btn => {
-            btn.addEventListener('click', function() {
-                document.querySelectorAll('[data-color]').forEach(b => b.classList.remove('seleccionada'));
-                this.classList.add('seleccionada');
-                estado.color = this.dataset.color;
-                document.getElementById('info-color').textContent = this.querySelector('.nombre-color').textContent;
-                actualizarDescripcionGeneral();
-            });
-        });
-
-        // Seleccionar estampado
-        document.querySelectorAll('[data-estampado]').forEach(btn => {
-            btn.addEventListener('click', function() {
-                document.querySelectorAll('[data-estampado]').forEach(b => b.classList.remove('seleccionada'));
-                this.classList.add('seleccionada');
-                estado.estampado = this.dataset.estampado;
-                document.getElementById('info-estampado').textContent = this.querySelector('.nombre-color').textContent;
-                actualizarDescripcionGeneral();
-            });
-        });
-
-        // Seleccionar talla
-        document.querySelectorAll('[data-talla]').forEach(btn => {
-            btn.addEventListener('click', function() {
-                document.querySelectorAll('[data-talla]').forEach(b => b.classList.remove('activo'));
-                this.classList.add('activo');
-                estado.talla = this.dataset.talla;
-                document.getElementById('info-talla').textContent = this.textContent;
-                actualizarDescripcionGeneral();
-            });
-        });
-
-        // Botones siguiente
-        document.querySelectorAll('[data-siguiente]').forEach(btn => {
-            btn.addEventListener('click', () => cambiarPaso(parseInt(btn.dataset.siguiente)));
-        });
-
-        // Botones atrás
-        document.querySelectorAll('[data-anterior]').forEach(btn => {
-            btn.addEventListener('click', () => cambiarPaso(parseInt(btn.dataset.anterior)));
-        });
-
-        // Botones vista
-        document.querySelectorAll('.btn-vista').forEach(btn => {
-            btn.addEventListener('click', function() {
-                document.querySelectorAll('.btn-vista').forEach(b => b.classList.remove('activo'));
-                this.classList.add('activo');
-            });
-        });
-
-        // Agregar al carrito
-        document.querySelector('.btn-siguiente.w-100').addEventListener('click', () => {
-            let nombreProducto = formatearNombre(estado.producto);
-            let tecnica = estado.tecnica === 'impresion' ? 'Impresión' : 'Bordado';
-            let nombreColor = formatearNombre(estado.color);
-            
-            let nombreEstampado = 'Sin estampado';
-            if (estado.estampado) {
-                const botonEstampado = document.querySelector(`[data-estampado="${estado.estampado}"]`);
-                if (botonEstampado) {
-                    nombreEstampado = botonEstampado.querySelector('.nombre-color').textContent;
-                }
-            }
-            
-            document.getElementById('info-informacion').textContent = `✅ ¡Configuración completada! ${nombreProducto} | ${nombreColor} | ${nombreEstampado} | 📏 Talla: ${estado.talla}`;
-            
-            alert(`Prenda agregada al carrito:\nProducto: ${nombreProducto}\nTécnica: ${tecnica}\nColor: ${nombreColor}\nEstampado: ${nombreEstampado}\nTalla: ${estado.talla || 'No seleccionada'}`);
-        });
-
-        // Finalizar
-        document.getElementById('btn-finalizar')?.addEventListener('click', () => {
-            alert('¡Configuración completada! Continúa con la talla.');
-        });
-
-        // Botón hamburguesa
-        document.getElementById('btn-menu').addEventListener('click', () => {
-            alert('Menú móvil');
-        });
-
-        // Inicializar descripción
-        actualizarDescripcionGeneral();
-
-        // Botón salir
-        document.getElementById('btn-salir').addEventListener('click', () => {
-            window.history.back();
-        });
-
-        // Pestañas de áreas
-        document.querySelectorAll('[data-area]').forEach(btn => {
-            btn.addEventListener('click', function() {
-                document.querySelectorAll('[data-area]').forEach(b => b.classList.remove('activa'));
-                this.classList.add('activa');
-                console.log('Área seleccionada:', this.dataset.area);
-            });
-        });
-    </script>
+    <script src="{{ url_for('static', filename='js/usuario/orden_personalizada.js') }}"></script>
 </body>
 </html>

@@ -1,36 +1,47 @@
 import os
+
 import pandas as pd
 import sqlalchemy as sa
-from dotenv import load_dotenv
 
-load_dotenv()  # permite tomar DATABASE_URL desde un .env local
+try:
+    from dotenv import load_dotenv
+except ImportError:
+    load_dotenv = None
 
-# Tablas y archivos heredados de Excel
-EXCEL_TABLES = {
-    "usuarios": "usuarios.xlsx",
-    "registros": "registros.xlsx",
-    "promociones": "promociones.xlsx",
-    "categoria_producto": "categoria_producto.xlsx",
-    "producto": "producto.xlsx",
-    "pedidos": "pedidos.xlsx",
-    "detalle_pedido": "detalle_pedido.xlsx",
-    "pagos": "pagos.xlsx",
-}
 
-# Referencias originales para proxys
-_pd_read_excel_original = pd.read_excel
-_pd_to_excel_original = pd.DataFrame.to_excel
-_os_path_exists_original = os.path.exists
+def load_local_env():
+    """Carga variables desde .env aun si python-dotenv no esta instalado."""
+    if load_dotenv is not None:
+        load_dotenv()
+        return
+
+    env_path = os.path.join(os.path.dirname(__file__), ".env")
+    if not os.path.exists(env_path):
+        return
+
+    with open(env_path, "r", encoding="utf-8") as env_file:
+        for raw_line in env_file:
+            line = raw_line.strip()
+            if not line or line.startswith("#") or "=" not in line:
+                continue
+
+            key, value = line.split("=", 1)
+            key = key.strip()
+            value = value.strip().strip('"').strip("'")
+            os.environ.setdefault(key, value)
+
+
+load_local_env()
 
 DATABASE_URL = os.environ.get(
     "DATABASE_URL",
-    "postgresql+psycopg://postgres:admin@localhost:5432/software_de_oro"
+    "postgresql+psycopg://postgres:admin@localhost:5432/software_de_oro",
 )
 engine = sa.create_engine(DATABASE_URL, future=True)
 
 
 def ensure_tables():
-    """Crea tablas vacias en Postgres si no existen (sustituye a los .xlsx)."""
+    """Crea y ajusta las tablas base de la aplicacion en PostgreSQL."""
     ddl = """
     CREATE TABLE IF NOT EXISTS usuarios (
         id_usuario BIGSERIAL PRIMARY KEY,
@@ -63,7 +74,9 @@ def ensure_tables():
         stock INT,
         id_categoria BIGINT,
         imagen_url TEXT,
-        eliminado BOOLEAN DEFAULT FALSE
+        eliminado BOOLEAN DEFAULT FALSE,
+        fuerza TEXT,
+        intendencia TEXT
     );
     CREATE TABLE IF NOT EXISTS pedidos (
         id_pedido BIGSERIAL PRIMARY KEY,
@@ -84,6 +97,7 @@ def ensure_tables():
         descripcion TEXT,
         tipo_descuento TEXT,
         valor_descuento NUMERIC(12,2),
+        id_producto BIGINT,
         codigo TEXT UNIQUE,
         fecha_inicio DATE,
         fecha_fin DATE,
@@ -105,93 +119,39 @@ def ensure_tables():
     """
     with engine.begin() as conn:
         conn.execute(sa.text(ddl))
+        conn.execute(sa.text("ALTER TABLE producto ADD COLUMN IF NOT EXISTS fuerza TEXT"))
+        conn.execute(sa.text("ALTER TABLE producto ADD COLUMN IF NOT EXISTS intendencia TEXT"))
+        conn.execute(sa.text("ALTER TABLE promociones ADD COLUMN IF NOT EXISTS id_producto BIGINT"))
 
 
-def cleanup_orphans_and_add_fks():
-    """Borra huerfanos y agrega llaves foraneas si no existen."""
-    return  # desactivado para evitar errores sobre datos existentes
+def read_table_df(table_name):
+    with engine.connect() as conn:
+        return pd.read_sql(sa.text(f"SELECT * FROM {table_name}"), conn)
 
 
-def bootstrap_tables_from_excel():
-    """Si la tabla no existe o esta vacia, la crea y llena desde los .xlsx existentes."""
-    inspector = sa.inspect(engine)
-    for table, filename in EXCEL_TABLES.items():
-        path = os.path.join("bd", filename)
-        if not _os_path_exists_original(path):
-            continue
-
-        table_exists = inspector.has_table(table)
-        row_count = 0
-        if table_exists:
-            with engine.connect() as conn:
-                row_count = conn.execute(sa.text(f"SELECT COUNT(*) FROM {table}")).scalar_one()
-
-        if (not table_exists) or row_count == 0:
-            df = _pd_read_excel_original(path)
-            if df.empty:
-                continue
-            df.to_sql(table, con=engine, if_exists="replace", index=False)
-    inspector.clear_cache()
+def replace_table_df(table_name, df):
+    df.to_sql(table_name, con=engine, if_exists="replace", index=False)
 
 
-def _read_excel_proxy(path, *args, **kwargs):
-    """Redirige lecturas de bd/*.xlsx a tablas SQL."""
-    if isinstance(path, str) and path.startswith("bd/"):
-        table = os.path.splitext(os.path.basename(path))[0]
-        with engine.connect() as conn:
-            return pd.read_sql(sa.text(f"SELECT * FROM {table}"), conn)
-    return _pd_read_excel_original(path, *args, **kwargs)
-
-
-def _to_excel_proxy(self, excel_writer, *args, **kwargs):
-    """Redirige escrituras de bd/*.xlsx a tablas SQL; demas usos siguen igual."""
-    if isinstance(excel_writer, str) and excel_writer.startswith("bd/"):
-        table = os.path.splitext(os.path.basename(excel_writer))[0]
-        self.to_sql(table, con=engine, if_exists="replace", index=False)
-        return
-    return _pd_to_excel_original(self, excel_writer, *args, **kwargs)
-
-
-def _path_exists_proxy(path):
-    """Hace que las rutas bd/*.xlsx 'existan' aunque los archivos ya no esten."""
-    if isinstance(path, str) and path.startswith("bd/"):
-        return True
-    return _os_path_exists_original(path)
-
-
-def cleanup_excel_copies():
-    """Elimina copias locales de Excel si aun existen."""
-    for filename in EXCEL_TABLES.values():
-        path = os.path.join("bd", filename)
-        if _os_path_exists_original(path):
-            try:
-                os.remove(path)
-            except OSError:
-                pass
-
-
-def install_excel_proxies():
-    pd.read_excel = _read_excel_proxy
-    pd.DataFrame.to_excel = _to_excel_proxy
-    os.path.exists = _path_exists_proxy
+def next_id(table_name, id_column):
+    with engine.connect() as conn:
+        query = sa.text(f"SELECT COALESCE(MAX({id_column}), 0) + 1 FROM {table_name}")
+        return int(conn.execute(query).scalar_one())
 
 
 def init_db():
     ensure_tables()
-    bootstrap_tables_from_excel()
-    cleanup_excel_copies()
-    cleanup_orphans_and_add_fks()
-    install_excel_proxies()
     return engine
 
 
-# Inicializa al importar
 init_db()
 
 __all__ = [
+    "DATABASE_URL",
     "engine",
-    "init_db",
     "ensure_tables",
-    "bootstrap_tables_from_excel",
-    "EXCEL_TABLES",
+    "init_db",
+    "next_id",
+    "read_table_df",
+    "replace_table_df",
 ]

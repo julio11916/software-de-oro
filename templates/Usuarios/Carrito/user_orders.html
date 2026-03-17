@@ -14,7 +14,6 @@
 <body class="page-with-catalog-header">
     {% include 'Usuarios/partials/header_offcanvas.html' %}
 
-    <!-- Mensajes Flash -->
     {% with messages = get_flashed_messages(with_categories=true) %}
     {% if messages %}
     <div class="container mt-3">
@@ -28,10 +27,8 @@
     {% endif %}
     {% endwith %}
 
-    <!-- Contenido Principal -->
     <div class="container main-container">
         {% if pedidos %}
-        <!-- Encabezado de Pedidos -->
         <div class="orders-header">
             <h2><i class="fas fa-history"></i> Historial de Pedidos</h2>
             <div class="orders-stats">
@@ -45,7 +42,6 @@
             </div>
         </div>
 
-        <!-- Lista de Pedidos -->
         <div class="orders-grid">
             {% for pedido in pedidos %}
             <div class="order-card">
@@ -74,17 +70,15 @@
                             <i class="fas fa-money-bill-wave"></i>
                             <div class="info-content">
                                 <span class="info-label">Monto Total</span>
-                                <span class="info-value price">{{ pedido.monto|cop if pedido.monto else
-                                    'N/A' }}</span>
+                                <span class="info-value price">{{ pedido.monto|cop if pedido.monto else 'N/A' }}</span>
                             </div>
                         </div>
 
                         <div class="info-item">
                             <i class="fas fa-credit-card"></i>
                             <div class="info-content">
-                                <span class="info-label">Método de Pago</span>
-                                <span class="info-value">{{ pedido.metodo_pago if pedido.metodo_pago else 'N/A'
-                                    }}</span>
+                                <span class="info-label">Metodo de Pago</span>
+                                <span class="info-value">{{ pedido.metodo_pago if pedido.metodo_pago else 'N/A' }}</span>
                             </div>
                         </div>
                     </div>
@@ -101,13 +95,12 @@
         </div>
 
         {% else %}
-        <!-- Sin Pedidos -->
         <div class="empty-orders">
             <div class="empty-orders-icon">
                 <i class="fas fa-box-open"></i>
             </div>
-            <h2>Aún no has realizado ningún pedido</h2>
-            <p>¡Explora nuestro catálogo y realiza tu primera compra!</p>
+            <h2>Aun no has realizado ningun pedido</h2>
+            <p>Explora nuestro catalogo y realiza tu primera compra.</p>
             <a href="{{ url_for('user_dashboard') }}" class="btn-start-shopping">
                 <i class="fas fa-store"></i>
                 Comenzar a Comprar
@@ -118,8 +111,6 @@
 
     <script src="{{ url_for('static', filename='js/usuario/catalog_base.js') }}"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-    
 </body>
 
 </html>
-

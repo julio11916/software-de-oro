@@ -188,3 +188,12 @@ function handleCheckout(e) {
         alert('Debes agregar al menos un producto.');
     }
 }
+
+document.addEventListener('DOMContentLoaded', function () {
+    const posData = document.getElementById('posData');
+    if (!posData) return;
+
+    const currencyCode = JSON.parse(posData.dataset.currencyCode || '"COP"');
+    const productos = JSON.parse(posData.dataset.productos || '[]');
+    initPOS(currencyCode, productos);
+});
