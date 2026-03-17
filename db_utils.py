@@ -1,6 +1,9 @@
 import os
 import pandas as pd
 import sqlalchemy as sa
+from dotenv import load_dotenv
+
+load_dotenv()  # permite tomar DATABASE_URL desde un .env local
 
 # Tablas y archivos heredados de Excel
 EXCEL_TABLES = {
@@ -21,7 +24,7 @@ _os_path_exists_original = os.path.exists
 
 DATABASE_URL = os.environ.get(
     "DATABASE_URL",
-    "postgresql+psycopg://postgres:@localhost:5432/software_de_oro"
+    "postgresql+psycopg://postgres:admin@localhost:5432/software_de_oro"
 )
 engine = sa.create_engine(DATABASE_URL, future=True)
 

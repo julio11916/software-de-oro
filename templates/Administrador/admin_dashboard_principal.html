@@ -75,6 +75,111 @@
 
             <!-- Centro vacío -->
             <div class="content-area">
+                {% set ing_act = ingresos_mes_actual|default(0) %}
+                {% set ing_prev = ingresos_mes_anterior|default(0) %}
+                {% set egr_act = egresos_mes_actual|default(0) %}
+                {% set egr_prev = egresos_mes_anterior|default(0) %}
+                {% set bal_act = ing_act - egr_act %}
+                {% set bal_prev = ing_prev - egr_prev %}
+                {% set delta_abs = bal_act - bal_prev %}
+                {% set delta_pct = (delta_abs / bal_prev * 100) if bal_prev else 0 %}
+
+                <div class="balance-card">
+                    <div class="gradient-section-title">
+                        <h5 class="mb-0">Ingresos y Egresos</h5>
+                        <small style="font-weight:500;">Balance del mes actual vs. anterior</small>
+                    </div>
+                    <div class="balance-body">
+                        <div class="balance-row">
+                            <div class="balance-tile">
+                                <div class="balance-label">Ingresos mes actual</div>
+                                <div class="balance-value">{{ ing_act|cop }}</div>
+                            </div>
+                            <div class="balance-tile">
+                                <div class="balance-label">Ingresos mes anterior</div>
+                                <div class="balance-value">{{ ing_prev|cop }}</div>
+                            </div>
+                            <div class="balance-tile">
+                                <div class="balance-label">Egresos mes actual</div>
+                                <div class="balance-value">{{ egr_act|cop }}</div>
+                            </div>
+                            <div class="balance-tile">
+                                <div class="balance-label">Egresos mes anterior</div>
+                                <div class="balance-value">{{ egr_prev|cop }}</div>
+                            </div>
+                        </div>
+                        <div class="balance-row">
+                            <div class="balance-tile">
+                                <div class="balance-label">Balance actual</div>
+                                <div class="balance-value">{{ bal_act|cop }}</div>
+                            </div>
+                            <div class="balance-tile">
+                                <div class="balance-label">Balance anterior</div>
+                                <div class="balance-value">{{ bal_prev|cop }}</div>
+                            </div>
+                            <div class="balance-tile">
+                                <div class="balance-label">Variación</div>
+                                <div class="delta-pill {{ 'delta-positive' if delta_abs >= 0 else 'delta-negative' }}">
+                                    <i class="fas {{ 'fa-arrow-up' if delta_abs >=0 else 'fa-arrow-down' }}"></i>
+                                    {{ delta_abs|cop }} ({{ '%.1f' % delta_pct }}%)
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="balance-card">
+                    <div class="gradient-section-title">
+                        <h5 class="mb-0">Usuarios</h5>
+                        <small style="font-weight:500;">Últimos 30 días</small>
+                    </div>
+                    <div class="balance-body">
+                        <div class="balance-row">
+                            <div class="balance-tile">
+                                <div class="balance-label">Registrados último mes</div>
+                                <div class="balance-value">{{ usuarios_ult_mes }}</div>
+                            </div>
+                            <div class="balance-tile">
+                                <div class="balance-label">Compraron último mes</div>
+                                <div class="balance-value">{{ usuarios_compraron_ult_mes }}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="balance-card">
+                    <div class="gradient-section-title d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Productos más vendidos</h5>
+                        <span class="badge bg-light text-dark">Top {{ top_productos|length }}</span>
+                    </div>
+                    <div class="balance-body">
+                        {% if top_productos %}
+                        <div class="table-responsive">
+                            <table class="table table-sm align-middle mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Producto</th>
+                                        <th>Cant.</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for p in top_productos %}
+                                    <tr>
+                                        <td>{{ p.id_producto }}</td>
+                                        <td>{{ p.nombre or 'Producto' }}</td>
+                                        <td>{{ p.cantidad|int }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        {% else %}
+                        <p class="mb-0 text-muted">No hay datos de ventas para calcular el top.</p>
+                        {% endif %}
+                    </div>
+                </div>
+
                 <div class="alerts-panel">
                     <div class="alerts-header">
                         <h5 class="mb-0">Notificaciones de Inventario</h5>
