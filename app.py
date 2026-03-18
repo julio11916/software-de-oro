@@ -149,7 +149,7 @@ def normalizar_imagen_url(valor):
     ruta = str(valor or '').strip().replace('\\', '/')
     if not ruta or ruta.lower() == 'nan':
         return ''
-    if ruta.startswith('img/Empresa/') or ruta.startswith('img/Pagina/'):
+    if ruta.startswith('img/Empresa/') or ruta.startswith('img/Pagina/') or ruta.startswith('img/catalogo/'):
         return ruta
     if ruta.startswith('img/'):
         return f"img/Empresa/{ruta.split('/')[-1]}"
