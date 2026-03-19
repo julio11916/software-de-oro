@@ -1629,6 +1629,70 @@ def get_cart_count():
     count = len(carrito)
     return {'count': count}
 
+@app.route('/add_custom_order', methods=['POST'])
+def add_custom_order():
+    if session.get('rol') != 'normal':
+        return jsonify({'success': False, 'message': 'Acceso denegado'}), 403
+    
+    if 'carrito' not in session:
+        session['carrito'] = []
+    
+    try:
+        data = request.get_json()
+        
+        # Validar datos requeridos
+        producto = data.get('producto', '')
+        color = data.get('color', '')
+        estampado = data.get('estampado', '')
+        talla = data.get('talla', '')
+        tecnica = data.get('tecnica', '')
+        
+        if not all([producto, color, talla]):
+            return jsonify({'success': False, 'message': 'Datos incompletos'}), 400
+        
+        # Precios para órdenes personalizadas
+        price_map = {
+            'camiseta': 45000,
+            'buso': 78000,
+            'gorra': 35000,
+            'pañoleta': 28000,
+            'buso-manga-larga': 85000,
+        }
+        
+        precio = price_map.get(producto, 45000)
+        
+        # Crear item de carrito personalizado
+        item_carrito = {
+            'tipo': 'personalizado',
+            'id_producto': None,
+            'nombre': f'{producto.capitalize()} Personalizado',
+            'cantidad': 1,
+            'precio': precio,
+            'subtotal': precio,
+            'detalles': {
+                'producto': producto,
+                'color': color,
+                'estampado': estampado,
+                'talla': talla,
+                'tecnica': tecnica
+            }
+        }
+        
+        carrito = session.get('carrito', [])
+        carrito.append(item_carrito)
+        
+        session['carrito'] = carrito
+        session.modified = True
+        
+        return jsonify({
+            'success': True,
+            'message': f'¡{item_carrito["nombre"]} agregado al carrito exitosamente!',
+            'cart_count': len(carrito)
+        }), 200
+    
+    except Exception as e:
+        return jsonify({'success': False, 'message': f'Error: {str(e)}'}), 500
+
 @app.route('/cart/remove/<int:index>', methods=['POST'])
 def remove_from_cart(index):
     if session.get('rol') == 'normal':

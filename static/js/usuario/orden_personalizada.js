@@ -13,7 +13,7 @@
         camiseta: "$ 45.000",
         buso: "$ 78.000",
         gorra: "$ 35.000",
-        panoleta: "$ 28.000",
+        pañoleta: "$ 28.000",
         "buso-manga-larga": "$ 85.000",
     };
 
@@ -21,7 +21,7 @@
         camiseta: "Camiseta",
         buso: "Buso",
         gorra: "Gorra",
-        panoleta: "Panuelo",
+        pañoleta: "Pañoleta",
         "buso-manga-larga": "Buso manga larga",
     };
 
@@ -76,21 +76,21 @@
             const label = number?.nextElementSibling;
             if (!number || !label) continue;
 
-            number.classList.remove("orden-step__number--active", "orden-step__number--completed");
-            label.classList.remove("orden-step__label--active");
+            number.classList.remove("activo", "completado");
+            label.classList.remove("activo");
 
             if (i < state.pasoActual) {
-                number.classList.add("orden-step__number--completed");
+                number.classList.add("completado");
             } else if (i === state.pasoActual) {
-                number.classList.add("orden-step__number--active");
-                label.classList.add("orden-step__label--active");
+                number.classList.add("activo");
+                label.classList.add("activo");
             }
         }
     }
 
     function changeStep(step) {
-        document.querySelectorAll(".orden-stage").forEach((section) => {
-            section.classList.toggle("orden-stage--hidden", section.id !== `paso${step}`);
+        document.querySelectorAll(".paso-contenido").forEach((section) => {
+            section.classList.toggle("seccion-hidden", section.id !== `paso${step}`);
         });
         state.pasoActual = step;
         updateStepIndicators();
@@ -98,22 +98,51 @@
     }
 
     function updateTabsByProduct() {
-        const isSpecial = state.producto === "panoleta" || state.producto === "gorra";
         const tabs = document.querySelectorAll("[data-area]");
+        let allowedAreas = [];
+        let defaultActiveArea = null;
 
+        // Definir qué áreas se muestran según el producto
+        if (state.producto === "pañoleta") {
+            allowedAreas = ["impresion-delantera"];
+            defaultActiveArea = "impresion-delantera";
+        } else if (state.producto === "gorra") {
+            allowedAreas = ["impresion-trasera", "impresion-delantera"];
+            defaultActiveArea = "impresion-trasera";
+        } else {
+            // Para otros productos, mostrar todas
+            allowedAreas = [
+                "pecho-izquierdo",
+                "centro-pecho",
+                "centro-ampliado",
+                "manga-izquierda",
+                "manga-derecha",
+                "impresion-trasera",
+                "impresion-delantera",
+            ];
+            defaultActiveArea = "pecho-izquierdo";
+        }
+
+        // Remover clase activa de todas y actualizar visibilidad
         tabs.forEach((tab) => {
             const area = tab.dataset.area;
-            const allowed = !isSpecial || area === "impresion-delantera" || area === "impresion-trasera";
-            tab.classList.toggle("orden-tab--hidden", !allowed);
-            if (!allowed) {
-                tab.classList.remove("orden-tab--active");
+            const isAllowed = allowedAreas.includes(area);
+            
+            if (!isAllowed) {
+                tab.style.display = "none";
+                tab.classList.remove("activa");
+            } else {
+                tab.style.display = "inline-block";
             }
         });
 
-        if (!document.querySelector(".orden-tab.orden-tab--active:not(.orden-tab--hidden)")) {
-            const firstVisible = document.querySelector(".orden-tab:not(.orden-tab--hidden)");
-            firstVisible?.classList.add("orden-tab--active");
-        }
+        // Establecer la pestaña activa por defecto según el producto
+        tabs.forEach((tab) => {
+            tab.classList.remove("activa");
+            if (tab.dataset.area === defaultActiveArea && tab.style.display !== "none") {
+                tab.classList.add("activa");
+            }
+        });
     }
 
     function bindSelections() {
@@ -123,7 +152,7 @@
                 setActiveClass(
                     document.querySelectorAll("[data-producto]"),
                     (element) => element === button,
-                    "orden-product-card--selected"
+                    "seleccionada"
                 );
                 updateTabsByProduct();
                 updateSummary();
@@ -136,7 +165,7 @@
                 setActiveClass(
                     document.querySelectorAll("[data-tecnica]"),
                     (element) => element === button,
-                    "orden-option-button--active"
+                    "activo"
                 );
                 updateSummary();
             });
@@ -148,7 +177,7 @@
                 setActiveClass(
                     document.querySelectorAll("[data-color]"),
                     (element) => element === button,
-                    "orden-color-card--selected"
+                    "seleccionada"
                 );
                 updateSummary();
             });
@@ -160,7 +189,7 @@
                 setActiveClass(
                     document.querySelectorAll("[data-estampado]"),
                     (element) => element === button,
-                    "orden-color-card--selected"
+                    "seleccionada"
                 );
                 updateSummary();
             });
@@ -172,7 +201,7 @@
                 setActiveClass(
                     document.querySelectorAll("[data-talla]"),
                     (element) => element === button,
-                    "orden-option-button--active"
+                    "activo"
                 );
                 updateSummary();
             });
@@ -197,15 +226,52 @@
             alert("La configuracion quedo lista. El siguiente paso sera conectarla al flujo real de carrito.");
         });
 
-        document.getElementById("btn-agregar-carrito")?.addEventListener("click", () => {
-            const producto = productLabels[state.producto] || formatLabel(state.producto);
-            const tecnica = state.tecnica === "bordado" ? "Bordado" : "Impresion";
-            const estampado = state.estampado ? formatLabel(state.estampado) : "Sin estampado";
-            const talla = state.talla || "Pendiente";
+        document.getElementById("btn-agregar-carrito")?.addEventListener("click", async () => {
+            // Validar que todos los campos estén completos
+            if (!state.talla) {
+                alert("Por favor, selecciona una talla antes de agregar al carrito.");
+                return;
+            }
 
-            alert(
-                `Configuracion actual:\nProducto: ${producto}\nTecnica: ${tecnica}\nColor: ${formatLabel(state.color)}\nEstampado: ${estampado}\nTalla: ${talla}`
+            const producto = productLabels[state.producto] || formatLabel(state.producto);
+            const tecnica = state.tecnica === "bordado" ? "bordado" : "impresion";
+            const estampado = state.estampado || "ninguno";
+            
+            // Mostrar confirmación
+            const confirmacion = confirm(
+                `¿Agregar al carrito?\n\nProducto: ${producto}\nTécnica: ${tecnica}\nColor: ${formatLabel(state.color)}\nEstampado: ${formatLabel(estampado)}\nTalla: ${state.talla}`
             );
+            
+            if (!confirmacion) return;
+
+            try {
+                const response = await fetch('/add_custom_order', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        producto: state.producto,
+                        color: state.color,
+                        estampado: estampado,
+                        talla: state.talla,
+                        tecnica: tecnica
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    alert(data.message);
+                    // Redirigir al carrito
+                    window.location.href = '/cart';
+                } else {
+                    alert(`Error: ${data.message}`);
+                }
+            } catch (error) {
+                alert(`Error al agregar al carrito: ${error.message}`);
+                console.error('Error:', error);
+            }
         });
     }
 
@@ -220,11 +286,11 @@
 
         document.querySelectorAll("[data-area]").forEach((button) => {
             button.addEventListener("click", () => {
-                if (button.classList.contains("orden-tab--hidden")) return;
+                if (button.style.display === "none") return;
                 setActiveClass(
                     document.querySelectorAll("[data-area]"),
                     (element) => element === button,
-                    "orden-tab--active"
+                    "activa"
                 );
             });
         });

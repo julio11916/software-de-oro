@@ -46,7 +46,18 @@
                                 </div>
                                 <div class="item-details">
                                     <h5 class="item-name">{{ item.nombre }}</h5>
-                                    <p class="item-description">{{ item.descripcion|default('Producto de alta calidad', true) }}</p>
+                                    {% if item.tipo == 'personalizado' and item.detalles %}
+                                    <p class="item-description">
+                                        <strong>Personalizado:</strong> {{ item.detalles.producto|capitalize }} |
+                                        Color: {{ item.detalles.color|capitalize }} |
+                                        Talla: {{ item.detalles.talla }} |
+                                        Estampado: {{ item.detalles.estampado|capitalize }} |
+                                        Técnica: {{ item.detalles.tecnica|capitalize }}
+                                    </p>
+                                    {% else %}
+                                    <p class="item-description">{{ item.descripcion|default('Producto de alta calidad',
+                                        true) }}</p>
+                                    {% endif %}
                                     <p class="item-price">
                                         <i class="fas fa-tag"></i>
                                         Precio unitario: <span class="price-value">{{ item.precio|cop }}</span>
