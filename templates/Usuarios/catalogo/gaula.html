@@ -3,9 +3,9 @@
 {% block content %}
 <section class="catalog-hero">
     <div class="container">
-        <h1 class="catalog-title">Catalogo GAULA</h1>
+        <h1 class="catalog-title">Catalogo Gaula</h1>
         <p class="catalog-subtitle">
-            Explora los productos disponibles para GAULA con informacion real del sistema.
+            Explora los productos disponibles para el gaula con información real del sistema.
         </p>
     </div>
 </section>
@@ -23,7 +23,7 @@
                 <h2 class="item-title">{{ producto.nombre }}</h2>
                 <ul class="item-meta">
                     <li>Precio: {{ producto.precio|cop }}</li>
-                    <li>{{ producto.descripcion or 'Producto disponible para GAULA.' }}</li>
+                    <li>{{ producto.descripcion or 'Producto disponible para el gaula.' }}</li>
                     <li>
                         {% if producto.stock|int > 0 %}
                         Stock disponible: {{ producto.stock|int }}
@@ -43,7 +43,7 @@
             <div class="catalog-details">
                 <h2 class="item-title">No hay productos disponibles</h2>
                 <ul class="item-meta">
-                    <li>No encontramos productos activos para GAULA en este momento.</li>
+                    <li>No encontramos productos activos para el gaula en este momento.</li>
                 </ul>
                 <a class="btn-costs" href="{{ url_for('user_dashboard') }}">Volver al catalogo general</a>
             </div>

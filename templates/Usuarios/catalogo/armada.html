@@ -3,10 +3,10 @@
 {% block content %}
 <section class="catalog-hero">
     <div class="container">
-        <h1 class="catalog-title">Catalogo Armada</h1>
+        <h1 class="catalog-title">Catalogo Armada de la República de Colombia </h1>
         <p class="catalog-subtitle">
-            Explora los productos disponibles para Armada con informacion real del sistema.
-        </p>
+            Explora los productos disponibles para Armada de la República de Colombia 
+            con informacion real del sistema.</p>
     </div>
 </section>
 
@@ -16,7 +16,7 @@
         {% for producto in productos %}
         <div class="catalog-row {% if loop.index0 % 2 == 1 %}is-reverse{% endif %}">
             <div class="catalog-media">
-                <img src="{{ url_for('static', filename=producto.imagen_url if producto.imagen_url else 'img/Pagina/logo.jpeg') }}"
+                <img src="{{ url_for('static', filename=producto.imagen_url if producto.imagen_url else 'img/catalogo/armada/guerrera_ejercito.png') }}"
                     alt="{{ producto.nombre }}">
             </div>
             <div class="catalog-details">
