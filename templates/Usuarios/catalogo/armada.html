@@ -3,9 +3,9 @@
 {% block content %}
 <section class="catalog-hero">
     <div class="container">
-        <h1 class="catalog-title">Catalogo Armada de la República de Colombia </h1>
+        <h1 class="catalog-title">Cat&aacute;logo Armada de la Rep&uacute;blica de Colombia </h1>
         <p class="catalog-subtitle">
-            Explora los productos disponibles para Armada de la República de Colombia 
+            Explora los productos disponibles para Armada de la Rep&uacute;blica de Colombia 
             con informacion real del sistema.</p>
     </div>
 </section>
@@ -32,7 +32,7 @@
                         {% endif %}
                     </li>
                 </ul>
-                <a class="btn-costs" href="{{ url_for('producto_detalle', id_producto=producto.id_producto) }}">
+                <a class="btn-costs" href="{{ url_for('producto_detalle', id_producto=producto.id_producto, from='armada') }}">
                     Ver producto
                 </a>
             </div>
@@ -45,7 +45,7 @@
                 <ul class="item-meta">
                     <li>No encontramos productos activos para Armada en este momento.</li>
                 </ul>
-                <a class="btn-costs" href="{{ url_for('user_dashboard') }}">Volver al catalogo general</a>
+                <a class="btn-costs" href="{{ url_for('user_dashboard') }}">Volver al cat&aacute;logo general</a>
             </div>
         </div>
         {% endif %}

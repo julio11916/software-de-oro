@@ -6,12 +6,20 @@
                 <i class="fas fa-bars"></i>
             </button>
 
+            {% if session.get('rol') == 'normal' %}
             <a class="brand-logo" href="{{ url_for('user_dashboard') }}">
+            {% else %}
+            <a class="brand-logo" href="{{ url_for('home') }}">
+            {% endif %}
                 <img src="{{ url_for('static', filename='img/Pagina/logo_transparente.png') }}" alt="Logo Nachoher">
             </a>
 
             <div class="header-actions">
+                {% if session.get('rol') == 'normal' %}
                 <a href="{{ url_for('cart') }}" class="icon-btn-dark">
+                {% else %}
+                <a href="{{ url_for('login') }}" class="icon-btn-dark">
+                {% endif %}
                     <i class="fas fa-bag-shopping"></i>
                 </a>
 
@@ -20,6 +28,7 @@
                         <i class="far fa-user"></i>
                     </button>
                     <div class="dropdown-menu-custom" id="userDropdown">
+                        {% if session.get('rol') == 'normal' %}
                         <a href="{{ url_for('user_profile') }}">
                             <i class="fas fa-user-circle me-2"></i> Mi Perfil
                         </a>
@@ -27,8 +36,16 @@
                             <i class="fas fa-box me-2"></i> Mis Pedidos
                         </a>
                         <a href="{{ url_for('logout') }}">
-                            <i class="fas fa-sign-out-alt me-2"></i> Cerrar sesion
+                            <i class="fas fa-sign-out-alt me-2"></i> Cerrar sesi&oacute;n
                         </a>
+                        {% else %}
+                        <a href="{{ url_for('login') }}">
+                            <i class="fas fa-sign-in-alt me-2"></i>Iniciar sesi&oacute;n
+                        </a>
+                        <a href="{{ url_for('registro') }}">
+                            <i class="fas fa-user-plus me-2"></i>Crear cuenta
+                        </a>
+                        {% endif %}
                     </div>
                 </div>
             </div>
@@ -46,7 +63,11 @@
     </div>
     <div class="offcanvas-body">
         <nav class="offcanvas-nav">
+            {% if session.get('rol') == 'normal' %}
             <a class="offcanvas-link active" href="{{ url_for('user_dashboard') }}">
+            {% else %}
+            <a class="offcanvas-link active" href="{{ url_for('home') }}">
+            {% endif %}
                 <i class="fas fa-house"></i>
                 <span>Home</span>
             </a>
@@ -67,7 +88,11 @@
         <div class="offcanvas-divider"></div>
 
         <nav class="offcanvas-nav">
+            {% if session.get('rol') == 'normal' %}
             <a class="offcanvas-link active" href="{{ url_for('orden_personalizada') }}">
+            {% else %}
+            <a class="offcanvas-link active" href="{{ url_for('login') }}">
+            {% endif %}
                 <i class="fas fa-clipboard-list"></i>
                 <span>Orden personalizada</span>
             </a>
