@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>Panel de Administración</title>
+    <title>Panel de Administraci&oacute;n</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
     <!-- Bootstrap -->
@@ -56,7 +56,7 @@
 
             <div class="sidebar-bottom mt-auto">
                 <button class="btn btn-success w-100 mb-2" id="backBtn">Volver</button>
-                <a href="{{ url_for('logout') }}" class="btn btn-danger w-100">Cerrar Sesión</a>
+                <a href="{{ url_for('logout') }}" class="btn btn-danger w-100">Cerrar Sesi&oacute;n</a>
             </div>
 
         </div>
@@ -67,13 +67,13 @@
             <!-- Top Banner -->
             <div class="topbar d-flex justify-content-between align-items-center">
                 <div>
-                    <h4 class="mb-0">Panel de Administración</h4>
-                    <small>Sistema de gestión</small>
+                    <h4 class="mb-0">Panel de Administraci&oacute;n</h4>
+                    <small>Sistema de gesti&oacute;n</small>
                 </div>
                 <div id="fechaHora"></div>
             </div>
 
-            <!-- Centro vacío -->
+            <!-- Centro vac&iacute;o -->
             <div class="content-area">
                 {% set ing_act = ingresos_mes_actual|default(0) %}
                 {% set ing_prev = ingresos_mes_anterior|default(0) %}
@@ -118,7 +118,7 @@
                                 <div class="balance-value">{{ bal_prev|cop }}</div>
                             </div>
                             <div class="balance-tile">
-                                <div class="balance-label">Variación</div>
+                                <div class="balance-label">Variaci&oacute;n</div>
                                 <div class="delta-pill {{ 'delta-positive' if delta_abs >= 0 else 'delta-negative' }}">
                                     <i class="fas {{ 'fa-arrow-up' if delta_abs >=0 else 'fa-arrow-down' }}"></i>
                                     {{ delta_abs|cop }} ({{ '%.1f' % delta_pct }}%)
@@ -131,16 +131,16 @@
                 <div class="balance-card">
                     <div class="gradient-section-title">
                         <h5 class="mb-0">Usuarios</h5>
-                        <small style="font-weight:500;">Últimos 30 días</small>
+                        <small style="font-weight:500;">&Uacute;ltimos 30 d&iacute;as</small>
                     </div>
                     <div class="balance-body">
                         <div class="balance-row">
                             <div class="balance-tile">
-                                <div class="balance-label">Registrados último mes</div>
+                                <div class="balance-label">Registrados &uacute;ltimo mes</div>
                                 <div class="balance-value">{{ usuarios_ult_mes }}</div>
                             </div>
                             <div class="balance-tile">
-                                <div class="balance-label">Compraron último mes</div>
+                                <div class="balance-label">Compraron &uacute;ltimo mes</div>
                                 <div class="balance-value">{{ usuarios_compraron_ult_mes }}</div>
                             </div>
                         </div>
@@ -149,7 +149,7 @@
 
                 <div class="balance-card">
                     <div class="gradient-section-title d-flex justify-content-between align-items-center">
-                        <h5 class="mb-0">Productos más vendidos</h5>
+                        <h5 class="mb-0">Productos m&aacute;s vendidos</h5>
                         <span class="badge bg-light text-dark">Top {{ top_productos|length }}</span>
                     </div>
                     <div class="balance-body">

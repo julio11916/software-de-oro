@@ -51,7 +51,7 @@
 
             <div class="sidebar-bottom mt-auto">
                 <a href="{{ url_for('home') }}" class="btn btn-success w-100 mb-2" onclick="if (window.history.length > 1) { window.history.back(); } else { window.location.href='{{ url_for('home') }}'; } return false;">Volver</a>
-                <a href="{{ url_for('logout') }}" class="btn btn-danger w-100">Cerrar sesion</a>
+                <a href="{{ url_for('logout') }}" class="btn btn-danger w-100">Cerrar sesi&oacute;n</a>
             </div>
         </div>
 
@@ -59,7 +59,7 @@
             <div class="topbar d-flex justify-content-between align-items-center">
                 <div>
                     <h4 class="mb-0">Gestion de Productos</h4>
-                    <small>Crear, editar y administrar catalogo</small>
+                    <small>Crear, editar y administrar cat&aacute;logo</small>
                 </div>
                 <div id="fechaHora"></div>
             </div>
@@ -131,7 +131,7 @@
 
                 <section class="product-panel">
                     <div class="panel-header gradient-section-title d-flex justify-content-between align-items-center">
-                        <h5 class="mb-0">Catalogo actual</h5>
+                        <h5 class="mb-0">Cat&aacute;logo actual</h5>
                         <div class="catalog-header-actions">
                             <a href="{{ url_for('admin_papelera') }}" class="btn btn-sm btn-paper-bin">Papelera</a>
                             <span class="badge bg-light text-dark">Total: {{ productos|length }}</span>

@@ -38,31 +38,31 @@
 
             <!-- Formulario de Pago -->
             <form method="POST" action="{{ url_for('pay') }}">
-                <!-- Método de Pago -->
+                <!-- M&eacute;todo de Pago -->
                 <div class="payment-section">
                     <h3 class="section-title">
-                        <i class="fas fa-credit-card"></i> Método de Pago
+                        <i class="fas fa-credit-card"></i> M&eacute;todo de Pago
                     </h3>
 
                     <div class="form-group">
                         <label class="form-label">
-                            <i class="fas fa-ticket-alt"></i> Código promocional (opcional)
+                            <i class="fas fa-ticket-alt"></i> C&oacute;digo promocional (opcional)
                         </label>
                         <input type="text" name="codigo_promo" class="form-control" placeholder="Ej: ORO10">
                     </div>
 
                     <div class="form-group">
-                        <label class="form-label" style="margin-bottom: 0.5rem;">Selecciona un método de pago</label>
+                        <label class="form-label" style="margin-bottom: 0.5rem;">Selecciona un m&eacute;todo de pago</label>
                         <select name="metodo_pago" class="form-select" required>
-                            <option value="">Selecciona un método de pago</option>
-                            <option value="tarjeta">💳 Tarjeta de Crédito/Débito</option>
+                            <option value="">Selecciona un m&eacute;todo de pago</option>
+                            <option value="tarjeta">💳 Tarjeta de Cr&eacute;dito/D&eacute;bito</option>
                             <option value="transferencia">🏦 Transferencia Bancaria</option>
                             <option value="efectivo">💵 Efectivo</option>
                         </select>
                     </div>
                 </div>
 
-                <!-- Botón Procesar Pago -->
+                <!-- Bot&oacute;n Procesar Pago -->
                 <button type="submit" class="btn-payment">
                     <i class="fas fa-lock"></i> Procesar Pago Seguro
                 </button>
@@ -76,7 +76,7 @@
                 </div>
                 <div class="feature-item">
                     <i class="fas fa-undo"></i>
-                    <span>Devolución gratuita</span>
+                    <span>Devoluci&oacute;n gratuita</span>
                 </div>
                 <div class="feature-item">
                     <i class="fas fa-headset"></i>
@@ -84,30 +84,30 @@
                 </div>
             </div>
 
-            <!-- Información de Envío -->
+            <!-- Informaci&oacute;n de Env&iacute;o -->
             <div class="shipping-info">
                 <h4 class="shipping-title">
-                    <i class="fas fa-info-circle"></i> Información de Envío
+                    <i class="fas fa-info-circle"></i> Informaci&oacute;n de Env&iacute;o
                 </h4>
                 <div class="shipping-items">
                     <div class="shipping-item">
                         <i class="fas fa-truck"></i>
                         <div class="shipping-item-content">
-                            <strong>Envío Gratis</strong>
+                            <strong>Env&iacute;o Gratis</strong>
                             <p>En pedidos superiores a COP 50.000</p>
                         </div>
                     </div>
                     <div class="shipping-item">
                         <i class="fas fa-clock"></i>
                         <div class="shipping-item-content">
-                            <strong>Entrega Rápida</strong>
-                            <p>3-5 días hábiles</p>
+                            <strong>Entrega R&aacute;pida</strong>
+                            <p>3-5 d&iacute;as h&aacute;biles</p>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Botón Volver -->
+            <!-- Bot&oacute;n Volver -->
             <div style="text-align: center;">
                 <a href="{{ url_for('cart') }}" class="btn-back">
                     <i class="fas fa-arrow-left"></i> Volver al Carrito
