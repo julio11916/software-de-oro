@@ -70,74 +70,114 @@
                     </div>
                     <div class="panel-body">
                         {% if productos %}
-                        <div class="row g-4">
-                            {% for producto in productos %}
-                            <div class="col-lg-6 col-xl-4">
-                                <article class="promo-product-card h-100">
-                                    <div class="promo-image-wrap">
-                                        {% if producto.imagen_url %}
-                                        <img src="{{ url_for('static', filename=producto.imagen_url) }}" alt="{{ producto.nombre }}"
-                                            class="promo-image">
-                                        {% else %}
-                                        <div class="promo-image promo-placeholder">Sin imagen</div>
-                                        {% endif %}
-                                    </div>
-                                    <div class="promo-body">
-                                        <h6 class="product-name mb-1">{{ producto.nombre }}</h6>
-                                        <p class="product-price mb-3">{{ producto.precio|cop }}</p>
-
-                                        <form method="POST" action="{{ url_for('admin_promo') }}" class="row g-2">
-                                            <input type="hidden" name="id_producto" value="{{ producto.id_producto }}">
-                                            <div class="col-12">
-                                                <label class="form-label">Nombre de la promocion</label>
-                                                <input type="text" name="nombre" class="form-control form-control-sm"
-                                                    value="Promo {{ producto.nombre }}" required>
-                                            </div>
-                                            <div class="col-12">
-                                                <label class="form-label">Descripcion</label>
-                                                <input type="text" name="descripcion" class="form-control form-control-sm"
-                                                    placeholder="Ej: Oferta especial por tiempo limitado">
-                                            </div>
-                                            <div class="col-6">
-                                                <label class="form-label">Tipo</label>
-                                                <select name="tipo_descuento" class="form-select form-select-sm">
-                                                    <option value="porcentaje">Porcentaje (%)</option>
-                                                    <option value="valor_fijo">Valor fijo (COP)</option>
-                                                </select>
-                                            </div>
-                                            <div class="col-6">
-                                                <label class="form-label">Valor</label>
-                                                <input type="number" name="valor_descuento" class="form-control form-control-sm"
-                                                    min="0" step="0.01" required>
-                                            </div>
-                                            <div class="col-6">
-                                                <label class="form-label">Inicio</label>
-                                                <input type="date" name="fecha_inicio" class="form-control form-control-sm">
-                                            </div>
-                                            <div class="col-6">
-                                                <label class="form-label">Fin</label>
-                                                <input type="date" name="fecha_fin" class="form-control form-control-sm">
-                                            </div>
-                                            <div class="col-8">
-                                                <label class="form-label">Codigo (opcional)</label>
-                                                <input type="text" name="codigo" class="form-control form-control-sm" maxlength="30"
-                                                    placeholder="Ej: ORO10">
-                                            </div>
-                                            <div class="col-4 d-flex align-items-end">
-                                                <div class="form-check">
-                                                    <input class="form-check-input" type="checkbox" name="activo" checked>
-                                                    <label class="form-check-label">Activa</label>
-                                                </div>
-                                            </div>
-                                            <div class="col-12">
-                                                <button type="submit" class="btn btn-primary w-100 btn-sm">Crear promocion</button>
-                                            </div>
-                                        </form>
-                                    </div>
-                                </article>
+                        {% for fuerza in fuerzas %}
+                        {% set productos_fuerza = productos_por_fuerza[fuerza] %}
+                        <div class="force-section">
+                            <div class="force-section-header">
+                                <h6 class="mb-0">{{ fuerza }}</h6>
+                                <div class="force-section-actions">
+                                    <span class="badge bg-light text-dark">{{ productos_fuerza|length }} producto(s)</span>
+                                    <button
+                                        type="button"
+                                        class="force-arrow"
+                                        data-track-id="promo-force-track-{{ loop.index0 }}"
+                                        data-direction="prev"
+                                        aria-label="Desplazar a la izquierda"
+                                        {% if productos_fuerza|length <= 1 %}disabled{% endif %}
+                                    >
+                                        &#10094;
+                                    </button>
+                                    <button
+                                        type="button"
+                                        class="force-arrow"
+                                        data-track-id="promo-force-track-{{ loop.index0 }}"
+                                        data-direction="next"
+                                        aria-label="Desplazar a la derecha"
+                                        {% if productos_fuerza|length <= 1 %}disabled{% endif %}
+                                    >
+                                        &#10095;
+                                    </button>
+                                </div>
                             </div>
-                            {% endfor %}
+
+                            {% if productos_fuerza %}
+                            <div class="force-track-wrap">
+                                <div class="force-track" id="promo-force-track-{{ loop.index0 }}">
+                                    {% for producto in productos_fuerza %}
+                                    <div class="force-product-item">
+                                        <article class="promo-product-card h-100">
+                                            <div class="promo-image-wrap">
+                                                {% if producto.imagen_url %}
+                                                <img src="{{ url_for('static', filename=producto.imagen_url) }}" alt="{{ producto.nombre }}"
+                                                    class="promo-image">
+                                                {% else %}
+                                                <div class="promo-image promo-placeholder">Sin imagen</div>
+                                                {% endif %}
+                                            </div>
+                                            <div class="promo-body">
+                                                <h6 class="product-name mb-1">{{ producto.nombre }}</h6>
+                                                <p class="product-price mb-3">{{ producto.precio|cop }}</p>
+
+                                                <form method="POST" action="{{ url_for('admin_promo') }}" class="row g-2">
+                                                    <input type="hidden" name="id_producto" value="{{ producto.id_producto }}">
+                                                    <div class="col-12">
+                                                        <label class="form-label">Nombre de la promocion</label>
+                                                        <input type="text" name="nombre" class="form-control form-control-sm"
+                                                            value="Promo {{ producto.nombre }}" required>
+                                                    </div>
+                                                    <div class="col-12">
+                                                        <label class="form-label">Descripcion</label>
+                                                        <input type="text" name="descripcion" class="form-control form-control-sm"
+                                                            placeholder="Ej: Oferta especial por tiempo limitado">
+                                                    </div>
+                                                    <div class="col-6">
+                                                        <label class="form-label">Tipo</label>
+                                                        <select name="tipo_descuento" class="form-select form-select-sm">
+                                                            <option value="porcentaje">Porcentaje (%)</option>
+                                                            <option value="valor_fijo">Valor fijo (COP)</option>
+                                                        </select>
+                                                    </div>
+                                                    <div class="col-6">
+                                                        <label class="form-label">Valor</label>
+                                                        <input type="number" name="valor_descuento" class="form-control form-control-sm"
+                                                            min="0" step="0.01" required>
+                                                    </div>
+                                                    <div class="col-6">
+                                                        <label class="form-label">Inicio</label>
+                                                        <input type="date" name="fecha_inicio" class="form-control form-control-sm">
+                                                    </div>
+                                                    <div class="col-6">
+                                                        <label class="form-label">Fin</label>
+                                                        <input type="date" name="fecha_fin" class="form-control form-control-sm">
+                                                    </div>
+                                                    <div class="col-8">
+                                                        <label class="form-label">Codigo (opcional)</label>
+                                                        <input type="text" name="codigo" class="form-control form-control-sm" maxlength="30"
+                                                            placeholder="Ej: ORO10">
+                                                    </div>
+                                                    <div class="col-4 d-flex align-items-end">
+                                                        <div class="form-check">
+                                                            <input class="form-check-input" type="checkbox" name="activo" checked>
+                                                            <label class="form-check-label">Activa</label>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-12">
+                                                        <button type="submit" class="btn btn-primary w-100 btn-sm">Crear promocion</button>
+                                                    </div>
+                                                </form>
+                                            </div>
+                                        </article>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            {% else %}
+                            <div class="force-empty-state">
+                                <p class="mb-0 text-muted">No hay productos registrados para {{ fuerza }}.</p>
+                            </div>
+                            {% endif %}
                         </div>
+                        {% endfor %}
                         {% else %}
                         <div class="empty-state">
                             <h6 class="mb-1">No hay productos disponibles</h6>
@@ -227,6 +267,7 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="{{ url_for('static', filename='js/administrador/admin_dashboard_principal.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/administrador/admin_promociones.js') }}"></script>
 </body>
 
 </html>
