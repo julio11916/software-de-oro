@@ -49,8 +49,11 @@ FUERZAS_OPCIONES = ["Policia", "Ejercito", "Armada", "Gaula"]
 INTENDENCIAS_OPCIONES = [
     "Busos", "Camibusos", "Gorras", "Panoletas", "Sudaderas",
     "Pantalonetas", "Colchas", "Tendidos", "Chuspas para ropa sucia",
-    "Fundas para almohadas", "Camuflados"
+    "Fundas para almohadas", "Camuflados", "Accesorios", "Presillas"
 ]
+ALLOWED_IMAGE_EXTENSIONS = {'jpg', 'jpeg', 'png', 'gif', 'webp'}
+MAX_IMAGE_SIZE_BYTES = 3 * 1024 * 1024
+MAX_IMAGES_PER_PRODUCT = 5
 
 # DB init y proxys se hacen al importar db_utils
 
@@ -161,6 +164,143 @@ def normalizar_imagenes_productos(productos):
         productos['imagen_url'] = ''
     productos['imagen_url'] = productos['imagen_url'].apply(normalizar_imagen_url)
     return productos
+
+
+def extension_imagen(nombre_archivo):
+    if not nombre_archivo or '.' not in nombre_archivo:
+        return ''
+    return nombre_archivo.rsplit('.', 1)[-1].lower()
+
+
+def validar_archivo_imagen(archivo):
+    extension = extension_imagen(getattr(archivo, 'filename', ''))
+    if extension not in ALLOWED_IMAGE_EXTENSIONS:
+        return "Formato de imagen no permitido. Usa .jpg, .jpeg, .png, .gif o .webp."
+
+    archivo.seek(0, os.SEEK_END)
+    tamano = archivo.tell()
+    archivo.seek(0)
+    if tamano > MAX_IMAGE_SIZE_BYTES:
+        return "La imagen excede el tamano maximo permitido (3MB)."
+    return None
+
+
+def ruta_imagen_producto_absoluta(ruta_relativa):
+    ruta = str(ruta_relativa or '').strip().replace('\\', '/').lstrip('/')
+    if not ruta.startswith('img/Empresa/'):
+        return ''
+
+    base = os.path.abspath(os.path.join('static', 'img', 'Empresa'))
+    candidata = os.path.abspath(os.path.join('static', ruta))
+    if os.path.commonpath([base, candidata]) != base:
+        return ''
+    return candidata
+
+
+def listar_archivos_galeria_producto(id_producto):
+    carpeta_destino = os.path.join('static', 'img', 'Empresa')
+    prefijo = f'producto_{id_producto}_'
+    resultados = []
+
+    if not os.path.isdir(carpeta_destino):
+        return resultados
+
+    for nombre in os.listdir(carpeta_destino):
+        if not nombre.lower().startswith(prefijo.lower()):
+            continue
+        if extension_imagen(nombre) not in ALLOWED_IMAGE_EXTENSIONS:
+            continue
+        sufijo = nombre[len(prefijo):]
+        posicion = sufijo.split('.', 1)[0]
+        if not posicion.isdigit():
+            continue
+        resultados.append((int(posicion), nombre))
+
+    resultados.sort(key=lambda item: item[0])
+    return resultados
+
+
+def migrar_legacy_a_galeria(id_producto):
+    if listar_archivos_galeria_producto(id_producto):
+        return
+
+    carpeta_destino = os.path.join('static', 'img', 'Empresa')
+    if not os.path.isdir(carpeta_destino):
+        return
+
+    for extension in sorted(ALLOWED_IMAGE_EXTENSIONS):
+        legacy_name = f'producto_{id_producto}.{extension}'
+        legacy_path = os.path.join(carpeta_destino, legacy_name)
+        if not os.path.exists(legacy_path):
+            continue
+        nuevo_nombre = f'producto_{id_producto}_1.{extension}'
+        nuevo_path = os.path.join(carpeta_destino, nuevo_nombre)
+        os.replace(legacy_path, nuevo_path)
+        break
+
+
+def limpiar_imagenes_producto(id_producto):
+    carpeta_destino = os.path.join('static', 'img', 'Empresa')
+    if not os.path.isdir(carpeta_destino):
+        return
+
+    prefijo_galeria = f'producto_{id_producto}_'.lower()
+    prefijo_legacy = f'producto_{id_producto}.'.lower()
+    for nombre in os.listdir(carpeta_destino):
+        nombre_lower = nombre.lower()
+        if not (nombre_lower.startswith(prefijo_galeria) or nombre_lower.startswith(prefijo_legacy)):
+            continue
+        if extension_imagen(nombre_lower) not in ALLOWED_IMAGE_EXTENSIONS:
+            continue
+        ruta = os.path.join(carpeta_destino, nombre)
+        if os.path.isfile(ruta):
+            os.remove(ruta)
+
+
+def guardar_galeria_producto(id_producto, imagenes, reemplazar=True):
+    carpeta_destino = os.path.join('static', 'img', 'Empresa')
+    os.makedirs(carpeta_destino, exist_ok=True)
+
+    imagenes_validas = [img for img in imagenes if img and str(getattr(img, 'filename', '')).strip()]
+    if reemplazar:
+        limpiar_imagenes_producto(id_producto)
+        indice_inicial = 1
+    else:
+        migrar_legacy_a_galeria(id_producto)
+        existentes = listar_archivos_galeria_producto(id_producto)
+        indice_inicial = (existentes[-1][0] + 1) if existentes else 1
+
+    rutas_guardadas = []
+    for indice, imagen in enumerate(imagenes_validas, start=indice_inicial):
+        extension = extension_imagen(imagen.filename)
+        nombre_archivo = f'producto_{id_producto}_{indice}.{extension}'
+        ruta_absoluta = os.path.join(carpeta_destino, nombre_archivo)
+        imagen.save(ruta_absoluta)
+        rutas_guardadas.append(f"img/Empresa/{nombre_archivo}".replace('\\', '/'))
+    return rutas_guardadas
+
+
+def obtener_galeria_producto(id_producto, imagen_principal=''):
+    try:
+        id_producto_int = int(float(id_producto))
+    except (TypeError, ValueError):
+        return [normalizar_imagen_url(imagen_principal)] if str(imagen_principal).strip() else []
+
+    galeria = listar_archivos_galeria_producto(id_producto_int)
+    rutas = [f"img/Empresa/{nombre}".replace('\\', '/') for _, nombre in galeria]
+
+    if not rutas:
+        carpeta_destino = os.path.join('static', 'img', 'Empresa')
+        if str(imagen_principal).strip():
+            rutas.append(normalizar_imagen_url(imagen_principal))
+        else:
+            for extension in sorted(ALLOWED_IMAGE_EXTENSIONS):
+                legacy_name = f'producto_{id_producto_int}.{extension}'
+                legacy_path = os.path.join(carpeta_destino, legacy_name)
+                if os.path.exists(legacy_path):
+                    rutas.append(f"img/Empresa/{legacy_name}")
+                    break
+    return rutas
 
 
 def cargar_productos_df():
@@ -643,13 +783,68 @@ def admin_productos():
     if session.get('rol') != 'admin':
         return "Acceso denegado"
 
+    productos_todos = cargar_productos_df()
+    total_eliminados = int(productos_todos['eliminado'].fillna(False).astype(bool).sum())
     productos = cargar_productos_activos_df()
+    total_productos = len(productos)
+    busqueda = request.args.get('q', '').strip()
+    fuerza_filtro = request.args.get('fuerza', '').strip()
+    intendencia_filtro = request.args.get('intendencia', '').strip()
+
+    if fuerza_filtro and fuerza_filtro not in FUERZAS_OPCIONES:
+        fuerza_filtro = ''
+    if intendencia_filtro and intendencia_filtro not in INTENDENCIAS_OPCIONES:
+        intendencia_filtro = ''
+
+    if busqueda:
+        filtros = [
+            productos['nombre'].str.contains(busqueda, case=False, na=False, regex=False),
+            productos['descripcion'].str.contains(busqueda, case=False, na=False, regex=False),
+            productos['fuerza'].str.contains(busqueda, case=False, na=False, regex=False),
+            productos['intendencia'].str.contains(busqueda, case=False, na=False, regex=False),
+            productos['id_producto'].fillna('').astype(str).str.contains(busqueda, case=False, na=False, regex=False),
+        ]
+        mascara = filtros[0]
+        for filtro in filtros[1:]:
+            mascara = mascara | filtro
+        productos = productos[mascara].copy()
+
+    if fuerza_filtro:
+        productos = productos[productos['fuerza'].str.strip() == fuerza_filtro].copy()
+
+    if intendencia_filtro:
+        productos = productos[productos['intendencia'].str.strip() == intendencia_filtro].copy()
+
+    hay_filtros = bool(busqueda or fuerza_filtro or intendencia_filtro)
     lista_productos = productos.to_dict(orient='records')
+    productos_por_fuerza = {fuerza: [] for fuerza in FUERZAS_OPCIONES}
+
+    for producto in lista_productos:
+        imagen_principal = str(producto.get('imagen_url', '')).strip()
+        galeria = obtener_galeria_producto(producto.get('id_producto'), imagen_principal)
+        producto['imagenes'] = galeria
+        if galeria:
+            producto['imagen_url'] = galeria[0]
+
+        fuerza_producto = str(producto.get('fuerza', '')).strip().lower()
+        for fuerza in FUERZAS_OPCIONES:
+            if fuerza_producto == fuerza.lower():
+                productos_por_fuerza[fuerza].append(producto)
+                break
+
     return render_template(
         'Administrador/Gestion productos/admin_prod_dashboard.html',
         productos=lista_productos,
+        productos_por_fuerza=productos_por_fuerza,
         fuerzas=FUERZAS_OPCIONES,
-        intendencias=INTENDENCIAS_OPCIONES
+        intendencias=INTENDENCIAS_OPCIONES,
+        search_query=busqueda,
+        selected_fuerza=fuerza_filtro,
+        selected_intendencia=intendencia_filtro,
+        has_filters=hay_filtros,
+        total_productos=total_productos,
+        total_eliminados=total_eliminados,
+        max_images_per_product=MAX_IMAGES_PER_PRODUCT
     )
 
 
@@ -664,27 +859,27 @@ def agregar_producto():
             flash('Selecciona una fuerza e intendencia validas.', 'danger')
             return redirect(url_for('admin_productos'))
 
-        imagen_url = ''
-        imagen = request.files.get('imagen')
-        if imagen and imagen.filename:
-            extensiones_permitidas = {'jpg', 'jpeg', 'png', 'gif', 'webp'}
-            extension = imagen.filename.rsplit('.', 1)[-1].lower() if '.' in imagen.filename else ''
-            if extension not in extensiones_permitidas:
-                flash("Formato de imagen no permitido. Usa .jpg, .jpeg, .png, .gif o .webp.", 'danger')
+        imagenes = [
+            archivo for archivo in request.files.getlist('imagenes')
+            if archivo and str(getattr(archivo, 'filename', '')).strip()
+        ]
+        if not imagenes:
+            imagen_unica = request.files.get('imagen')
+            if imagen_unica and str(getattr(imagen_unica, 'filename', '')).strip():
+                imagenes = [imagen_unica]
+
+        if len(imagenes) > MAX_IMAGES_PER_PRODUCT:
+            flash(f'Solo puedes subir hasta {MAX_IMAGES_PER_PRODUCT} imagenes por producto.', 'danger')
+            return redirect(url_for('admin_productos'))
+
+        for imagen in imagenes:
+            error_validacion = validar_archivo_imagen(imagen)
+            if error_validacion:
+                flash(error_validacion, 'danger')
                 return redirect(url_for('admin_productos'))
 
-            imagen.seek(0, os.SEEK_END)
-            tamano = imagen.tell()
-            imagen.seek(0)
-            if tamano > 3 * 1024 * 1024:
-                flash("La imagen excede el tamano maximo permitido (3MB).", 'danger')
-                return redirect(url_for('admin_productos'))
-
-            carpeta_destino = os.path.join('static', 'img', 'Empresa')
-            os.makedirs(carpeta_destino, exist_ok=True)
-            ruta = os.path.join(carpeta_destino, f'producto_{nuevo_id}.jpg')
-            imagen.save(ruta)
-            imagen_url = f'img/Empresa/producto_{nuevo_id}.jpg'
+        galeria_guardada = guardar_galeria_producto(nuevo_id, imagenes, reemplazar=True)
+        imagen_url = galeria_guardada[0] if galeria_guardada else ''
 
         nuevo_producto = {
             'id_producto': nuevo_id,
@@ -707,7 +902,8 @@ def agregar_producto():
             f"- precio: {formatear_cop(float(request.form['precio']))}\n"
             f"- stock: {int(request.form['stock'])}\n"
             f"- fuerza: {fuerza}\n"
-            f"- intendencia: {intendencia}"
+            f"- intendencia: {intendencia}\n"
+            f"- imagenes: {len(galeria_guardada)}"
         )
 
         return redirect(url_for('admin_productos'))
@@ -745,40 +941,125 @@ def subir_imagen(id_producto):
     if session.get('rol') != 'admin':
         return "Acceso denegado"
 
-    imagen = request.files.get('imagen')
-    if imagen:
-        # Validar extensión
-        extensiones_permitidas = {'jpg', 'jpeg', 'png', 'gif', 'webp'}
-        extension = imagen.filename.rsplit('.', 1)[-1].lower()
-        if extension not in extensiones_permitidas:
-            flash("Formato de imagen no permitido. Usa .jpg, .jpeg, .png, .gif o .webp.")
-            return redirect(url_for('admin_productos'))
+    imagenes = [
+        archivo for archivo in request.files.getlist('imagenes')
+        if archivo and str(getattr(archivo, 'filename', '')).strip()
+    ]
+    if not imagenes:
+        imagen_unica = request.files.get('imagen')
+        if imagen_unica and str(getattr(imagen_unica, 'filename', '')).strip():
+            imagenes = [imagen_unica]
 
-        # Validar tamano (max. 3MB)
-        imagen.seek(0, os.SEEK_END)
-        tamano = imagen.tell()
-        imagen.seek(0)
-        if tamano > 3 * 1024 * 1024:
-            flash("La imagen excede el tamano maximo permitido (3MB).")
-            return redirect(url_for('admin_productos'))
-
-        # Guardar imagen
-        carpeta_destino = os.path.join('static', 'img', 'Empresa')
-        os.makedirs(carpeta_destino, exist_ok=True)
-        ruta = os.path.join(carpeta_destino, f'producto_{id_producto}.jpg')
-        imagen.save(ruta)
-
-        productos = cargar_productos_df()
-        idx = productos[productos['id_producto'] == id_producto].index
-        if not idx.empty:
-            productos.at[idx[0], 'imagen_url'] = f'img/Empresa/producto_{id_producto}.jpg'
-            guardar_productos_df(productos)
-
-        flash("Imagen subida correctamente.")
-
-    else:
+    if not imagenes:
         flash("No se selecciono ninguna imagen.")
+        return redirect(url_for('admin_productos'))
 
+    if len(imagenes) > MAX_IMAGES_PER_PRODUCT:
+        flash(f'Solo puedes subir hasta {MAX_IMAGES_PER_PRODUCT} imagenes por producto.', 'danger')
+        return redirect(url_for('admin_productos'))
+
+    for imagen in imagenes:
+        error_validacion = validar_archivo_imagen(imagen)
+        if error_validacion:
+            flash(error_validacion, 'danger')
+            return redirect(url_for('admin_productos'))
+
+    galeria_guardada = guardar_galeria_producto(id_producto, imagenes, reemplazar=True)
+
+    productos = cargar_productos_df()
+    idx = productos[productos['id_producto'] == id_producto].index
+    if not idx.empty:
+        productos.at[idx[0], 'imagen_url'] = galeria_guardada[0] if galeria_guardada else ''
+        guardar_productos_df(productos)
+        flash(f"Galeria reemplazada ({len(galeria_guardada)} imagenes).", 'success')
+    else:
+        flash("Producto no encontrado.", 'danger')
+
+    return redirect(url_for('admin_productos'))
+
+
+@app.route('/admin/imagen/agregar/<int:id_producto>', methods=['POST'])
+def agregar_imagenes_producto(id_producto):
+    if session.get('rol') != 'admin':
+        return "Acceso denegado"
+
+    imagenes = [
+        archivo for archivo in request.files.getlist('imagenes_agregar')
+        if archivo and str(getattr(archivo, 'filename', '')).strip()
+    ]
+    if not imagenes:
+        imagenes = [
+            archivo for archivo in request.files.getlist('imagenes')
+            if archivo and str(getattr(archivo, 'filename', '')).strip()
+        ]
+
+    if not imagenes:
+        flash("No se seleccionaron imagenes para agregar.", 'warning')
+        return redirect(url_for('admin_productos'))
+
+    for imagen in imagenes:
+        error_validacion = validar_archivo_imagen(imagen)
+        if error_validacion:
+            flash(error_validacion, 'danger')
+            return redirect(url_for('admin_productos'))
+
+    productos = cargar_productos_df()
+    idx = productos[productos['id_producto'] == id_producto].index
+    if idx.empty:
+        flash("Producto no encontrado.", 'danger')
+        return redirect(url_for('admin_productos'))
+
+    imagen_principal = str(productos.at[idx[0], 'imagen_url']) if 'imagen_url' in productos.columns else ''
+    galeria_actual = obtener_galeria_producto(id_producto, imagen_principal)
+    if len(galeria_actual) + len(imagenes) > MAX_IMAGES_PER_PRODUCT:
+        disponibles = max(0, MAX_IMAGES_PER_PRODUCT - len(galeria_actual))
+        flash(
+            f"Este producto ya tiene {len(galeria_actual)} imagen(es). "
+            f"Solo puedes agregar {disponibles} mas (maximo {MAX_IMAGES_PER_PRODUCT}).",
+            'danger'
+        )
+        return redirect(url_for('admin_productos'))
+
+    guardar_galeria_producto(id_producto, imagenes, reemplazar=False)
+    galeria_actualizada = obtener_galeria_producto(id_producto, '')
+    productos.at[idx[0], 'imagen_url'] = galeria_actualizada[0] if galeria_actualizada else ''
+    guardar_productos_df(productos)
+
+    flash(f"Se agregaron {len(imagenes)} imagen(es). Total: {len(galeria_actualizada)}.", 'success')
+    return redirect(url_for('admin_productos'))
+
+
+@app.route('/admin/imagen/eliminar/<int:id_producto>', methods=['POST'])
+def eliminar_imagen_producto(id_producto):
+    if session.get('rol') != 'admin':
+        return "Acceso denegado"
+
+    imagen_a_eliminar = normalizar_imagen_url(request.form.get('imagen_a_eliminar', '').strip())
+    if not imagen_a_eliminar:
+        flash("Selecciona una imagen para eliminar.", 'warning')
+        return redirect(url_for('admin_productos'))
+
+    productos = cargar_productos_df()
+    idx = productos[productos['id_producto'] == id_producto].index
+    if idx.empty:
+        flash("Producto no encontrado.", 'danger')
+        return redirect(url_for('admin_productos'))
+
+    imagen_principal = str(productos.at[idx[0], 'imagen_url']) if 'imagen_url' in productos.columns else ''
+    galeria_actual = obtener_galeria_producto(id_producto, imagen_principal)
+    if imagen_a_eliminar not in galeria_actual:
+        flash("La imagen seleccionada no pertenece a este producto.", 'danger')
+        return redirect(url_for('admin_productos'))
+
+    ruta_absoluta = ruta_imagen_producto_absoluta(imagen_a_eliminar)
+    if ruta_absoluta and os.path.exists(ruta_absoluta):
+        os.remove(ruta_absoluta)
+
+    galeria_actualizada = obtener_galeria_producto(id_producto, '')
+    productos.at[idx[0], 'imagen_url'] = galeria_actualizada[0] if galeria_actualizada else ''
+    guardar_productos_df(productos)
+
+    flash(f"Imagen eliminada. Total actual: {len(galeria_actualizada)}.", 'success')
     return redirect(url_for('admin_productos'))
 
 
@@ -1534,6 +1815,10 @@ def product_detail(id_producto):
             return "Producto no encontrado"
         
         producto_dict = producto.iloc[0].to_dict()
+        galeria = obtener_galeria_producto(id_producto, producto_dict.get('imagen_url', ''))[:MAX_IMAGES_PER_PRODUCT]
+        producto_dict['imagenes'] = galeria
+        if galeria:
+            producto_dict['imagen_url'] = galeria[0]
         
         # Obtener el contador del carrito
         carrito = session.get('carrito', [])
@@ -2222,9 +2507,15 @@ def producto_detalle(id_producto):
     if producto.empty:
         return "Producto no encontrado"
 
+    producto_dict = producto.iloc[0].to_dict()
+    galeria = obtener_galeria_producto(id_producto, producto_dict.get('imagen_url', ''))[:MAX_IMAGES_PER_PRODUCT]
+    producto_dict['imagenes'] = galeria
+    if galeria:
+        producto_dict['imagen_url'] = galeria[0]
+
     carrito = session.get('carrito', [])
     cart_count = len(carrito)
-    return render_template('Usuarios/Detalle pedido/product_detail.html', producto=producto.iloc[0].to_dict(), cart_count=cart_count)
+    return render_template('Usuarios/Detalle pedido/product_detail.html', producto=producto_dict, cart_count=cart_count)
 
 @app.route('/admin/promo', methods=['GET','POST'])
 def admin_promo():
@@ -2304,6 +2595,21 @@ def admin_promo():
     productos = cargar_productos_activos_df()
     productos['id_producto'] = pd.to_numeric(productos.get('id_producto', 0), errors='coerce').fillna(0).astype(int)
     lista_productos = productos.to_dict(orient='records')
+    productos_por_fuerza = {fuerza: [] for fuerza in FUERZAS_OPCIONES}
+
+    for producto in lista_productos:
+        imagen_principal = str(producto.get('imagen_url', '')).strip()
+        galeria = obtener_galeria_producto(producto.get('id_producto'), imagen_principal)
+        producto['imagenes'] = galeria
+        if galeria:
+            producto['imagen_url'] = galeria[0]
+
+        fuerza_producto = str(producto.get('fuerza', '')).strip().lower()
+        for fuerza in FUERZAS_OPCIONES:
+            if fuerza_producto == fuerza.lower():
+                productos_por_fuerza[fuerza].append(producto)
+                break
+
     pagos = cargar_pagos_df()
     if not pagos.empty:
         if 'id_promo' not in pagos.columns:
@@ -2340,7 +2646,9 @@ def admin_promo():
     return render_template(
         'Administrador/Promociones/adim_promo.html',
         promos=lista_promos,
-        productos=lista_productos
+        productos=lista_productos,
+        productos_por_fuerza=productos_por_fuerza,
+        fuerzas=FUERZAS_OPCIONES
     )
 
 
