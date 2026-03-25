@@ -84,126 +84,149 @@
                 {% set delta_abs = bal_act - bal_prev %}
                 {% set delta_pct = (delta_abs / bal_prev * 100) if bal_prev else 0 %}
 
-                <div class="balance-card">
-                    <div class="gradient-section-title">
-                        <h5 class="mb-0">Ingresos y Egresos</h5>
-                        <small style="font-weight:500;">Balance del mes actual vs. anterior</small>
-                    </div>
-                    <div class="balance-body">
-                        <div class="balance-row">
-                            <div class="balance-tile">
-                                <div class="balance-label">Ingresos mes actual</div>
-                                <div class="balance-value">{{ ing_act|cop }}</div>
-                            </div>
-                            <div class="balance-tile">
-                                <div class="balance-label">Ingresos mes anterior</div>
-                                <div class="balance-value">{{ ing_prev|cop }}</div>
-                            </div>
-                            <div class="balance-tile">
-                                <div class="balance-label">Egresos mes actual</div>
-                                <div class="balance-value">{{ egr_act|cop }}</div>
-                            </div>
-                            <div class="balance-tile">
-                                <div class="balance-label">Egresos mes anterior</div>
-                                <div class="balance-value">{{ egr_prev|cop }}</div>
-                            </div>
+                <div class="card-grid">
+
+                    <div class="dash-card card-usuarios">
+                        <div class="gradient-section-title">
+                            <h5 class="mb-0">Usuarios</h5>
+                            <small style="font-weight:500;">&Uacute;ltimos 30 d&iacute;as</small>
                         </div>
-                        <div class="balance-row">
-                            <div class="balance-tile">
-                                <div class="balance-label">Balance actual</div>
-                                <div class="balance-value">{{ bal_act|cop }}</div>
-                            </div>
-                            <div class="balance-tile">
-                                <div class="balance-label">Balance anterior</div>
-                                <div class="balance-value">{{ bal_prev|cop }}</div>
-                            </div>
-                            <div class="balance-tile">
-                                <div class="balance-label">Variaci&oacute;n</div>
-                                <div class="delta-pill {{ 'delta-positive' if delta_abs >= 0 else 'delta-negative' }}">
-                                    <i class="fas {{ 'fa-arrow-up' if delta_abs >=0 else 'fa-arrow-down' }}"></i>
-                                    {{ delta_abs|cop }} ({{ '%.1f' % delta_pct }}%)
+                        <div class="dash-body">
+                            {% set usuarios_activos_hoy = usuarios_activos_hoy|default(0) %}
+                            {% set usuarios_activos_mes = usuarios_activos_mes|default(0) %}
+                            {% set usuarios_recurrentes = usuarios_recurrentes|default(0) %}
+                            {% set usuarios_nuevos = usuarios_nuevos|default(0) %}
+                            {% set tasa_churn = tasa_churn|default(0) %}
+                            {% set tiempo_promedio = tiempo_promedio|default(0) %}
+                            <div class="balance-row">
+                                <div class="balance-tile">
+                                    <div class="balance-label">Usuarios activos (hoy / mes)</div>
+                                    <div class="balance-value">{{ usuarios_activos_hoy }} / {{ usuarios_activos_mes }}</div>
+                                </div>
+                                <div class="balance-tile">
+                                    <div class="balance-label">Nuevos vs recurrentes</div>
+                                    <div class="balance-value">{{ usuarios_nuevos }} / {{ usuarios_recurrentes }}</div>
+                                </div>
+                                <div class="balance-tile">
+                                    <div class="balance-label">Tasa de abandono (churn)</div>
+                                    <div class="balance-value">{{ '%.1f' % tasa_churn }}%</div>
+                                </div>
+                                <div class="balance-tile">
+                                    <div class="balance-label">Tiempo promedio en la plataforma</div>
+                                    <div class="balance-value">{{ tiempo_promedio }} min</div>
+                                </div>
+                                <div class="balance-tile">
+                                    <div class="balance-label">Registrados &uacute;ltimo mes</div>
+                                    <div class="balance-value">{{ usuarios_ult_mes }}</div>
+                                </div>
+                                <div class="balance-tile">
+                                    <div class="balance-label">Compraron &uacute;ltimo mes</div>
+                                    <div class="balance-value">{{ usuarios_compraron_ult_mes }}</div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                </div>
 
-                <div class="balance-card">
-                    <div class="gradient-section-title">
-                        <h5 class="mb-0">Usuarios</h5>
-                        <small style="font-weight:500;">&Uacute;ltimos 30 d&iacute;as</small>
+                    <div class="dash-card card-notif">
+                        <div class="gradient-section-title d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">Notificaciones de Inventario</h5>
+                            <span class="alerts-count">{{ productos_agotados|length }}</span>
+                        </div>
+                        <div class="dash-body">
+                            {% if productos_agotados %}
+                            <p class="text-muted mb-3">Productos agotados (stock en 0):</p>
+                            <ul class="alerts-list mb-0">
+                                {% for p in productos_agotados %}
+                                <li>
+                                    <strong>{{ p.nombre }}</strong>
+                                    <small>ID {{ p.id_producto }}</small>
+                                    <span class="badge bg-danger">Agotado</span>
+                                </li>
+                                {% endfor %}
+                            </ul>
+                            {% else %}
+                            <p class="mb-0 text-success">No hay productos agotados en este momento.</p>
+                            {% endif %}
+                        </div>
                     </div>
-                    <div class="balance-body">
-                        <div class="balance-row">
-                            <div class="balance-tile">
-                                <div class="balance-label">Registrados &uacute;ltimo mes</div>
-                                <div class="balance-value">{{ usuarios_ult_mes }}</div>
+
+                    <div class="dash-card card-ingresos">
+                        <div class="gradient-section-title">
+                            <h5 class="mb-0">Ingresos y Egresos</h5>
+                            <small style="font-weight:500;">Balance del mes actual vs. anterior</small>
+                        </div>
+                        <div class="dash-body balance-body">
+                            <div class="balance-row">
+                                <div class="balance-tile">
+                                    <div class="balance-label">Ingresos mes actual</div>
+                                    <div class="balance-value">{{ ing_act|cop }}</div>
+                                </div>
+                                <div class="balance-tile">
+                                    <div class="balance-label">Ingresos mes anterior</div>
+                                    <div class="balance-value">{{ ing_prev|cop }}</div>
+                                </div>
+                                <div class="balance-tile">
+                                    <div class="balance-label">Egresos mes actual</div>
+                                    <div class="balance-value">{{ egr_act|cop }}</div>
+                                </div>
+                                <div class="balance-tile">
+                                    <div class="balance-label">Egresos mes anterior</div>
+                                    <div class="balance-value">{{ egr_prev|cop }}</div>
+                                </div>
                             </div>
-                            <div class="balance-tile">
-                                <div class="balance-label">Compraron &uacute;ltimo mes</div>
-                                <div class="balance-value">{{ usuarios_compraron_ult_mes }}</div>
+                            <div class="balance-row">
+                                <div class="balance-tile">
+                                    <div class="balance-label">Balance actual</div>
+                                    <div class="balance-value">{{ bal_act|cop }}</div>
+                                </div>
+                                <div class="balance-tile">
+                                    <div class="balance-label">Balance anterior</div>
+                                    <div class="balance-value">{{ bal_prev|cop }}</div>
+                                </div>
+                                <div class="balance-tile">
+                                    <div class="balance-label">Variaci&oacute;n</div>
+                                    <div class="delta-pill {{ 'delta-positive' if delta_abs >= 0 else 'delta-negative' }}">
+                                        <i class="fas {{ 'fa-arrow-up' if delta_abs >=0 else 'fa-arrow-down' }}"></i>
+                                        {{ delta_abs|cop }} ({{ '%.1f' % delta_pct }}%)
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
 
-                <div class="balance-card">
-                    <div class="gradient-section-title d-flex justify-content-between align-items-center">
-                        <h5 class="mb-0">Productos m&aacute;s vendidos</h5>
-                        <span class="badge bg-light text-dark">Top {{ top_productos|length }}</span>
-                    </div>
-                    <div class="balance-body">
-                        {% if top_productos %}
-                        <div class="table-responsive">
-                            <table class="table table-sm align-middle mb-0">
-                                <thead>
-                                    <tr>
-                                        <th>ID</th>
-                                        <th>Producto</th>
-                                        <th>Cant.</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% for p in top_productos %}
-                                    <tr>
-                                        <td>{{ p.id_producto }}</td>
-                                        <td>{{ p.nombre or 'Producto' }}</td>
-                                        <td>{{ p.cantidad|int }}</td>
-                                    </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
+                    <div class="dash-card card-productos">
+                        <div class="gradient-section-title d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">Productos m&aacute;s vendidos</h5>
+                            <span class="badge bg-light text-dark">Top {{ top_productos|length }}</span>
                         </div>
-                        {% else %}
-                        <p class="mb-0 text-muted">No hay datos de ventas para calcular el top.</p>
-                        {% endif %}
+                        <div class="dash-body">
+                            {% if top_productos %}
+                            <div class="table-responsive">
+                                <table class="table table-sm align-middle mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th>ID</th>
+                                            <th>Producto</th>
+                                            <th>Cant.</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for p in top_productos %}
+                                        <tr>
+                                            <td>{{ p.id_producto }}</td>
+                                            <td>{{ p.nombre or 'Producto' }}</td>
+                                            <td>{{ p.cantidad|int }}</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            {% else %}
+                            <p class="mb-0 text-muted">No hay datos de ventas para calcular el top.</p>
+                            {% endif %}
+                        </div>
                     </div>
-                </div>
 
-                <div class="alerts-panel">
-                    <div class="alerts-header">
-                        <h5 class="mb-0">Notificaciones de Inventario</h5>
-                        <span class="alerts-count">{{ productos_agotados|length }}</span>
-                    </div>
-
-                    {% if productos_agotados %}
-                    <p class="text-muted mb-3">Productos agotados (stock en 0):</p>
-                    <ul class="alerts-list">
-                        {% for p in productos_agotados %}
-                        <li>
-                            <strong>{{ p.nombre }}</strong>
-                            <small>ID {{ p.id_producto }}</small>
-                            <span class="badge bg-danger">Agotado</span>
-                        </li>
-                        {% endfor %}
-                    </ul>
-                    {% else %}
-                    <p class="mb-0 text-success">No hay productos agotados en este momento.</p>
-                    {% endif %}
-
-                    <a class="btn btn-outline-primary mt-3" href="{{ url_for('admin_productos') }}">
-                        Ir a Gestion de Productos
-                    </a>
                 </div>
             </div>
 

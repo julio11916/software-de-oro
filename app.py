@@ -321,7 +321,17 @@ def cargar_productos_df():
     productos['precio'] = pd.to_numeric(productos['precio'], errors='coerce').fillna(0.0).astype(float)
     productos['stock'] = pd.to_numeric(productos['stock'], errors='coerce').fillna(0).astype(int)
     productos['id_categoria'] = pd.to_numeric(productos['id_categoria'], errors='coerce').fillna(0).astype(int)
-    productos['eliminado'] = productos['eliminado'].fillna(False).astype(bool)
+    # Normalizar bandera eliminado aun si viene como texto ('t','f','true','false') o nulos.
+    def _to_bool(valor: Any) -> bool:
+        if pd.isna(valor):
+            return False
+        if isinstance(valor, (int, float, bool)):
+            return bool(valor)
+        if isinstance(valor, str):
+            return valor.strip().lower() in {'true', 't', '1', 'yes', 'si', 'y'}
+        return bool(valor)
+
+    productos['eliminado'] = productos['eliminado'].apply(_to_bool)
     productos['fuerza'] = productos['fuerza'].fillna('').astype(str)
     productos['intendencia'] = productos['intendencia'].fillna('').astype(str)
     productos['nombre'] = productos['nombre'].fillna('').astype(str)
