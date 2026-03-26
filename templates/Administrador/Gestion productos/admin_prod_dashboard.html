@@ -87,8 +87,8 @@
                                     <input type="text" name="nombre" class="form-control" placeholder="Ej: Collar Sol Dorado" required>
                                 </div>
                                 <div class="col-md-4">
-                                    <label class="form-label">Descripcion</label>
-                                    <input type="text" name="descripcion" class="form-control" placeholder="Descripcion corta del producto" required>
+                                    <label class="form-label">Descripción</label>
+                                    <input type="text" name="descripcion" class="form-control" placeholder="Descripción corta del producto" required>
                                 </div>
                                 <div class="col-md-2">
                                     <label class="form-label">Precio</label>
@@ -121,7 +121,7 @@
                                     <input type="file" name="imagenes" class="form-control" accept=".jpg,.jpeg,.png,.gif,.webp" multiple>
                                 </div>
                                 <div class="col-12">
-                                    <small class="text-muted product-image-help">Puedes subir las imagenes que quieras, con maximo 5 por producto. Formatos permitidos: jpg, jpeg, png, gif, webp. Maximo 3MB por imagen.</small>
+                                    <small class="text-muted product-image-help">Puedes subir las imágenes que quieras, con máximo 5 por producto. Formatos permitidos: jpg, jpeg, png, gif, webp. Máximo 3MB por imagen.</small>
                                 </div>
                                 <div class="col-12">
                                     <button type="submit" class="btn btn-primary w-100">Agregar producto</button>
@@ -252,7 +252,7 @@
                                                         <input type="text" name="nombre" class="form-control form-control-sm" value="{{ producto.nombre }}" required>
                                                     </div>
                                                     <div class="mb-2">
-                                                        <label class="form-label">Descripcion</label>
+                                                        <label class="form-label">Descripción</label>
                                                         <input type="text" name="descripcion" class="form-control form-control-sm" value="{{ producto.descripcion }}" required>
                                                     </div>
                                                     <div class="row g-2 mb-3">
@@ -314,7 +314,7 @@
                                                             <option value="{{ imagen }}">Imagen {{ loop.index }}</option>
                                                             {% endfor %}
                                                         </select>
-                                                        <button type="submit" class="btn btn-outline-warning" onclick="return confirm('Quitar esta imagen del producto?')">Quitar</button>
+                                                        <button type="submit" class="btn btn-outline-warning" onclick="return confirm('¿Quitar esta imagen del producto?')">Quitar</button>
                                                     </div>
                                                 </form>
                                                 {% endif %}
@@ -322,7 +322,7 @@
                                                 <button type="submit" form="form-editar-{{ producto.id_producto }}" class="btn btn-outline-primary w-100 mt-2">Guardar cambios</button>
 
                                                 <form method="POST" action="{{ url_for('eliminar_producto', id_producto=producto.id_producto) }}" class="mt-2">
-                                                    <button type="submit" class="btn btn-outline-danger w-100" onclick="return confirm('Eliminar este producto?')">Eliminar</button>
+                                                    <button type="submit" class="btn btn-outline-danger w-100" onclick="return confirm('¿Eliminar este producto?')">Eliminar</button>
                                                 </form>
                                             </div>
                                         </article>

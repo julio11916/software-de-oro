@@ -92,7 +92,7 @@
                                     <button type="submit" class="btn btn-outline-primary w-100">Restaurar</button>
                                 </form>
 
-                                <form method="POST" action="{{ url_for('eliminar_definitivo', id_producto=producto.id_producto) }}" class="mt-2" onsubmit="return confirm('Estas seguro de eliminar este producto de forma permanente?');">
+                                <form method="POST" action="{{ url_for('eliminar_definitivo', id_producto=producto.id_producto) }}" class="mt-2" onsubmit="return confirm('¿Estás seguro de eliminar este producto de forma permanente?');">
                                     <button type="submit" class="btn btn-outline-danger w-100">Eliminar definitivamente</button>
                                 </form>
                             </div>
@@ -102,7 +102,7 @@
                 </div>
                 {% else %}
                 <div class="empty-trash">
-                    <h5 class="mb-1">La papelera esta vacia</h5>
+                    <h5 class="mb-1">La papelera está vacía</h5>
                     <p class="mb-0 text-muted">No hay productos eliminados en este momento.</p>
                 </div>
                 {% endif %}

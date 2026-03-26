@@ -41,13 +41,13 @@
             </div>
         </div>
 
-        <!-- promocion -->
+        <!-- promoción -->
 
         <div class="main-content w-100">
             <div class="topbar d-flex justify-content-between align-items-center">
                 <div>
                     <h4 class="mb-0">Gestion de Promociones por Producto</h4>
-                    <small>Selecciona un producto y crea su promocion desde la misma tarjeta</small>
+                    <small>Selecciona un producto y crea su promoción desde la misma tarjeta</small>
                 </div>
                 <div id="fechaHora"></div>
             </div>
@@ -121,12 +121,12 @@
                                                 <form method="POST" action="{{ url_for('admin_promo') }}" class="row g-2">
                                                     <input type="hidden" name="id_producto" value="{{ producto.id_producto }}">
                                                     <div class="col-12">
-                                                        <label class="form-label">Nombre de la promocion</label>
+                                                        <label class="form-label">Nombre de la promoción</label>
                                                         <input type="text" name="nombre" class="form-control form-control-sm"
                                                             value="Promo {{ producto.nombre }}" required>
                                                     </div>
                                                     <div class="col-12">
-                                                        <label class="form-label">Descripcion</label>
+                                                        <label class="form-label">Descripción</label>
                                                         <input type="text" name="descripcion" class="form-control form-control-sm"
                                                             placeholder="Ej: Oferta especial por tiempo limitado">
                                                     </div>
@@ -151,7 +151,7 @@
                                                         <input type="date" name="fecha_fin" class="form-control form-control-sm">
                                                     </div>
                                                     <div class="col-8">
-                                                        <label class="form-label">Codigo (opcional)</label>
+                                                        <label class="form-label">Código (opcional)</label>
                                                         <input type="text" name="codigo" class="form-control form-control-sm" maxlength="30"
                                                             placeholder="Ej: ORO10">
                                                     </div>
@@ -162,7 +162,7 @@
                                                         </div>
                                                     </div>
                                                     <div class="col-12">
-                                                        <button type="submit" class="btn btn-primary w-100 btn-sm">Crear promocion</button>
+                                                        <button type="submit" class="btn btn-primary w-100 btn-sm">Crear promoción</button>
                                                     </div>
                                                 </form>
                                             </div>
@@ -202,7 +202,7 @@
                                         <th>Producto</th>
                                         <th>Promocion</th>
                                         <th>Descuento</th>
-                                        <th>Codigo</th>
+                                        <th>Código</th>
                                         <th>Vigencia</th>
                                         <th>Estado</th>
                                         <th>Impacto</th>
@@ -256,7 +256,7 @@
                         {% else %}
                         <div class="empty-state">
                             <h6 class="mb-1">No hay promociones registradas</h6>
-                            <p class="mb-0 text-muted">Crea una promocion desde las tarjetas de productos.</p>
+                            <p class="mb-0 text-muted">Crea una promoción desde las tarjetas de productos.</p>
                         </div>
                         {% endif %}
                     </div>
