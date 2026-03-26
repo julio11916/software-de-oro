@@ -41,7 +41,7 @@
                                 <i class="fas fa-box me-2"></i> Mis Pedidos
                             </a>
                             <a href="{{ url_for('logout') }}">
-                                <i class="fas fa-sign-out-alt me-2"></i> Cerrar sesion
+                                <i class="fas fa-sign-out-alt me-2"></i> Cerrar sesi&oacute;n
                             </a>
                         </div>
                     </div>
@@ -66,12 +66,12 @@
                 </a>
                 <a class="offcanvas-link active">
                     <i class="fas fa-shirt"></i>
-                    <span>Catálogo</span>
+                    <span>Cat&aacute;logo</span>
                 </a>
                 <a class="offcanvas-link menu-normal" href="{{ url_for('armada') }}">  Armada</a>
-                <a class="offcanvas-link menu-normal" href="{{ url_for('ejercito') }}">  Ejército</a>
+                <a class="offcanvas-link menu-normal" href="{{ url_for('ejercito') }}">  Ej&eacute;rcito</a>
                 <a class="offcanvas-link menu-normal" href="{{ url_for('gaula') }}">  Gaula</a>
-                <a class="offcanvas-link menu-normal" href="{{ url_for('policia') }}">  Policía</a>
+                <a class="offcanvas-link menu-normal" href="{{ url_for('policia') }}">  Polic&iacute;a</a>
                 <a class="offcanvas-link active" href="{{ url_for('promociones') }}">
                     <i class="fa-solid fa-glasses" style="color: rgb(29, 42, 51);"></i>
                     <span>Accesorios</span>
@@ -101,7 +101,7 @@
                 <img src="{{ url_for('static', filename='img/Pagina/logo_transparente_2.png') }}" alt="Logo del proyecto"
                 class="logo">
             </a>
-            <p class="hero-subtitle">Catálogo premium de prendas y accesorios</p>
+            <p class="hero-subtitle">Cat&aacute;logo premium de prendas y accesorios</p>
             <a href="#catalogo" class="hero-cta">Ver destacados</a>
         </div>
     </section>
@@ -123,53 +123,59 @@
         <div class="container catalog-shell">
             <h2 class="section-title">Destacados</h2>
 
-            <div class="row g-4" id="productosContainer">
-                {% for producto in productos %}
-                <div class="col-lg-3 col-md-4 col-sm-6 producto-item" data-nombre="{{ producto.nombre|lower }}"
-                    data-precio="{{ producto.precio }}">
-                    <div class="card producto-card h-100">
-                        <a href="{{ url_for('product_detail', id_producto=producto.id_producto) }}">
-                            {% if producto.imagen_url %}
-                            <img src="{{ url_for('static', filename=producto.imagen_url) }}" class="card-img-top"
-                                alt="{{ producto.nombre }}">
-                            {% else %}
-                            <img src="{{ url_for('static', filename='img/Pagina/logo.jpeg') }}" class="card-img-top"
-                                alt="Imagen por defecto">
-                            {% endif %}
-                        </a>
+            <div id="destacadosCarousel" class="carousel slide destacados-carousel" data-bs-interval="0">
+                <div class="carousel-inner">
+                    {% for grupo in productos|batch(4, None) %}
+                    <div class="carousel-item {% if loop.first %}active{% endif %}">
+                        <div class="row g-4 justify-content-center">
+                            {% for producto in grupo if producto %}
+                            <div class="col-lg-3 col-md-4 col-sm-6 producto-item" data-nombre="{{ producto.nombre|lower }}"
+                                data-precio="{{ producto.precio }}">
+                                <div class="card producto-card h-100">
+                                    <a href="{{ url_for('product_detail', id_producto=producto.id_producto) }}">
+                                        {% if producto.imagen_url %}
+                                        <img src="{{ url_for('static', filename=producto.imagen_url) }}" class="card-img-top"
+                                            alt="{{ producto.nombre }}">
+                                        {% else %}
+                                        <img src="{{ url_for('static', filename='img/Pagina/logo.jpeg') }}" class="card-img-top"
+                                            alt="Imagen por defecto">
+                                        {% endif %}
+                                    </a>
 
-                        <div class="card-body">
-                            <h5 class="card-title">{{ producto.nombre }}</h5>
-                            <p class="card-text text-muted">{{ producto.descripcion }}</p>
+                                    <div class="card-body">
+                                        <h5 class="card-title">{{ producto.nombre }}</h5>
 
-                            {% if producto.promo_activa %}
-                            <div class="promo-badge mb-2">
-                                <span class="promo-tag">{{ producto.promo_etiqueta }}</span>
-                                <small>{{ producto.promo_nombre }}</small>
-                            </div>
-                            <p class="price mb-1">{{ producto.precio_con_descuento|cop }}</p>
-                            <p class="price-original">{{ producto.precio_original|cop }}</p>
-                            {% else %}
-                            <p class="price">{{ producto.precio|cop }}</p>
-                            {% endif %}
+                                        {% if producto.promo_activa %}
+                                        <div class="promo-badge mb-2">
+                                            <span class="promo-tag">{{ producto.promo_etiqueta }}</span>
+                                            <small>{{ producto.promo_nombre }}</small>
+                                        </div>
+                                        <p class="price mb-1">{{ producto.precio_con_descuento|cop }}</p>
+                                        <p class="price-original">{{ producto.precio_original|cop }}</p>
+                                        {% else %}
+                                        <p class="price">{{ producto.precio|cop }}</p>
+                                        {% endif %}
 
-                            {% if producto.stock|int <= 0 %}
-                            <p class="text-danger fw-bold mb-2">Agotado</p>
-                            {% endif %}
-
-                            <form method="POST" action="{{ url_for('add_to_cart', id_producto=producto.id_producto) }}">
-                                <div class="input-group">
-                                    <input type="number" name="cantidad" class="form-control" value="1" min="1"
-                                        max="{{ producto.stock|int }}" {% if producto.stock|int <=0 %}disabled{% endif %}>
-                                    <button type="submit" class="btn btn-primary" {% if producto.stock|int <=0 %}disabled{% endif %}>
-                                        <i class="fas fa-cart-plus"></i> Agregar
-                                    </button>
+                                        {% if producto.stock|int <= 0 %}
+                                        <p class="text-danger fw-bold mb-2 text-center">Agotado</p>
+                                        {% endif %}
+                                    </div>
                                 </div>
-                            </form>
+                            </div>
+                            {% endfor %}
                         </div>
                     </div>
+                    {% endfor %}
                 </div>
-                {% endfor %}
+
+                <button class="carousel-control-prev" type="button" data-bs-target="#destacadosCarousel" data-bs-slide="prev">
+                    <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                    <span class="visually-hidden">Anterior</span>
+                </button>
+                <button class="carousel-control-next" type="button" data-bs-target="#destacadosCarousel" data-bs-slide="next">
+                    <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                    <span class="visually-hidden">Siguiente</span>
+                </button>
             </div>
         </div>
     </main>
@@ -181,7 +187,7 @@
                     <i class="fas fa-crown"></i> <strong>Nachoher</strong>
                 </div>
                 <div class="footer-item">
-                    <i class="fas fa-map-marker-alt"></i> Urbanizacion Pablo Sexto
+                    <i class="fas fa-map-marker-alt"></i> Urbanizaci&oacute;n Pablo Sexto
                 </div>
                 <div class="footer-item">
                     <i class="fas fa-phone"></i> +57 313 2484017

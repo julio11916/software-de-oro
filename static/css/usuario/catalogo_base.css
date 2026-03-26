@@ -87,14 +87,14 @@ body {
 }
 
 .menu-canvas {
-    width: min(420px, 92vw);
+    width: min(360px, 88vw);
     background: var(--paper);
 }
 
 .menu-canvas .offcanvas-header {
-    padding: 20px 24px 12px;
+    padding: 16px 18px 10px;
     display: grid;
-    grid-template-columns: 36px 1fr 36px;
+    grid-template-columns: 32px 1fr 32px;
     align-items: center;
 }
 
@@ -113,23 +113,23 @@ body {
 }
 
 .offcanvas-body {
-    padding: 8px 24px 28px;
+    padding: 8px 16px 20px;
 }
 
 .offcanvas-nav {
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 0;
 }
 
 .offcanvas-link {
     text-decoration: none;
     color: var(--ink-900);
-    font-size: 1.7rem;
+    font-size: 1.2rem;
     line-height: 1.2;
-    font-weight: 700;
+    font-weight: 600;
     letter-spacing: -0.02em;
-    padding: 8px 0;
+    padding: 6px 0;
 }
 
 .offcanvas-link.active {
@@ -143,7 +143,7 @@ body {
 }
 
 .offcanvas-divider {
-    margin: 22px 0;
+    margin: 12px 0;
     border-top: 1px solid var(--line);
 }
 
@@ -263,6 +263,7 @@ body {
 /* PRECIO */
 
 .price{
+    text-align: center;
     font-weight:700;
     margin-bottom:12px;
 }

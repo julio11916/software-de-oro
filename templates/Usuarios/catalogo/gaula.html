@@ -3,9 +3,9 @@
 {% block content %}
 <section class="catalog-hero">
     <div class="container">
-        <h1 class="catalog-title">Catalogo Gaula</h1>
+        <h1 class="catalog-title">Cat&aacute;logo Gaula</h1>
         <p class="catalog-subtitle">
-            Explora los productos disponibles para el gaula con información real del sistema.
+            Explora los productos disponibles para el gaula con informaci&oacute;n real del sistema.
         </p>
     </div>
 </section>
@@ -32,7 +32,7 @@
                         {% endif %}
                     </li>
                 </ul>
-                <a class="btn-costs" href="{{ url_for('producto_detalle', id_producto=producto.id_producto) }}">
+                <a class="btn-costs" href="{{ url_for('product_detail', id_producto=producto.id_producto) }}">
                     Ver producto
                 </a>
             </div>
@@ -45,7 +45,7 @@
                 <ul class="item-meta">
                     <li>No encontramos productos activos para el gaula en este momento.</li>
                 </ul>
-                <a class="btn-costs" href="{{ url_for('user_dashboard') }}">Volver al catalogo general</a>
+                <a class="btn-costs" href="{{ url_for('user_dashboard') }}">Volver al cat&aacute;logo general</a>
             </div>
         </div>
         {% endif %}

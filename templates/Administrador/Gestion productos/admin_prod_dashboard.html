@@ -51,7 +51,7 @@
 
             <div class="sidebar-bottom mt-auto">
                 <a href="{{ url_for('home') }}" class="btn btn-success w-100 mb-2" onclick="if (window.history.length > 1) { window.history.back(); } else { window.location.href='{{ url_for('home') }}'; } return false;">Volver</a>
-                <a href="{{ url_for('logout') }}" class="btn btn-danger w-100">Cerrar sesion</a>
+                <a href="{{ url_for('logout') }}" class="btn btn-danger w-100">Cerrar sesi&oacute;n</a>
             </div>
         </div>
 
@@ -59,7 +59,7 @@
             <div class="topbar d-flex justify-content-between align-items-center">
                 <div>
                     <h4 class="mb-0">Gestion de Productos</h4>
-                    <small>Crear, editar y administrar catalogo</small>
+                    <small>Crear, editar y administrar cat&aacute;logo</small>
                 </div>
                 <div id="fechaHora"></div>
             </div>
@@ -87,8 +87,8 @@
                                     <input type="text" name="nombre" class="form-control" placeholder="Ej: Collar Sol Dorado" required>
                                 </div>
                                 <div class="col-md-4">
-                                    <label class="form-label">Descripcion</label>
-                                    <input type="text" name="descripcion" class="form-control" placeholder="Descripcion corta del producto" required>
+                                    <label class="form-label">Descripción</label>
+                                    <input type="text" name="descripcion" class="form-control" placeholder="Descripción corta del producto" required>
                                 </div>
                                 <div class="col-md-2">
                                     <label class="form-label">Precio</label>
@@ -117,9 +117,11 @@
                                     </select>
                                 </div>
                                 <div class="col-md-6">
-                                    <label class="form-label">Imagen del producto</label>
-                                    <input type="file" name="imagen" class="form-control" accept=".jpg,.jpeg,.png,.gif,.webp">
-                                    <small class="text-muted">Formatos permitidos: jpg, jpeg, png, gif, webp. Recomendado: maximo 3MB.</small>
+                                    <label class="form-label">Imagenes del producto</label>
+                                    <input type="file" name="imagenes" class="form-control" accept=".jpg,.jpeg,.png,.gif,.webp" multiple>
+                                </div>
+                                <div class="col-12">
+                                    <small class="text-muted product-image-help">Puedes subir las imágenes que quieras, con máximo 5 por producto. Formatos permitidos: jpg, jpeg, png, gif, webp. Máximo 3MB por imagen.</small>
                                 </div>
                                 <div class="col-12">
                                     <button type="submit" class="btn btn-primary w-100">Agregar producto</button>
@@ -131,87 +133,224 @@
 
                 <section class="product-panel">
                     <div class="panel-header gradient-section-title d-flex justify-content-between align-items-center">
-                        <h5 class="mb-0">Catalogo actual</h5>
+                        <h5 class="mb-0">Cat&aacute;logo actual</h5>
                         <div class="catalog-header-actions">
-                            <a href="{{ url_for('admin_papelera') }}" class="btn btn-sm btn-paper-bin">Papelera</a>
+                            <a href="{{ url_for('admin_papelera') }}" class="btn btn-sm btn-paper-bin">
+                                Papelera <span class="paper-count">{{ total_eliminados or 0 }}</span>
+                            </a>
+                            {% if has_filters %}
+                            <span class="badge bg-light text-dark">Mostrando: {{ productos|length }} / {{ total_productos }}</span>
+                            {% else %}
                             <span class="badge bg-light text-dark">Total: {{ productos|length }}</span>
+                            {% endif %}
                         </div>
                     </div>
 
                     <div class="panel-body">
-                        {% if productos %}
-                        <div class="row g-4">
-                            {% for producto in productos %}
-                            <div class="col-lg-6 col-xl-4">
-                                <article class="product-card h-100">
-                                    <div class="product-image-wrap">
-                                        {% if producto.imagen_url %}
-                                        <img src="{{ url_for('static', filename=producto.imagen_url) }}" alt="{{ producto.nombre }}" class="product-image">
-                                        {% else %}
-                                        <div class="product-image product-placeholder">Sin imagen</div>
-                                        {% endif %}
-                                    </div>
-
-                                    <div class="product-body">
-                                        <form method="POST" action="{{ url_for('editar_producto', id_producto=producto.id_producto) }}">
-                                            <div class="mb-2">
-                                                <label class="form-label">Nombre</label>
-                                                <input type="text" name="nombre" class="form-control form-control-sm" value="{{ producto.nombre }}" required>
-                                            </div>
-                                            <div class="mb-2">
-                                                <label class="form-label">Descripcion</label>
-                                                <input type="text" name="descripcion" class="form-control form-control-sm" value="{{ producto.descripcion }}" required>
-                                            </div>
-                                            <div class="row g-2 mb-3">
-                                                <div class="col-6">
-                                                    <label class="form-label">Precio</label>
-                                                    <input type="number" name="precio" class="form-control form-control-sm" value="{{ producto.precio }}" min="0" step="0.01" required>
-                                                </div>
-                                                <div class="col-6">
-                                                    <label class="form-label">Stock</label>
-                                                    <input type="number" name="stock" class="form-control form-control-sm" value="{{ producto.stock }}" min="0" required>
-                                                </div>
-                                            </div>
-                                            <div class="row g-2 mb-3">
-                                                <div class="col-6">
-                                                    <label class="form-label">Fuerza</label>
-                                                    <select name="fuerza" class="form-select form-select-sm" required>
-                                                        {% for fuerza in fuerzas %}
-                                                        <option value="{{ fuerza }}" {% if producto.fuerza == fuerza %}selected{% endif %}>{{ fuerza }}</option>
-                                                        {% endfor %}
-                                                    </select>
-                                                </div>
-                                                <div class="col-6">
-                                                    <label class="form-label">Intendencia</label>
-                                                    <select name="intendencia" class="form-select form-select-sm" required>
-                                                        {% for item in intendencias %}
-                                                        <option value="{{ item }}" {% if producto.intendencia == item %}selected{% endif %}>{{ item }}</option>
-                                                        {% endfor %}
-                                                    </select>
-                                                </div>
-                                            </div>
-                                            <button type="submit" class="btn btn-outline-primary w-100">Guardar cambios</button>
-                                        </form>
-
-                                        <form method="POST" action="{{ url_for('subir_imagen', id_producto=producto.id_producto) }}" enctype="multipart/form-data" class="mt-2">
-                                            <div class="input-group input-group-sm">
-                                                <input type="file" name="imagen" class="form-control" accept=".jpg,.jpeg,.png,.gif,.webp" required>
-                                                <button type="submit" class="btn btn-outline-secondary">Subir</button>
-                                            </div>
-                                        </form>
-
-                                        <form method="POST" action="{{ url_for('eliminar_producto', id_producto=producto.id_producto) }}" class="mt-2">
-                                            <button type="submit" class="btn btn-outline-danger w-100" onclick="return confirm('Eliminar este producto?')">Eliminar</button>
-                                        </form>
-                                    </div>
-                                </article>
+                        <form method="GET" action="{{ url_for('admin_productos') }}" class="row g-2 align-items-end mb-3">
+                            <div class="col-lg-4">
+                                <label class="form-label">Buscar producto</label>
+                                <input
+                                    type="text"
+                                    name="q"
+                                    class="form-control"
+                                    placeholder="Nombre, descripcion, fuerza, intendencia o ID"
+                                    value="{{ search_query or '' }}"
+                                >
                             </div>
-                            {% endfor %}
+                            <div class="col-md-6 col-lg-3">
+                                <label class="form-label">Filtrar por fuerza</label>
+                                <select name="fuerza" class="form-select">
+                                    <option value="">Todas</option>
+                                    {% for fuerza in fuerzas %}
+                                    <option value="{{ fuerza }}" {% if selected_fuerza == fuerza %}selected{% endif %}>{{ fuerza }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-6 col-lg-3">
+                                <label class="form-label">Filtrar por intendencia</label>
+                                <select name="intendencia" class="form-select">
+                                    <option value="">Todas</option>
+                                    {% for item in intendencias %}
+                                    <option value="{{ item }}" {% if selected_intendencia == item %}selected{% endif %}>{{ item }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-6 col-sm-auto">
+                                <button type="submit" class="btn btn-primary catalog-filter-btn">Buscar</button>
+                            </div>
+                            {% if has_filters %}
+                            <div class="col-6 col-sm-auto">
+                                <a href="{{ url_for('admin_productos') }}" class="btn btn-outline-secondary catalog-filter-btn">Limpiar</a>
+                            </div>
+                            {% endif %}
+                        </form>
+
+                        {% set ns = namespace(total=0) %}
+                        {% for fuerza in fuerzas %}
+                        {% set productos_fuerza = productos_por_fuerza[fuerza] %}
+                        {% set ns.total = ns.total + (productos_fuerza|length) %}
+                        <div class="force-section">
+                            <div class="force-section-header">
+                                <h6 class="mb-0">{{ fuerza }}</h6>
+                                <div class="force-section-actions">
+                                    <span class="badge bg-light text-dark">{{ productos_fuerza|length }} producto(s)</span>
+                                    <button
+                                        type="button"
+                                        class="force-arrow"
+                                        data-track-id="force-track-{{ loop.index0 }}"
+                                        data-direction="prev"
+                                        aria-label="Desplazar a la izquierda"
+                                        {% if productos_fuerza|length <= 1 %}disabled{% endif %}
+                                    >
+                                        &#10094;
+                                    </button>
+                                    <button
+                                        type="button"
+                                        class="force-arrow"
+                                        data-track-id="force-track-{{ loop.index0 }}"
+                                        data-direction="next"
+                                        aria-label="Desplazar a la derecha"
+                                        {% if productos_fuerza|length <= 1 %}disabled{% endif %}
+                                    >
+                                        &#10095;
+                                    </button>
+                                </div>
+                            </div>
+
+                            {% if productos_fuerza %}
+                            <div class="force-track-wrap">
+                                <div class="force-track" id="force-track-{{ loop.index0 }}">
+                                    {% for producto in productos_fuerza %}
+                                    <div class="force-product-item">
+                                        <article class="product-card h-100">
+                                            {% set imagenes_producto = producto.imagenes if producto.imagenes is defined else [] %}
+                                            <div class="product-image-wrap {% if imagenes_producto|length <= 1 %}is-single{% endif %}">
+                                                {% if imagenes_producto %}
+                                                <button type="button" class="image-nav image-nav-left" data-action="prev" aria-label="Imagen anterior">&#10094;</button>
+                                                <img
+                                                    src="{{ url_for('static', filename=imagenes_producto[0]) }}"
+                                                    alt="{{ producto.nombre }}"
+                                                    class="product-image js-product-image"
+                                                    data-images='{{ imagenes_producto | tojson | safe }}'
+                                                    data-index="0"
+                                                    data-static-prefix="{{ url_for('static', filename='') }}"
+                                                >
+                                                <button type="button" class="image-nav image-nav-right" data-action="next" aria-label="Imagen siguiente">&#10095;</button>
+                                                <div class="image-counter">
+                                                    <span class="js-current-index">1</span>/{{ imagenes_producto|length }}
+                                                </div>
+                                                {% else %}
+                                                <div class="product-image product-placeholder">Sin imagen</div>
+                                                {% endif %}
+                                            </div>
+
+                                            <div class="product-body">
+                                                <form method="POST" action="{{ url_for('editar_producto', id_producto=producto.id_producto) }}" id="form-editar-{{ producto.id_producto }}">
+                                                    <div class="mb-2">
+                                                        <label class="form-label">Nombre</label>
+                                                        <input type="text" name="nombre" class="form-control form-control-sm" value="{{ producto.nombre }}" required>
+                                                    </div>
+                                                    <div class="mb-2">
+                                                        <label class="form-label">Descripción</label>
+                                                        <input type="text" name="descripcion" class="form-control form-control-sm" value="{{ producto.descripcion }}" required>
+                                                    </div>
+                                                    <div class="row g-2 mb-3">
+                                                        <div class="col-6">
+                                                            <label class="form-label">Precio</label>
+                                                            <input type="number" name="precio" class="form-control form-control-sm" value="{{ producto.precio }}" min="0" step="0.01" required>
+                                                        </div>
+                                                        <div class="col-6">
+                                                            <label class="form-label">Stock</label>
+                                                            <input type="number" name="stock" class="form-control form-control-sm" value="{{ producto.stock }}" min="0" required>
+                                                        </div>
+                                                    </div>
+                                                    <div class="row g-2 mb-3">
+                                                        <div class="col-6">
+                                                            <label class="form-label">Fuerza</label>
+                                                            <select name="fuerza" class="form-select form-select-sm" required>
+                                                                {% for fuerza_item in fuerzas %}
+                                                                <option value="{{ fuerza_item }}" {% if producto.fuerza == fuerza_item %}selected{% endif %}>{{ fuerza_item }}</option>
+                                                                {% endfor %}
+                                                            </select>
+                                                        </div>
+                                                        <div class="col-6">
+                                                            <label class="form-label">Intendencia</label>
+                                                            <select name="intendencia" class="form-select form-select-sm" required>
+                                                                {% for item in intendencias %}
+                                                                <option value="{{ item }}" {% if producto.intendencia == item %}selected{% endif %}>{{ item }}</option>
+                                                                {% endfor %}
+                                                            </select>
+                                                        </div>
+                                                    </div>
+                                                </form>
+
+                                                <form method="POST" action="{{ url_for('subir_imagen', id_producto=producto.id_producto) }}" enctype="multipart/form-data" class="mt-2">
+                                                    <div class="input-group input-group-sm">
+                                                        <input type="file" name="imagenes" class="form-control" accept=".jpg,.jpeg,.png,.gif,.webp" multiple required>
+                                                        <button type="submit" class="btn btn-outline-secondary">Reemplazar galeria</button>
+                                                    </div>
+                                                </form>
+
+                                                {% if imagenes_producto|length < max_images_per_product %}
+                                                <form method="POST" action="{{ url_for('agregar_imagenes_producto', id_producto=producto.id_producto) }}" enctype="multipart/form-data" class="mt-2">
+                                                    <div class="input-group input-group-sm">
+                                                        <input type="file" name="imagenes_agregar" class="form-control" accept=".jpg,.jpeg,.png,.gif,.webp" multiple required>
+                                                        <button type="submit" class="btn btn-outline-info">Agregar imagenes</button>
+                                                    </div>
+                                                    <small class="text-muted d-block">Imagenes: {{ imagenes_producto|length }}/{{ max_images_per_product }}</small>
+                                                    <small class="text-muted">Puedes agregar hasta {{ max_images_per_product - (imagenes_producto|length) }} mas.</small>
+                                                </form>
+                                                {% else %}
+                                                <small class="text-muted d-block mt-2">Imagenes: {{ imagenes_producto|length }}/{{ max_images_per_product }}</small>
+                                                {% endif %}
+
+                                                {% if imagenes_producto %}
+                                                <form method="POST" action="{{ url_for('eliminar_imagen_producto', id_producto=producto.id_producto) }}" class="mt-2">
+                                                    <div class="input-group input-group-sm">
+                                                        <select name="imagen_a_eliminar" class="form-select" required>
+                                                            <option value="">Selecciona imagen a quitar</option>
+                                                            {% for imagen in imagenes_producto %}
+                                                            <option value="{{ imagen }}">Imagen {{ loop.index }}</option>
+                                                            {% endfor %}
+                                                        </select>
+                                                        <button type="submit" class="btn btn-outline-warning" onclick="return confirm('¿Quitar esta imagen del producto?')">Quitar</button>
+                                                    </div>
+                                                </form>
+                                                {% endif %}
+
+                                                <button type="submit" form="form-editar-{{ producto.id_producto }}" class="btn btn-outline-primary w-100 mt-2">Guardar cambios</button>
+
+                                                <form method="POST" action="{{ url_for('eliminar_producto', id_producto=producto.id_producto) }}" class="mt-2">
+                                                    <button type="submit" class="btn btn-outline-danger w-100" onclick="return confirm('¿Eliminar este producto?')">Eliminar</button>
+                                                </form>
+                                            </div>
+                                        </article>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            {% else %}
+                            <div class="force-empty-state">
+                                {% if has_filters %}
+                                <p class="mb-0 text-muted">No hay productos de {{ fuerza }} con los filtros actuales.</p>
+                                {% else %}
+                                <p class="mb-0 text-muted">No hay productos registrados para {{ fuerza }}.</p>
+                                {% endif %}
+                            </div>
+                            {% endif %}
                         </div>
-                        {% else %}
+                        {% endfor %}
+
+                        {% if ns.total == 0 %}
                         <div class="empty-state">
+                            {% if has_filters %}
+                            <h6 class="mb-1">Sin resultados para los filtros actuales</h6>
+                            <p class="mb-0 text-muted">Prueba con otro termino o limpia el filtro.</p>
+                            {% else %}
                             <h6 class="mb-1">No hay productos activos</h6>
                             <p class="mb-0 text-muted">Crea tu primer producto con el formulario superior.</p>
+                            {% endif %}
                         </div>
                         {% endif %}
                     </div>
@@ -222,6 +361,7 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="{{ url_for('static', filename='js/administrador/admin_dashboard_principal.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/administrador/admin_prod_dashboard.js') }}"></script>
 </body>
 
 </html>

@@ -50,7 +50,7 @@
                     <div class="alert alert-success d-flex align-items-center py-2 mb-0"
                         style="background-color: #d4edda; border-color: #28a745; border-left: 4px solid #28a745;">
                         <i class="fas fa-shield-alt me-2" style="color: #28a745;"></i>
-                        <span style="color: #155724;">OK Tu correo esta verificado - Autenticacion disponible</span>
+                        <span style="color: #155724;">OK Tu correo está verificado - Autenticación disponible</span>
                         <button class="btn btn-sm ms-auto" data-bs-toggle="modal" data-bs-target="#modalVerificacion"
                             style="background-color: #28a745; color: white; border: none; padding: 0.4rem 1rem; border-radius: 6px;">Autenticar</button>
                     </div>
@@ -59,7 +59,7 @@
                     <div class="alert alert-info d-flex align-items-center py-2 mb-0"
                         style="background-color: #fff3cd; border-color: #ffc107; border-left: 4px solid #ffc107;">
                         <i class="fas fa-envelope me-2" style="color: #ffc107;"></i>
-                        <span style="color: #856404;">Valida tu e-mail y manten tu cuenta segura</span>
+                        <span style="color: #856404;">Valida tu e-mail y mantén tu cuenta segura</span>
                         <button class="btn btn-sm ms-auto" data-bs-toggle="modal" data-bs-target="#modalVerificacion"
                             style="background-color: #3483fa; color: white; border: none; padding: 0.4rem 1rem; border-radius: 6px;">Validar</button>
                     </div>
@@ -72,7 +72,7 @@
         <div class="row g-4">
             <!-- Tu informacion -->
             <div class="col-md-6 col-lg-4">
-                <div class="option-card" data-bs-toggle="modal" data-bs-target="#modalInformacion">
+                <div class="option-card" data-bs-toggle="modal" data-bs-target="#modalInformaci&oacute;n">
                     <div class="option-icon">
                         <i class="fas fa-id-card"></i>
                     </div>
@@ -91,7 +91,7 @@
                     </div>
                     <div class="option-content">
                         <h5>Datos de tu cuenta</h5>
-                        <p class="text-muted mb-0">Datos que usas para acceder a la cuenta y tus estadisticas</p>
+                        <p class="text-muted mb-0">Datos que usas para acceder a la cuenta y tus estadísticas</p>
                     </div>
                 </div>
             </div>
@@ -104,7 +104,7 @@
                     </div>
                     <div class="option-content">
                         <h5>Seguridad</h5>
-                        <p class="text-muted mb-0">Activa contrasenas visibles</p>
+                        <p class="text-muted mb-0">Activa contraseñas visibles</p>
                     </div>
                 </div>
             </div>
@@ -151,11 +151,11 @@
     </div>
 
     <!-- Modal: Tu informacion -->
-    <div class="modal fade" id="modalInformacion" tabindex="-1">
+    <div class="modal fade" id="modalInformaci&oacute;n" tabindex="-1">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title"><i class="fas fa-id-card me-2"></i>Tu Informacion</h5>
+                    <h5 class="modal-title"><i class="fas fa-id-card me-2"></i>Tu Informaci&oacute;n</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
@@ -166,7 +166,7 @@
                                 value="{{ usuario.nombre }}" required>
                         </div>
                         <div class="mb-3">
-                            <label for="telefono" class="form-label">Telefono</label>
+                            <label for="telefono" class="form-label">Teléfono</label>
                             <input type="tel" class="form-control" id="telefono" name="telefono"
                                 value="{{ usuario.telefono if usuario.telefono else '' }}"
                                 placeholder="+57 300 1234567">
@@ -200,7 +200,7 @@
                 </div>
                 <div class="modal-body">
                     <div class="mb-4">
-                        <h6 class="text-muted mb-3">Informacion de la Cuenta</h6>
+                        <h6 class="text-muted mb-3">Informaci&oacute;n de la Cuenta</h6>
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <strong>Correo:</strong>
@@ -348,7 +348,7 @@
                             <input class="form-check-input" type="checkbox" id="notif_email" name="notif_email" {% if
                                 usuario.notif_email %}checked{% endif %}>
                             <label class="form-check-label" for="notif_email">
-                                Recibir notificaciones por correo electronico
+                                Recibir notificaciones por correo electrónico
                             </label>
                         </div>
                         <div class="form-check form-switch mb-3">
@@ -384,7 +384,7 @@
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header border-0">
-                    <h5 class="modal-title"><i class="fas fa-shield-alt me-2"></i>Autenticacion por Correo
+                    <h5 class="modal-title"><i class="fas fa-shield-alt me-2"></i>Autenticación por Correo
                     </h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
@@ -394,18 +394,18 @@
                             <div style="font-size: 64px; color: #3483fa;">
                                 <i class="fas fa-shield-alt"></i>
                             </div>
-                            <h6 class="mt-3">Autenticacion de Seguridad</h6>
-                            <p class="text-muted">Te enviaremos un codigo de 6 digitos a tu correo:</p>
+                            <h6 class="mt-3">Autenticación de Seguridad</h6>
+                            <p class="text-muted">Te enviaremos un código de 6 dígitos a tu correo:</p>
                             <p class="fw-bold">{{ usuario.email }}</p>
                         </div>
                         <div class="alert alert-info" style="background-color: #e7f3ff; border-color: #3483fa;">
                             <i class="fas fa-info-circle me-2"></i>
-                            <small>El codigo sera valido por 10 minutos</small>
+                            <small>El código será válido por 10 minutos</small>
                         </div>
                         <div class="d-grid gap-2">
                             <button type="button" class="btn btn-primary" id="btnEnviarCodigo"
                                 onclick="enviarCodigoVerificacion()">
-                                <i class="fas fa-paper-plane me-2"></i>Enviar Codigo
+                                <i class="fas fa-paper-plane me-2"></i>Enviar Código
                             </button>
                             <button type="button" class="btn btn-outline-secondary"
                                 data-bs-dismiss="modal">Cancelar</button>
@@ -418,18 +418,18 @@
                                 <i class="fas fa-envelope"></i>
                             </div>
                             <h6 class="mt-3">Revisa tu correo</h6>
-                            <p class="text-muted">Ingresa el codigo de 6 digitos que enviamos a:</p>
+                            <p class="text-muted">Ingresa el código de 6 dígitos que enviamos a:</p>
                             <p class="fw-bold">{{ usuario.email }}</p>
                         </div>
 
                         <form id="formVerificarCodigo" onsubmit="verificarCodigo(event)">
                             <div class="mb-3">
-                                <label for="codigoVerificacion" class="form-label">Codigo de Verificacion</label>
+                                <label for="codigoVerificacion" class="form-label">Código de Verificación</label>
                                 <input type="text" class="form-control form-control-lg text-center"
                                     id="codigoVerificacion" name="codigo" placeholder="123456" maxlength="6"
                                     inputmode="numeric" style="font-size: 28px; font-weight: bold;" autocomplete="off"
                                     required>
-                                <small class="text-muted">Solo numeros, sin espacios</small>
+                                <small class="text-muted">Solo números, sin espacios</small>
                             </div>
 
                             <div id="messageContainer" class="mb-3"></div>
@@ -439,7 +439,7 @@
                                     <i class="fas fa-check me-2"></i>Verificar
                                 </button>
                                 <button type="button" class="btn btn-outline-primary" onclick="reenviarCodigo()">
-                                    <i class="fas fa-redo me-2"></i>Reenviar Codigo
+                                    <i class="fas fa-redo me-2"></i>Reenviar Código
                                 </button>
                                 <button type="button" class="btn btn-outline-secondary"
                                     data-bs-dismiss="modal">Cancelar</button>

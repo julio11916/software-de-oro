@@ -3,9 +3,9 @@
 {% block content %}
 <section class="catalog-hero">
     <div class="container">
-        <h1 class="catalog-title">Catalogo Policia</h1>
+        <h1 class="catalog-title">Cat&aacute;logo Polic&iacute;a</h1>
         <p class="catalog-subtitle">
-            Explora los productos disponibles para Policia con informacion real del sistema.
+            Explora los productos disponibles para Polic&iacute;a con informacion real del sistema.
         </p>
     </div>
 </section>
@@ -23,7 +23,7 @@
                 <h2 class="item-title">{{ producto.nombre }}</h2>
                 <ul class="item-meta">
                     <li>Precio: {{ producto.precio|cop }}</li>
-                    <li>{{ producto.descripcion or 'Producto disponible para Policia.' }}</li>
+                    <li>{{ producto.descripcion or 'Producto disponible para Polic&iacute;a.' }}</li>
                     <li>
                         {% if producto.stock|int > 0 %}
                         Stock disponible: {{ producto.stock|int }}
@@ -32,7 +32,7 @@
                         {% endif %}
                     </li>
                 </ul>
-                <a class="btn-costs" href="{{ url_for('producto_detalle', id_producto=producto.id_producto) }}">
+                <a class="btn-costs" href="{{ url_for('product_detail', id_producto=producto.id_producto) }}">
                     Ver producto
                 </a>
             </div>
@@ -43,9 +43,9 @@
             <div class="catalog-details">
                 <h2 class="item-title">No hay productos disponibles</h2>
                 <ul class="item-meta">
-                    <li>No encontramos productos activos para Policia en este momento.</li>
+                    <li>No encontramos productos activos para Polic&iacute;a en este momento.</li>
                 </ul>
-                <a class="btn-costs" href="{{ url_for('user_dashboard') }}">Volver al catalogo general</a>
+                <a class="btn-costs" href="{{ url_for('user_dashboard') }}">Volver al cat&aacute;logo general</a>
             </div>
         </div>
         {% endif %}

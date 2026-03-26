@@ -14,7 +14,7 @@ body {
     margin: 0;
     color: var(--ink-900);
     background: #f4f4f2;
-    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    font-family: "Manrope", "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
 }
 
 .page-with-catalog-header {
@@ -98,7 +98,7 @@ body {
 }
 
 .offcanvas-body {
-    padding: 8px 24px 28px;
+    padding: 8px 10px 28px 20px;
 }
 
 .offcanvas-nav {
@@ -110,9 +110,9 @@ body {
 .offcanvas-link {
     text-decoration: none;
     color: var(--ink-900);
-    font-size: 1.7rem;
+    font-size: 1.2rem;
     line-height: 1.2;
-    font-weight: 700;
+    font-weight: 600;
     letter-spacing: -0.02em;
     padding: 8px 0;
 }
@@ -125,6 +125,12 @@ body {
     text-decoration: underline;
     text-decoration-thickness: 3px;
     text-underline-offset: 8px;
+}
+
+.menu-normal {
+    font-size: 1rem;
+    font-weight: 500;
+    color: #4c4c4c;
 }
 
 .offcanvas-divider {
@@ -248,9 +254,13 @@ body {
 .producto-card .card-body {
     display: flex;
     flex-direction: column;
+    align-items: center;
+    gap: 6px;
 }
 
 .card-title {
+    font-weight: normal;
+    text-align: center;
     font-weight: 700;
 }
 
@@ -260,16 +270,18 @@ body {
 
 .price {
     color: #0d0d0d;
-    font-size: 1.18rem;
+    font-size: 1rem;
     font-weight: 700;
-    margin-bottom: 0.4rem;
+    margin-bottom: 0.2rem;
+    text-align: center;
 }
 
 .price-original {
-    font-size: 0.9rem;
+    font-size: 0.85rem;
     color: #7a7a7a;
     text-decoration: line-through;
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.3rem;
+    text-align: center;
 }
 
 .promo-badge {
@@ -336,6 +348,28 @@ body {
     display: block;
 }
 
+/* Carrusel de destacados */
+.destacados-carousel {
+    position: relative;
+}
+
+.destacados-carousel .carousel-item {
+    padding: 8px 14px;
+}
+
+.destacados-carousel .carousel-control-prev,
+.destacados-carousel .carousel-control-next {
+    width: 48px;
+    filter: invert(1);
+}
+
+.destacados-carousel .carousel-control-prev-icon,
+.destacados-carousel .carousel-control-next-icon {
+    background-color: rgba(0, 0, 0, 0.55);
+    border-radius: 50%;
+    background-size: 70%;
+}
+
 .footer-compact {
     background: #121212;
     color: #fff;
@@ -398,7 +432,7 @@ body {
     }
 
     .offcanvas-link {
-        font-size: 1.3rem;
+        font-size: 1.1rem;
     }
 
     .page-with-catalog-header {
