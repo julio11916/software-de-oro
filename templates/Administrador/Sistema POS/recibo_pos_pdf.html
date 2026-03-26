@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Recibo de venta</title>
+    <style>
+{{ css_content | safe }}
+    </style>
+</head>
+<body>
+{% for pagina in paginas %}
+    <section class="receipt-page{% if not loop.last %} page-break{% endif %}">
+        {% if watermark_image_src %}
+            <img class="receipt-watermark" src="{{ watermark_image_src }}" alt="">
+        {% endif %}
+        <header class="receipt-header">
+            <h1>RECIBO DE VENTA</h1>
+            <div class="header-line"></div>
+            <p class="brand">NACHOHER</p>
+            <p class="motto">Diseno - Calidad - Precision</p>
+            <div class="meta-row">
+                <span>Recibo: {{ codigo_recibo }}</span>
+                <span>Fecha: {{ fecha_txt }}</span>
+            </div>
+            {% if total_paginas > 1 %}
+                <p class="page-number">Pag. {{ pagina.numero }}/{{ total_paginas }}</p>
+            {% endif %}
+        </header>
+
+        {% if pagina.numero == 1 %}
+            <section class="block">
+                <h2>DATOS GENERALES</h2>
+                <div class="line-divider"></div>
+                <div class="two-col-row">
+                    <div class="left-col">
+                        <p class="ubicacion-linea">Ubicacion: Urbanizacion Pablo Sexto Manzana A Casa 6</p>
+                        <p>Ciudad: Ibague, Tolima</p>
+                    </div>
+                    <div class="right-col">
+                        <p>Telefono: +57 313 2484017</p>
+                        <p>Correo: contacto@nachoher.com</p>
+                        <p>Hora: {{ hora_txt }}</p>
+                    </div>
+                </div>
+            </section>
+
+            {% if cliente_campos %}
+                <section class="block">
+                    <h2>INFORMACION DEL CLIENTE</h2>
+                    <div class="line-divider"></div>
+                    <div class="client-grid">
+                        {% for campo in cliente_campos %}
+                            <div class="client-field">
+                                <span class="label">{{ campo.label }}:</span>
+                                <span class="value">{{ campo.valor }}</span>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </section>
+            {% endif %}
+        {% endif %}
+
+        <section class="block">
+            <h2>DETALLE DE LA COMPRA</h2>
+            <div class="line-divider"></div>
+            <table class="detail-table">
+                <colgroup>
+                    <col class="col-cantidad">
+                    <col class="col-descripcion">
+                    <col class="col-unitario">
+                    <col class="col-total">
+                </colgroup>
+                <thead>
+                    <tr>
+                        <th>CANTIDAD</th>
+                        <th>DESCRIPCION</th>
+                        <th>VALOR UNITARIO</th>
+                        <th>TOTAL</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in pagina.detalle_items %}
+                        <tr>
+                            <td class="center">{{ item.cantidad }}</td>
+                            <td class="descripcion">{{ item.descripcion }}</td>
+                            <td class="right">{{ item.valor_unitario }}</td>
+                            <td class="right">{{ item.total }}</td>
+                        </tr>
+                    {% endfor %}
+                    {% if not pagina.detalle_items %}
+                        <tr>
+                            <td class="center">-</td>
+                            <td>Sin productos</td>
+                            <td class="right">COP 0,00</td>
+                            <td class="right">COP 0,00</td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </section>
+
+        {% if pagina.es_ultima %}
+            <section class="block resumen">
+                <h2>RESUMEN DE PAGO</h2>
+                <div class="line-divider"></div>
+                <div class="summary-grid">
+                    <div class="summary-left">
+                        <p>Cantidad de items: {{ cantidad_items }}</p>
+                        <p>Metodo de pago: {{ metodo_pago }}</p>
+                    </div>
+                    <div class="summary-right">
+                        <p><span>Subtotal:</span><strong>{{ subtotal_txt }}</strong></p>
+                        <p><span>Descuento:</span><strong>{{ descuento_txt }}</strong></p>
+                        <p class="total-line"><span>Total a pagar:</span><strong>{{ total_txt }}</strong></p>
+                    </div>
+                </div>
+            </section>
+
+            <section class="block observaciones">
+                <h2>OBSERVACIONES</h2>
+                <div class="line-divider"></div>
+                <p>{{ observaciones }}</p>
+            </section>
+        {% endif %}
+    </section>
+{% endfor %}
+</body>
+</html>

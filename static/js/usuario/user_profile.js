@@ -46,13 +46,13 @@ function enviarCodigoVerificacion() {
 
             showMessage(data.message, "error");
             btn.disabled = false;
-            btn.innerHTML = '<i class="fas fa-paper-plane me-2"></i>Enviar Codigo';
+            btn.innerHTML = '<i class="fas fa-paper-plane me-2"></i>Enviar Código';
         })
         .catch((error) => {
             console.error("Error:", error);
-            showMessage("Error al enviar el codigo. Intenta nuevamente.", "error");
+            showMessage("Error al enviar el código. Intenta nuevamente.", "error");
             btn.disabled = false;
-            btn.innerHTML = '<i class="fas fa-paper-plane me-2"></i>Enviar Codigo';
+            btn.innerHTML = '<i class="fas fa-paper-plane me-2"></i>Enviar Código';
         });
 }
 
@@ -65,7 +65,7 @@ function verificarCodigo(event) {
 
     const codigo = codigoInput.value.replace(/\s/g, "").trim();
     if (codigo.length !== 6 || !/^\d{6}$/.test(codigo)) {
-        showMessage("El codigo debe tener exactamente 6 digitos.", "error");
+        showMessage("El código debe tener exactamente 6 dígitos.", "error");
         return;
     }
 
@@ -96,7 +96,7 @@ function verificarCodigo(event) {
         })
         .catch((error) => {
             console.error("Error:", error);
-            showMessage("Error al verificar el codigo. Intenta nuevamente.", "error");
+            showMessage("Error al verificar el código. Intenta nuevamente.", "error");
             btn.disabled = false;
             btn.innerHTML = '<i class="fas fa-check me-2"></i>Verificar';
         });
@@ -172,7 +172,7 @@ document.addEventListener("DOMContentLoaded", function () {
             if (container) container.innerHTML = "";
             if (btnEnviar) {
                 btnEnviar.disabled = false;
-                btnEnviar.innerHTML = '<i class="fas fa-paper-plane me-2"></i>Enviar Codigo';
+                btnEnviar.innerHTML = '<i class="fas fa-paper-plane me-2"></i>Enviar Código';
             }
         });
 

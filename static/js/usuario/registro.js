@@ -8,7 +8,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const validarConfirmacion = () => {
         if (confirmInput.value && confirmInput.value !== passwordInput.value) {
-            confirmInput.setCustomValidity("Las contrasenas no coinciden.");
+            confirmInput.setCustomValidity("Las contraseñas no coinciden.");
             return;
         }
 

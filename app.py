@@ -1,7 +1,6 @@
-﻿import os
-import json
-import pandas as pd
+﻿import os, json, re, shutil, subprocess, base64, pandas as pd
 from io import BytesIO
+from pathlib import Path
 from openpyxl.chart import BarChart, LineChart, PieChart, Reference
 from openpyxl.chart.series import DataPoint
 from flask import Flask, render_template, request, redirect, url_for, session, Response, flash, send_file, jsonify
@@ -181,7 +180,7 @@ def validar_archivo_imagen(archivo):
     tamano = archivo.tell()
     archivo.seek(0)
     if tamano > MAX_IMAGE_SIZE_BYTES:
-        return "La imagen excede el tamano maximo permitido (3MB)."
+        return "La imagen excede el tamaño máximo permitido (3MB)."
     return None
 
 
@@ -565,6 +564,294 @@ def formatear_cop(valor):
     return f"{CURRENCY_CODE} {valor_formateado}"
 
 
+def _construir_datos_recibo_pos(id_pedido):
+    detalle = cargar_detalle_pedido_df()
+    if detalle.empty:
+        raise ValueError(f'No existe detalle para el pedido #{id_pedido}.')
+
+    detalle = detalle.copy()
+    detalle['id_pedido'] = pd.to_numeric(detalle['id_pedido'], errors='coerce')
+    detalle = detalle[detalle['id_pedido'] == int(id_pedido)]
+    if detalle.empty:
+        raise ValueError(f'No existe detalle para el pedido #{id_pedido}.')
+
+    if 'id_detalle' in detalle.columns:
+        detalle = detalle.sort_values(by='id_detalle', ascending=True, na_position='last')
+
+    productos_df = cargar_productos_df()
+    productos_df['id_producto'] = pd.to_numeric(productos_df['id_producto'], errors='coerce')
+    productos_map = {}
+    for _, row in productos_df.iterrows():
+        if pd.notna(row.get('id_producto')):
+            productos_map[int(row['id_producto'])] = str(row.get('nombre', '')).strip()
+
+    items = []
+    for _, row in detalle.iterrows():
+        id_producto = int(pd.to_numeric(row.get('id_producto'), errors='coerce') or 0)
+        cantidad = int(pd.to_numeric(row.get('cantidad', 0), errors='coerce') or 0)
+        subtotal = float(pd.to_numeric(row.get('subtotal', 0), errors='coerce') or 0)
+        if cantidad <= 0:
+            cantidad = 1
+        valor_unitario = subtotal / cantidad if cantidad else subtotal
+        descripcion = productos_map.get(id_producto, f"Producto #{id_producto}")
+        items.append({
+            'cantidad': cantidad,
+            'descripcion': descripcion,
+            'valor_unitario': float(valor_unitario),
+            'total': float(subtotal)
+        })
+
+    pagos = cargar_pagos_df()
+    pagos['id_pedido'] = pd.to_numeric(pagos['id_pedido'], errors='coerce')
+    pago_pedido = pagos[pagos['id_pedido'] == int(id_pedido)].copy()
+    pago_row = None
+    if not pago_pedido.empty:
+        pago_pedido['id_pago'] = pd.to_numeric(pago_pedido['id_pago'], errors='coerce')
+        pago_pedido = pago_pedido.sort_values(by='id_pago', ascending=False, na_position='last')
+        pago_row = pago_pedido.iloc[0]
+
+    metodo_pago = ''
+    monto_total = float(sum(item['total'] for item in items))
+    descuento_total = 0.0
+    if pago_row is not None:
+        metodo_pago = str(pago_row.get('metodo_pago', '')).strip().lower()
+        monto_total = float(pd.to_numeric(pago_row.get('monto', monto_total), errors='coerce') or monto_total)
+        descuento_total = float(pd.to_numeric(pago_row.get('monto_descuento', 0), errors='coerce') or 0)
+
+    metodo_label = {
+        'efectivo': 'Efectivo',
+        'tarjeta': 'Tarjeta',
+        'transferencia': 'Transferencia',
+        'qr': 'QR'
+    }.get(metodo_pago, metodo_pago.title() if metodo_pago else 'No especificado')
+
+    pedidos = cargar_pedidos_df()
+    pedidos['id_pedido'] = pd.to_numeric(pedidos['id_pedido'], errors='coerce')
+    pedido_row = pedidos[pedidos['id_pedido'] == int(id_pedido)]
+    fecha_compra = datetime.now()
+    if not pedido_row.empty:
+        fecha_raw = pedido_row.iloc[0].get('fecha_pedido', '')
+        fecha_parseada = pd.to_datetime(fecha_raw, errors='coerce')
+        if pd.notna(fecha_parseada):
+            fecha_compra = fecha_parseada.to_pydatetime()
+
+    cliente_nombre = ''
+    cliente_correo = ''
+    cliente_documento = ''
+    cliente_telefono = ''
+    ultimo_recibo = session.get('ultimo_recibo_pos', {})
+    if str(ultimo_recibo.get('id_pedido', '')) == str(id_pedido):
+        cliente_nombre = str(ultimo_recibo.get('cliente_nombre', '')).strip()
+        cliente_correo = str(ultimo_recibo.get('cliente_correo', '')).strip()
+        cliente_documento = str(ultimo_recibo.get('cliente_documento', '')).strip()
+        cliente_telefono = str(ultimo_recibo.get('cliente_telefono', '')).strip()
+
+    subtotal_bruto = max(0.0, monto_total + descuento_total)
+    return {
+        'id_pedido': int(id_pedido),
+        'fecha_compra': fecha_compra,
+        'metodo_pago': metodo_label,
+        'items': items,
+        'subtotal_bruto': float(subtotal_bruto),
+        'descuento_total': float(descuento_total),
+        'total': float(monto_total),
+        'cliente_nombre': cliente_nombre,
+        'cliente_correo': cliente_correo,
+        'cliente_documento': cliente_documento,
+        'cliente_telefono': cliente_telefono
+    }
+
+
+def _particionar_items_recibo(items, max_items_por_pagina=8):
+    items = list(items or [])
+    if not items:
+        return [[]]
+    return [items[i:i + max_items_por_pagina] for i in range(0, len(items), max_items_por_pagina)]
+
+
+def _construir_contexto_recibo_pos(id_pedido):
+    datos = _construir_datos_recibo_pos(id_pedido)
+    fecha_txt = datos['fecha_compra'].strftime('%d / %m / %Y')
+    hora_txt = datos['fecha_compra'].strftime('%H:%M:%S')
+
+    items_formateados = []
+    for item in datos.get('items', []):
+        items_formateados.append({
+            'cantidad': int(pd.to_numeric(item.get('cantidad', 0), errors='coerce') or 0),
+            'descripcion': str(item.get('descripcion', '') or '').strip(),
+            'valor_unitario': formatear_cop(item.get('valor_unitario', 0)),
+            'total': formatear_cop(item.get('total', 0))
+        })
+
+    paginas_items = _particionar_items_recibo(items_formateados, max_items_por_pagina=8)
+    total_paginas = len(paginas_items)
+    paginas = []
+    for i, items_pagina in enumerate(paginas_items, start=1):
+        paginas.append({
+            'numero': i,
+            'detalle_items': items_pagina,
+            'es_ultima': i == total_paginas
+        })
+
+    cliente_campos = []
+    cliente_nombre = str(datos.get('cliente_nombre', '') or '').strip()
+    cliente_doc = str(datos.get('cliente_documento', '') or '').strip()
+    cliente_tel = str(datos.get('cliente_telefono', '') or '').strip()
+    cliente_mail = str(datos.get('cliente_correo', '') or '').strip()
+    if cliente_nombre:
+        cliente_campos.append({'label': 'Nombre', 'valor': cliente_nombre})
+    if cliente_doc:
+        cliente_campos.append({'label': 'Documento', 'valor': cliente_doc})
+    if cliente_tel:
+        cliente_campos.append({'label': 'Telefono', 'valor': cliente_tel})
+    if cliente_mail:
+        cliente_campos.append({'label': 'Correo', 'valor': cliente_mail})
+
+    return {
+        'id_pedido': int(datos['id_pedido']),
+        'codigo_recibo': f"POS-{int(datos['id_pedido']):06d}",
+        'fecha_txt': fecha_txt,
+        'hora_txt': hora_txt,
+        'paginas': paginas,
+        'total_paginas': total_paginas,
+        'cliente_campos': cliente_campos,
+        'cantidad_items': len(items_formateados),
+        'metodo_pago': str(datos.get('metodo_pago', 'No especificado') or 'No especificado'),
+        'subtotal_txt': formatear_cop(datos.get('subtotal_bruto', 0)),
+        'descuento_txt': formatear_cop(datos.get('descuento_total', 0)),
+        'total_txt': formatear_cop(datos.get('total', 0)),
+        'observaciones': (
+            "Prendas confeccionadas bajo estandares de resistencia, "
+            "durabilidad y ergonomia para uso tactico y operativo."
+        )
+    }
+
+
+def _cargar_css_recibo_pos():
+    ruta_css = os.path.join(app.root_path, 'static', 'css', 'administrador', 'admin_pos_recibo.css')
+    if not os.path.exists(ruta_css):
+        return ''
+    try:
+        with open(ruta_css, 'r', encoding='utf-8') as f_css:
+            return f_css.read()
+    except UnicodeDecodeError:
+        with open(ruta_css, 'r', encoding='latin-1') as f_css:
+            return f_css.read()
+
+
+def _cargar_marca_agua_recibo_src():
+    carpeta = os.path.join(app.root_path, 'static', 'img', 'Pagina')
+    candidatos = ('recibo.png', 'nachoher_fondo_logo.jpg', 'logo.jpeg')
+    mime_por_ext = {
+        '.png': 'image/png',
+        '.jpg': 'image/jpeg',
+        '.jpeg': 'image/jpeg'
+    }
+
+    for nombre in candidatos:
+        ruta = Path(carpeta) / nombre
+        if not ruta.exists():
+            continue
+        try:
+            return ruta.resolve().as_uri()
+        except ValueError:
+            pass
+
+        ext = ruta.suffix.lower()
+        mime = mime_por_ext.get(ext, 'application/octet-stream')
+        with open(ruta, 'rb') as f_img:
+            contenido_b64 = base64.b64encode(f_img.read()).decode('ascii')
+        return f"data:{mime};base64,{contenido_b64}"
+    return ''
+
+
+def render_html_recibo_pos(id_pedido):
+    contexto = _construir_contexto_recibo_pos(id_pedido)
+    css_content = _cargar_css_recibo_pos()
+    return render_template(
+        'Administrador/Sistema POS/recibo_pos_pdf.html',
+        css_content=css_content,
+        watermark_image_src=_cargar_marca_agua_recibo_src(),
+        **contexto
+    )
+
+
+def _buscar_msedge():
+    candidatos = []
+
+    edge_env = str(os.environ.get('EDGE_PATH', '')).strip()
+    if edge_env:
+        candidatos.append(edge_env)
+
+    for exe in ('msedge.exe', 'msedge'):
+        encontrado = shutil.which(exe)
+        if encontrado:
+            candidatos.append(encontrado)
+
+    candidatos.extend([
+        r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe",
+        r"C:\Program Files\Microsoft\Edge\Application\msedge.exe"
+    ])
+
+    for ruta in candidatos:
+        if ruta and os.path.exists(ruta):
+            return ruta
+    return None
+
+
+def generar_pdf_recibo_pos(id_pedido):
+    html = render_html_recibo_pos(id_pedido)
+    ruta_edge = _buscar_msedge()
+    if not ruta_edge:
+        raise RuntimeError(
+            "No se encontro Microsoft Edge para convertir el recibo a PDF. "
+            "Configura EDGE_PATH o instala Edge."
+        )
+
+    tmp_path = Path(app.root_path) / f"recibo_pos_tmp_{id_pedido}_{os.getpid()}_{int(datetime.now().timestamp() * 1000)}"
+    tmp_path.mkdir(parents=True, exist_ok=True)
+
+    try:
+        html_path = tmp_path / f"recibo_pos_{id_pedido}.html"
+        pdf_path = tmp_path / f"recibo_pos_{id_pedido}.pdf"
+        user_data_dir = tmp_path
+
+        html_path.write_text(html, encoding='utf-8')
+
+        comando = [
+            ruta_edge,
+            "--headless",
+            "--disable-gpu",
+            "--no-pdf-header-footer",
+            "--print-to-pdf-no-header",
+            "--no-sandbox",
+            "--disable-breakpad",
+            "--no-first-run",
+            "--no-default-browser-check",
+            "--allow-file-access-from-files",
+            f"--user-data-dir={str(user_data_dir)}",
+            f"--print-to-pdf={str(pdf_path)}",
+            html_path.resolve().as_uri()
+        ]
+
+        resultado = subprocess.run(
+            comando,
+            capture_output=True,
+            text=True,
+            timeout=90
+        )
+
+        if resultado.returncode != 0 or not pdf_path.exists():
+            detalle_error = (resultado.stderr or resultado.stdout or '').strip()
+            if detalle_error:
+                detalle_error = detalle_error.splitlines()[0]
+            raise RuntimeError(f"No se pudo convertir el recibo a PDF. {detalle_error}")
+
+        return pdf_path.read_bytes()
+    finally:
+        shutil.rmtree(tmp_path, ignore_errors=True)
+
+
 def obtener_productos_agotados():
     productos = cargar_productos_df()
     if productos.empty:
@@ -669,7 +956,7 @@ def login():
     if not usuario.empty:
         estado = str(usuario.iloc[0].get('estado', 'activo')).strip().lower()
         if estado != 'activo':
-            return "Tu usuario esta inactivo. Contacta al administrador."
+            return "Tu usuario está inactivo. Contacta al administrador."
 
         rol = usuario.iloc[0]['rol']
         id_usuario = usuario.iloc[0]['id_usuario']
@@ -679,7 +966,7 @@ def login():
         session['rol'] = rol
         session['nombre'] = nombre
 
-        registrar_actividad("Inicio de sesion exitoso")
+        registrar_actividad("Inicio de sesión exitoso")
 
         if rol == 'admin':
             return redirect(url_for('admin_dashboard'))
@@ -699,7 +986,7 @@ def registro():
         usuarios = cargar_usuarios_df()
 
         if email in usuarios['email'].values:
-            return "Este correo ya esta registrado."
+            return "Este correo ya está registrado."
 
         ultimo_id = pd.to_numeric(usuarios['id_usuario'], errors='coerce').max()
         nuevo_id = int(ultimo_id + 1) if pd.notna(ultimo_id) else 1
@@ -961,7 +1248,7 @@ def subir_imagen(id_producto):
             imagenes = [imagen_unica]
 
     if not imagenes:
-        flash("No se selecciono ninguna imagen.")
+        flash("No se seleccionó ninguna imagen.")
         return redirect(url_for('admin_productos'))
 
     if len(imagenes) > MAX_IMAGES_PER_PRODUCT:
@@ -1025,7 +1312,7 @@ def agregar_imagenes_producto(id_producto):
         disponibles = max(0, MAX_IMAGES_PER_PRODUCT - len(galeria_actual))
         flash(
             f"Este producto ya tiene {len(galeria_actual)} imagen(es). "
-            f"Solo puedes agregar {disponibles} mas (maximo {MAX_IMAGES_PER_PRODUCT}).",
+            f"Solo puedes agregar {disponibles} más (máximo {MAX_IMAGES_PER_PRODUCT}).",
             'danger'
         )
         return redirect(url_for('admin_productos'))
@@ -1225,18 +1512,18 @@ def admin_guardar_usuario():
         try:
             edit_id = int(float(id_usuario_raw))
         except ValueError:
-            flash('ID de usuario invalido.', 'danger')
+            flash('ID de usuario inválido.', 'danger')
             return redirect(url_for('admin_usuarios'))
 
     if edit_id is None and not password:
-        flash('La contrasena es obligatoria para crear usuarios.', 'danger')
+        flash('La contraseña es obligatoria para crear usuarios.', 'danger')
         return redirect(url_for('admin_usuarios'))
 
     existe_email = usuarios[usuarios['email'].str.lower() == email.lower()]
     if edit_id is not None:
         existe_email = existe_email[existe_email['id_usuario'] != edit_id]
     if not existe_email.empty:
-        flash('Ese email ya esta registrado por otro usuario.', 'danger')
+        flash('Ese email ya está registrado por otro usuario.', 'danger')
         return redirect(url_for('admin_usuarios'))
 
     if edit_id is not None:
@@ -1360,9 +1647,120 @@ def admin_pos():
     if session.get('rol') != 'admin':
         return "Acceso denegado"
 
+    recibo_pedido_id = None
+    descargar_recibo = request.args.get('descargar_recibo', '').strip()
+    if descargar_recibo:
+        try:
+            recibo_pedido_id = int(descargar_recibo)
+            if recibo_pedido_id <= 0:
+                recibo_pedido_id = None
+        except ValueError:
+            recibo_pedido_id = None
+
     productos = cargar_productos_activos_df()
+    promos = cargar_promociones_df()
+    hoy = datetime.now().date()
+
+    mejor_promo_por_producto = {}
+    mejor_descuento_por_producto = {}
+    for _, row in promos.iterrows():
+        promo = row.to_dict()
+        if not promocion_esta_aplicable(promo, hoy):
+            continue
+
+        id_producto_promo = pd.to_numeric(promo.get('id_producto'), errors='coerce')
+        if pd.isna(id_producto_promo):
+            continue
+        id_prod_int = int(id_producto_promo)
+
+        producto_df = productos[productos['id_producto'] == id_prod_int]
+        if producto_df.empty:
+            continue
+
+        precio_ref = float(pd.to_numeric(producto_df.iloc[0].get('precio', 0), errors='coerce') or 0)
+        descuento_actual = calcular_descuento_promocion(precio_ref, promo)
+        if descuento_actual > mejor_descuento_por_producto.get(id_prod_int, -1):
+            mejor_descuento_por_producto[id_prod_int] = descuento_actual
+            mejor_promo_por_producto[id_prod_int] = promo
+
     lista_productos = productos.to_dict(orient='records')
-    return render_template('Administrador/Sistema POS/admin_pos_dashboard.html', productos=lista_productos)
+    for producto in lista_productos:
+        id_producto = int(pd.to_numeric(producto.get('id_producto', 0), errors='coerce') or 0)
+        precio_base = float(pd.to_numeric(producto.get('precio', 0), errors='coerce') or 0)
+        promo = mejor_promo_por_producto.get(id_producto)
+
+        if promo:
+            descuento_unitario = calcular_descuento_promocion(precio_base, promo)
+            precio_venta = max(0.0, precio_base - descuento_unitario)
+            producto['promo_activa'] = True
+            producto['promo_id'] = promo.get('id_promo', '')
+            producto['promo_codigo'] = promo.get('codigo', '')
+            producto['promo_nombre'] = promo.get('nombre', '')
+            producto['promo_tipo_descuento'] = promo.get('tipo_descuento', '')
+            producto['promo_valor_descuento'] = float(pd.to_numeric(promo.get('valor_descuento', 0), errors='coerce') or 0)
+            producto['promo_descuento_unitario'] = float(descuento_unitario)
+            producto['precio_original'] = float(precio_base)
+            producto['precio_con_descuento'] = float(precio_venta)
+            producto['precio_venta'] = float(precio_venta)
+        else:
+            producto['promo_activa'] = False
+            producto['promo_id'] = ''
+            producto['promo_codigo'] = ''
+            producto['promo_nombre'] = ''
+            producto['promo_tipo_descuento'] = ''
+            producto['promo_valor_descuento'] = 0.0
+            producto['promo_descuento_unitario'] = 0.0
+            producto['precio_original'] = float(precio_base)
+            producto['precio_con_descuento'] = float(precio_base)
+            producto['precio_venta'] = float(precio_base)
+
+    return render_template(
+        'Administrador/Sistema POS/admin_pos_dashboard.html',
+        productos=lista_productos,
+        fuerzas=FUERZAS_OPCIONES,
+        recibo_pedido_id=recibo_pedido_id
+    )
+
+
+@app.route('/admin/pos/recibo/<int:id_pedido>.pdf')
+def admin_pos_recibo_pdf(id_pedido):
+    if session.get('rol') != 'admin':
+        return "Acceso denegado"
+
+    try:
+        pdf_bytes = generar_pdf_recibo_pos(id_pedido)
+    except ValueError as exc:
+        return Response(str(exc), status=404, mimetype='text/plain; charset=utf-8')
+    except Exception as exc:
+        return Response(
+            f'No se pudo generar el recibo PDF. {str(exc)}',
+            status=500,
+            mimetype='text/plain; charset=utf-8'
+        )
+
+    return send_file(
+        BytesIO(pdf_bytes),
+        mimetype='application/pdf',
+        as_attachment=True,
+        download_name=f"recibo_pos_{id_pedido}.pdf"
+    )
+
+
+@app.route('/admin/pos/recibo/<int:id_pedido>/html')
+def admin_pos_recibo_html(id_pedido):
+    if session.get('rol') != 'admin':
+        return "Acceso denegado"
+
+    try:
+        return render_html_recibo_pos(id_pedido)
+    except ValueError as exc:
+        return Response(str(exc), status=404, mimetype='text/plain; charset=utf-8')
+    except Exception as exc:
+        return Response(
+            f'No se pudo generar la vista del recibo. {str(exc)}',
+            status=500,
+            mimetype='text/plain; charset=utf-8'
+        )
 
 
 @app.route('/admin/pedidos')
@@ -1487,9 +1885,162 @@ def admin_pedidos():
     pedidos_view['productos_pedido'] = pedidos_view['id_pedido'].apply(
         lambda valor: productos_por_pedido.get(int(valor), 'Sin productos') if pd.notna(valor) else 'Sin productos'
     )
+
+    filtro_q = str(request.args.get('q', '')).strip()
+    filtro_estado = str(request.args.get('estado', 'todos')).strip().lower()
+    filtro_fecha_desde = str(request.args.get('fecha_desde', '')).strip()
+    filtro_fecha_hasta = str(request.args.get('fecha_hasta', '')).strip()
+    pago_filtro_q = str(request.args.get('pago_q', '')).strip()
+    pago_filtro_metodo = str(request.args.get('pago_metodo', 'todos')).strip().lower()
+    pago_filtro_estado = str(request.args.get('pago_estado', 'todos')).strip().lower()
+    pago_filtro_fecha_desde = str(request.args.get('pago_fecha_desde', '')).strip()
+    pago_filtro_fecha_hasta = str(request.args.get('pago_fecha_hasta', '')).strip()
+
+    estados_validos = {'pendiente', 'enviado', 'entregado', 'cancelado'}
+    if filtro_estado not in estados_validos:
+        filtro_estado = 'todos'
+
+    pedidos_view['estado'] = pedidos_view['estado'].fillna('pendiente').astype(str).str.strip().str.lower()
+    pedidos_view['fecha_pedido'] = pedidos_view['fecha_pedido'].fillna('').astype(str)
+    pedidos_view['fecha_pedido_dt'] = pd.to_datetime(pedidos_view['fecha_pedido'], errors='coerce')
+    pedidos_view['id_pedido_txt'] = pedidos_view['id_pedido'].apply(
+        lambda valor: str(int(valor)) if pd.notna(valor) else ''
+    )
+
+    if filtro_estado != 'todos':
+        pedidos_view = pedidos_view[pedidos_view['estado'] == filtro_estado]
+
+    fecha_desde_dt = pd.to_datetime(filtro_fecha_desde, errors='coerce')
+    if pd.notna(fecha_desde_dt):
+        pedidos_view = pedidos_view[pedidos_view['fecha_pedido_dt'].dt.date >= fecha_desde_dt.date()]
+    else:
+        filtro_fecha_desde = ''
+
+    fecha_hasta_dt = pd.to_datetime(filtro_fecha_hasta, errors='coerce')
+    if pd.notna(fecha_hasta_dt):
+        pedidos_view = pedidos_view[pedidos_view['fecha_pedido_dt'].dt.date <= fecha_hasta_dt.date()]
+    else:
+        filtro_fecha_hasta = ''
+
+    if filtro_q:
+        texto = filtro_q.lower()
+        pedidos_view = pedidos_view[
+            pedidos_view['id_pedido_txt'].str.contains(texto, na=False) |
+            pedidos_view['usuario_nombre'].fillna('').astype(str).str.lower().str.contains(texto, na=False) |
+            pedidos_view['productos_pedido'].fillna('').astype(str).str.lower().str.contains(texto, na=False) |
+            pedidos_view['fecha_pedido'].str.lower().str.contains(texto, na=False)
+        ]
+
     pedidos_view = pedidos_view.sort_values(by='id_pedido', ascending=False, na_position='last')
 
-    pagos_view = pagos.sort_values(by='id_pago', ascending=False, na_position='last')
+    pedidos_por_pagina = 10
+    pagina_raw = str(request.args.get('page', '1')).strip()
+    try:
+        pagina_actual = int(pagina_raw)
+    except ValueError:
+        pagina_actual = 1
+    pagina_actual = max(1, pagina_actual)
+
+    total_filtrados = int(len(pedidos_view.index))
+    total_paginas = max(1, (total_filtrados + pedidos_por_pagina - 1) // pedidos_por_pagina)
+    if pagina_actual > total_paginas:
+        pagina_actual = total_paginas
+
+    if total_paginas <= 7:
+        botones_paginacion = list(range(1, total_paginas + 1))
+    else:
+        botones_paginacion = [1]
+        inicio = max(2, pagina_actual - 1)
+        fin = min(total_paginas - 1, pagina_actual + 1)
+        if inicio > 2:
+            botones_paginacion.append('...')
+        botones_paginacion.extend(range(inicio, fin + 1))
+        if fin < total_paginas - 1:
+            botones_paginacion.append('...')
+        botones_paginacion.append(total_paginas)
+
+    inicio = (pagina_actual - 1) * pedidos_por_pagina
+    fin = inicio + pedidos_por_pagina
+    pedidos_view = pedidos_view.iloc[inicio:fin].copy()
+
+    pagos_view = pagos.copy()
+    pagos_view['metodo_pago'] = pagos_view['metodo_pago'].fillna('').astype(str).str.strip().str.lower()
+    pagos_view['estado_pago'] = pagos_view['estado_pago'].fillna('').astype(str).str.strip().str.lower()
+    pagos_view['fecha_pago'] = pagos_view['fecha_pago'].fillna('').astype(str)
+    pagos_view['fecha_pago_dt'] = pd.to_datetime(pagos_view['fecha_pago'], errors='coerce')
+    pagos_view['id_pago_txt'] = pagos_view['id_pago'].apply(lambda valor: str(int(valor)) if pd.notna(valor) else '')
+    pagos_view['id_pedido_txt'] = pagos_view['id_pedido'].apply(lambda valor: str(int(valor)) if pd.notna(valor) else '')
+    pagos_view['monto_txt'] = pagos_view['monto'].apply(
+        lambda valor: f"{float(valor):.2f}" if pd.notna(valor) else ''
+    )
+
+    metodos_pago_opciones = sorted([m for m in pagos_view['metodo_pago'].unique().tolist() if m])
+    estados_pago_opciones = sorted([e for e in pagos_view['estado_pago'].unique().tolist() if e])
+
+    if pago_filtro_metodo != 'todos' and pago_filtro_metodo not in metodos_pago_opciones:
+        pago_filtro_metodo = 'todos'
+    if pago_filtro_estado != 'todos' and pago_filtro_estado not in estados_pago_opciones:
+        pago_filtro_estado = 'todos'
+
+    if pago_filtro_metodo != 'todos':
+        pagos_view = pagos_view[pagos_view['metodo_pago'] == pago_filtro_metodo]
+    if pago_filtro_estado != 'todos':
+        pagos_view = pagos_view[pagos_view['estado_pago'] == pago_filtro_estado]
+
+    pago_fecha_desde_dt = pd.to_datetime(pago_filtro_fecha_desde, errors='coerce')
+    if pd.notna(pago_fecha_desde_dt):
+        pagos_view = pagos_view[pagos_view['fecha_pago_dt'].dt.date >= pago_fecha_desde_dt.date()]
+    else:
+        pago_filtro_fecha_desde = ''
+
+    pago_fecha_hasta_dt = pd.to_datetime(pago_filtro_fecha_hasta, errors='coerce')
+    if pd.notna(pago_fecha_hasta_dt):
+        pagos_view = pagos_view[pagos_view['fecha_pago_dt'].dt.date <= pago_fecha_hasta_dt.date()]
+    else:
+        pago_filtro_fecha_hasta = ''
+
+    if pago_filtro_q:
+        pago_texto = pago_filtro_q.lower()
+        pagos_view = pagos_view[
+            pagos_view['id_pago_txt'].str.contains(pago_texto, na=False) |
+            pagos_view['id_pedido_txt'].str.contains(pago_texto, na=False) |
+            pagos_view['metodo_pago'].str.contains(pago_texto, na=False) |
+            pagos_view['estado_pago'].str.contains(pago_texto, na=False) |
+            pagos_view['fecha_pago'].str.lower().str.contains(pago_texto, na=False) |
+            pagos_view['monto_txt'].str.contains(pago_texto, na=False)
+        ]
+
+    pagos_view = pagos_view.sort_values(by='id_pago', ascending=False, na_position='last')
+
+    pagos_por_pagina = 10
+    pago_pagina_raw = str(request.args.get('pago_page', '1')).strip()
+    try:
+        pago_pagina_actual = int(pago_pagina_raw)
+    except ValueError:
+        pago_pagina_actual = 1
+    pago_pagina_actual = max(1, pago_pagina_actual)
+
+    pago_total_filtrados = int(len(pagos_view.index))
+    pago_total_paginas = max(1, (pago_total_filtrados + pagos_por_pagina - 1) // pagos_por_pagina)
+    if pago_pagina_actual > pago_total_paginas:
+        pago_pagina_actual = pago_total_paginas
+
+    if pago_total_paginas <= 7:
+        pago_botones_paginacion = list(range(1, pago_total_paginas + 1))
+    else:
+        pago_botones_paginacion = [1]
+        pago_inicio_botones = max(2, pago_pagina_actual - 1)
+        pago_fin_botones = min(pago_total_paginas - 1, pago_pagina_actual + 1)
+        if pago_inicio_botones > 2:
+            pago_botones_paginacion.append('...')
+        pago_botones_paginacion.extend(range(pago_inicio_botones, pago_fin_botones + 1))
+        if pago_fin_botones < pago_total_paginas - 1:
+            pago_botones_paginacion.append('...')
+        pago_botones_paginacion.append(pago_total_paginas)
+
+    pago_inicio = (pago_pagina_actual - 1) * pagos_por_pagina
+    pago_fin = pago_inicio + pagos_por_pagina
+    pagos_view = pagos_view.iloc[pago_inicio:pago_fin].copy()
 
     lista_pedidos = pedidos_view.fillna('').to_dict(orient='records')
     lista_pagos = pagos_view.fillna('').to_dict(orient='records')
@@ -1504,11 +2055,56 @@ def admin_pedidos():
             p['id_pago'] = int(p['id_pago'])
         if p.get('id_pedido') != '':
             p['id_pedido'] = int(p['id_pedido'])
+        p['metodo_pago'] = str(p.get('metodo_pago', '')).strip().lower()
+        p['estado_pago'] = str(p.get('estado_pago', '')).strip().lower()
 
     return render_template(
         'Administrador/Gestion pedidos/admin_orders.html',
         pedidos=lista_pedidos,
-        pagos=lista_pagos
+        pagos=lista_pagos,
+        filtros={
+            'q': filtro_q,
+            'estado': filtro_estado,
+            'fecha_desde': filtro_fecha_desde,
+            'fecha_hasta': filtro_fecha_hasta,
+            'page': pagina_actual
+        },
+        pago_filtros={
+            'q': pago_filtro_q,
+            'metodo': pago_filtro_metodo,
+            'estado': pago_filtro_estado,
+            'fecha_desde': pago_filtro_fecha_desde,
+            'fecha_hasta': pago_filtro_fecha_hasta,
+            'page': pago_pagina_actual
+        },
+        paginacion={
+            'page': pagina_actual,
+            'per_page': pedidos_por_pagina,
+            'total': total_filtrados,
+            'total_paginas': total_paginas,
+            'desde': (inicio + 1) if total_filtrados > 0 else 0,
+            'hasta': min(fin, total_filtrados),
+            'opciones': list(range(1, total_paginas + 1)),
+            'botones': botones_paginacion
+        },
+        paginacion_pagos={
+            'page': pago_pagina_actual,
+            'per_page': pagos_por_pagina,
+            'total': pago_total_filtrados,
+            'total_paginas': pago_total_paginas,
+            'desde': (pago_inicio + 1) if pago_total_filtrados > 0 else 0,
+            'hasta': min(pago_fin, pago_total_filtrados),
+            'botones': pago_botones_paginacion
+        },
+        metodos_pago_opciones=metodos_pago_opciones,
+        estados_pago_opciones=estados_pago_opciones,
+        hay_filtros_activos=bool(
+            filtro_q or filtro_fecha_desde or filtro_fecha_hasta or filtro_estado != 'todos'
+        ),
+        hay_filtros_pagos_activos=bool(
+            pago_filtro_q or pago_filtro_fecha_desde or pago_filtro_fecha_hasta or
+            pago_filtro_metodo != 'todos' or pago_filtro_estado != 'todos'
+        )
     )
 
 
@@ -1517,16 +2113,62 @@ def admin_pedidos_estado(id_pedido):
     if session.get('rol') != 'admin':
         return "Acceso denegado"
 
+    filtro_q = str(request.form.get('f_q', '')).strip()
+    filtro_estado = str(request.form.get('f_estado', 'todos')).strip().lower()
+    filtro_fecha_desde = str(request.form.get('f_fecha_desde', '')).strip()
+    filtro_fecha_hasta = str(request.form.get('f_fecha_hasta', '')).strip()
+    filtro_page = str(request.form.get('f_page', '1')).strip()
+    pago_filtro_q = str(request.form.get('f_pago_q', '')).strip()
+    pago_filtro_metodo = str(request.form.get('f_pago_metodo', 'todos')).strip().lower()
+    pago_filtro_estado = str(request.form.get('f_pago_estado', 'todos')).strip().lower()
+    pago_filtro_fecha_desde = str(request.form.get('f_pago_fecha_desde', '')).strip()
+    pago_filtro_fecha_hasta = str(request.form.get('f_pago_fecha_hasta', '')).strip()
+    pago_filtro_page = str(request.form.get('f_pago_page', '1')).strip()
+
+    def redirigir_a_pedidos_con_filtros():
+        params = {}
+        if filtro_q:
+            params['q'] = filtro_q
+        if filtro_estado and filtro_estado != 'todos':
+            params['estado'] = filtro_estado
+        if filtro_fecha_desde:
+            params['fecha_desde'] = filtro_fecha_desde
+        if filtro_fecha_hasta:
+            params['fecha_hasta'] = filtro_fecha_hasta
+        try:
+            page_int = int(filtro_page)
+            if page_int > 1:
+                params['page'] = page_int
+        except ValueError:
+            pass
+        if pago_filtro_q:
+            params['pago_q'] = pago_filtro_q
+        if pago_filtro_metodo and pago_filtro_metodo != 'todos':
+            params['pago_metodo'] = pago_filtro_metodo
+        if pago_filtro_estado and pago_filtro_estado != 'todos':
+            params['pago_estado'] = pago_filtro_estado
+        if pago_filtro_fecha_desde:
+            params['pago_fecha_desde'] = pago_filtro_fecha_desde
+        if pago_filtro_fecha_hasta:
+            params['pago_fecha_hasta'] = pago_filtro_fecha_hasta
+        try:
+            pago_page_int = int(pago_filtro_page)
+            if pago_page_int > 1:
+                params['pago_page'] = pago_page_int
+        except ValueError:
+            pass
+        return redirect(url_for('admin_pedidos', **params))
+
     estado_nuevo = request.form.get('estado', '').strip().lower()
     estados_validos = {'pendiente', 'enviado', 'entregado', 'cancelado'}
     if estado_nuevo not in estados_validos:
-        flash('Estado de pedido invalido.', 'danger')
-        return redirect(url_for('admin_pedidos'))
+        flash('Estado de pedido inválido.', 'danger')
+        return redirigir_a_pedidos_con_filtros()
 
     pedidos = cargar_pedidos_df()
     if 'id_pedido' not in pedidos.columns:
-        flash('Estructura de pedidos invalida.', 'danger')
-        return redirect(url_for('admin_pedidos'))
+        flash('Estructura de pedidos inválida.', 'danger')
+        return redirigir_a_pedidos_con_filtros()
     if 'estado' not in pedidos.columns:
         pedidos['estado'] = 'pendiente'
 
@@ -1534,7 +2176,7 @@ def admin_pedidos_estado(id_pedido):
     idx = pedidos[pedidos['id_pedido'] == id_pedido].index
     if idx.empty:
         flash('Pedido no encontrado.', 'warning')
-        return redirect(url_for('admin_pedidos'))
+        return redirigir_a_pedidos_con_filtros()
 
     estado_anterior = str(pedidos.at[idx[0], 'estado']).strip().lower()
     pedidos.at[idx[0], 'estado'] = estado_nuevo
@@ -1546,13 +2188,33 @@ def admin_pedidos_estado(id_pedido):
     else:
         flash(f'El pedido #{id_pedido} ya estaba en "{estado_nuevo}".', 'info')
 
-    return redirect(url_for('admin_pedidos'))
+    return redirigir_a_pedidos_con_filtros()
 
 
 @app.route('/admin/pos/checkout', methods=['POST'])
 def admin_pos_checkout():
     if session.get('rol') != 'admin':
         return "Acceso denegado"
+
+    cliente_nombre = request.form.get('cliente_nombre', '').strip()
+    cliente_correo = request.form.get('cliente_correo', '').strip().lower()
+    cliente_documento = request.form.get('cliente_documento', '').strip()
+    cliente_telefono = request.form.get('cliente_telefono', '').strip()
+    if not cliente_nombre or not cliente_correo or not cliente_documento or not cliente_telefono:
+        flash('Debes completar todos los datos del cliente para registrar la venta.', 'warning')
+        return redirect(url_for('admin_pos'))
+    if not re.fullmatch(r'[A-Za-zÁÉÍÓÚáéíóúÑñÜü\s]+', cliente_nombre):
+        flash('El nombre del cliente solo puede contener letras y espacios.', 'warning')
+        return redirect(url_for('admin_pos'))
+    if not re.fullmatch(r'[^@\s]+@[^@\s]+\.[^@\s]+', cliente_correo):
+        flash('Debes ingresar un correo electrónico válido.', 'warning')
+        return redirect(url_for('admin_pos'))
+    if not cliente_documento.isdigit():
+        flash('La cédula solo puede contener números.', 'warning')
+        return redirect(url_for('admin_pos'))
+    if not cliente_telefono.isdigit() or len(cliente_telefono) > 10:
+        flash('El teléfono solo puede contener números y máximo 10 dígitos.', 'warning')
+        return redirect(url_for('admin_pos'))
 
     items_raw = request.form.get('items_json', '[]')
     metodo_pago = request.form.get('metodo_pago', 'efectivo').strip().lower()
@@ -1572,10 +2234,36 @@ def admin_pos_checkout():
 
     productos = cargar_productos_df()
     if productos.empty:
-        flash('No existe el catalogo de productos.', 'danger')
+        flash('No existe el catálogo de productos.', 'danger')
         return redirect(url_for('admin_pos'))
 
+    promos = cargar_promociones_df()
+    hoy = datetime.now().date()
+    mejor_promo_por_producto = {}
+    mejor_descuento_por_producto = {}
+    for _, row in promos.iterrows():
+        promo = row.to_dict()
+        if not promocion_esta_aplicable(promo, hoy):
+            continue
+
+        id_producto_promo = pd.to_numeric(promo.get('id_producto'), errors='coerce')
+        if pd.isna(id_producto_promo):
+            continue
+        id_prod_int = int(id_producto_promo)
+
+        producto_df = productos[productos['id_producto'] == id_prod_int]
+        if producto_df.empty:
+            continue
+
+        precio_ref = float(pd.to_numeric(producto_df.iloc[0].get('precio', 0), errors='coerce') or 0)
+        descuento_actual = calcular_descuento_promocion(precio_ref, promo)
+        if descuento_actual > mejor_descuento_por_producto.get(id_prod_int, -1):
+            mejor_descuento_por_producto[id_prod_int] = descuento_actual
+            mejor_promo_por_producto[id_prod_int] = promo
+
     carrito_validado = []
+    total_bruto = 0.0
+    total_descuento = 0.0
     total = 0.0
 
     for item in items:
@@ -1583,7 +2271,7 @@ def admin_pos_checkout():
             id_producto = int(item.get('id_producto', 0))
             cantidad = int(item.get('cantidad', 0))
         except (TypeError, ValueError):
-            flash('Hay productos invalidos en el carrito POS.', 'danger')
+            flash('Hay productos inválidos en el carrito POS.', 'danger')
             return redirect(url_for('admin_pos'))
 
         if cantidad <= 0:
@@ -1597,24 +2285,39 @@ def admin_pos_checkout():
 
         row_idx = idx[0]
         if bool(productos.at[row_idx, 'eliminado']):
-            flash(f'El producto ID {id_producto} esta eliminado.', 'danger')
+            flash(f'El producto ID {id_producto} está eliminado.', 'danger')
             return redirect(url_for('admin_pos'))
 
-        stock_actual = int(productos.at[row_idx, 'stock'])
+        stock_actual = int(pd.to_numeric(productos.at[row_idx, 'stock'], errors='coerce') or 0)
         if cantidad > stock_actual:
             nombre = str(productos.at[row_idx, 'nombre'])
             flash(f'Stock insuficiente para "{nombre}". Disponible: {stock_actual}.', 'warning')
             return redirect(url_for('admin_pos'))
 
-        precio = float(productos.at[row_idx, 'precio'])
-        subtotal = precio * cantidad
-        total += subtotal
+        precio_base = float(pd.to_numeric(productos.at[row_idx, 'precio'], errors='coerce') or 0)
+        promo = mejor_promo_por_producto.get(id_producto)
+        descuento_unitario = calcular_descuento_promocion(precio_base, promo) if promo else 0.0
+        precio_final = max(0.0, precio_base - descuento_unitario)
+
+        subtotal_bruto = precio_base * cantidad
+        subtotal_descuento = descuento_unitario * cantidad
+        subtotal_final = max(0.0, subtotal_bruto - subtotal_descuento)
+
+        total_bruto += subtotal_bruto
+        total_descuento += subtotal_descuento
+        total += subtotal_final
 
         productos.at[row_idx, 'stock'] = stock_actual - cantidad
         carrito_validado.append({
             'id_producto': id_producto,
             'cantidad': cantidad,
-            'subtotal': subtotal
+            'subtotal': subtotal_final,
+            'subtotal_bruto': subtotal_bruto,
+            'monto_descuento': subtotal_descuento,
+            'promo_id': promo.get('id_promo', '') if promo else '',
+            'promo_codigo': promo.get('codigo', '') if promo else '',
+            'promo_tipo_descuento': promo.get('tipo_descuento', '') if promo else '',
+            'promo_valor_descuento': float(pd.to_numeric(promo.get('valor_descuento', 0), errors='coerce') or 0) if promo else 0.0
         })
 
     guardar_productos_df(productos)
@@ -1647,6 +2350,41 @@ def admin_pos_checkout():
     detalle_pedido = pd.concat([detalle_pedido, pd.DataFrame(nuevos_detalles)], ignore_index=True)
     guardar_detalle_pedido_df(detalle_pedido)
 
+    promo_ids = []
+    promo_codigos = []
+    promo_tipos = []
+    promo_valores = []
+    for item in carrito_validado:
+        promo_id = str(item.get('promo_id', '')).strip()
+        promo_codigo = str(item.get('promo_codigo', '')).strip()
+        promo_tipo = str(item.get('promo_tipo_descuento', '')).strip()
+        promo_valor = float(pd.to_numeric(item.get('promo_valor_descuento', 0), errors='coerce') or 0)
+
+        if promo_id and promo_id not in promo_ids:
+            promo_ids.append(promo_id)
+        if promo_codigo and promo_codigo not in promo_codigos:
+            promo_codigos.append(promo_codigo)
+        if promo_tipo and promo_tipo not in promo_tipos:
+            promo_tipos.append(promo_tipo)
+        if promo_valor and promo_valor not in promo_valores:
+            promo_valores.append(promo_valor)
+
+    if not promo_ids:
+        pago_id_promo = ''
+        pago_codigo_promo = ''
+        pago_tipo_descuento = ''
+        pago_valor_descuento = 0.0
+    elif len(promo_ids) == 1:
+        pago_id_promo = promo_ids[0]
+        pago_codigo_promo = promo_codigos[0] if promo_codigos else ''
+        pago_tipo_descuento = promo_tipos[0] if promo_tipos else ''
+        pago_valor_descuento = float(promo_valores[0]) if promo_valores else 0.0
+    else:
+        pago_id_promo = 'multi'
+        pago_codigo_promo = ','.join(promo_codigos)
+        pago_tipo_descuento = 'multi'
+        pago_valor_descuento = 0.0
+
     next_pago_id = next_id('pagos', 'id_pago')
     nuevo_pago = {
         'id_pago': next_pago_id,
@@ -1654,14 +2392,49 @@ def admin_pos_checkout():
         'monto': round(total, 2),
         'metodo_pago': metodo_pago,
         'fecha_pago': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-        'estado_pago': 'aprobado'
+        'estado_pago': 'aprobado',
+        'id_promo': pago_id_promo,
+        'codigo_promo': pago_codigo_promo,
+        'tipo_descuento': pago_tipo_descuento,
+        'valor_descuento': round(pago_valor_descuento, 2),
+        'monto_descuento': round(total_descuento, 2)
     }
     pagos = pd.concat([pagos, pd.DataFrame([nuevo_pago])], ignore_index=True)
     guardar_pagos_df(pagos)
-    total_cop = formatear_cop(round(total, 2))
-    registrar_actividad(f"POS registro venta #{next_pedido_id} por {total_cop} ({len(carrito_validado)} producto(s))")
-    flash(f'Venta POS registrada. Pedido #{next_pedido_id} por {total_cop}.', 'success')
-    return redirect(url_for('admin_pos'))
+
+    total_bruto = round(total_bruto, 2)
+    total_descuento = round(total_descuento, 2)
+    total = round(total, 2)
+    total_cop = formatear_cop(total)
+    total_bruto_cop = formatear_cop(total_bruto)
+    descuento_cop = formatear_cop(total_descuento)
+    registrar_actividad(
+        f"POS registro venta #{next_pedido_id} por {total_cop} ({len(carrito_validado)} producto(s))\n"
+        f"- total bruto: {total_bruto_cop}\n"
+        f"- descuento aplicado: {descuento_cop}\n"
+        f"- cliente: {cliente_nombre}\n"
+        f"- correo: {cliente_correo}\n"
+        f"- documento: {cliente_documento}\n"
+        f"- teléfono: {cliente_telefono}"
+    )
+    if total_descuento > 0:
+        flash(
+            f'Venta POS registrada. Pedido #{next_pedido_id} por {total_cop}. '
+            f'Descuento aplicado: {descuento_cop}.',
+            'success'
+        )
+    else:
+        flash(f'Venta POS registrada. Pedido #{next_pedido_id} por {total_cop}.', 'success')
+
+    session['ultimo_recibo_pos'] = {
+        'id_pedido': int(next_pedido_id),
+        'cliente_nombre': cliente_nombre,
+        'cliente_correo': cliente_correo,
+        'cliente_documento': cliente_documento,
+        'cliente_telefono': cliente_telefono
+    }
+    session.modified = True
+    return redirect(url_for('admin_pos', descargar_recibo=next_pedido_id))
 
 
 @app.route('/admin/editar/<int:id_producto>', methods=['GET', 'POST'])
@@ -1763,7 +2536,7 @@ def user_dashboard():
         productos = cargar_productos_activos_df()
         lista_productos = productos.to_dict(orient='records')
 
-        # Promocion vigente por producto para mostrar en catalogo
+        # Promoción vigente por producto para mostrar en catálogo
         promos = cargar_promociones_df()
         hoy = datetime.now().date()
         mejor_promo_por_producto = {}
@@ -1854,18 +2627,18 @@ def add_to_cart(id_producto):
         cantidad = 1
 
     if cantidad <= 0:
-        flash('Cantidad invalida.', 'warning')
+        flash('Cantidad inválida.', 'warning')
         return redirect(url_for('user_dashboard'))
 
     producto_df = productos[productos['id_producto'] == id_producto]
     if producto_df.empty:
-        flash('El producto no existe o ya no esta disponible.', 'warning')
+        flash('El producto no existe o ya no está disponible.', 'warning')
         return redirect(url_for('user_dashboard'))
 
     producto = producto_df.iloc[0]
     stock_actual = int(producto.get('stock', 0))
     if stock_actual <= 0:
-        flash(f'El producto "{producto["nombre"]}" esta agotado.', 'warning')
+        flash(f'El producto "{producto["nombre"]}" está agotado.', 'warning')
         return redirect(url_for('user_dashboard'))
     if cantidad > stock_actual:
         flash(f'Solo hay {stock_actual} unidad(es) disponibles de "{producto["nombre"]}".', 'warning')
@@ -2002,7 +2775,7 @@ def pay():
         if codigo_promo:
             promo_aplicada = buscar_promocion_por_codigo(promos, codigo_promo, datetime.now().date())
             if promo_aplicada is None:
-                flash('El codigo promocional no es valido o no esta vigente.', 'warning')
+                flash('El código promocional no es válido o no está vigente.', 'warning')
                 return redirect(url_for('cart'))
             descuento_promo = calcular_descuento_promocion(total, promo_aplicada)
 
@@ -2013,7 +2786,7 @@ def pay():
             cantidad = int(item.get('cantidad', 0))
             fila = productos[(productos['id_producto'] == id_producto) & (productos['eliminado'] == False)]
             if fila.empty:
-                flash(f'El producto "{item.get("nombre", id_producto)}" ya no esta disponible.', 'warning')
+                flash(f'El producto "{item.get("nombre", id_producto)}" ya no está disponible.', 'warning')
                 return redirect(url_for('cart'))
             stock_actual = int(fila.iloc[0].get('stock', 0))
             if cantidad > stock_actual:
@@ -2078,7 +2851,7 @@ def pay():
         pagos = pd.concat([pagos, pd.DataFrame([nuevo_pago])], ignore_index=True)
         guardar_pagos_df(pagos)
         
-        # Registrar acción
+        # Registrar accion
         registrar_actividad(f"Creo pedido #{nuevo_id_pedido} con {len(carrito)} producto(s) por {formatear_cop(total_final)}")
 
         if agotados_en_compra:
@@ -2088,9 +2861,9 @@ def pay():
         session['carrito'] = []
         session.modified = True
 
-        # Preparar datos para la página de confirmación
+        # Preparar datos para la pagina de confirmacion
         metodo_pago_nombres = {
-            'tarjeta': 'Tarjeta de Crédito/Débito',
+            'tarjeta': 'Tarjeta de Credito/Debito',
             'transferencia': 'Transferencia Bancaria',
             'efectivo': 'Efectivo',
             'paypal': 'PayPal'
@@ -2152,7 +2925,7 @@ def user_profile():
     if session.get('rol') != 'normal':
         return "Acceso denegado"
     
-    # Cargar información del usuario
+    # Cargar informacion del usuario
     usuarios = cargar_usuarios_df()
     usuario_email = session.get('usuario')
     usuario = usuarios[usuarios['email'] == usuario_email]
@@ -2172,7 +2945,7 @@ def user_profile():
     if 'email_verified' not in usuario_dict:
         usuario_dict['email_verified'] = False
     
-    # Asegurar que existan las columnas de configuración con valores por defecto
+    # Asegurar que existan las columnas de configuracion con valores por defecto
     config_defaults = {
         'notif_email': True,
         'notif_pedidos': True,
@@ -2227,7 +3000,7 @@ def update_profile():
     if 'direccion' not in usuarios.columns:
         usuarios['direccion'] = ''
     
-    # Actualizar información
+    # Actualizar informacion
     idx = usuarios[usuarios['email'] == usuario_email].index
     if not idx.empty:
         usuarios.loc[idx, 'nombre'] = nombre
@@ -2301,14 +3074,14 @@ def update_settings():
     usuarios = cargar_usuarios_df()
     usuario_email = session.get('usuario')
     
-    # Asegurar que existan las columnas de configuración
+    # Asegurar que existan las columnas de configuracion
     columnas_config = ['notif_email', 'notif_pedidos', 'notif_promociones', 
                        'perfil_publico', 'mostrar_historial', 'idioma', 'moneda']
     for col in columnas_config:
         if col not in usuarios.columns:
             usuarios[col] = '' if col in ['idioma', 'moneda'] else False
     
-    # Actualizar configuración
+    # Actualizar configuracion
     idx = usuarios[usuarios['email'] == usuario_email].index
     if not idx.empty:
         usuarios.loc[idx, 'notif_email'] = notif_email
@@ -2320,7 +3093,7 @@ def update_settings():
         usuarios.loc[idx, 'moneda'] = moneda
         
         guardar_usuarios_df(usuarios)
-        registrar_actividad(f"Usuario {usuario_email} actualizó sus ajustes")
+        registrar_actividad(f"Usuario {usuario_email} actualizo sus ajustes")
         flash('Ajustes guardados correctamente', 'success')
     else:
         flash('Error al guardar los ajustes', 'danger')
@@ -2329,7 +3102,7 @@ def update_settings():
 
 @app.route('/user/send-verification-code', methods=['POST'])
 def send_verification_code():
-    """Envía un código de verificación al correo del usuario (funciona siempre)"""
+    """Envía un código de verificación al correo del usuario (funciona siempre)."""
     if session.get('rol') != 'normal':
         return jsonify({'success': False, 'message': 'Acceso denegado'}), 403
     
@@ -2371,17 +3144,17 @@ def send_verification_code():
         # MODO DESARROLLO: Mostrar código en consola sin enviar email
         if modo_desarrollo:
             print("\n" + "="*60)
-            print("🔐 MODO DESARROLLO - CÓDIGO DE VERIFICACIÓN")
+            print("MODO DESARROLLO - CÓDIGO DE VERIFICACIÓN")
             print("="*60)
-            print(f"📧 Usuario: {usuario_email}")
-            print(f"🔢 Código: {codigo}")
-            print(f"⏰ Válido hasta: {expiry.strftime('%H:%M:%S')}")
+            print(f"Usuario: {usuario_email}")
+            print(f"Código: {codigo}")
+            print(f"Válido hasta: {expiry.strftime('%H:%M:%S')}")
             print("="*60 + "\n")
             
             registrar_actividad(f"Código de autenticación generado para {usuario_email} (modo desarrollo)")
             return jsonify({
                 'success': True, 
-                'message': f'✅ Código generado: {codigo} (revisa la consola del servidor)'
+                'message': f'Código generado: {codigo} (revisa la consola del servidor)'
             })
         
         # MODO PRODUCCIÓN: Enviar email real
@@ -2393,11 +3166,11 @@ def send_verification_code():
             })
         else:
             # Si falla el envío, mostrar en consola como fallback
-            print("\n⚠️ ERROR AL ENVIAR EMAIL - MOSTRANDO CÓDIGO EN CONSOLA:")
+            print("\nERROR AL ENVIAR EMAIL - MOSTRANDO CÓDIGO EN CONSOLA:")
             print(f"Código para {usuario_email}: {codigo}\n")
             return jsonify({
                 'success': True, 
-                'message': f'⚠️ Email no configurado. Tu código es: {codigo}'
+                'message': f'Email no configurado. Tu código es: {codigo}'
             })
             
     except Exception as e:
@@ -2409,7 +3182,7 @@ def send_verification_code():
 
 @app.route('/user/verify-email', methods=['POST'])
 def verify_email():
-    """Verifica el código ingresado por el usuario (funciona siempre)"""
+    """Verifica el código ingresado por el usuario (funciona siempre)."""
     if session.get('rol') != 'normal':
         return jsonify({'success': False, 'message': 'Acceso denegado'}), 403
     
@@ -2485,7 +3258,7 @@ def verify_email():
             'message': 'Error interno del servidor'
         }), 500
 
-#ruta para el redireccionamiento para ver el catalogo
+# Ruta para el redireccionamiento para ver el catálogo
 @app.route('/armada')
 def armada():
     productos = cargar_productos_por_fuerza('Armada')
@@ -2529,7 +3302,7 @@ def producto_detalle(id_producto):
 
 @app.route('/admin/promo', methods=['GET','POST'])
 def admin_promo():
-    # pagina de gestion de promociones para administradores
+    # Página de gestión de promociones para administradores
     if session.get('rol') != 'admin':
         return "Acceso denegado"
 
@@ -2567,14 +3340,14 @@ def admin_promo():
             pd.to_numeric(productos_ref.get('id_producto', 0), errors='coerce') == id_producto_num
         ].empty
         if not existe_producto:
-            flash('El producto seleccionado no existe o esta inactivo.', 'warning')
+            flash('El producto seleccionado no existe o está inactivo.', 'warning')
             return redirect(url_for('admin_promo'))
 
         promos = cargar_promociones_df()
         if codigo:
             existe_codigo = promos[promos['codigo'].astype(str).str.upper() == codigo]
             if not existe_codigo.empty:
-                flash('El codigo promocional ya existe. Usa otro.', 'warning')
+                flash('El código promocional ya existe. Usa otro.', 'warning')
                 return redirect(url_for('admin_promo'))
         next_id = int(pd.to_numeric(promos['id_promo'], errors='coerce').max() + 1) if not promos.empty else 1
         nuevo = {
@@ -2677,7 +3450,7 @@ def admin_promo_toggle(id_promo):
 
 @app.route('/promociones')
 def promociones():
-    # pagina publica que muestra promociones activas y vigentes
+    # Página pública que muestra promociones activas y vigentes
     promos = cargar_promociones_df()
     hoy = datetime.now().date()
     productos = cargar_productos_activos_df()
@@ -3053,3 +3826,7 @@ def sobre_nosotros():
 
 if __name__ == '__main__':
     app.run(debug=True)
+
+
+
+

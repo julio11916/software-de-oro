@@ -1,0 +1,256 @@
+@page {
+    size: A4;
+    margin: 10mm;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+html,
+body {
+    margin: 0;
+    padding: 0;
+    font-family: "Times New Roman", serif;
+    color: #21180f;
+    background: #f2e8d6;
+}
+
+body {
+    padding: 0;
+}
+
+.receipt-page {
+    width: 190mm;
+    min-height: 277mm;
+    margin: 0 auto 6mm;
+    padding: 10mm 11mm;
+    background: #f8f1e3;
+    border: 1px solid #7a664f;
+    position: relative;
+    overflow: hidden;
+    isolation: isolate;
+}
+
+.receipt-watermark {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+    opacity: 0.35;
+    pointer-events: none;
+    z-index: 0;
+}
+
+.receipt-page > :not(.receipt-watermark) {
+    position: relative;
+    z-index: 1;
+}
+
+.page-break {
+    page-break-after: always;
+}
+
+.receipt-header {
+    text-align: center;
+}
+
+.receipt-header h1 {
+    margin: 0;
+    font-size: 17pt;
+    letter-spacing: 0.4px;
+    font-weight: 700;
+}
+
+.header-line {
+    width: 320px;
+    max-width: 78%;
+    margin: 4px auto 6px;
+    border-bottom: 1px solid #6f5a43;
+}
+
+.brand {
+    margin: 0;
+    font-size: 12pt;
+}
+
+.motto {
+    margin: 2px 0 6px;
+    font-size: 11pt;
+}
+
+.meta-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 10.5pt;
+    margin-top: 3px;
+}
+
+.page-number {
+    margin: 4px 0 0;
+    text-align: right;
+    font-size: 9.5pt;
+}
+
+.block {
+    margin-top: 10px;
+}
+
+.block h2 {
+    margin: 0;
+    font-size: 10.8pt;
+    letter-spacing: 0.3px;
+}
+
+.line-divider {
+    border-bottom: 1px solid #6f5a43;
+    margin-top: 4px;
+}
+
+.two-col-row {
+    display: flex;
+    gap: 14px;
+    margin-top: 8px;
+}
+
+.left-col,
+.right-col {
+    flex: 1;
+}
+
+.left-col {
+    flex: 1.25;
+}
+
+.right-col {
+    flex: 1;
+}
+
+.left-col p,
+.right-col p {
+    margin: 0 0 5px;
+    font-size: 10.2pt;
+}
+
+.left-col .ubicacion-linea {
+    white-space: nowrap;
+    font-size: 9.8pt;
+}
+
+.client-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px 18px;
+    margin-top: 8px;
+}
+
+.client-field {
+    border-bottom: 1px solid #6f5a43;
+    padding-bottom: 2px;
+    min-height: 18px;
+}
+
+.client-field .label {
+    font-weight: 700;
+    font-size: 10.4pt;
+}
+
+.client-field .value {
+    margin-left: 4px;
+    font-size: 10.3pt;
+}
+
+.detail-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 8px;
+    table-layout: fixed;
+}
+
+.col-cantidad {
+    width: 24mm;
+}
+
+.col-descripcion {
+    width: 74mm;
+}
+
+.col-unitario {
+    width: 38mm;
+}
+
+.col-total {
+    width: 30mm;
+}
+
+.detail-table th,
+.detail-table td {
+    border: 1px solid #6f5a43;
+    padding: 6px 7px;
+    font-size: 10.2pt;
+    vertical-align: middle;
+    overflow: hidden;
+}
+
+.detail-table th {
+    font-size: 10.4pt;
+    font-weight: 700;
+    text-align: center;
+    background: rgba(190, 169, 142, 0.14);
+    white-space: nowrap;
+    line-height: 1.1;
+}
+
+.detail-table td.center {
+    text-align: center;
+}
+
+.detail-table td.right {
+    text-align: right;
+}
+
+.detail-table td.descripcion {
+    white-space: normal;
+    overflow: visible;
+    text-overflow: initial;
+    word-break: break-word;
+    line-height: 1.2;
+}
+
+.resumen .summary-grid {
+    display: flex;
+    justify-content: space-between;
+    gap: 26px;
+    margin-top: 8px;
+}
+
+.summary-left,
+.summary-right {
+    flex: 1;
+}
+
+.summary-left p,
+.summary-right p {
+    margin: 0 0 7px;
+    font-size: 10.8pt;
+}
+
+.summary-right p {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.summary-right .total-line {
+    font-size: 12pt;
+    font-weight: 700;
+}
+
+.observaciones p {
+    margin: 8px 0 0;
+    line-height: 1.45;
+    font-size: 10.8pt;
+}
