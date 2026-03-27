@@ -1,0 +1,54 @@
+{% extends "Usuarios/catalogo_base.html" %}
+
+{% block content %}
+<section class="catalog-hero">
+    <div class="container">
+        <h1 class="catalog-title">Cat&aacute;logo de Accesorios</h1>
+        <p class="catalog-subtitle">
+            Explora los accesorios disponibles con informaci&oacute;n real del sistema.
+        </p>
+    </div>
+</section>
+
+<section class="catalog-list">
+    <div class="container">
+        {% if productos %}
+        {% for producto in productos %}
+        <div class="catalog-row {% if loop.index0 % 2 == 1 %}is-reverse{% endif %}">
+            <div class="catalog-media">
+                <img src="{{ url_for('static', filename=producto.imagen_url if producto.imagen_url else 'img/catalogo/armada/guerrera_ejercito.png') }}"
+                    alt="{{ producto.nombre }}">
+            </div>
+            <div class="catalog-details">
+                <h2 class="item-title">{{ producto.nombre }}</h2>
+                <ul class="item-meta">
+                    <li>Precio: {{ producto.precio|cop }}</li>
+                    <li>{{ producto.descripcion or 'Accesorio disponible.' }}</li>
+                    <li>
+                        {% if producto.stock|int > 0 %}
+                        Stock disponible: {{ producto.stock|int }}
+                        {% else %}
+                        Agotado
+                        {% endif %}
+                    </li>
+                </ul>
+                <a class="btn-costs" href="{{ url_for('product_detail', id_producto=producto.id_producto) }}">
+                    Ver producto
+                </a>
+            </div>
+        </div>
+        {% endfor %}
+        {% else %}
+        <div class="catalog-row">
+            <div class="catalog-details">
+                <h2 class="item-title">No hay accesorios disponibles</h2>
+                <ul class="item-meta">
+                    <li>No encontramos accesorios activos en este momento.</li>
+                </ul>
+                <a class="btn-costs" href="{{ url_for('user_dashboard') }}">Volver al cat&aacute;logo general</a>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}

@@ -459,6 +459,11 @@ def cargar_productos_por_fuerza(fuerza):
     productos = productos[productos['fuerza'].str.strip().str.lower() == fuerza_norm]
     return productos.to_dict(orient='records')
 
+def cargar_productos_por_intendencia(intendencia):
+    productos = cargar_productos_activos_df()
+    intendencia_norm = intendencia.strip().lower()
+    productos = productos[productos['intendencia'].str.strip().str.lower() == intendencia_norm]
+    return productos.to_dict(orient='records')
 
 def parsear_fecha_promocion(valor: Any) -> Optional[date]:
     if valor is None:
@@ -3636,44 +3641,10 @@ def admin_promo_toggle(id_promo):
     return redirect(url_for('admin_promo'))
 
 
-@app.route('/promociones')
-def promociones():
-    # Página pública que muestra promociones activas y vigentes
-    promos = cargar_promociones_df()
-    hoy = datetime.now().date()
-    productos = cargar_productos_activos_df()
-    productos['id_producto'] = pd.to_numeric(productos.get('id_producto', 0), errors='coerce')
-
-    productos_map = {}
-    for _, row in productos.iterrows():
-        id_producto = pd.to_numeric(row.get('id_producto'), errors='coerce')
-        if pd.notna(id_producto):
-            productos_map[int(id_producto)] = {
-                'nombre': str(row.get('nombre', '')).strip(),
-                'imagen_url': str(row.get('imagen_url', '')).strip(),
-                'precio': float(pd.to_numeric(row.get('precio', 0), errors='coerce') or 0),
-                'descripcion': str(row.get('descripcion', '')).strip()
-            }
-
-    lista_promos = []
-    for _, row in promos.iterrows():
-        p = row.to_dict()
-        if promocion_esta_aplicable(p, hoy):
-            id_producto = pd.to_numeric(p.get('id_producto'), errors='coerce')
-            producto = productos_map.get(int(id_producto), None) if pd.notna(id_producto) else None
-            if producto:
-                p['producto_nombre'] = producto['nombre'] or p.get('nombre', 'Producto')
-                p['producto_imagen_url'] = producto['imagen_url']
-                p['producto_precio'] = producto['precio']
-                if not str(p.get('descripcion', '')).strip() and producto['descripcion']:
-                    p['descripcion'] = producto['descripcion']
-            else:
-                p['producto_nombre'] = 'Producto no disponible'
-                p['producto_imagen_url'] = ''
-                p['producto_precio'] = 0.0
-            p['estado_vigencia'] = estado_vigencia_promocion(p, hoy)
-            lista_promos.append(p)
-    return render_template('Usuarios/Promociones/promociones.html', promos=lista_promos)
+@app.route('/accesorios')
+def accesorios():
+    productos = cargar_productos_por_intendencia('Accesorios')
+    return render_template('Usuarios/catalogo/accesorios.html', productos=productos)
 
 
 @app.route('/admin/charts')
