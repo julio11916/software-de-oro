@@ -1,0 +1,130 @@
+<section class="orders-panel">
+    <div class="panel-head d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">Pagos</h5>
+        <span class="badge bg-light text-dark">Total: {{ paginacion_pagos.total if paginacion_pagos else pagos|length }}</span>
+    </div>
+    <div class="panel-body">
+        <form method="GET" action="{{ url_for('admin_pedidos') }}" class="orders-filters mb-3">
+            <input type="hidden" name="q" value="{{ filtros.q if filtros else '' }}">
+            <input type="hidden" name="estado" value="{{ filtros.estado if filtros else 'todos' }}">
+            <input type="hidden" name="fecha_desde" value="{{ filtros.fecha_desde if filtros else '' }}">
+            <input type="hidden" name="fecha_hasta" value="{{ filtros.fecha_hasta if filtros else '' }}">
+            <input type="hidden" name="page" value="{{ filtros.page if filtros else 1 }}">
+            <div class="row g-2 align-items-end">
+                <div class="col-12 col-lg-4">
+                    <label class="form-label mb-1">Buscar</label>
+                    <input type="text" name="pago_q" class="form-control form-control-sm"
+                        placeholder="ID pago, pedido, método, estado o fecha"
+                        value="{{ pago_filtros.q if pago_filtros else '' }}">
+                </div>
+                <div class="col-6 col-lg-2">
+                    <label class="form-label mb-1">Método</label>
+                    <select name="pago_metodo" class="form-select form-select-sm">
+                        <option value="todos" {% if pago_filtros and pago_filtros.metodo == 'todos' %}selected{% endif %}>Todos</option>
+                        {% for metodo in metodos_pago_opciones %}
+                        <option value="{{ metodo }}" {% if pago_filtros and pago_filtros.metodo == metodo %}selected{% endif %}>{{ metodo|capitalize }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-6 col-lg-2">
+                    <label class="form-label mb-1">Estado</label>
+                    <select name="pago_estado" class="form-select form-select-sm">
+                        <option value="todos" {% if pago_filtros and pago_filtros.estado == 'todos' %}selected{% endif %}>Todos</option>
+                        {% for estado_pago in estados_pago_opciones %}
+                        <option value="{{ estado_pago }}" {% if pago_filtros and pago_filtros.estado == estado_pago %}selected{% endif %}>{{ estado_pago|capitalize }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-6 col-lg-2">
+                    <label class="form-label mb-1">Desde</label>
+                    <input type="date" name="pago_fecha_desde" class="form-control form-control-sm"
+                        value="{{ pago_filtros.fecha_desde if pago_filtros else '' }}">
+                </div>
+                <div class="col-6 col-lg-2">
+                    <label class="form-label mb-1">Hasta</label>
+                    <input type="date" name="pago_fecha_hasta" class="form-control form-control-sm"
+                        value="{{ pago_filtros.fecha_hasta if pago_filtros else '' }}">
+                </div>
+                <div class="col-6 col-lg-2 d-flex gap-2">
+                    <button type="submit" class="btn btn-sm btn-primary w-100">Filtrar</button>
+                    <a href="{{ url_for('admin_pedidos', q=(filtros.q if filtros else ''), estado=(filtros.estado if filtros else 'todos'), fecha_desde=(filtros.fecha_desde if filtros else ''), fecha_hasta=(filtros.fecha_hasta if filtros else ''), page=(filtros.page if filtros else 1)) }}" class="btn btn-sm btn-outline-secondary w-100">Limpiar</a>
+                </div>
+            </div>
+        </form>
+
+        {% if pagos %}
+        <div class="table-responsive">
+            <table class="table table-sm orders-table align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>ID Pago</th>
+                        <th>ID Pedido</th>
+                        <th>Monto</th>
+                        <th>Método</th>
+                        <th>Fecha</th>
+                        <th>Estado</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for pago in pagos %}
+                    <tr>
+                        <td>{{ pago.id_pago }}</td>
+                        <td>#{{ pago.id_pedido }}</td>
+                        <td>{{ pago.monto|cop }}</td>
+                        <td>{{ pago.metodo_pago|capitalize if pago.metodo_pago else 'N/A' }}</td>
+                        <td>{{ pago.fecha_pago }}</td>
+                        <td>{{ pago.estado_pago|capitalize if pago.estado_pago else 'N/A' }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% if paginacion_pagos and paginacion_pagos.total > 0 %}
+        <div class="orders-pagination">
+            <small class="text-muted">Mostrando {{ paginacion_pagos.desde }} - {{ paginacion_pagos.hasta }} de {{ paginacion_pagos.total }} pagos</small>
+            {% if paginacion_pagos.total_paginas > 1 %}
+            <div class="pagination-controls">
+                {% set pago_prev_page = paginacion_pagos.page - 1 %}
+                {% set pago_next_page = paginacion_pagos.page + 1 %}
+
+                {% if paginacion_pagos.page > 1 %}
+                <a class="btn btn-sm btn-outline-primary page-arrow"
+                    href="{{ url_for('admin_pedidos', q=(filtros.q if filtros else ''), estado=(filtros.estado if filtros else 'todos'), fecha_desde=(filtros.fecha_desde if filtros else ''), fecha_hasta=(filtros.fecha_hasta if filtros else ''), page=(filtros.page if filtros else 1), pago_q=(pago_filtros.q if pago_filtros else ''), pago_metodo=(pago_filtros.metodo if pago_filtros else 'todos'), pago_estado=(pago_filtros.estado if pago_filtros else 'todos'), pago_fecha_desde=(pago_filtros.fecha_desde if pago_filtros else ''), pago_fecha_hasta=(pago_filtros.fecha_hasta if pago_filtros else ''), pago_page=pago_prev_page) }}"
+                    title="Página anterior de pagos" aria-label="Página anterior de pagos">&larr;</a>
+                {% else %}
+                <span class="btn btn-sm btn-outline-secondary page-arrow disabled" title="Página anterior de pagos">&larr;</span>
+                {% endif %}
+
+                <nav class="page-numbers" aria-label="Paginación de pagos">
+                    {% for b in paginacion_pagos.botones %}
+                    {% if b == '...' %}
+                    <span class="page-ellipsis">...</span>
+                    {% elif b == paginacion_pagos.page %}
+                    <span class="page-number active">{{ b }}</span>
+                    {% else %}
+                    <a class="page-number"
+                        href="{{ url_for('admin_pedidos', q=(filtros.q if filtros else ''), estado=(filtros.estado if filtros else 'todos'), fecha_desde=(filtros.fecha_desde if filtros else ''), fecha_hasta=(filtros.fecha_hasta if filtros else ''), page=(filtros.page if filtros else 1), pago_q=(pago_filtros.q if pago_filtros else ''), pago_metodo=(pago_filtros.metodo if pago_filtros else 'todos'), pago_estado=(pago_filtros.estado if pago_filtros else 'todos'), pago_fecha_desde=(pago_filtros.fecha_desde if pago_filtros else ''), pago_fecha_hasta=(pago_filtros.fecha_hasta if pago_filtros else ''), pago_page=b) }}">{{ b }}</a>
+                    {% endif %}
+                    {% endfor %}
+                </nav>
+
+                {% if paginacion_pagos.page < paginacion_pagos.total_paginas %}
+                <a class="btn btn-sm btn-outline-primary page-arrow"
+                    href="{{ url_for('admin_pedidos', q=(filtros.q if filtros else ''), estado=(filtros.estado if filtros else 'todos'), fecha_desde=(filtros.fecha_desde if filtros else ''), fecha_hasta=(filtros.fecha_hasta if filtros else ''), page=(filtros.page if filtros else 1), pago_q=(pago_filtros.q if pago_filtros else ''), pago_metodo=(pago_filtros.metodo if pago_filtros else 'todos'), pago_estado=(pago_filtros.estado if pago_filtros else 'todos'), pago_fecha_desde=(pago_filtros.fecha_desde if pago_filtros else ''), pago_fecha_hasta=(pago_filtros.fecha_hasta if pago_filtros else ''), pago_page=pago_next_page) }}"
+                    title="Página siguiente de pagos" aria-label="Página siguiente de pagos">&rarr;</a>
+                {% else %}
+                <span class="btn btn-sm btn-outline-secondary page-arrow disabled" title="Página siguiente de pagos">&rarr;</span>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+        {% endif %}
+        {% else %}
+        {% if hay_filtros_pagos_activos %}
+        <p class="mb-0 text-muted">No hay pagos que coincidan con los filtros aplicados.</p>
+        {% else %}
+        <p class="mb-0 text-muted">No hay pagos registrados.</p>
+        {% endif %}
+        {% endif %}
+    </div>
+</section>
