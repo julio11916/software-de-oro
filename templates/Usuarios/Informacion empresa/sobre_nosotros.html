@@ -24,12 +24,12 @@
                     <i class="fas fa-bars"></i>
                 </button>
 
-                {% if session.get('rol') == 'normal' %}
+{% if session.get('rol') == 'normal' %}
                 <a class="brand-logo" href="{{ url_for('user_dashboard') }}">
-                {% else %}
+{% else %}
                 <a class="brand-logo" href="{{ url_for('home') }}">
-                {% endif %}
-                    <img src="{{ url_for('static', filename='img/Pagina/logo_transparente.png') }}" alt="Logo Nachoher">
+{% endif %}
+                    <img src="{{ url_for('static', filename='img/Pagina/logo_header.png') }}" alt="Logo Nachoher">
                 </a>
 
                 <div class="header-actions">
@@ -68,7 +68,7 @@
             <button type="button" class="btn-close-custom" data-bs-dismiss="offcanvas" aria-label="Close">
                 <i class="fas fa-xmark"></i>
             </button>
-            <img src="{{ url_for('static', filename='img/Pagina/logo_transparente.png') }}" class="offcanvas-logo" alt="Logo">
+            <img src="{{ url_for('static', filename='img/Pagina/logo_header.png') }}" class="offcanvas-logo" alt="Logo">
             <span></span>
         </div>
         <div class="offcanvas-body">
