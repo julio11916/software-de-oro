@@ -1,53 +1,78 @@
 <!DOCTYPE html>
 <html lang="es">
-
 <head>
     <meta charset="UTF-8">
     <title>Registro de Usuario</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/usuario/registro.css') }}">
 </head>
-
 <body class="auth-page">
     <div class="auth-card">
         <h3 class="mb-4 text-center">Crear cuenta</h3>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ 'danger' if category == 'error' else category }} py-2" role="alert">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
         <form method="POST" action="{{ url_for('registro') }}" id="registroForm">
             <div class="mb-3">
                 <label for="nombre" class="form-label">Nombre completo</label>
-                <input type="text" class="form-control auth-input" name="nombre" id="nombre" required>
+                <input type="text" class="form-control auth-input" name="nombre" id="nombre" value="{{ nombre_registro or '' }}" required>
             </div>
             <div class="mb-3">
-                <label for="email" class="form-label">Correo electrónico</label>
-                <input type="email" class="form-control auth-input" name="email" id="email" required>
+                <label for="email" class="form-label">Correo electronico</label>
+                <input type="email" class="form-control auth-input" name="email" id="email" value="{{ email_registro or '' }}" required>
+                <small id="emailStatus" class="d-block mt-1"></small>
             </div>
             <div class="mb-3">
                 <label for="password" class="form-label">Contrasena</label>
-                <input type="password" class="form-control auth-input" name="password" id="password"
-                    required minlength="8"
+                <input
+                    type="password"
+                    class="form-control auth-input"
+                    name="password"
+                    id="password"
+                    required
+                    minlength="8"
                     pattern="(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}"
-                    title="Minimo 8 caracteres, con mayuscula, minuscula, numero y un caracter especial.">
+                    title="Minimo 8 caracteres, con mayuscula, minuscula, numero y caracter especial."
+                >
             </div>
             <div class="mb-3">
-                <label for="confirm_password" class="form-label">Verificar contraseña</label>
-                <input type="password" class="form-control auth-input" id="confirm_password" required>
+                <label for="confirm_password" class="form-label">Confirmar contrasena</label>
+                <input type="password" class="form-control auth-input" name="confirm_password" id="confirm_password" required>
             </div>
+            <div class="mb-3 form-check">
+                <input type="checkbox" class="form-check-input" id="showPasswords">
+                <label class="form-check-label" for="showPasswords">Mostrar contrasena</label>
+            </div>
+            <p class="small text-muted mt-2 mb-3">
+                Al registrarte, te enviaremos un codigo al correo para verificar tu cuenta.
+                Este codigo sera valido por {{ registro_code_minutes }} minutos.
+            </p>
+
             <div class="mb-3 form-check">
                 <input type="checkbox" class="form-check-input" id="terms" required>
                 <label class="form-check-label" for="terms">
-                    He leido y aceptado todos los terminos del servicio y politicas de privacidad
+                    He leido y aceptado los terminos del servicio y politicas de privacidad
                 </label>
             </div>
             <div class="d-grid gap-2 d-md-flex">
-                <button type="submit" class="btn btn-dark flex-fill">Registrarme</button>
+                <button type="submit" class="btn btn-dark flex-fill" id="btnRegistrar">Registrarme</button>
                 <a href="{{ url_for('home') }}" class="btn btn-dark flex-fill">Cancelar</a>
             </div>
         </form>
+
         <div class="mt-4 text-center">
-            <h6 class="mb-3">¿Ya tienes cuenta?</h6>
-            <a href="{{ url_for('login') }}" class="btn btn-dark w-100">Iniciar sesi&oacute;n</a>
+            <h6 class="mb-3">Ya tienes cuenta?</h6>
+            <a href="{{ url_for('login') }}" class="btn btn-dark w-100">Iniciar sesion</a>
         </div>
     </div>
     <script src="{{ url_for('static', filename='js/usuario/registro.js') }}"></script>
 </body>
-
 </html>
