@@ -1,6 +1,6 @@
 :root {
     --primary-color: #2c3e50;
-    --secondary-color: #ffc107;
+    --secondary-color: #17a2b8; /* cian */
     --success-color: #28a745;
     --light-bg: #f8f9fa;
 }
@@ -202,9 +202,9 @@ body {
 }
 
 .btn-primary-action {
-    background: var(--success-color);
-    color: white;
-    border: none;
+    background: linear-gradient(135deg, hsl(226, 43%, 38%) 0%, #3263a3 60%, #1794d2 100%);
+    color: #fff;
+    border: 1px solid #3263a3;
     padding: 1rem 2rem;
     border-radius: 8px;
     text-decoration: none;
@@ -214,19 +214,20 @@ body {
     font-weight: 600;
     font-size: 1rem;
     transition: all 0.3s;
+    box-shadow: 0 8px 16px rgba(23, 162, 184, 0.25);
 }
 
 .btn-primary-action:hover {
-    background: #218838;
-    color: white;
+    filter: brightness(1.05);
+    color: #fff;
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+    box-shadow: 0 6px 14px rgba(23, 162, 184, 0.3);
 }
 
 .btn-secondary-action {
-    background: white;
-    color: var(--primary-color);
-    border: 2px solid var(--primary-color);
+    background: linear-gradient(135deg, hsl(226, 43%, 38%) 0%, #3263a3 60%, #1794d2 100%);
+    color: #fff;
+    border: 1px solid #3263a3;
     padding: 1rem 2rem;
     border-radius: 8px;
     text-decoration: none;
@@ -236,11 +237,12 @@ body {
     font-weight: 600;
     font-size: 1rem;
     transition: all 0.3s;
+    box-shadow: 0 8px 16px rgba(23, 162, 184, 0.25);
 }
 
 .btn-secondary-action:hover {
-    background: var(--primary-color);
-    color: white;
+    filter: brightness(1.05);
+    color: #fff;
     transform: translateY(-2px);
 }
 
