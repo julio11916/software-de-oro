@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mi cuenta- Nachoher</title>
+    <title>Mi Cuenta - Nachoher</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/usuario/catalog_base.css') }}">
@@ -48,18 +48,18 @@
                     {% if usuario.email_verified %}
                     <!-- Email Verificado -->
                     <div class="alert alert-success d-flex align-items-center py-2 mb-0"
-                        style="background-color: #e6f7fb; border-color: #17a2b8; border-left: 4px solid #17a2b8;">
-                        <i class="fas fa-shield-alt me-2" style="color: #17a2b8;"></i>
-                        <span style="color: #0f5968;">OK Tu correo está verificado - Autenticación disponible</span>
+                        style="background-color: #d4edda; border-color: #28a745; border-left: 4px solid #28a745;">
+                        <i class="fas fa-shield-alt me-2" style="color: #28a745;"></i>
+                        <span style="color: #155724;">Tu correo est&aacute; verificado. Autenticaci&oacute;n disponible</span>
                         <button class="btn btn-sm ms-auto" data-bs-toggle="modal" data-bs-target="#modalVerificacion"
                             style="background: linear-gradient(135deg, hsl(226, 43%, 38%) 0%, #3263a3 60%, #1794d2 100%); color: white; border: 1px solid #3263a3; padding: 0.4rem 1rem; border-radius: 6px; box-shadow: 0 6px 14px rgba(23, 162, 184, 0.25);">Autenticar</button>
                     </div>
                     {% else %}
                     <!-- Email No Verificado -->
                     <div class="alert alert-info d-flex align-items-center py-2 mb-0"
-                        style="background-color: #e6f7fb; border-color: #17a2b8; border-left: 4px solid #17a2b8;">
-                        <i class="fas fa-envelope me-2" style="color: #17a2b8;"></i>
-                        <span style="color: #0f5968;">Valida tu e-mail y mantén tu cuenta segura</span>
+                        style="background-color: #fff3cd; border-color: #ffc107; border-left: 4px solid #ffc107;">
+                        <i class="fas fa-envelope me-2" style="color: #ffc107;"></i>
+                        <span style="color: #856404;">Valida tu correo y mant&eacute;n tu cuenta segura</span>
                         <button class="btn btn-sm ms-auto" data-bs-toggle="modal" data-bs-target="#modalVerificacion"
                             style="background: linear-gradient(135deg, hsl(226, 43%, 38%) 0%, #3263a3 60%, #1794d2 100%); color: white; border: 1px solid #3263a3; padding: 0.4rem 1rem; border-radius: 6px; box-shadow: 0 6px 14px rgba(23, 162, 184, 0.25);">Validar</button>
                     </div>
@@ -70,14 +70,14 @@
 
         <!-- Grid de Opciones -->
         <div class="row g-4">
-            <!-- Tu informacion -->
+            <!-- Tu información -->
             <div class="col-md-6 col-lg-4">
                 <div class="option-card" data-bs-toggle="modal" data-bs-target="#modalInformaci&oacute;n">
                     <div class="option-icon">
                         <i class="fas fa-id-card"></i>
                     </div>
                     <div class="option-content">
-                        <h5>Tu informacion</h5>
+                        <h5>Tu informaci&oacute;n</h5>
                         <p class="text-muted mb-0">Nombre, apellidos y datos para identificarte</p>
                     </div>
                 </div>
@@ -143,14 +143,14 @@
                     </div>
                     <div class="option-content">
                         <h5>Comunicaciones</h5>
-                        <p class="text-muted mb-0">Elige que tipo de informacion quieres recibir</p>
+                        <p class="text-muted mb-0">Elige qu&eacute; tipo de informaci&oacute;n quieres recibir</p>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Modal: Tu informacion -->
+    <!-- Modal: Tu información -->
     <div class="modal fade" id="modalInformaci&oacute;n" tabindex="-1">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
@@ -172,7 +172,7 @@
                                 placeholder="+57 300 1234567">
                         </div>
                         <div class="mb-3">
-                            <label class="form-label">Correo Electronico</label>
+                            <label class="form-label">Correo electr&oacute;nico</label>
                             <input type="email" class="form-control" value="{{ usuario.email }}" readonly>
                             <small class="text-muted">El correo no se puede modificar</small>
                         </div>
@@ -278,14 +278,14 @@
                         <input type="hidden" name="nombre" value="{{ usuario.nombre }}">
                         <input type="hidden" name="telefono" value="{{ usuario.telefono if usuario.telefono else '' }}">
                         <div class="mb-3">
-                            <label for="direccion" class="form-label">Direccion de Entrega</label>
+                            <label for="direccion" class="form-label">Direcci&oacute;n de entrega</label>
                             <input type="text" class="form-control" id="direccion" name="direccion"
                                 value="{{ usuario.direccion if usuario.direccion else '' }}"
                                 placeholder="Calle, numero, ciudad, etc.">
                         </div>
                         <div class="text-end">
                             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                            <button type="submit" class="btn btn-primary">Guardar Direccion</button>
+                            <button type="submit" class="btn btn-primary">Guardar direcci&oacute;n</button>
                         </div>
                     </form>
                 </div>

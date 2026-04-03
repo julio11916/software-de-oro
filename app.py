@@ -504,6 +504,53 @@ def calcular_descuento_promocion(subtotal, promo):
     return min(descuento, subtotal)
 
 
+def obtener_mejor_promocion_por_producto(
+    productos_df: pd.DataFrame,
+    promos_df: pd.DataFrame,
+    fecha_ref: Optional[date] = None
+):
+    if fecha_ref is None:
+        fecha_ref = datetime.now().date()
+
+    productos_ref = productos_df.copy()
+    if 'id_producto' not in productos_ref.columns:
+        productos_ref['id_producto'] = pd.Series(dtype='int')
+    if 'precio' not in productos_ref.columns:
+        productos_ref['precio'] = 0.0
+
+    productos_ref['id_producto'] = pd.to_numeric(productos_ref['id_producto'], errors='coerce')
+    productos_ref['precio'] = pd.to_numeric(productos_ref['precio'], errors='coerce').fillna(0.0)
+
+    precio_por_producto = {}
+    for _, producto in productos_ref.iterrows():
+        pid = pd.to_numeric(producto.get('id_producto'), errors='coerce')
+        if pd.notna(pid):
+            precio_por_producto[int(pid)] = float(pd.to_numeric(producto.get('precio', 0), errors='coerce') or 0.0)
+
+    mejor_promo_por_producto = {}
+    mejor_descuento_por_producto = {}
+    for _, row in promos_df.iterrows():
+        promo = row.to_dict()
+        if not promocion_esta_aplicable(promo, fecha_ref):
+            continue
+
+        id_producto_promo = pd.to_numeric(promo.get('id_producto'), errors='coerce')
+        if pd.isna(id_producto_promo):
+            continue
+
+        id_prod_int = int(id_producto_promo)
+        if id_prod_int not in precio_por_producto:
+            continue
+
+        precio_ref = precio_por_producto.get(id_prod_int, 0.0)
+        descuento_actual = calcular_descuento_promocion(precio_ref, promo)
+        if descuento_actual > mejor_descuento_por_producto.get(id_prod_int, -1):
+            mejor_descuento_por_producto[id_prod_int] = descuento_actual
+            mejor_promo_por_producto[id_prod_int] = promo
+
+    return mejor_promo_por_producto
+
+
 def buscar_promocion_por_codigo(promos_df, codigo, fecha_ref=None):
     codigo_norm = str(codigo).strip().upper()
     if not codigo_norm:
@@ -1153,7 +1200,7 @@ def agregar_producto():
         fuerza = request.form.get('fuerza', '').strip()
         intendencia = request.form.get('intendencia', '').strip()
         if fuerza not in FUERZAS_OPCIONES or intendencia not in INTENDENCIAS_OPCIONES:
-            flash('Selecciona una fuerza e intendencia validas.', 'danger')
+            flash('Selecciona una fuerza e intendencia válidas.', 'danger')
             return redirect(url_for('admin_productos'))
 
         imagenes = [
@@ -1166,7 +1213,7 @@ def agregar_producto():
                 imagenes = [imagen_unica]
 
         if len(imagenes) > MAX_IMAGES_PER_PRODUCT:
-            flash(f'Solo puedes subir hasta {MAX_IMAGES_PER_PRODUCT} imagenes por producto.', 'danger')
+            flash(f'Solo puedes subir hasta {MAX_IMAGES_PER_PRODUCT} imágenes por producto.', 'danger')
             return redirect(url_for('admin_productos'))
 
         for imagen in imagenes:
@@ -1200,7 +1247,7 @@ def agregar_producto():
             f"- stock: {int(request.form['stock'])}\n"
             f"- fuerza: {fuerza}\n"
             f"- intendencia: {intendencia}\n"
-            f"- imagenes: {len(galeria_guardada)}"
+            f"- imágenes: {len(galeria_guardada)}"
         )
 
         return redirect(url_for('admin_productos'))
@@ -1252,7 +1299,7 @@ def subir_imagen(id_producto):
         return redirect(url_for('admin_productos'))
 
     if len(imagenes) > MAX_IMAGES_PER_PRODUCT:
-        flash(f'Solo puedes subir hasta {MAX_IMAGES_PER_PRODUCT} imagenes por producto.', 'danger')
+        flash(f'Solo puedes subir hasta {MAX_IMAGES_PER_PRODUCT} imágenes por producto.', 'danger')
         return redirect(url_for('admin_productos'))
 
     for imagen in imagenes:
@@ -1268,7 +1315,7 @@ def subir_imagen(id_producto):
     if not idx.empty:
         productos.at[idx[0], 'imagen_url'] = galeria_guardada[0] if galeria_guardada else ''
         guardar_productos_df(productos)
-        flash(f"Galeria reemplazada ({len(galeria_guardada)} imagenes).", 'success')
+        flash(f"Galería reemplazada ({len(galeria_guardada)} imágenes).", 'success')
     else:
         flash("Producto no encontrado.", 'danger')
 
@@ -1291,7 +1338,7 @@ def agregar_imagenes_producto(id_producto):
         ]
 
     if not imagenes:
-        flash("No se seleccionaron imagenes para agregar.", 'warning')
+        flash("No se seleccionaron imágenes para agregar.", 'warning')
         return redirect(url_for('admin_productos'))
 
     for imagen in imagenes:
@@ -1322,7 +1369,7 @@ def agregar_imagenes_producto(id_producto):
     productos.at[idx[0], 'imagen_url'] = galeria_actualizada[0] if galeria_actualizada else ''
     guardar_productos_df(productos)
 
-    flash(f"Se agregaron {len(imagenes)} imagen(es). Total: {len(galeria_actualizada)}.", 'success')
+    flash(f"Se agregaron {len(imagenes)} imágenes. Total: {len(galeria_actualizada)}.", 'success')
     return redirect(url_for('admin_productos'))
 
 
@@ -1529,7 +1576,7 @@ def admin_guardar_usuario():
     if edit_id is not None:
         idx = usuarios[usuarios['id_usuario'] == edit_id].index
         if idx.empty:
-            flash('Usuario no encontrado para edicion.', 'danger')
+            flash('Usuario no encontrado para edición.', 'danger')
             return redirect(url_for('admin_usuarios'))
 
         usuarios.at[idx[0], 'nombre'] = nombre
@@ -1660,28 +1707,7 @@ def admin_pos():
     productos = cargar_productos_activos_df()
     promos = cargar_promociones_df()
     hoy = datetime.now().date()
-
-    mejor_promo_por_producto = {}
-    mejor_descuento_por_producto = {}
-    for _, row in promos.iterrows():
-        promo = row.to_dict()
-        if not promocion_esta_aplicable(promo, hoy):
-            continue
-
-        id_producto_promo = pd.to_numeric(promo.get('id_producto'), errors='coerce')
-        if pd.isna(id_producto_promo):
-            continue
-        id_prod_int = int(id_producto_promo)
-
-        producto_df = productos[productos['id_producto'] == id_prod_int]
-        if producto_df.empty:
-            continue
-
-        precio_ref = float(pd.to_numeric(producto_df.iloc[0].get('precio', 0), errors='coerce') or 0)
-        descuento_actual = calcular_descuento_promocion(precio_ref, promo)
-        if descuento_actual > mejor_descuento_por_producto.get(id_prod_int, -1):
-            mejor_descuento_por_producto[id_prod_int] = descuento_actual
-            mejor_promo_por_producto[id_prod_int] = promo
+    mejor_promo_por_producto = obtener_mejor_promocion_por_producto(productos, promos, hoy)
 
     lista_productos = productos.to_dict(orient='records')
     for producto in lista_productos:
@@ -1763,19 +1789,7 @@ def admin_pos_recibo_html(id_pedido):
         )
 
 
-@app.route('/admin/pedidos')
-def admin_pedidos():
-    if session.get('rol') != 'admin':
-        return "Acceso denegado"
-
-    pedidos = cargar_pedidos_df()
-    pagos = cargar_pagos_df()
-    detalle = cargar_detalle_pedido_df()
-
-    productos = cargar_productos_df()[['id_producto', 'nombre']]
-
-    usuarios = cargar_usuarios_df()
-
+def _normalizar_dataframes_admin_pedidos(pedidos, pagos, detalle, productos):
     if 'id_pedido' not in pedidos.columns:
         pedidos['id_pedido'] = pd.Series(dtype='int')
     if 'id_usuario' not in pedidos.columns:
@@ -1822,39 +1836,40 @@ def admin_pedidos():
     detalle['subtotal'] = pd.to_numeric(detalle['subtotal'], errors='coerce').fillna(0)
     productos['id_producto'] = pd.to_numeric(productos['id_producto'], errors='coerce')
 
-    totales_pedido = detalle.groupby('id_pedido', as_index=False)['subtotal'].sum()
-    totales_pedido = totales_pedido.rename(columns={'subtotal': 'total_productos'})
+    return pedidos, pagos, detalle, productos[['id_producto', 'nombre']].copy()
 
-    pagos_ultimos = pagos.sort_values(by='id_pago', ascending=False).drop_duplicates(subset=['id_pedido'], keep='first')
-    pagos_ultimos = pagos_ultimos[['id_pedido', 'monto', 'metodo_pago', 'fecha_pago', 'estado_pago']]
 
-    pedidos_view = pedidos.merge(totales_pedido, on='id_pedido', how='left')
-    pedidos_view = pedidos_view.merge(pagos_ultimos, on='id_pedido', how='left')
-    pedidos_view['total_productos'] = pedidos_view['total_productos'].fillna(0)
-    pedidos_view['monto'] = pedidos_view['monto'].fillna(0)
-
+def _construir_mapa_usuarios(usuarios):
     usuarios_map = {}
-    for _, u in usuarios.iterrows():
-        uid = pd.to_numeric(u.get('id_usuario'), errors='coerce')
+    for _, usuario in usuarios.iterrows():
+        uid = pd.to_numeric(usuario.get('id_usuario'), errors='coerce')
         if pd.notna(uid):
-            usuarios_map[int(uid)] = str(u.get('nombre', '')).strip()
+            usuarios_map[int(uid)] = str(usuario.get('nombre', '')).strip()
+    return usuarios_map
 
-    def resolver_usuario(valor):
-        uid = pd.to_numeric(valor, errors='coerce')
-        if pd.notna(uid):
-            uid = int(uid)
-            if uid in usuarios_map and usuarios_map[uid]:
-                return usuarios_map[uid]
-            return f"Usuario #{uid}"
-        return str(valor) if str(valor).strip() else 'N/A'
 
+def _resolver_nombre_usuario(valor, usuarios_map):
+    uid = pd.to_numeric(valor, errors='coerce')
+    if pd.notna(uid):
+        uid = int(uid)
+        if uid in usuarios_map and usuarios_map[uid]:
+            return usuarios_map[uid]
+        return f"Usuario #{uid}"
+    return str(valor) if str(valor).strip() else 'N/A'
+
+
+def _construir_mapa_productos(productos):
     productos_map = {}
     for _, producto in productos.iterrows():
         pid = pd.to_numeric(producto.get('id_producto'), errors='coerce')
         if pd.notna(pid):
             productos_map[int(pid)] = str(producto.get('nombre', '')).strip()
+    return productos_map
 
+
+def _construir_productos_por_pedido(detalle, productos_map):
     productos_por_pedido = {}
+
     for id_pedido, grupo in detalle.groupby('id_pedido'):
         if pd.isna(id_pedido):
             continue
@@ -1881,230 +1896,328 @@ def admin_pedidos():
                 vistos.append(item)
         productos_por_pedido[int(id_pedido)] = ', '.join(vistos) if vistos else 'Sin productos'
 
-    pedidos_view['usuario_nombre'] = pedidos_view['id_usuario'].apply(resolver_usuario)
+    return productos_por_pedido
+
+
+def _construir_vista_pedidos(pedidos, pagos, detalle, usuarios, productos):
+    totales_pedido = detalle.groupby('id_pedido', as_index=False)['subtotal'].sum()
+    totales_pedido = totales_pedido.rename(columns={'subtotal': 'total_productos'})
+
+    pagos_ultimos = pagos.sort_values(by='id_pago', ascending=False).drop_duplicates(
+        subset=['id_pedido'],
+        keep='first'
+    )
+    pagos_ultimos = pagos_ultimos[['id_pedido', 'monto', 'metodo_pago', 'fecha_pago', 'estado_pago']]
+
+    pedidos_view = pedidos.merge(totales_pedido, on='id_pedido', how='left')
+    pedidos_view = pedidos_view.merge(pagos_ultimos, on='id_pedido', how='left')
+    pedidos_view['total_productos'] = pedidos_view['total_productos'].fillna(0)
+    pedidos_view['monto'] = pedidos_view['monto'].fillna(0)
+
+    usuarios_map = _construir_mapa_usuarios(usuarios)
+    productos_map = _construir_mapa_productos(productos)
+    productos_por_pedido = _construir_productos_por_pedido(detalle, productos_map)
+
+    pedidos_view['usuario_nombre'] = pedidos_view['id_usuario'].apply(
+        lambda valor: _resolver_nombre_usuario(valor, usuarios_map)
+    )
     pedidos_view['productos_pedido'] = pedidos_view['id_pedido'].apply(
         lambda valor: productos_por_pedido.get(int(valor), 'Sin productos') if pd.notna(valor) else 'Sin productos'
     )
 
-    filtro_q = str(request.args.get('q', '')).strip()
-    filtro_estado = str(request.args.get('estado', 'todos')).strip().lower()
-    filtro_fecha_desde = str(request.args.get('fecha_desde', '')).strip()
-    filtro_fecha_hasta = str(request.args.get('fecha_hasta', '')).strip()
-    pago_filtro_q = str(request.args.get('pago_q', '')).strip()
-    pago_filtro_metodo = str(request.args.get('pago_metodo', 'todos')).strip().lower()
-    pago_filtro_estado = str(request.args.get('pago_estado', 'todos')).strip().lower()
-    pago_filtro_fecha_desde = str(request.args.get('pago_fecha_desde', '')).strip()
-    pago_filtro_fecha_hasta = str(request.args.get('pago_fecha_hasta', '')).strip()
+    return pedidos_view
 
+
+def _leer_filtros_admin_pedidos(args):
+    filtros = {
+        'q': str(args.get('q', '')).strip(),
+        'estado': str(args.get('estado', 'todos')).strip().lower(),
+        'fecha_desde': str(args.get('fecha_desde', '')).strip(),
+        'fecha_hasta': str(args.get('fecha_hasta', '')).strip(),
+        'page': str(args.get('page', '1')).strip(),
+    }
+    pago_filtros = {
+        'q': str(args.get('pago_q', '')).strip(),
+        'metodo': str(args.get('pago_metodo', 'todos')).strip().lower(),
+        'estado': str(args.get('pago_estado', 'todos')).strip().lower(),
+        'fecha_desde': str(args.get('pago_fecha_desde', '')).strip(),
+        'fecha_hasta': str(args.get('pago_fecha_hasta', '')).strip(),
+        'page': str(args.get('pago_page', '1')).strip(),
+    }
+    return filtros, pago_filtros
+
+
+def _parse_positive_int(value, default=1):
+    try:
+        parsed = int(value)
+    except (TypeError, ValueError):
+        return default
+    return max(1, parsed)
+
+
+def _build_pagination_buttons(total_paginas, pagina_actual):
+    if total_paginas <= 7:
+        return list(range(1, total_paginas + 1))
+
+    botones = [1]
+    inicio = max(2, pagina_actual - 1)
+    fin = min(total_paginas - 1, pagina_actual + 1)
+    if inicio > 2:
+        botones.append('...')
+    botones.extend(range(inicio, fin + 1))
+    if fin < total_paginas - 1:
+        botones.append('...')
+    botones.append(total_paginas)
+    return botones
+
+
+def _filtrar_y_paginar_pedidos(pedidos_view, filtros, per_page=10):
+    filtros = dict(filtros)
     estados_validos = {'pendiente', 'enviado', 'entregado', 'cancelado'}
-    if filtro_estado not in estados_validos:
-        filtro_estado = 'todos'
+    if filtros.get('estado') not in estados_validos:
+        filtros['estado'] = 'todos'
 
-    pedidos_view['estado'] = pedidos_view['estado'].fillna('pendiente').astype(str).str.strip().str.lower()
-    pedidos_view['fecha_pedido'] = pedidos_view['fecha_pedido'].fillna('').astype(str)
-    pedidos_view['fecha_pedido_dt'] = pd.to_datetime(pedidos_view['fecha_pedido'], errors='coerce')
-    pedidos_view['id_pedido_txt'] = pedidos_view['id_pedido'].apply(
+    vista = pedidos_view.copy()
+    vista['estado'] = vista['estado'].fillna('pendiente').astype(str).str.strip().str.lower()
+    vista['fecha_pedido'] = vista['fecha_pedido'].fillna('').astype(str)
+    vista['fecha_pedido_dt'] = pd.to_datetime(vista['fecha_pedido'], errors='coerce')
+    vista['id_pedido_txt'] = vista['id_pedido'].apply(
         lambda valor: str(int(valor)) if pd.notna(valor) else ''
     )
 
-    if filtro_estado != 'todos':
-        pedidos_view = pedidos_view[pedidos_view['estado'] == filtro_estado]
+    if filtros['estado'] != 'todos':
+        vista = vista[vista['estado'] == filtros['estado']]
 
-    fecha_desde_dt = pd.to_datetime(filtro_fecha_desde, errors='coerce')
+    fecha_desde_dt = pd.to_datetime(filtros.get('fecha_desde', ''), errors='coerce')
     if pd.notna(fecha_desde_dt):
-        pedidos_view = pedidos_view[pedidos_view['fecha_pedido_dt'].dt.date >= fecha_desde_dt.date()]
+        vista = vista[vista['fecha_pedido_dt'].dt.date >= fecha_desde_dt.date()]
     else:
-        filtro_fecha_desde = ''
+        filtros['fecha_desde'] = ''
 
-    fecha_hasta_dt = pd.to_datetime(filtro_fecha_hasta, errors='coerce')
+    fecha_hasta_dt = pd.to_datetime(filtros.get('fecha_hasta', ''), errors='coerce')
     if pd.notna(fecha_hasta_dt):
-        pedidos_view = pedidos_view[pedidos_view['fecha_pedido_dt'].dt.date <= fecha_hasta_dt.date()]
+        vista = vista[vista['fecha_pedido_dt'].dt.date <= fecha_hasta_dt.date()]
     else:
-        filtro_fecha_hasta = ''
+        filtros['fecha_hasta'] = ''
 
+    filtro_q = filtros.get('q', '')
     if filtro_q:
         texto = filtro_q.lower()
-        pedidos_view = pedidos_view[
-            pedidos_view['id_pedido_txt'].str.contains(texto, na=False) |
-            pedidos_view['usuario_nombre'].fillna('').astype(str).str.lower().str.contains(texto, na=False) |
-            pedidos_view['productos_pedido'].fillna('').astype(str).str.lower().str.contains(texto, na=False) |
-            pedidos_view['fecha_pedido'].str.lower().str.contains(texto, na=False)
+        vista = vista[
+            vista['id_pedido_txt'].str.contains(texto, na=False)
+            | vista['usuario_nombre'].fillna('').astype(str).str.lower().str.contains(texto, na=False)
+            | vista['productos_pedido'].fillna('').astype(str).str.lower().str.contains(texto, na=False)
+            | vista['fecha_pedido'].str.lower().str.contains(texto, na=False)
         ]
 
-    pedidos_view = pedidos_view.sort_values(by='id_pedido', ascending=False, na_position='last')
-
-    pedidos_por_pagina = 10
-    pagina_raw = str(request.args.get('page', '1')).strip()
-    try:
-        pagina_actual = int(pagina_raw)
-    except ValueError:
-        pagina_actual = 1
-    pagina_actual = max(1, pagina_actual)
-
-    total_filtrados = int(len(pedidos_view.index))
-    total_paginas = max(1, (total_filtrados + pedidos_por_pagina - 1) // pedidos_por_pagina)
+    vista = vista.sort_values(by='id_pedido', ascending=False, na_position='last')
+    pagina_actual = _parse_positive_int(filtros.get('page', 1), default=1)
+    total_filtrados = int(len(vista.index))
+    total_paginas = max(1, (total_filtrados + per_page - 1) // per_page)
     if pagina_actual > total_paginas:
         pagina_actual = total_paginas
 
-    if total_paginas <= 7:
-        botones_paginacion = list(range(1, total_paginas + 1))
-    else:
-        botones_paginacion = [1]
-        inicio = max(2, pagina_actual - 1)
-        fin = min(total_paginas - 1, pagina_actual + 1)
-        if inicio > 2:
-            botones_paginacion.append('...')
-        botones_paginacion.extend(range(inicio, fin + 1))
-        if fin < total_paginas - 1:
-            botones_paginacion.append('...')
-        botones_paginacion.append(total_paginas)
+    inicio = (pagina_actual - 1) * per_page
+    fin = inicio + per_page
+    vista = vista.iloc[inicio:fin].copy()
 
-    inicio = (pagina_actual - 1) * pedidos_por_pagina
-    fin = inicio + pedidos_por_pagina
-    pedidos_view = pedidos_view.iloc[inicio:fin].copy()
-
-    pagos_view = pagos.copy()
-    pagos_view['metodo_pago'] = pagos_view['metodo_pago'].fillna('').astype(str).str.strip().str.lower()
-    pagos_view['estado_pago'] = pagos_view['estado_pago'].fillna('').astype(str).str.strip().str.lower()
-    pagos_view['fecha_pago'] = pagos_view['fecha_pago'].fillna('').astype(str)
-    pagos_view['fecha_pago_dt'] = pd.to_datetime(pagos_view['fecha_pago'], errors='coerce')
-    pagos_view['id_pago_txt'] = pagos_view['id_pago'].apply(lambda valor: str(int(valor)) if pd.notna(valor) else '')
-    pagos_view['id_pedido_txt'] = pagos_view['id_pedido'].apply(lambda valor: str(int(valor)) if pd.notna(valor) else '')
-    pagos_view['monto_txt'] = pagos_view['monto'].apply(
-        lambda valor: f"{float(valor):.2f}" if pd.notna(valor) else ''
+    filtros['page'] = pagina_actual
+    paginacion = {
+        'page': pagina_actual,
+        'per_page': per_page,
+        'total': total_filtrados,
+        'total_paginas': total_paginas,
+        'desde': (inicio + 1) if total_filtrados > 0 else 0,
+        'hasta': min(fin, total_filtrados),
+        'opciones': list(range(1, total_paginas + 1)),
+        'botones': _build_pagination_buttons(total_paginas, pagina_actual),
+    }
+    hay_filtros_activos = bool(
+        filtros.get('q') or filtros.get('fecha_desde') or filtros.get('fecha_hasta') or filtros.get('estado') != 'todos'
     )
+    return vista, filtros, paginacion, hay_filtros_activos
 
-    metodos_pago_opciones = sorted([m for m in pagos_view['metodo_pago'].unique().tolist() if m])
-    estados_pago_opciones = sorted([e for e in pagos_view['estado_pago'].unique().tolist() if e])
 
-    if pago_filtro_metodo != 'todos' and pago_filtro_metodo not in metodos_pago_opciones:
-        pago_filtro_metodo = 'todos'
-    if pago_filtro_estado != 'todos' and pago_filtro_estado not in estados_pago_opciones:
-        pago_filtro_estado = 'todos'
+def _filtrar_y_paginar_pagos(pagos, pago_filtros, per_page=10):
+    filtros = dict(pago_filtros)
 
-    if pago_filtro_metodo != 'todos':
-        pagos_view = pagos_view[pagos_view['metodo_pago'] == pago_filtro_metodo]
-    if pago_filtro_estado != 'todos':
-        pagos_view = pagos_view[pagos_view['estado_pago'] == pago_filtro_estado]
+    vista = pagos.copy()
+    vista['metodo_pago'] = vista['metodo_pago'].fillna('').astype(str).str.strip().str.lower()
+    vista['estado_pago'] = vista['estado_pago'].fillna('').astype(str).str.strip().str.lower()
+    vista['fecha_pago'] = vista['fecha_pago'].fillna('').astype(str)
+    vista['fecha_pago_dt'] = pd.to_datetime(vista['fecha_pago'], errors='coerce')
+    vista['id_pago_txt'] = vista['id_pago'].apply(lambda valor: str(int(valor)) if pd.notna(valor) else '')
+    vista['id_pedido_txt'] = vista['id_pedido'].apply(lambda valor: str(int(valor)) if pd.notna(valor) else '')
+    vista['monto_txt'] = vista['monto'].apply(lambda valor: f"{float(valor):.2f}" if pd.notna(valor) else '')
 
-    pago_fecha_desde_dt = pd.to_datetime(pago_filtro_fecha_desde, errors='coerce')
+    metodos_pago_opciones = sorted([m for m in vista['metodo_pago'].unique().tolist() if m])
+    estados_pago_opciones = sorted([e for e in vista['estado_pago'].unique().tolist() if e])
+
+    if filtros.get('metodo') != 'todos' and filtros.get('metodo') not in metodos_pago_opciones:
+        filtros['metodo'] = 'todos'
+    if filtros.get('estado') != 'todos' and filtros.get('estado') not in estados_pago_opciones:
+        filtros['estado'] = 'todos'
+
+    if filtros.get('metodo') != 'todos':
+        vista = vista[vista['metodo_pago'] == filtros['metodo']]
+    if filtros.get('estado') != 'todos':
+        vista = vista[vista['estado_pago'] == filtros['estado']]
+
+    pago_fecha_desde_dt = pd.to_datetime(filtros.get('fecha_desde', ''), errors='coerce')
     if pd.notna(pago_fecha_desde_dt):
-        pagos_view = pagos_view[pagos_view['fecha_pago_dt'].dt.date >= pago_fecha_desde_dt.date()]
+        vista = vista[vista['fecha_pago_dt'].dt.date >= pago_fecha_desde_dt.date()]
     else:
-        pago_filtro_fecha_desde = ''
+        filtros['fecha_desde'] = ''
 
-    pago_fecha_hasta_dt = pd.to_datetime(pago_filtro_fecha_hasta, errors='coerce')
+    pago_fecha_hasta_dt = pd.to_datetime(filtros.get('fecha_hasta', ''), errors='coerce')
     if pd.notna(pago_fecha_hasta_dt):
-        pagos_view = pagos_view[pagos_view['fecha_pago_dt'].dt.date <= pago_fecha_hasta_dt.date()]
+        vista = vista[vista['fecha_pago_dt'].dt.date <= pago_fecha_hasta_dt.date()]
     else:
-        pago_filtro_fecha_hasta = ''
+        filtros['fecha_hasta'] = ''
 
-    if pago_filtro_q:
-        pago_texto = pago_filtro_q.lower()
-        pagos_view = pagos_view[
-            pagos_view['id_pago_txt'].str.contains(pago_texto, na=False) |
-            pagos_view['id_pedido_txt'].str.contains(pago_texto, na=False) |
-            pagos_view['metodo_pago'].str.contains(pago_texto, na=False) |
-            pagos_view['estado_pago'].str.contains(pago_texto, na=False) |
-            pagos_view['fecha_pago'].str.lower().str.contains(pago_texto, na=False) |
-            pagos_view['monto_txt'].str.contains(pago_texto, na=False)
+    filtro_q = filtros.get('q', '')
+    if filtro_q:
+        pago_texto = filtro_q.lower()
+        vista = vista[
+            vista['id_pago_txt'].str.contains(pago_texto, na=False)
+            | vista['id_pedido_txt'].str.contains(pago_texto, na=False)
+            | vista['metodo_pago'].str.contains(pago_texto, na=False)
+            | vista['estado_pago'].str.contains(pago_texto, na=False)
+            | vista['fecha_pago'].str.lower().str.contains(pago_texto, na=False)
+            | vista['monto_txt'].str.contains(pago_texto, na=False)
         ]
 
-    pagos_view = pagos_view.sort_values(by='id_pago', ascending=False, na_position='last')
+    vista = vista.sort_values(by='id_pago', ascending=False, na_position='last')
+    pagina_actual = _parse_positive_int(filtros.get('page', 1), default=1)
+    total_filtrados = int(len(vista.index))
+    total_paginas = max(1, (total_filtrados + per_page - 1) // per_page)
+    if pagina_actual > total_paginas:
+        pagina_actual = total_paginas
 
-    pagos_por_pagina = 10
-    pago_pagina_raw = str(request.args.get('pago_page', '1')).strip()
-    try:
-        pago_pagina_actual = int(pago_pagina_raw)
-    except ValueError:
-        pago_pagina_actual = 1
-    pago_pagina_actual = max(1, pago_pagina_actual)
+    inicio = (pagina_actual - 1) * per_page
+    fin = inicio + per_page
+    vista = vista.iloc[inicio:fin].copy()
 
-    pago_total_filtrados = int(len(pagos_view.index))
-    pago_total_paginas = max(1, (pago_total_filtrados + pagos_por_pagina - 1) // pagos_por_pagina)
-    if pago_pagina_actual > pago_total_paginas:
-        pago_pagina_actual = pago_total_paginas
+    filtros['page'] = pagina_actual
+    paginacion = {
+        'page': pagina_actual,
+        'per_page': per_page,
+        'total': total_filtrados,
+        'total_paginas': total_paginas,
+        'desde': (inicio + 1) if total_filtrados > 0 else 0,
+        'hasta': min(fin, total_filtrados),
+        'botones': _build_pagination_buttons(total_paginas, pagina_actual),
+    }
+    hay_filtros_activos = bool(
+        filtros.get('q')
+        or filtros.get('fecha_desde')
+        or filtros.get('fecha_hasta')
+        or filtros.get('metodo') != 'todos'
+        or filtros.get('estado') != 'todos'
+    )
 
-    if pago_total_paginas <= 7:
-        pago_botones_paginacion = list(range(1, pago_total_paginas + 1))
-    else:
-        pago_botones_paginacion = [1]
-        pago_inicio_botones = max(2, pago_pagina_actual - 1)
-        pago_fin_botones = min(pago_total_paginas - 1, pago_pagina_actual + 1)
-        if pago_inicio_botones > 2:
-            pago_botones_paginacion.append('...')
-        pago_botones_paginacion.extend(range(pago_inicio_botones, pago_fin_botones + 1))
-        if pago_fin_botones < pago_total_paginas - 1:
-            pago_botones_paginacion.append('...')
-        pago_botones_paginacion.append(pago_total_paginas)
+    return vista, filtros, paginacion, metodos_pago_opciones, estados_pago_opciones, hay_filtros_activos
 
-    pago_inicio = (pago_pagina_actual - 1) * pagos_por_pagina
-    pago_fin = pago_inicio + pagos_por_pagina
-    pagos_view = pagos_view.iloc[pago_inicio:pago_fin].copy()
 
+def _serializar_pedidos_admin(pedidos_view):
     lista_pedidos = pedidos_view.fillna('').to_dict(orient='records')
+    for pedido in lista_pedidos:
+        if pedido.get('id_pedido') != '':
+            pedido['id_pedido'] = int(pedido['id_pedido'])
+        pedido['estado'] = str(pedido.get('estado', 'pendiente')).strip().lower() or 'pendiente'
+    return lista_pedidos
+
+
+def _serializar_pagos_admin(pagos_view):
     lista_pagos = pagos_view.fillna('').to_dict(orient='records')
+    for pago in lista_pagos:
+        if pago.get('id_pago') != '':
+            pago['id_pago'] = int(pago['id_pago'])
+        if pago.get('id_pedido') != '':
+            pago['id_pedido'] = int(pago['id_pedido'])
+        pago['metodo_pago'] = str(pago.get('metodo_pago', '')).strip().lower()
+        pago['estado_pago'] = str(pago.get('estado_pago', '')).strip().lower()
+    return lista_pagos
 
-    for p in lista_pedidos:
-        if p.get('id_pedido') != '':
-            p['id_pedido'] = int(p['id_pedido'])
-        p['estado'] = str(p.get('estado', 'pendiente')).strip().lower() or 'pendiente'
 
-    for p in lista_pagos:
-        if p.get('id_pago') != '':
-            p['id_pago'] = int(p['id_pago'])
-        if p.get('id_pedido') != '':
-            p['id_pedido'] = int(p['id_pedido'])
-        p['metodo_pago'] = str(p.get('metodo_pago', '')).strip().lower()
-        p['estado_pago'] = str(p.get('estado_pago', '')).strip().lower()
+def _construir_params_redireccion_admin_pedidos(filtros, pago_filtros):
+    params = {}
+
+    if filtros.get('q'):
+        params['q'] = filtros['q']
+    if filtros.get('estado') and filtros['estado'] != 'todos':
+        params['estado'] = filtros['estado']
+    if filtros.get('fecha_desde'):
+        params['fecha_desde'] = filtros['fecha_desde']
+    if filtros.get('fecha_hasta'):
+        params['fecha_hasta'] = filtros['fecha_hasta']
+
+    page = _parse_positive_int(filtros.get('page', 1), default=1)
+    if page > 1:
+        params['page'] = page
+
+    if pago_filtros.get('q'):
+        params['pago_q'] = pago_filtros['q']
+    if pago_filtros.get('metodo') and pago_filtros['metodo'] != 'todos':
+        params['pago_metodo'] = pago_filtros['metodo']
+    if pago_filtros.get('estado') and pago_filtros['estado'] != 'todos':
+        params['pago_estado'] = pago_filtros['estado']
+    if pago_filtros.get('fecha_desde'):
+        params['pago_fecha_desde'] = pago_filtros['fecha_desde']
+    if pago_filtros.get('fecha_hasta'):
+        params['pago_fecha_hasta'] = pago_filtros['fecha_hasta']
+
+    pago_page = _parse_positive_int(pago_filtros.get('page', 1), default=1)
+    if pago_page > 1:
+        params['pago_page'] = pago_page
+
+    return params
+
+
+def _redirigir_admin_pedidos_con_filtros(filtros, pago_filtros):
+    params = _construir_params_redireccion_admin_pedidos(filtros, pago_filtros)
+    return redirect(url_for('admin_pedidos', **params))
+
+
+@app.route('/admin/pedidos')
+def admin_pedidos():
+    if session.get('rol') != 'admin':
+        return "Acceso denegado"
+
+    pedidos = cargar_pedidos_df()
+    pagos = cargar_pagos_df()
+    detalle = cargar_detalle_pedido_df()
+    productos = cargar_productos_df()
+    usuarios = cargar_usuarios_df()
+
+    pedidos, pagos, detalle, productos = _normalizar_dataframes_admin_pedidos(
+        pedidos, pagos, detalle, productos
+    )
+    pedidos_view = _construir_vista_pedidos(pedidos, pagos, detalle, usuarios, productos)
+
+    filtros, pago_filtros = _leer_filtros_admin_pedidos(request.args)
+    pedidos_view, filtros, paginacion, hay_filtros_activos = _filtrar_y_paginar_pedidos(
+        pedidos_view, filtros, per_page=10
+    )
+    pagos_view, pago_filtros, paginacion_pagos, metodos_pago_opciones, estados_pago_opciones, hay_filtros_pagos_activos = _filtrar_y_paginar_pagos(
+        pagos, pago_filtros, per_page=10
+    )
+
+    lista_pedidos = _serializar_pedidos_admin(pedidos_view)
+    lista_pagos = _serializar_pagos_admin(pagos_view)
 
     return render_template(
         'Administrador/Gestion pedidos/admin_orders.html',
         pedidos=lista_pedidos,
         pagos=lista_pagos,
-        filtros={
-            'q': filtro_q,
-            'estado': filtro_estado,
-            'fecha_desde': filtro_fecha_desde,
-            'fecha_hasta': filtro_fecha_hasta,
-            'page': pagina_actual
-        },
-        pago_filtros={
-            'q': pago_filtro_q,
-            'metodo': pago_filtro_metodo,
-            'estado': pago_filtro_estado,
-            'fecha_desde': pago_filtro_fecha_desde,
-            'fecha_hasta': pago_filtro_fecha_hasta,
-            'page': pago_pagina_actual
-        },
-        paginacion={
-            'page': pagina_actual,
-            'per_page': pedidos_por_pagina,
-            'total': total_filtrados,
-            'total_paginas': total_paginas,
-            'desde': (inicio + 1) if total_filtrados > 0 else 0,
-            'hasta': min(fin, total_filtrados),
-            'opciones': list(range(1, total_paginas + 1)),
-            'botones': botones_paginacion
-        },
-        paginacion_pagos={
-            'page': pago_pagina_actual,
-            'per_page': pagos_por_pagina,
-            'total': pago_total_filtrados,
-            'total_paginas': pago_total_paginas,
-            'desde': (pago_inicio + 1) if pago_total_filtrados > 0 else 0,
-            'hasta': min(pago_fin, pago_total_filtrados),
-            'botones': pago_botones_paginacion
-        },
+        filtros=filtros,
+        pago_filtros=pago_filtros,
+        paginacion=paginacion,
+        paginacion_pagos=paginacion_pagos,
         metodos_pago_opciones=metodos_pago_opciones,
         estados_pago_opciones=estados_pago_opciones,
-        hay_filtros_activos=bool(
-            filtro_q or filtro_fecha_desde or filtro_fecha_hasta or filtro_estado != 'todos'
-        ),
-        hay_filtros_pagos_activos=bool(
-            pago_filtro_q or pago_filtro_fecha_desde or pago_filtro_fecha_hasta or
-            pago_filtro_metodo != 'todos' or pago_filtro_estado != 'todos'
-        )
+        hay_filtros_activos=hay_filtros_activos,
+        hay_filtros_pagos_activos=hay_filtros_pagos_activos,
     )
 
 
@@ -2113,62 +2226,32 @@ def admin_pedidos_estado(id_pedido):
     if session.get('rol') != 'admin':
         return "Acceso denegado"
 
-    filtro_q = str(request.form.get('f_q', '')).strip()
-    filtro_estado = str(request.form.get('f_estado', 'todos')).strip().lower()
-    filtro_fecha_desde = str(request.form.get('f_fecha_desde', '')).strip()
-    filtro_fecha_hasta = str(request.form.get('f_fecha_hasta', '')).strip()
-    filtro_page = str(request.form.get('f_page', '1')).strip()
-    pago_filtro_q = str(request.form.get('f_pago_q', '')).strip()
-    pago_filtro_metodo = str(request.form.get('f_pago_metodo', 'todos')).strip().lower()
-    pago_filtro_estado = str(request.form.get('f_pago_estado', 'todos')).strip().lower()
-    pago_filtro_fecha_desde = str(request.form.get('f_pago_fecha_desde', '')).strip()
-    pago_filtro_fecha_hasta = str(request.form.get('f_pago_fecha_hasta', '')).strip()
-    pago_filtro_page = str(request.form.get('f_pago_page', '1')).strip()
-
-    def redirigir_a_pedidos_con_filtros():
-        params = {}
-        if filtro_q:
-            params['q'] = filtro_q
-        if filtro_estado and filtro_estado != 'todos':
-            params['estado'] = filtro_estado
-        if filtro_fecha_desde:
-            params['fecha_desde'] = filtro_fecha_desde
-        if filtro_fecha_hasta:
-            params['fecha_hasta'] = filtro_fecha_hasta
-        try:
-            page_int = int(filtro_page)
-            if page_int > 1:
-                params['page'] = page_int
-        except ValueError:
-            pass
-        if pago_filtro_q:
-            params['pago_q'] = pago_filtro_q
-        if pago_filtro_metodo and pago_filtro_metodo != 'todos':
-            params['pago_metodo'] = pago_filtro_metodo
-        if pago_filtro_estado and pago_filtro_estado != 'todos':
-            params['pago_estado'] = pago_filtro_estado
-        if pago_filtro_fecha_desde:
-            params['pago_fecha_desde'] = pago_filtro_fecha_desde
-        if pago_filtro_fecha_hasta:
-            params['pago_fecha_hasta'] = pago_filtro_fecha_hasta
-        try:
-            pago_page_int = int(pago_filtro_page)
-            if pago_page_int > 1:
-                params['pago_page'] = pago_page_int
-        except ValueError:
-            pass
-        return redirect(url_for('admin_pedidos', **params))
+    filtros = {
+        'q': str(request.form.get('f_q', '')).strip(),
+        'estado': str(request.form.get('f_estado', 'todos')).strip().lower(),
+        'fecha_desde': str(request.form.get('f_fecha_desde', '')).strip(),
+        'fecha_hasta': str(request.form.get('f_fecha_hasta', '')).strip(),
+        'page': str(request.form.get('f_page', '1')).strip(),
+    }
+    pago_filtros = {
+        'q': str(request.form.get('f_pago_q', '')).strip(),
+        'metodo': str(request.form.get('f_pago_metodo', 'todos')).strip().lower(),
+        'estado': str(request.form.get('f_pago_estado', 'todos')).strip().lower(),
+        'fecha_desde': str(request.form.get('f_pago_fecha_desde', '')).strip(),
+        'fecha_hasta': str(request.form.get('f_pago_fecha_hasta', '')).strip(),
+        'page': str(request.form.get('f_pago_page', '1')).strip(),
+    }
 
     estado_nuevo = request.form.get('estado', '').strip().lower()
     estados_validos = {'pendiente', 'enviado', 'entregado', 'cancelado'}
     if estado_nuevo not in estados_validos:
         flash('Estado de pedido inválido.', 'danger')
-        return redirigir_a_pedidos_con_filtros()
+        return _redirigir_admin_pedidos_con_filtros(filtros, pago_filtros)
 
     pedidos = cargar_pedidos_df()
     if 'id_pedido' not in pedidos.columns:
         flash('Estructura de pedidos inválida.', 'danger')
-        return redirigir_a_pedidos_con_filtros()
+        return _redirigir_admin_pedidos_con_filtros(filtros, pago_filtros)
     if 'estado' not in pedidos.columns:
         pedidos['estado'] = 'pendiente'
 
@@ -2176,7 +2259,7 @@ def admin_pedidos_estado(id_pedido):
     idx = pedidos[pedidos['id_pedido'] == id_pedido].index
     if idx.empty:
         flash('Pedido no encontrado.', 'warning')
-        return redirigir_a_pedidos_con_filtros()
+        return _redirigir_admin_pedidos_con_filtros(filtros, pago_filtros)
 
     estado_anterior = str(pedidos.at[idx[0], 'estado']).strip().lower()
     pedidos.at[idx[0], 'estado'] = estado_nuevo
@@ -2188,79 +2271,44 @@ def admin_pedidos_estado(id_pedido):
     else:
         flash(f'El pedido #{id_pedido} ya estaba en "{estado_nuevo}".', 'info')
 
-    return redirigir_a_pedidos_con_filtros()
+    return _redirigir_admin_pedidos_con_filtros(filtros, pago_filtros)
 
 
-@app.route('/admin/pos/checkout', methods=['POST'])
-def admin_pos_checkout():
-    if session.get('rol') != 'admin':
-        return "Acceso denegado"
-
-    cliente_nombre = request.form.get('cliente_nombre', '').strip()
-    cliente_correo = request.form.get('cliente_correo', '').strip().lower()
-    cliente_documento = request.form.get('cliente_documento', '').strip()
-    cliente_telefono = request.form.get('cliente_telefono', '').strip()
+def _validar_cliente_pos(cliente_nombre, cliente_correo, cliente_documento, cliente_telefono):
     if not cliente_nombre or not cliente_correo or not cliente_documento or not cliente_telefono:
-        flash('Debes completar todos los datos del cliente para registrar la venta.', 'warning')
-        return redirect(url_for('admin_pos'))
+        return ('Debes completar todos los datos del cliente para registrar la venta.', 'warning')
     if not re.fullmatch(r'[A-Za-zÁÉÍÓÚáéíóúÑñÜü\s]+', cliente_nombre):
-        flash('El nombre del cliente solo puede contener letras y espacios.', 'warning')
-        return redirect(url_for('admin_pos'))
+        return ('El nombre del cliente solo puede contener letras y espacios.', 'warning')
     if not re.fullmatch(r'[^@\s]+@[^@\s]+\.[^@\s]+', cliente_correo):
-        flash('Debes ingresar un correo electrónico válido.', 'warning')
-        return redirect(url_for('admin_pos'))
+        return ('Debes ingresar un correo electrónico válido.', 'warning')
     if not cliente_documento.isdigit():
-        flash('La cédula solo puede contener números.', 'warning')
-        return redirect(url_for('admin_pos'))
+        return ('La cédula solo puede contener números.', 'warning')
     if not cliente_telefono.isdigit() or len(cliente_telefono) > 10:
-        flash('El teléfono solo puede contener números y máximo 10 dígitos.', 'warning')
-        return redirect(url_for('admin_pos'))
+        return ('El teléfono solo puede contener números y máximo 10 dígitos.', 'warning')
+    return None
 
-    items_raw = request.form.get('items_json', '[]')
-    metodo_pago = request.form.get('metodo_pago', 'efectivo').strip().lower()
+
+def _normalizar_metodo_pago_pos(metodo_pago):
+    metodo = str(metodo_pago or 'efectivo').strip().lower()
     metodos_validos = {'efectivo', 'tarjeta', 'transferencia', 'qr'}
-    if metodo_pago not in metodos_validos:
-        metodo_pago = 'efectivo'
+    if metodo not in metodos_validos:
+        return 'efectivo'
+    return metodo
 
+
+def _parsear_items_checkout_pos(items_raw):
     try:
         items = json.loads(items_raw)
     except json.JSONDecodeError:
-        flash('No se pudo procesar el carrito POS.', 'danger')
-        return redirect(url_for('admin_pos'))
+        return None, ('No se pudo procesar el carrito POS.', 'danger')
 
     if not isinstance(items, list) or not items:
-        flash('Agrega al menos un producto para cobrar.', 'warning')
-        return redirect(url_for('admin_pos'))
+        return None, ('Agrega al menos un producto para cobrar.', 'warning')
 
-    productos = cargar_productos_df()
-    if productos.empty:
-        flash('No existe el catálogo de productos.', 'danger')
-        return redirect(url_for('admin_pos'))
+    return items, None
 
-    promos = cargar_promociones_df()
-    hoy = datetime.now().date()
-    mejor_promo_por_producto = {}
-    mejor_descuento_por_producto = {}
-    for _, row in promos.iterrows():
-        promo = row.to_dict()
-        if not promocion_esta_aplicable(promo, hoy):
-            continue
 
-        id_producto_promo = pd.to_numeric(promo.get('id_producto'), errors='coerce')
-        if pd.isna(id_producto_promo):
-            continue
-        id_prod_int = int(id_producto_promo)
-
-        producto_df = productos[productos['id_producto'] == id_prod_int]
-        if producto_df.empty:
-            continue
-
-        precio_ref = float(pd.to_numeric(producto_df.iloc[0].get('precio', 0), errors='coerce') or 0)
-        descuento_actual = calcular_descuento_promocion(precio_ref, promo)
-        if descuento_actual > mejor_descuento_por_producto.get(id_prod_int, -1):
-            mejor_descuento_por_producto[id_prod_int] = descuento_actual
-            mejor_promo_por_producto[id_prod_int] = promo
-
+def _validar_y_preparar_carrito_pos(items, productos, mejor_promo_por_producto):
     carrito_validado = []
     total_bruto = 0.0
     total_descuento = 0.0
@@ -2271,33 +2319,27 @@ def admin_pos_checkout():
             id_producto = int(item.get('id_producto', 0))
             cantidad = int(item.get('cantidad', 0))
         except (TypeError, ValueError):
-            flash('Hay productos inválidos en el carrito POS.', 'danger')
-            return redirect(url_for('admin_pos'))
+            return None, ('Hay productos inválidos en el carrito POS.', 'danger')
 
         if cantidad <= 0:
-            flash('La cantidad debe ser mayor a cero.', 'danger')
-            return redirect(url_for('admin_pos'))
+            return None, ('La cantidad debe ser mayor a cero.', 'danger')
 
         idx = productos[productos['id_producto'] == id_producto].index
         if idx.empty:
-            flash(f'El producto con ID {id_producto} ya no existe.', 'danger')
-            return redirect(url_for('admin_pos'))
+            return None, (f'El producto con ID {id_producto} ya no existe.', 'danger')
 
         row_idx = idx[0]
         if bool(productos.at[row_idx, 'eliminado']):
-            flash(f'El producto ID {id_producto} está eliminado.', 'danger')
-            return redirect(url_for('admin_pos'))
+            return None, (f'El producto ID {id_producto} está eliminado.', 'danger')
 
         stock_actual = int(pd.to_numeric(productos.at[row_idx, 'stock'], errors='coerce') or 0)
         if cantidad > stock_actual:
             nombre = str(productos.at[row_idx, 'nombre'])
-            flash(f'Stock insuficiente para "{nombre}". Disponible: {stock_actual}.', 'warning')
-            return redirect(url_for('admin_pos'))
+            return None, (f'Stock insuficiente para "{nombre}". Disponible: {stock_actual}.', 'warning')
 
         precio_base = float(pd.to_numeric(productos.at[row_idx, 'precio'], errors='coerce') or 0)
         promo = mejor_promo_por_producto.get(id_producto)
         descuento_unitario = calcular_descuento_promocion(precio_base, promo) if promo else 0.0
-        precio_final = max(0.0, precio_base - descuento_unitario)
 
         subtotal_bruto = precio_base * cantidad
         subtotal_descuento = descuento_unitario * cantidad
@@ -2320,36 +2362,16 @@ def admin_pos_checkout():
             'promo_valor_descuento': float(pd.to_numeric(promo.get('valor_descuento', 0), errors='coerce') or 0) if promo else 0.0
         })
 
-    guardar_productos_df(productos)
+    return {
+        'carrito_validado': carrito_validado,
+        'productos': productos,
+        'total_bruto': total_bruto,
+        'total_descuento': total_descuento,
+        'total': total,
+    }, None
 
-    pedidos = cargar_pedidos_df()
-    detalle_pedido = cargar_detalle_pedido_df()
-    pagos = cargar_pagos_df()
 
-    next_pedido_id = next_id('pedidos', 'id_pedido')
-    nuevo_pedido = {
-        'id_pedido': next_pedido_id,
-        'id_usuario': session.get('usuario', 'admin_pos'),
-        'fecha_pedido': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-        'estado': 'completado'
-    }
-    pedidos = pd.concat([pedidos, pd.DataFrame([nuevo_pedido])], ignore_index=True)
-    guardar_pedidos_df(pedidos)
-
-    next_detalle_id = next_id('detalle_pedido', 'id_detalle')
-    nuevos_detalles = []
-    for item in carrito_validado:
-        nuevos_detalles.append({
-            'id_detalle': next_detalle_id,
-            'id_pedido': next_pedido_id,
-            'id_producto': item['id_producto'],
-            'cantidad': item['cantidad'],
-            'subtotal': item['subtotal']
-        })
-        next_detalle_id += 1
-    detalle_pedido = pd.concat([detalle_pedido, pd.DataFrame(nuevos_detalles)], ignore_index=True)
-    guardar_detalle_pedido_df(detalle_pedido)
-
+def _resumen_promocion_pago_desde_carrito(carrito_validado):
     promo_ids = []
     promo_codigos = []
     promo_tipos = []
@@ -2370,37 +2392,199 @@ def admin_pos_checkout():
             promo_valores.append(promo_valor)
 
     if not promo_ids:
-        pago_id_promo = ''
-        pago_codigo_promo = ''
-        pago_tipo_descuento = ''
-        pago_valor_descuento = 0.0
-    elif len(promo_ids) == 1:
-        pago_id_promo = promo_ids[0]
-        pago_codigo_promo = promo_codigos[0] if promo_codigos else ''
-        pago_tipo_descuento = promo_tipos[0] if promo_tipos else ''
-        pago_valor_descuento = float(promo_valores[0]) if promo_valores else 0.0
-    else:
-        pago_id_promo = 'multi'
-        pago_codigo_promo = ','.join(promo_codigos)
-        pago_tipo_descuento = 'multi'
-        pago_valor_descuento = 0.0
+        return {
+            'id_promo': '',
+            'codigo_promo': '',
+            'tipo_descuento': '',
+            'valor_descuento': 0.0
+        }
+    if len(promo_ids) == 1:
+        return {
+            'id_promo': promo_ids[0],
+            'codigo_promo': promo_codigos[0] if promo_codigos else '',
+            'tipo_descuento': promo_tipos[0] if promo_tipos else '',
+            'valor_descuento': float(promo_valores[0]) if promo_valores else 0.0
+        }
+    return {
+        'id_promo': 'multi',
+        'codigo_promo': ','.join(promo_codigos),
+        'tipo_descuento': 'multi',
+        'valor_descuento': 0.0
+    }
 
-    next_pago_id = next_id('pagos', 'id_pago')
+
+def _resumen_promocion_desde_promo_aplicada(promo_aplicada):
+    if not promo_aplicada:
+        return {
+            'id_promo': '',
+            'codigo_promo': '',
+            'tipo_descuento': '',
+            'valor_descuento': 0.0
+        }
+
+    id_promo_num = pd.to_numeric(promo_aplicada.get('id_promo'), errors='coerce')
+    id_promo = int(id_promo_num) if pd.notna(id_promo_num) else ''
+    return {
+        'id_promo': id_promo,
+        'codigo_promo': promo_aplicada.get('codigo', ''),
+        'tipo_descuento': promo_aplicada.get('tipo_descuento', ''),
+        'valor_descuento': float(pd.to_numeric(promo_aplicada.get('valor_descuento', 0), errors='coerce') or 0.0)
+    }
+
+
+def _construir_items_detalle_desde_carrito(carrito):
+    items_detalle = []
+    for item in carrito:
+        items_detalle.append({
+            'id_producto': item['id_producto'],
+            'cantidad': item['cantidad'],
+            'subtotal': item['subtotal']
+        })
+    return items_detalle
+
+
+def _crear_pedido_y_detalle(pedidos, detalle_pedido, id_usuario, estado_pedido, items_detalle):
+    nuevo_id_pedido = next_id('pedidos', 'id_pedido')
+    nuevo_pedido = {
+        'id_pedido': nuevo_id_pedido,
+        'id_usuario': id_usuario,
+        'fecha_pedido': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        'estado': estado_pedido
+    }
+    pedidos = pd.concat([pedidos, pd.DataFrame([nuevo_pedido])], ignore_index=True)
+    guardar_pedidos_df(pedidos)
+
+    next_detalle_id = next_id('detalle_pedido', 'id_detalle')
+    nuevos_detalles = []
+    for item in items_detalle:
+        nuevos_detalles.append({
+            'id_detalle': next_detalle_id,
+            'id_pedido': nuevo_id_pedido,
+            'id_producto': item['id_producto'],
+            'cantidad': item['cantidad'],
+            'subtotal': item['subtotal']
+        })
+        next_detalle_id += 1
+    detalle_pedido = pd.concat([detalle_pedido, pd.DataFrame(nuevos_detalles)], ignore_index=True)
+    guardar_detalle_pedido_df(detalle_pedido)
+    return nuevo_id_pedido
+
+
+def _crear_pago_para_pedido(pagos, id_pedido, monto, metodo_pago, resumen_promos, monto_descuento):
+    resumen = resumen_promos or {
+        'id_promo': '',
+        'codigo_promo': '',
+        'tipo_descuento': '',
+        'valor_descuento': 0.0
+    }
+
+    nuevo_id_pago = next_id('pagos', 'id_pago')
     nuevo_pago = {
-        'id_pago': next_pago_id,
-        'id_pedido': next_pedido_id,
-        'monto': round(total, 2),
+        'id_pago': nuevo_id_pago,
+        'id_pedido': id_pedido,
+        'monto': monto,
         'metodo_pago': metodo_pago,
         'fecha_pago': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         'estado_pago': 'aprobado',
-        'id_promo': pago_id_promo,
-        'codigo_promo': pago_codigo_promo,
-        'tipo_descuento': pago_tipo_descuento,
-        'valor_descuento': round(pago_valor_descuento, 2),
-        'monto_descuento': round(total_descuento, 2)
+        'id_promo': resumen.get('id_promo', ''),
+        'codigo_promo': resumen.get('codigo_promo', ''),
+        'tipo_descuento': resumen.get('tipo_descuento', ''),
+        'valor_descuento': resumen.get('valor_descuento', 0.0),
+        'monto_descuento': monto_descuento
     }
     pagos = pd.concat([pagos, pd.DataFrame([nuevo_pago])], ignore_index=True)
     guardar_pagos_df(pagos)
+    return nuevo_id_pago
+
+
+def _registrar_venta_pos_admin(carrito_validado, metodo_pago, total, total_descuento):
+    pedidos = cargar_pedidos_df()
+    detalle_pedido = cargar_detalle_pedido_df()
+    pagos = cargar_pagos_df()
+    items_detalle = _construir_items_detalle_desde_carrito(carrito_validado)
+    next_pedido_id = _crear_pedido_y_detalle(
+        pedidos=pedidos,
+        detalle_pedido=detalle_pedido,
+        id_usuario=session.get('usuario', 'admin_pos'),
+        estado_pedido='completado',
+        items_detalle=items_detalle
+    )
+
+    resumen_promos = _resumen_promocion_pago_desde_carrito(carrito_validado)
+    _crear_pago_para_pedido(
+        pagos=pagos,
+        id_pedido=next_pedido_id,
+        monto=round(total, 2),
+        metodo_pago=metodo_pago,
+        resumen_promos={
+            'id_promo': resumen_promos['id_promo'],
+            'codigo_promo': resumen_promos['codigo_promo'],
+            'tipo_descuento': resumen_promos['tipo_descuento'],
+            'valor_descuento': round(float(pd.to_numeric(resumen_promos['valor_descuento'], errors='coerce') or 0.0), 2)
+        },
+        monto_descuento=round(total_descuento, 2)
+    )
+
+    return next_pedido_id
+
+
+@app.route('/admin/pos/checkout', methods=['POST'])
+def admin_pos_checkout():
+    if session.get('rol') != 'admin':
+        return "Acceso denegado"
+
+    cliente_nombre = request.form.get('cliente_nombre', '').strip()
+    cliente_correo = request.form.get('cliente_correo', '').strip().lower()
+    cliente_documento = request.form.get('cliente_documento', '').strip()
+    cliente_telefono = request.form.get('cliente_telefono', '').strip()
+    error_cliente = _validar_cliente_pos(
+        cliente_nombre,
+        cliente_correo,
+        cliente_documento,
+        cliente_telefono
+    )
+    if error_cliente:
+        flash(error_cliente[0], error_cliente[1])
+        return redirect(url_for('admin_pos'))
+
+    items_raw = request.form.get('items_json', '[]')
+    metodo_pago = _normalizar_metodo_pago_pos(request.form.get('metodo_pago', 'efectivo'))
+
+    items, error_items = _parsear_items_checkout_pos(items_raw)
+    if error_items:
+        flash(error_items[0], error_items[1])
+        return redirect(url_for('admin_pos'))
+
+    productos = cargar_productos_df()
+    if productos.empty:
+        flash('No existe el catálogo de productos.', 'danger')
+        return redirect(url_for('admin_pos'))
+
+    promos = cargar_promociones_df()
+    hoy = datetime.now().date()
+    mejor_promo_por_producto = obtener_mejor_promocion_por_producto(productos, promos, hoy)
+
+    resultado_carrito, error_carrito = _validar_y_preparar_carrito_pos(
+        items,
+        productos,
+        mejor_promo_por_producto
+    )
+    if error_carrito:
+        flash(error_carrito[0], error_carrito[1])
+        return redirect(url_for('admin_pos'))
+
+    carrito_validado = resultado_carrito['carrito_validado']
+    total_bruto = resultado_carrito['total_bruto']
+    total_descuento = resultado_carrito['total_descuento']
+    total = resultado_carrito['total']
+    guardar_productos_df(resultado_carrito['productos'])
+
+    next_pedido_id = _registrar_venta_pos_admin(
+        carrito_validado,
+        metodo_pago,
+        total,
+        total_descuento
+    )
 
     total_bruto = round(total_bruto, 2)
     total_descuento = round(total_descuento, 2)
@@ -2468,7 +2652,7 @@ def editar_producto(id_producto):
         nueva_fuerza = request.form.get('fuerza', anterior['fuerza']).strip()
         nueva_intendencia = request.form.get('intendencia', anterior['intendencia']).strip()
         if nueva_fuerza not in FUERZAS_OPCIONES or nueva_intendencia not in INTENDENCIAS_OPCIONES:
-            flash('Selecciona una fuerza e intendencia validas.', 'danger')
+            flash('Selecciona una fuerza e intendencia válidas.', 'danger')
             return redirect(url_for('admin_productos'))
 
         nueva_categoria = anterior['id_categoria']
@@ -2539,25 +2723,7 @@ def user_dashboard():
         # Promoción vigente por producto para mostrar en catálogo
         promos = cargar_promociones_df()
         hoy = datetime.now().date()
-        mejor_promo_por_producto = {}
-        mejor_descuento_por_producto = {}
-        for _, row in promos.iterrows():
-            promo = row.to_dict()
-            if not promocion_esta_aplicable(promo, hoy):
-                continue
-            id_producto_promo = pd.to_numeric(promo.get('id_producto'), errors='coerce')
-            if pd.isna(id_producto_promo):
-                continue
-            id_prod_int = int(id_producto_promo)
-            precio_ref = float(pd.to_numeric(
-                productos.loc[productos['id_producto'] == id_prod_int, 'precio'].iloc[0]
-                if not productos[productos['id_producto'] == id_prod_int].empty else 0,
-                errors='coerce'
-            ) or 0)
-            descuento_actual = calcular_descuento_promocion(precio_ref, promo)
-            if descuento_actual > mejor_descuento_por_producto.get(id_prod_int, -1):
-                mejor_descuento_por_producto[id_prod_int] = descuento_actual
-                mejor_promo_por_producto[id_prod_int] = promo
+        mejor_promo_por_producto = obtener_mejor_promocion_por_producto(productos, promos, hoy)
 
         for producto in lista_productos:
             precio_base = float(pd.to_numeric(producto.get('precio', 0), errors='coerce') or 0)
@@ -2649,7 +2815,7 @@ def add_to_cart(id_producto):
     if item_existente:
         nueva_cantidad = int(item_existente.get('cantidad', 0)) + cantidad
         if nueva_cantidad > stock_actual:
-            flash(f'No puedes agregar mas de {stock_actual} unidad(es) de "{producto["nombre"]}".', 'warning')
+            flash(f'No puedes agregar más de {stock_actual} unidad(es) de "{producto["nombre"]}".', 'warning')
             return redirect(url_for('cart'))
         item_existente['cantidad'] = nueva_cantidad
         item_existente['subtotal'] = float(item_existente['precio']) * nueva_cantidad
@@ -2728,6 +2894,92 @@ def checkout():
         return render_template('Usuarios/Carrito/checkout.html', carrito=carrito, total=total)
     return "Acceso denegado"
 
+
+def _asegurar_columnas_descuento_pagos(pagos):
+    if 'id_promo' not in pagos.columns:
+        pagos['id_promo'] = pd.Series(dtype='float')
+    if 'codigo_promo' not in pagos.columns:
+        pagos['codigo_promo'] = ''
+    if 'tipo_descuento' not in pagos.columns:
+        pagos['tipo_descuento'] = ''
+    if 'valor_descuento' not in pagos.columns:
+        pagos['valor_descuento'] = 0.0
+    if 'monto_descuento' not in pagos.columns:
+        pagos['monto_descuento'] = 0.0
+    return pagos
+
+
+def _resolver_promocion_checkout(codigo_promo, promos, total):
+    if not codigo_promo:
+        return None, 0.0, None
+
+    promo_aplicada = buscar_promocion_por_codigo(promos, codigo_promo, datetime.now().date())
+    if promo_aplicada is None:
+        return None, 0.0, ('El código promocional no es válido o no está vigente.', 'warning')
+
+    descuento_promo = calcular_descuento_promocion(total, promo_aplicada)
+    return promo_aplicada, descuento_promo, None
+
+
+def _validar_stock_checkout(productos, carrito):
+    for item in carrito:
+        id_producto = int(item.get('id_producto', 0))
+        cantidad = int(item.get('cantidad', 0))
+        fila = productos[(productos['id_producto'] == id_producto) & (productos['eliminado'] == False)]
+        if fila.empty:
+            return (f'El producto "{item.get("nombre", id_producto)}" ya no está disponible.', 'warning')
+        stock_actual = int(fila.iloc[0].get('stock', 0))
+        if cantidad > stock_actual:
+            nombre = str(fila.iloc[0].get('nombre', item.get('nombre', id_producto)))
+            return (f'Stock insuficiente para "{nombre}". Disponible: {stock_actual}.', 'warning')
+    return None
+
+
+def _descontar_stock_checkout(productos, carrito):
+    agotados_en_compra = []
+    for item in carrito:
+        id_producto = int(item.get('id_producto', 0))
+        cantidad = int(item.get('cantidad', 0))
+        idx = productos[productos['id_producto'] == id_producto].index[0]
+        stock_anterior = int(productos.at[idx, 'stock'])
+        nuevo_stock = stock_anterior - cantidad
+        productos.at[idx, 'stock'] = nuevo_stock
+        if stock_anterior > 0 and nuevo_stock == 0:
+            agotados_en_compra.append(str(productos.at[idx, 'nombre']))
+    return agotados_en_compra
+
+
+def _registrar_compra_checkout_usuario(
+    carrito,
+    pedidos,
+    detalle_pedido,
+    pagos,
+    metodo_pago,
+    total_final,
+    promo_aplicada,
+    descuento_promo
+):
+    items_detalle = _construir_items_detalle_desde_carrito(carrito)
+    nuevo_id_pedido = _crear_pedido_y_detalle(
+        pedidos=pedidos,
+        detalle_pedido=detalle_pedido,
+        id_usuario=session.get('id_usuario', session['usuario']),
+        estado_pedido='pendiente',
+        items_detalle=items_detalle
+    )
+
+    resumen_promos = _resumen_promocion_desde_promo_aplicada(promo_aplicada)
+    _crear_pago_para_pedido(
+        pagos=pagos,
+        id_pedido=nuevo_id_pedido,
+        monto=total_final,
+        metodo_pago=metodo_pago,
+        resumen_promos=resumen_promos,
+        monto_descuento=float(descuento_promo)
+    )
+    return nuevo_id_pedido
+
+
 @app.route('/pay', methods=['POST'])
 def pay():
     if session.get('rol') == 'normal':
@@ -2747,21 +2999,10 @@ def pay():
         
         total = sum(item['subtotal'] for item in carrito)
         codigo_promo = request.form.get('codigo_promo', '').strip().upper()
-        promo_aplicada = None
-        descuento_promo = 0.0
+        metodo_pago = request.form['metodo_pago']
 
         pagos = cargar_pagos_df()
-
-        if 'id_promo' not in pagos.columns:
-            pagos['id_promo'] = pd.Series(dtype='float')
-        if 'codigo_promo' not in pagos.columns:
-            pagos['codigo_promo'] = ''
-        if 'tipo_descuento' not in pagos.columns:
-            pagos['tipo_descuento'] = ''
-        if 'valor_descuento' not in pagos.columns:
-            pagos['valor_descuento'] = 0.0
-        if 'monto_descuento' not in pagos.columns:
-            pagos['monto_descuento'] = 0.0
+        pagos = _asegurar_columnas_descuento_pagos(pagos)
 
         pedidos = cargar_pedidos_df()
         detalle_pedido = cargar_detalle_pedido_df()
@@ -2772,84 +3013,31 @@ def pay():
             return redirect(url_for('cart'))
 
         promos = cargar_promociones_df()
-        if codigo_promo:
-            promo_aplicada = buscar_promocion_por_codigo(promos, codigo_promo, datetime.now().date())
-            if promo_aplicada is None:
-                flash('El código promocional no es válido o no está vigente.', 'warning')
-                return redirect(url_for('cart'))
-            descuento_promo = calcular_descuento_promocion(total, promo_aplicada)
+        promo_aplicada, descuento_promo, error_promo = _resolver_promocion_checkout(codigo_promo, promos, total)
+        if error_promo:
+            flash(error_promo[0], error_promo[1])
+            return redirect(url_for('cart'))
 
         total_final = max(0.0, float(total) - float(descuento_promo))
 
-        for item in carrito:
-            id_producto = int(item.get('id_producto', 0))
-            cantidad = int(item.get('cantidad', 0))
-            fila = productos[(productos['id_producto'] == id_producto) & (productos['eliminado'] == False)]
-            if fila.empty:
-                flash(f'El producto "{item.get("nombre", id_producto)}" ya no está disponible.', 'warning')
-                return redirect(url_for('cart'))
-            stock_actual = int(fila.iloc[0].get('stock', 0))
-            if cantidad > stock_actual:
-                nombre = str(fila.iloc[0].get('nombre', item.get('nombre', id_producto)))
-                flash(f'Stock insuficiente para "{nombre}". Disponible: {stock_actual}.', 'warning')
-                return redirect(url_for('cart'))
+        error_stock = _validar_stock_checkout(productos, carrito)
+        if error_stock:
+            flash(error_stock[0], error_stock[1])
+            return redirect(url_for('cart'))
 
-        agotados_en_compra = []
-        for item in carrito:
-            id_producto = int(item.get('id_producto', 0))
-            cantidad = int(item.get('cantidad', 0))
-            idx = productos[productos['id_producto'] == id_producto].index[0]
-            stock_anterior = int(productos.at[idx, 'stock'])
-            nuevo_stock = stock_anterior - cantidad
-            productos.at[idx, 'stock'] = nuevo_stock
-            if stock_anterior > 0 and nuevo_stock == 0:
-                agotados_en_compra.append(str(productos.at[idx, 'nombre']))
-
+        agotados_en_compra = _descontar_stock_checkout(productos, carrito)
         guardar_productos_df(productos)
 
-        # Crear nuevo pedido
-        nuevo_id_pedido = next_id('pedidos', 'id_pedido')
-        nuevo_pedido = {
-            'id_pedido': nuevo_id_pedido,
-            'id_usuario': session.get('id_usuario', session['usuario']),
-            'fecha_pedido': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-            'estado': 'pendiente'
-        }
-        pedidos = pd.concat([pedidos, pd.DataFrame([nuevo_pedido])], ignore_index=True)
-        guardar_pedidos_df(pedidos)
-        
-        # Guardar detalles del pedido
-        next_detalle_id = next_id('detalle_pedido', 'id_detalle')
-        for item in carrito:
-            nuevo_detalle = {
-                'id_detalle': next_detalle_id,
-                'id_pedido': nuevo_id_pedido,
-                'id_producto': item['id_producto'],
-                'cantidad': item['cantidad'],
-                'subtotal': item['subtotal']
-            }
-            detalle_pedido = pd.concat([detalle_pedido, pd.DataFrame([nuevo_detalle])], ignore_index=True)
-            next_detalle_id += 1
-        
-        guardar_detalle_pedido_df(detalle_pedido)
-
-        # Registrar pago
-        nuevo_id_pago = next_id('pagos', 'id_pago')
-        nuevo_pago = {
-            'id_pago': nuevo_id_pago,
-            'id_pedido': nuevo_id_pedido,
-            'monto': total_final,
-            'metodo_pago': request.form['metodo_pago'],
-            'fecha_pago': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-            'estado_pago': 'aprobado',
-            'id_promo': int(pd.to_numeric(promo_aplicada.get('id_promo'), errors='coerce')) if promo_aplicada else '',
-            'codigo_promo': promo_aplicada.get('codigo', '') if promo_aplicada else '',
-            'tipo_descuento': promo_aplicada.get('tipo_descuento', '') if promo_aplicada else '',
-            'valor_descuento': float(pd.to_numeric(promo_aplicada.get('valor_descuento', 0), errors='coerce')) if promo_aplicada else 0.0,
-            'monto_descuento': float(descuento_promo)
-        }
-        pagos = pd.concat([pagos, pd.DataFrame([nuevo_pago])], ignore_index=True)
-        guardar_pagos_df(pagos)
+        nuevo_id_pedido = _registrar_compra_checkout_usuario(
+            carrito=carrito,
+            pedidos=pedidos,
+            detalle_pedido=detalle_pedido,
+            pagos=pagos,
+            metodo_pago=metodo_pago,
+            total_final=total_final,
+            promo_aplicada=promo_aplicada,
+            descuento_promo=descuento_promo
+        )
         
         # Registrar accion
         registrar_actividad(f"Creo pedido #{nuevo_id_pedido} con {len(carrito)} producto(s) por {formatear_cop(total_final)}")
@@ -2861,9 +3049,9 @@ def pay():
         session['carrito'] = []
         session.modified = True
 
-        # Preparar datos para la pagina de confirmacion
+        # Preparar datos para la página de confirmación
         metodo_pago_nombres = {
-            'tarjeta': 'Tarjeta de Credito/Debito',
+            'tarjeta': 'Tarjeta de Crédito/Débito',
             'transferencia': 'Transferencia Bancaria',
             'efectivo': 'Efectivo',
             'paypal': 'PayPal'
@@ -2871,7 +3059,7 @@ def pay():
         
         return render_template('Usuarios/Carrito/order_confirmation.html',
             pedido_id=nuevo_id_pedido,
-            metodo_pago=metodo_pago_nombres.get(request.form['metodo_pago'], request.form['metodo_pago']),
+            metodo_pago=metodo_pago_nombres.get(metodo_pago, metodo_pago),
             fecha=datetime.now().strftime("%d/%m/%Y %H:%M"),
             total=total_final,
             promo_codigo=promo_aplicada.get('codigo', '') if promo_aplicada else None,
@@ -3329,10 +3517,10 @@ def admin_promo():
         inicio_date = parsear_fecha_promocion(fecha_inicio)
         fin_date = parsear_fecha_promocion(fecha_fin)
         if inicio_date and fin_date and inicio_date > fin_date:
-            flash('La fecha de inicio no puede ser mayor que la fecha fin.', 'warning')
+            flash('La fecha de inicio no puede ser mayor que la fecha de fin.', 'warning')
             return redirect(url_for('admin_promo'))
         if pd.isna(id_producto):
-            flash('Debes seleccionar un producto para la promocion.', 'warning')
+            flash('Debes seleccionar un producto para la promoción.', 'warning')
             return redirect(url_for('admin_promo'))
         productos_ref = cargar_productos_activos_df()
         id_producto_num = int(id_producto)
@@ -3366,7 +3554,7 @@ def admin_promo():
         guardar_promociones_df(promos)
         detalle_desc = formatear_cop(valor_descuento) if tipo_descuento == 'valor_fijo' else f"{valor_descuento:.2f}%"
         registrar_actividad(
-            f"Promocion creada: {nombre}\n"
+            f"Promoción creada: {nombre}\n"
             f"- producto ID: {int(id_producto)}\n"
             f"- descuento: {detalle_desc}\n"
             f"- codigo: {codigo or 'N/A'}"
@@ -3723,13 +3911,13 @@ def admin_charts_export_excel():
         resumen_df.to_excel(writer, sheet_name='Resumen', index=False)
         datos['ventas_producto_df'].to_excel(writer, sheet_name='Ventas por producto', index=False)
         datos['ventas_mes_df'].to_excel(writer, sheet_name='Ventas por mes', index=False)
-        datos['metodos_pago_df'].to_excel(writer, sheet_name='Metodos de pago', index=False)
+        datos['metodos_pago_df'].to_excel(writer, sheet_name='Métodos de pago', index=False)
         datos['top_productos_df'].to_excel(writer, sheet_name='Top productos', index=False)
 
         wb = writer.book
         ws_producto = wb['Ventas por producto']
         ws_mes = wb['Ventas por mes']
-        ws_metodos = wb['Metodos de pago']
+        ws_metodos = wb['Métodos de pago']
         ws_top = wb['Top productos']
         formato_cop = '[>=1000]#,##0.00 "COP";0.00 "COP"'
 

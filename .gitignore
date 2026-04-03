@@ -29,6 +29,7 @@ Thumbs.db
 .tmp_env/
 .tmp_py/
 .virtualenv_appdata/
+recibo_pos_*/
 
 # Archivos de Excel (datos)
 *.xlsx

@@ -14,12 +14,12 @@
 <body class="orden-page">
     <header class="orden-topbar">
         <div class="orden-topbar__left">
-            <button class="orden-icon-button" id="btn-menu" type="button" aria-label="Abrir menu">
+            <button class="orden-icon-button" id="btn-menu" type="button" aria-label="Abrir menú">
                 <i class="fas fa-bars"></i>
             </button>
             <a class="orden-topbar__brand" href="{{ url_for('user_dashboard') }}">
                 <i class="fas fa-shirt"></i>
-                <span>Ordenes personalizadas</span>
+                <span>&Oacute;rdenes personalizadas</span>
             </a>
         </div>
         <button class="orden-exit-button" id="btn-salir" type="button">
@@ -30,18 +30,18 @@
 
     <main class="orden-layout">
         <section class="orden-hero">
-            <p class="orden-kicker">Personalizacion guiada</p>
-            <h1>Disena tu prenda paso a paso</h1>
+            <p class="orden-kicker">Personalizaci&oacute;n guiada</p>
+            <h1>Dise&ntilde;a tu prenda paso a paso</h1>
             <p class="orden-lead">
                 Configura tipo de producto, color, estampado y talla desde una sola vista.
             </p>
         </section>
 
-        <section class="orden-gender-switch" aria-label="Tipo de coleccion">
+        <section class="orden-gender-switch" aria-label="Tipo de colecci&oacute;n">
             <button class="orden-chip orden-chip--active" data-genero="unisex" type="button">Unisex</button>
         </section>
 
-        <section class="orden-steps" aria-label="Progreso de personalizacion">
+        <section class="orden-steps" aria-label="Progreso de personalizaci&oacute;n">
             <div class="orden-step">
                 <div class="orden-step__number orden-step__number--active" id="paso1-header">1</div>
                 <span class="orden-step__label orden-step__label--active">Producto</span>
@@ -86,7 +86,7 @@
                         </button>
                         <button class="orden-product-card" data-producto="panoleta" type="button">
                             <i class="fas fa-ribbon"></i>
-                            <span>Panuelo</span>
+                            <span>Pa&ntilde;uelo</span>
                         </button>
                         <button class="orden-product-card" data-producto="buso-manga-larga" type="button">
                             <i class="fas fa-person-dress"></i>
@@ -95,15 +95,15 @@
                     </div>
 
                     <div class="orden-subsection">
-                        <label class="orden-field-label">Tecnica</label>
+                        <label class="orden-field-label">T&eacute;cnica</label>
                         <div class="orden-option-grid orden-option-grid--two">
-                            <button class="orden-option-button orden-option-button--active" data-tecnica="impresion" type="button">Impresion</button>
+                            <button class="orden-option-button orden-option-button--active" data-tecnica="impresion" type="button">Impresi&oacute;n</button>
                             <button class="orden-option-button" data-tecnica="bordado" type="button">Bordado</button>
                         </div>
                     </div>
 
                     <div class="orden-actions">
-                        <button class="orden-nav-button" type="button" disabled>Atras</button>
+                        <button class="orden-nav-button" type="button" disabled>Atr&aacute;s</button>
                         <button class="orden-nav-button orden-nav-button--primary" data-siguiente="2" type="button">Siguiente</button>
                     </div>
                 </div>
@@ -137,7 +137,7 @@
                     </div>
 
                     <div class="orden-actions">
-                        <button class="orden-nav-button" data-anterior="1" type="button">Atras</button>
+                        <button class="orden-nav-button" data-anterior="1" type="button">Atr&aacute;s</button>
                         <button class="orden-nav-button orden-nav-button--primary" data-siguiente="3" type="button">Siguiente</button>
                     </div>
                 </div>
@@ -147,7 +147,7 @@
                         <span class="orden-section-title__number">3</span>
                         <div>
                             <h2>Elige el estampado</h2>
-                            <p>Define la intervencion visual principal de la prenda.</p>
+                            <p>Define la intervenci&oacute;n visual principal de la prenda.</p>
                         </div>
                     </div>
 
@@ -175,7 +175,7 @@
                     </div>
 
                     <div class="orden-actions">
-                        <button class="orden-nav-button" data-anterior="2" type="button">Atras</button>
+                        <button class="orden-nav-button" data-anterior="2" type="button">Atr&aacute;s</button>
                         <button class="orden-nav-button orden-nav-button--primary" data-siguiente="4" type="button">Siguiente</button>
                     </div>
                 </div>
@@ -202,7 +202,7 @@
                     </div>
 
                     <div class="orden-actions">
-                        <button class="orden-nav-button" data-anterior="3" type="button">Atras</button>
+                        <button class="orden-nav-button" data-anterior="3" type="button">Atr&aacute;s</button>
                         <button class="orden-nav-button orden-nav-button--primary" id="btn-finalizar" type="button">Finalizar</button>
                     </div>
                 </div>
@@ -214,20 +214,20 @@
                     <p>Usa esta columna para revisar la configuración actual.</p>
                 </div>
 
-                <div class="orden-tabs" aria-label="Areas de personalizacion">
+                <div class="orden-tabs" aria-label="&Aacute;reas de personalizaci&oacute;n">
                     <button class="orden-tab orden-tab--active" data-area="pecho-izquierdo" type="button">Pecho izquierdo</button>
                     <button class="orden-tab" data-area="centro-pecho" type="button">Centro pecho</button>
                     <button class="orden-tab" data-area="centro-ampliado" type="button">Centro ampliado</button>
                     <button class="orden-tab" data-area="manga-izquierda" type="button">Manga izquierda</button>
                     <button class="orden-tab" data-area="manga-derecha" type="button">Manga derecha</button>
-                    <button class="orden-tab" data-area="impresion-trasera" type="button">Impresion trasera</button>
-                    <button class="orden-tab" data-area="impresion-delantera" type="button">Impresion delantera</button>
+                    <button class="orden-tab" data-area="impresion-trasera" type="button">Impresi&oacute;n trasera</button>
+                    <button class="orden-tab" data-area="impresion-delantera" type="button">Impresi&oacute;n delantera</button>
                 </div>
 
                 <div class="orden-preview-canvas" id="area-preview">
                     <div class="orden-preview-canvas__content">
                         <i class="fas fa-shirt"></i>
-                        <p>Selecciona una configuracion para visualizar tu prenda.</p>
+                        <p>Selecciona una configuraci&oacute;n para visualizar tu prenda.</p>
                     </div>
                 </div>
 
@@ -238,7 +238,7 @@
                     </div>
                     <div class="orden-summary__row">
                         <span>Descripción general</span>
-                        <strong id="info-informacion">Camiseta | Impresion | Paso 1/4</strong>
+                        <strong id="info-informacion">Camiseta | Impresi&oacute;n | Paso 1/4</strong>
                     </div>
                     <div class="orden-summary__row">
                         <span>Color</span>

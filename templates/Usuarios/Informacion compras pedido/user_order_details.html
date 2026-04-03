@@ -23,7 +23,7 @@
 
         <div class="info-pedido">
             <h2>Informaci&oacute;n del Pedido</h2>
-            <p><strong>Numero de Pedido:</strong> #{{ pedido.id_pedido }}</p>
+            <p><strong>N&uacute;mero de Pedido:</strong> #{{ pedido.id_pedido }}</p>
             <p><strong>Fecha de Compra:</strong> {{ pedido.fecha_pedido }}</p>
             <p><strong>Estado:</strong>
                 <span class="estado-{{ pedido.estado }}">
@@ -55,7 +55,7 @@
             </tr>
         </table>
         {% else %}
-        <p>No hay informacion disponible sobre los productos de este pedido.</p>
+        <p>No hay informaci&oacute;n disponible sobre los productos de este pedido.</p>
         {% endif %}
     </div>
 
