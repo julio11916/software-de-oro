@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict 73VzDBYxikSRahytNVRGhTJThGZmg6VWcQqbB1PK9IW7cs38vHCoVqzaxNjIlsy
+\restrict nyLw9sfBzjh6eMfq3voRwYY76AYHm8usvWappQT4IS5ukm1fnF6l6qbC9SXAezg
 
 -- Dumped from database version 18.3
 -- Dumped by pg_dump version 18.3
@@ -190,8 +190,10 @@ CREATE TABLE public.usuarios (
     estado text,
     fecha_registro text,
     email_verified boolean,
-    verification_code double precision,
-    verification_code_expiry text
+    verification_code text,
+    verification_code_expiry text,
+    reset_token text,
+    reset_token_expiry text
 );
 
 
@@ -304,6 +306,7 @@ COPY public.detalle_pedido (id_detalle, id_pedido, id_producto, cantidad, subtot
 41	35	3	1	50000
 42	36	3	1	50000
 43	37	3	1	50000
+44	38	3	1	50000
 \.
 
 
@@ -345,6 +348,7 @@ COPY public.pagos (id_pago, id_pedido, monto, metodo_pago, fecha_pago, estado_pa
 35	35	50000	qr	2026-03-25 19:56:07	aprobado	1		porcentaje	50	50000
 36	36	50000	qr	2026-03-25 20:29:37	aprobado	1		porcentaje	50	50000
 37	37	50000	efectivo	2026-03-27 14:14:32	aprobado	1		porcentaje	50	50000
+38	38	50000	transferencia	2026-03-27 16:51:25	aprobado	1		porcentaje	50	50000
 \.
 
 
@@ -386,6 +390,7 @@ COPY public.pedidos (id_pedido, id_usuario, fecha_pedido, estado) FROM stdin;
 35	nico@gmail.com	2026-03-25 19:56:06	completado
 36	nico@gmail.com	2026-03-25 20:29:37	completado
 37	nico@gmail.com	2026-03-27 14:14:32	completado
+38	nico@gmail.com	2026-03-27 16:51:25	completado
 \.
 
 
@@ -396,7 +401,7 @@ COPY public.pedidos (id_pedido, id_usuario, fecha_pedido, estado) FROM stdin;
 COPY public.producto (id_producto, nombre, descripcion, precio, stock, id_categoria, fuerza, intendencia, imagen_url, eliminado) FROM stdin;
 1	Camiseta mallada	Damn	60	10	1	Policia	Busos	img/Empresa/producto_1.jpg	t
 2	Armando Estaban Quito	puro de corazon	100000	100	1	Gaula	Camibusos	img/Empresa/producto_2_1.jpg	t
-3	Camiseta unisex con camuflado	Diseñada para brindar comodidad y estilo en cualquier ocasión. Disponible en versiones con camuflado, que incluyen diseños representativos y gráficos alusivos a la institución.	100000	9	1	Ejercito	Camuflados	img/Empresa/producto_3.jpg	f
+3	Camiseta unisex con camuflado	Diseñada para brindar comodidad y estilo en cualquier ocasión. Disponible en versiones con camuflado, que incluyen diseños representativos y gráficos alusivos a la institución.	100000	8	1	Ejercito	Camuflados	img/Empresa/producto_3.jpg	f
 4	Camiseta unisex sin estampado color negro	Diseñada para brindar comodidad y estilo en cualquier ocasión. Ideal para quienes prefieren un estilo más sencillo y versátil.	50000	10	1	Ejercito	Busos	img/Empresa/producto_4.jpg	f
 5	Camiseta unisex sin estampado color blanco	Diseñada para brindar comodidad y estilo en cualquier ocasión. Ideal para quienes prefieren un estilo más sencillo y versátil.	50000	10	1	Ejercito	Busos	img/Empresa/producto_5.jpg	f
 6	Camiseta unisex color verde	Diseñada para brindar comodidad y estilo en cualquier ocasión. Ideal para quienes prefieren un estilo más sencillo y versátil.	50000	10	1	Ejercito	Busos	img/Empresa/producto_6.jpg	f
@@ -610,6 +615,23 @@ COPY public.registros (id_registro, id_usuario, accion, fecha_accion) FROM stdin
 176	nico@gmail.com	POS registro venta #37 por COP 50.000,00 (1 producto(s))\n- total bruto: COP 100.000,00\n- descuento aplicado: COP 50.000,00\n- cliente: cata\n- correo: ratalina@gmail.com\n- documento: 34795368972\n- teléfono: 3204567896	2026-03-27 14:14:32
 177	julio@gmail.com	Inicio de sesión exitoso	2026-03-27 15:11:37
 178	nico@gmail.com	Inicio de sesión exitoso	2026-03-27 15:12:36
+179	nico@gmail.com	Inicio de sesión exitoso	2026-03-27 16:43:07
+180	nico@gmail.com	POS registro venta #38 por COP 50.000,00 (1 producto(s))\n- total bruto: COP 100.000,00\n- descuento aplicado: COP 50.000,00\n- cliente: cata\n- correo: ratalina@gmail.com\n- documento: 34795368972\n- teléfono: 3204567896	2026-03-27 16:51:25
+181	nico@gmail.com	Inicio de sesión exitoso	2026-04-02 16:45:28
+182	julio@gmail.com	Inicio de sesión exitoso	2026-04-02 16:47:30
+183	admin	Nuevo usuario registrado: julio cesar otalvaro sanchez	2026-04-02 16:50:05
+184	somosdecimoB2020@gmail.com	Código de autenticación generado para somosdecimoB2020@gmail.com (modo desarrollo)	2026-04-02 16:50:20
+185	somosdecimoB2020@gmail.com	Usuario somosdecimoB2020@gmail.com verificó su correo electrónico	2026-04-02 16:51:18
+186	nico@gmail.com	Inicio de sesión exitoso	2026-04-02 17:30:25
+187	nico@gmail.com	Inicio de sesión exitoso	2026-04-02 17:45:54
+188	admin	Nuevo usuario registrado y verificado: julio cesar otalvaro sanchez	2026-04-02 18:52:23
+189	admin	Enlace de recuperacion enviado a nachoher072+recoverytest1775230812@gmail.com	2026-04-03 10:40:14
+190	admin	Contrasena restablecida por recuperacion para nachoher072+recoverytest1775230812@gmail.com	2026-04-03 10:40:14
+191	nachoher072+recoverytest1775230812@gmail.com	Inicio de sesión exitoso	2026-04-03 10:40:14
+192	admin	Enlace de recuperacion enviado a somosdecimob2020@gmail.com	2026-04-03 11:24:56
+193	admin	Contrasena restablecida por recuperacion para somosdecimob2020@gmail.com	2026-04-03 11:26:18
+194	somosdecimob2020@gmail.com	Inicio de sesión exitoso	2026-04-03 11:26:49
+195	julio@gmail.com	Inicio de sesión exitoso	2026-04-03 11:31:17
 \.
 
 
@@ -617,17 +639,19 @@ COPY public.registros (id_registro, id_usuario, accion, fecha_accion) FROM stdin
 -- Data for Name: usuarios; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
-COPY public.usuarios (id_usuario, nombre, email, password_hash, rol, estado, fecha_registro, email_verified, verification_code, verification_code_expiry) FROM stdin;
-1	Nico	nico@gmail.com	admin	admin	activo	2026-02-06 14:55:32	f	\N	\N
-2	Julio	julio@gmail.com	admin	normal	activo	2026-02-06 14:55:32	f	801703	2026-03-06 14:07:29
-3	Alvaréx Freo	alv@gmail.com	admin	normal	activo	2026-02-06 16:40:07	f	\N	\N
-4	jilmer	hola@gmail.com	admin	admin	activo	2026-02-20 15:47:06	f	\N	\N
-5	Isabel	hola3@gmail.com	123456789	normal	activo	2026-02-20 15:47:36	f	\N	\N
-6	Tatiana Rivera	tatis@gmail.com	admin	normal	activo	2026-02-25 22:35:53	f	\N	\N
-7	Tatiana Rivera	tr3303419@gmail.com	admin	normal	inactivo	2026-02-26 22:54:23	f	\N	\N
-8	David	david@gmail.com	4321	normal	activo	2026-03-04 19:37:39	f	\N	\N
-9	David	rodriguezsierradavidsantiago@gmail.com	54321	normal	activo	2026-03-04 22:56:35	t	844313	2026-03-04 23:45:18
-10	Catalina rodriguez	catar@gmail.com	Catalina1.	normal	activo	2026-03-13 15:30:56	\N	\N	\N
+COPY public.usuarios (id_usuario, nombre, email, password_hash, rol, estado, fecha_registro, email_verified, verification_code, verification_code_expiry, reset_token, reset_token_expiry) FROM stdin;
+1	Nico	nico@gmail.com	admin	admin	activo	2026-02-06 14:55:32	f				
+2	Julio	julio@gmail.com	scrypt:32768:8:1$LelqMtI3TmTMyzOE$bebb09284b93879bd665d266791c9d2b8fb8ddd46c90620e350e6cfbce10695ae1bdcfbe52fae9a7cd79af1bec0e0bacea6a1dc725a5c757f07ad6d499b4e29b	normal	activo	2026-02-06 14:55:32	f	801703	2026-03-06 14:07:29		
+3	Alvaréx Freo	alv@gmail.com	admin	normal	activo	2026-02-06 16:40:07	f				
+4	jilmer	hola@gmail.com	admin	admin	activo	2026-02-20 15:47:06	f				
+5	Isabel	hola3@gmail.com	123456789	normal	activo	2026-02-20 15:47:36	f				
+6	Tatiana Rivera	tatis@gmail.com	admin	normal	activo	2026-02-25 22:35:53	f				
+7	Tatiana Rivera	tr3303419@gmail.com	admin	normal	inactivo	2026-02-26 22:54:23	f				
+8	David	david@gmail.com	4321	normal	activo	2026-03-04 19:37:39	f				
+9	David	rodriguezsierradavidsantiago@gmail.com	54321	normal	activo	2026-03-04 22:56:35	t	844313	2026-03-04 23:45:18		
+10	Catalina rodriguez	catar@gmail.com	Catalina1.	normal	activo	2026-03-13 15:30:56	f				
+11	julio cesar otalvaro sanchez	somosdecimob2020@gmail.com	scrypt:32768:8:1$xXEaOs4nnTL7BFLU$2c58839161a345654ccc41bb69e2d88185b4082bc0f5b443e92a7b294b9c36029c515fa8f46b0d6dbced71ecafe5edc07def0dc5089c22658654c6006d70dd50	normal	activo	2026-04-02 16:50:05	t				
+12	julio cesar otalvaro sanchez	julio11916@gmail.com	Skrillex_san1111042086	normal	activo	2026-04-02 18:52:23	t				
 \.
 
 
@@ -657,5 +681,5 @@ REVOKE USAGE ON SCHEMA public FROM PUBLIC;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict 73VzDBYxikSRahytNVRGhTJThGZmg6VWcQqbB1PK9IW7cs38vHCoVqzaxNjIlsy
+\unrestrict nyLw9sfBzjh6eMfq3voRwYY76AYHm8usvWappQT4IS5ukm1fnF6l6qbC9SXAezg
 
