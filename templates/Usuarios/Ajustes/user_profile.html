@@ -52,7 +52,7 @@
                         <i class="fas fa-shield-alt me-2" style="color: #28a745;"></i>
                         <span style="color: #155724;">Tu correo est&aacute; verificado. Autenticaci&oacute;n disponible</span>
                         <button class="btn btn-sm ms-auto" data-bs-toggle="modal" data-bs-target="#modalVerificacion"
-                            style="background-color: #28a745; color: white; border: none; padding: 0.4rem 1rem; border-radius: 6px;">Autenticar</button>
+                            style="background: linear-gradient(135deg, hsl(226, 43%, 38%) 0%, #3263a3 60%, #1794d2 100%); color: white; border: 1px solid #3263a3; padding: 0.4rem 1rem; border-radius: 6px; box-shadow: 0 6px 14px rgba(23, 162, 184, 0.25);">Autenticar</button>
                     </div>
                     {% else %}
                     <!-- Email No Verificado -->
@@ -61,7 +61,7 @@
                         <i class="fas fa-envelope me-2" style="color: #ffc107;"></i>
                         <span style="color: #856404;">Valida tu correo y mant&eacute;n tu cuenta segura</span>
                         <button class="btn btn-sm ms-auto" data-bs-toggle="modal" data-bs-target="#modalVerificacion"
-                            style="background-color: #3483fa; color: white; border: none; padding: 0.4rem 1rem; border-radius: 6px;">Validar</button>
+                            style="background: linear-gradient(135deg, hsl(226, 43%, 38%) 0%, #3263a3 60%, #1794d2 100%); color: white; border: 1px solid #3263a3; padding: 0.4rem 1rem; border-radius: 6px; box-shadow: 0 6px 14px rgba(23, 162, 184, 0.25);">Validar</button>
                     </div>
                     {% endif %}
                 </div>
@@ -391,14 +391,14 @@
                 <div class="modal-body">
                     <div id="stepSendCode">
                         <div class="text-center mb-4">
-                            <div style="font-size: 64px; color: #3483fa;">
+                            <div style="font-size: 64px; color: #17a2b8;">
                                 <i class="fas fa-shield-alt"></i>
                             </div>
                             <h6 class="mt-3">Autenticación de Seguridad</h6>
                             <p class="text-muted">Te enviaremos un código de 6 dígitos a tu correo:</p>
                             <p class="fw-bold">{{ usuario.email }}</p>
                         </div>
-                        <div class="alert alert-info" style="background-color: #e7f3ff; border-color: #3483fa;">
+                        <div class="alert alert-info" style="background-color: #e6f7fb; border-color: #17a2b8;">
                             <i class="fas fa-info-circle me-2"></i>
                             <small>El código será válido por 10 minutos</small>
                         </div>
@@ -414,7 +414,7 @@
 
                     <div id="stepVerifyCode" style="display: none;">
                         <div class="text-center mb-4">
-                            <div style="font-size: 64px; color: #28a745;">
+                            <div style="font-size: 64px; color: #17a2b8;">
                                 <i class="fas fa-envelope"></i>
                             </div>
                             <h6 class="mt-3">Revisa tu correo</h6>

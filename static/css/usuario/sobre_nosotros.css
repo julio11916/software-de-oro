@@ -8,17 +8,18 @@ body {
 
 .store-header-inner {
     display: grid;
-    grid-template-columns: 42px 1fr auto;
+    grid-template-columns: auto auto 1fr;
     align-items: center;
-}
-
-.header-spacer {
-    width: 42px;
-    height: 42px;
+    column-gap: 10px;
 }
 
 .brand-logo {
-    justify-self: center;
+    justify-self: start;
+}
+.brand-logo img {
+    height: 50px;
+    width: auto;
+    filter: brightness(0) saturate(0);
 }
 
 .about-hero {
@@ -117,6 +118,12 @@ body {
     font-weight: 700;
     color: #101820;
     margin: 0;
+}
+
+@media (max-width: 991px) {
+    .brand-logo img {
+        height: 48px;
+    }
 }
 
 .info-card-content {
