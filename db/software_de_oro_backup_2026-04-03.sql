@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict nyLw9sfBzjh6eMfq3voRwYY76AYHm8usvWappQT4IS5ukm1fnF6l6qbC9SXAezg
+\restrict v9sJhJQeZepBHTSgQtF8lVhjw8GudFCB8UY0P87MVspKkckzy7pawQ0HcLhaa0E
 
 -- Dumped from database version 18.3
 -- Dumped by pg_dump version 18.3
@@ -632,6 +632,7 @@ COPY public.registros (id_registro, id_usuario, accion, fecha_accion) FROM stdin
 193	admin	Contrasena restablecida por recuperacion para somosdecimob2020@gmail.com	2026-04-03 11:26:18
 194	somosdecimob2020@gmail.com	Inicio de sesión exitoso	2026-04-03 11:26:49
 195	julio@gmail.com	Inicio de sesión exitoso	2026-04-03 11:31:17
+196	admin	Nuevo usuario registrado y verificado: jilmer	2026-04-03 11:55:51
 \.
 
 
@@ -652,6 +653,7 @@ COPY public.usuarios (id_usuario, nombre, email, password_hash, rol, estado, fec
 10	Catalina rodriguez	catar@gmail.com	Catalina1.	normal	activo	2026-03-13 15:30:56	f				
 11	julio cesar otalvaro sanchez	somosdecimob2020@gmail.com	scrypt:32768:8:1$xXEaOs4nnTL7BFLU$2c58839161a345654ccc41bb69e2d88185b4082bc0f5b443e92a7b294b9c36029c515fa8f46b0d6dbced71ecafe5edc07def0dc5089c22658654c6006d70dd50	normal	activo	2026-04-02 16:50:05	t				
 12	julio cesar otalvaro sanchez	julio11916@gmail.com	Skrillex_san1111042086	normal	activo	2026-04-02 18:52:23	t				
+13	jilmer	c65238944@gmail.com	scrypt:32768:8:1$omQpXag2INR8SgL1$e9acff045519d2bd46f7c429390c1189e2e02abc29b7a9e6d076d20a98f667464472ed40b3d14253739785c0f955d5eb7cae9a10abfd0872a4f933ef60cbaa9a	normal	activo	2026-04-03 11:55:51	t				
 \.
 
 
@@ -681,5 +683,5 @@ REVOKE USAGE ON SCHEMA public FROM PUBLIC;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict nyLw9sfBzjh6eMfq3voRwYY76AYHm8usvWappQT4IS5ukm1fnF6l6qbC9SXAezg
+\unrestrict v9sJhJQeZepBHTSgQtF8lVhjw8GudFCB8UY0P87MVspKkckzy7pawQ0HcLhaa0E
 

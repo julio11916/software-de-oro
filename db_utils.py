@@ -1,4 +1,5 @@
 import os
+import re
 
 import pandas as pd
 import sqlalchemy as sa
@@ -38,6 +39,16 @@ DATABASE_URL = os.environ.get(
     "postgresql+psycopg://postgres:admin@localhost:5432/software_de_oro",
 )
 engine = sa.create_engine(DATABASE_URL, future=True)
+
+
+IDENTIFIER_PATTERN = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
+
+
+def _safe_identifier(value):
+    ident = str(value or "").strip()
+    if not IDENTIFIER_PATTERN.fullmatch(ident):
+        raise ValueError(f"Identificador SQL invalido: {value!r}")
+    return ident
 
 
 def ensure_tables():
@@ -119,23 +130,37 @@ def ensure_tables():
     """
     with engine.begin() as conn:
         conn.execute(sa.text(ddl))
+        conn.execute(sa.text("ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS reset_token TEXT"))
+        conn.execute(sa.text("ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS reset_token_expiry TIMESTAMPTZ"))
         conn.execute(sa.text("ALTER TABLE producto ADD COLUMN IF NOT EXISTS fuerza TEXT"))
         conn.execute(sa.text("ALTER TABLE producto ADD COLUMN IF NOT EXISTS intendencia TEXT"))
         conn.execute(sa.text("ALTER TABLE promociones ADD COLUMN IF NOT EXISTS id_producto BIGINT"))
 
 
 def read_table_df(table_name):
+    table = _safe_identifier(table_name)
     with engine.connect() as conn:
-        return pd.read_sql(sa.text(f"SELECT * FROM {table_name}"), conn)
+        return pd.read_sql(sa.text(f'SELECT * FROM "{table}"'), conn)
 
 
 def replace_table_df(table_name, df):
-    df.to_sql(table_name, con=engine, if_exists="replace", index=False)
+    """
+    Reemplaza el contenido de una tabla preservando su estructura (DDL, constraints e indices).
+    """
+    table = _safe_identifier(table_name)
+    data = df if df is not None else pd.DataFrame()
+
+    with engine.begin() as conn:
+        conn.execute(sa.text(f'DELETE FROM "{table}"'))
+        if not data.empty:
+            data.to_sql(table, con=conn, if_exists="append", index=False, method="multi")
 
 
 def next_id(table_name, id_column):
+    table = _safe_identifier(table_name)
+    column = _safe_identifier(id_column)
     with engine.connect() as conn:
-        query = sa.text(f"SELECT COALESCE(MAX({id_column}), 0) + 1 FROM {table_name}")
+        query = sa.text(f'SELECT COALESCE(MAX("{column}"), 0) + 1 FROM "{table}"')
         return int(conn.execute(query).scalar_one())
 
 
