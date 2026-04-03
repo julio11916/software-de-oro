@@ -1,4 +1,4 @@
-﻿import os, json, re, shutil, subprocess, base64, pandas as pd
+import os, json, re, shutil, subprocess, base64, secrets, pandas as pd
 from io import BytesIO
 from pathlib import Path
 from openpyxl.chart import BarChart, LineChart, PieChart, Reference
@@ -6,12 +6,26 @@ from openpyxl.chart.series import DataPoint
 from flask import Flask, render_template, request, redirect, url_for, session, Response, flash, send_file, jsonify
 from datetime import datetime, timedelta, date
 from typing import Any, Mapping, Optional
-from email_service import mail, generar_codigo_verificacion, enviar_codigo_verificacion
+from dotenv import load_dotenv
+from werkzeug.security import generate_password_hash, check_password_hash
+from email_service import (
+    mail,
+    generar_codigo_verificacion,
+    enviar_codigo_verificacion,
+    enviar_recuperacion_password,
+)
+load_dotenv()
 import config_email
 from db_utils import engine, read_table_df, replace_table_df, next_id  # Inicializa DB y proxys al importar
 
 app = Flask(__name__)
-app.secret_key = "clave"  # Necesario para manejar sesiones
+app.secret_key = os.getenv("SECRET_KEY", "").strip()
+if not app.secret_key:
+    app.secret_key = os.urandom(32)
+    print(
+        "ADVERTENCIA: SECRET_KEY no esta configurada en el entorno. "
+        "Usando una clave temporal para esta ejecucion."
+    )
 
 # Configuración de Flask-Mail para Gmail
 app.config['MAIL_SERVER'] = config_email.MAIL_SERVER
@@ -20,6 +34,7 @@ app.config['MAIL_USE_TLS'] = config_email.MAIL_USE_TLS
 app.config['MAIL_USERNAME'] = config_email.MAIL_USERNAME
 app.config['MAIL_PASSWORD'] = config_email.MAIL_PASSWORD
 app.config['MAIL_DEFAULT_SENDER'] = config_email.MAIL_DEFAULT_SENDER
+app.config['PROJECT_NAME'] = 'NACHOHER'
 
 # Inicializar Flask-Mail
 mail.init_app(app)
@@ -27,7 +42,20 @@ mail.init_app(app)
 CURRENCY_CODE = "COP"
 CURRENCY_NAME = "Peso colombiano"
 
-USUARIO_COLUMNS = ['id_usuario', 'nombre', 'email', 'password_hash', 'rol', 'estado', 'fecha_registro', 'email_verified', 'verification_code', 'verification_code_expiry']
+USUARIO_COLUMNS = [
+    'id_usuario',
+    'nombre',
+    'email',
+    'password_hash',
+    'rol',
+    'estado',
+    'fecha_registro',
+    'email_verified',
+    'verification_code',
+    'verification_code_expiry',
+    'reset_token',
+    'reset_token_expiry',
+]
 REGISTRO_COLUMNS = ['id_registro', 'id_usuario', 'accion', 'fecha_accion']
 PRODUCTO_COLUMNS = ['id_producto', 'nombre', 'descripcion', 'precio', 'stock', 'id_categoria', 'fuerza', 'intendencia', 'imagen_url', 'eliminado']
 PEDIDO_COLUMNS = ['id_pedido', 'id_usuario', 'fecha_pedido', 'estado']
@@ -53,6 +81,9 @@ INTENDENCIAS_OPCIONES = [
 ALLOWED_IMAGE_EXTENSIONS = {'jpg', 'jpeg', 'png', 'gif', 'webp'}
 MAX_IMAGE_SIZE_BYTES = 3 * 1024 * 1024
 MAX_IMAGES_PER_PRODUCT = 5
+REGISTER_CODE_EXP_MINUTES = 7
+PASSWORD_RESET_EXP_MINUTES = 30
+PENDING_REGISTRATIONS = {}
 
 # DB init y proxys se hacen al importar db_utils
 
@@ -71,11 +102,15 @@ def cargar_usuarios_df():
             else:
                 usuarios[col] = ''
     
-    # Asegurar que las columnas de verificación sean tipo string
+    # Asegurar que las columnas de tokens sean tipo string
     if 'verification_code' in usuarios.columns:
         usuarios['verification_code'] = usuarios['verification_code'].fillna('').astype(str)
     if 'verification_code_expiry' in usuarios.columns:
         usuarios['verification_code_expiry'] = usuarios['verification_code_expiry'].fillna('').astype(str)
+    if 'reset_token' in usuarios.columns:
+        usuarios['reset_token'] = usuarios['reset_token'].fillna('').astype(str)
+    if 'reset_token_expiry' in usuarios.columns:
+        usuarios['reset_token_expiry'] = usuarios['reset_token_expiry'].fillna('').astype(str)
     if 'email_verified' in usuarios.columns:
         usuarios['email_verified'] = usuarios['email_verified'].fillna(False).astype(bool)
     
@@ -85,11 +120,15 @@ def cargar_usuarios_df():
 
 
 def guardar_usuarios_df(usuarios):
-    # Convertir columnas de verificación a string antes de guardar
+    # Convertir columnas de tokens a string antes de guardar
     if 'verification_code' in usuarios.columns:
         usuarios['verification_code'] = usuarios['verification_code'].astype(str)
     if 'verification_code_expiry' in usuarios.columns:
         usuarios['verification_code_expiry'] = usuarios['verification_code_expiry'].astype(str)
+    if 'reset_token' in usuarios.columns:
+        usuarios['reset_token'] = usuarios['reset_token'].astype(str)
+    if 'reset_token_expiry' in usuarios.columns:
+        usuarios['reset_token_expiry'] = usuarios['reset_token_expiry'].astype(str)
     replace_table_df('usuarios', usuarios[USUARIO_COLUMNS])
 
 
@@ -169,6 +208,114 @@ def extension_imagen(nombre_archivo):
     if not nombre_archivo or '.' not in nombre_archivo:
         return ''
     return nombre_archivo.rsplit('.', 1)[-1].lower()
+
+
+def normalizar_email(valor):
+    return str(valor or '').strip().lower()
+
+
+def email_es_valido(email):
+    return bool(re.fullmatch(r'[^@\s]+@[^@\s]+\.[^@\s]+', str(email or '').strip()))
+
+
+def limpiar_registros_pendientes():
+    ahora = datetime.now()
+    expirados = []
+    for email, data in PENDING_REGISTRATIONS.items():
+        expiry_at = data.get('expiry_at')
+        if not expiry_at or ahora > expiry_at:
+            expirados.append(email)
+    for email in expirados:
+        PENDING_REGISTRATIONS.pop(email, None)
+
+
+def obtener_registro_pendiente(email):
+    limpiar_registros_pendientes()
+    return PENDING_REGISTRATIONS.get(normalizar_email(email))
+
+
+def guardar_registro_pendiente(email, codigo, nombre='', password=''):
+    expiry_at = datetime.now() + timedelta(minutes=REGISTER_CODE_EXP_MINUTES)
+    PENDING_REGISTRATIONS[normalizar_email(email)] = {
+        'code': str(codigo).strip(),
+        'expiry_at': expiry_at,
+        'nombre': str(nombre).strip(),
+        'password': str(password)
+    }
+    return expiry_at
+
+
+def password_esta_hasheado(valor):
+    texto = str(valor or '').strip()
+    return texto.startswith('pbkdf2:') or texto.startswith('scrypt:')
+
+
+def crear_hash_password(password):
+    return generate_password_hash(str(password or ''))
+
+
+def password_coincide(password_guardado, password_plano):
+    guardado = str(password_guardado or '')
+    plano = str(password_plano or '')
+    if not guardado or not plano:
+        return False
+
+    if password_esta_hasheado(guardado):
+        try:
+            return check_password_hash(guardado, plano)
+        except Exception:
+            return False
+
+    return guardado == plano
+
+
+def generar_token_recuperacion():
+    return secrets.token_urlsafe(32)
+
+
+def obtener_usuario_por_token_recuperacion(usuarios, token):
+    token = str(token or '').strip()
+    if not token:
+        return None
+
+    usuarios['reset_token'] = usuarios['reset_token'].fillna('').astype(str)
+    candidatos = usuarios[usuarios['reset_token'] == token]
+    if candidatos.empty:
+        return None
+
+    idx = candidatos.index[0]
+    return idx, candidatos.loc[idx]
+
+
+def token_recuperacion_expirado(usuario):
+    expiry_raw = str(usuario.get('reset_token_expiry', '') or '').strip()
+    if not expiry_raw:
+        return True
+
+    expiry_dt = pd.to_datetime(expiry_raw, errors='coerce')
+    if pd.isna(expiry_dt):
+        return True
+    return pd.Timestamp.now() > expiry_dt
+
+
+def limpiar_token_recuperacion(usuarios, idx_usuario):
+    usuarios.at[idx_usuario, 'reset_token'] = ''
+    usuarios.at[idx_usuario, 'reset_token_expiry'] = ''
+
+
+def enviar_codigo_registro(email, codigo):
+    envio_ok = enviar_codigo_verificacion(
+        email,
+        codigo,
+        tipo='registro',
+        minutos_expiracion=REGISTER_CODE_EXP_MINUTES
+    )
+    if envio_ok:
+        return True, 'Codigo enviado correctamente. Revisa tu correo.'
+    return False, (
+        'No fue posible enviar el codigo de verificacion al correo indicado. '
+        'Verifica la configuracion SMTP del sistema e intenta nuevamente.'
+    )
 
 
 def validar_archivo_imagen(archivo):
@@ -995,45 +1142,360 @@ def login():
     if request.method == 'GET':
         return render_template('Usuarios/Autenticacion/login_form.html')
     usuarios = cargar_usuarios_df()  # leer cada vez
-    email = request.form['email']
-    password = request.form['password']
+    email = normalizar_email(request.form.get('email', ''))
+    password = request.form.get('password', '')
 
-    usuario = usuarios[(usuarios['email'] == email) & (usuarios['password_hash'] == password)]
-
-    if not usuario.empty:
-        estado = str(usuario.iloc[0].get('estado', 'activo')).strip().lower()
-        if estado != 'activo':
-            return "Tu usuario está inactivo. Contacta al administrador."
-
-        rol = usuario.iloc[0]['rol']
-        id_usuario = usuario.iloc[0]['id_usuario']
-        nombre = str(usuario.iloc[0].get('nombre', '')).strip()
-        session['usuario'] = email
-        session['id_usuario'] = int(id_usuario)
-        session['rol'] = rol
-        session['nombre'] = nombre
-
-        registrar_actividad("Inicio de sesión exitoso")
-
-        if rol == 'admin':
-            return redirect(url_for('admin_dashboard'))
-        else:
-            return redirect(url_for('user_dashboard'))
-    else:
+    usuarios['email'] = usuarios['email'].astype(str).str.strip()
+    candidatos = usuarios[usuarios['email'].str.lower() == email]
+    if candidatos.empty:
         return "Credenciales inválidas. Intenta de nuevo."
+
+    idx_usuario = candidatos.index[0]
+    usuario = candidatos.loc[idx_usuario]
+
+    if not password_coincide(usuario.get('password_hash', ''), password):
+        return "Credenciales inválidas. Intenta de nuevo."
+
+    # Migracion transparente: si la contraseña antigua estaba en texto plano, se hashea al iniciar sesion.
+    password_guardado = str(usuario.get('password_hash', '') or '')
+    if not password_esta_hasheado(password_guardado):
+        usuarios.at[idx_usuario, 'password_hash'] = crear_hash_password(password)
+        guardar_usuarios_df(usuarios)
+
+    estado = str(usuario.get('estado', 'activo')).strip().lower()
+    if estado != 'activo':
+        return "Tu usuario está inactivo. Contacta al administrador."
+
+    rol = usuario['rol']
+    id_usuario = usuario['id_usuario']
+    nombre = str(usuario.get('nombre', '')).strip()
+    email_sesion = str(usuario.get('email', email)).strip() or email
+
+    session['usuario'] = email_sesion
+    session['id_usuario'] = int(id_usuario)
+    session['rol'] = rol
+    session['nombre'] = nombre
+
+    registrar_actividad("Inicio de sesión exitoso")
+
+    if rol == 'admin':
+        return redirect(url_for('admin_dashboard'))
+    else:
+        return redirect(url_for('user_dashboard'))
+
+
+@app.route('/forgot-password', methods=['GET', 'POST'])
+def forgot_password():
+    if request.method == 'GET':
+        return render_template(
+            'Usuarios/Autenticacion/forgot_password.html',
+            reset_minutes=PASSWORD_RESET_EXP_MINUTES
+        )
+
+    email = normalizar_email(request.form.get('email', ''))
+    if not email_es_valido(email):
+        flash('Debes ingresar un correo electronico valido.', 'danger')
+        return render_template(
+            'Usuarios/Autenticacion/forgot_password.html',
+            reset_minutes=PASSWORD_RESET_EXP_MINUTES
+        ), 400
+
+    usuarios = cargar_usuarios_df()
+    usuarios['email'] = usuarios['email'].astype(str).str.strip().str.lower()
+    candidatos = usuarios[usuarios['email'] == email]
+
+    if not candidatos.empty:
+        idx_usuario = candidatos.index[0]
+        token = generar_token_recuperacion()
+        expiry_at = datetime.now() + timedelta(minutes=PASSWORD_RESET_EXP_MINUTES)
+
+        usuarios.at[idx_usuario, 'reset_token'] = token
+        usuarios.at[idx_usuario, 'reset_token_expiry'] = expiry_at.strftime('%Y-%m-%d %H:%M:%S')
+        guardar_usuarios_df(usuarios)
+
+        enlace = url_for('reset_password', token=token, _external=True)
+        envio_ok = enviar_recuperacion_password(
+            email=email,
+            enlace_recuperacion=enlace,
+            minutos_expiracion=PASSWORD_RESET_EXP_MINUTES
+        )
+
+        if envio_ok:
+            registrar_actividad(f"Enlace de recuperacion enviado a {email}")
+        else:
+            limpiar_token_recuperacion(usuarios, idx_usuario)
+            guardar_usuarios_df(usuarios)
+            print(f"No fue posible enviar el correo de recuperacion para: {email}")
+
+    flash(
+        'Si el correo existe en el sistema, te enviamos un enlace para restablecer tu contrasena.',
+        'info'
+    )
+    return redirect(url_for('forgot_password'))
+
+
+@app.route('/reset-password/<token>', methods=['GET', 'POST'])
+def reset_password(token):
+    token = str(token or '').strip()
+    usuarios = cargar_usuarios_df()
+
+    encontrado = obtener_usuario_por_token_recuperacion(usuarios, token)
+    if not encontrado:
+        flash('El enlace de recuperacion no es valido o ya fue utilizado.', 'danger')
+        return redirect(url_for('forgot_password'))
+
+    idx_usuario, usuario = encontrado
+    if token_recuperacion_expirado(usuario):
+        limpiar_token_recuperacion(usuarios, idx_usuario)
+        guardar_usuarios_df(usuarios)
+        flash('El enlace de recuperacion expiro. Solicita uno nuevo.', 'warning')
+        return redirect(url_for('forgot_password'))
+
+    if request.method == 'GET':
+        return render_template(
+            'Usuarios/Autenticacion/reset_password.html',
+            token=token
+        )
+
+    new_password = request.form.get('new_password', '')
+    confirm_password = request.form.get('confirm_password', '')
+
+    if not new_password or not confirm_password:
+        flash('Debes completar todos los campos.', 'danger')
+        return render_template('Usuarios/Autenticacion/reset_password.html', token=token), 400
+
+    if new_password != confirm_password:
+        flash('Las contrasenas no coinciden.', 'danger')
+        return render_template('Usuarios/Autenticacion/reset_password.html', token=token), 400
+
+    if not re.fullmatch(r'(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}', new_password):
+        flash(
+            'La contrasena debe tener minimo 8 caracteres, mayuscula, minuscula, numero y caracter especial.',
+            'danger'
+        )
+        return render_template('Usuarios/Autenticacion/reset_password.html', token=token), 400
+
+    usuarios.at[idx_usuario, 'password_hash'] = crear_hash_password(new_password)
+    limpiar_token_recuperacion(usuarios, idx_usuario)
+    guardar_usuarios_df(usuarios)
+
+    email_usuario = str(usuario.get('email', '')).strip()
+    registrar_actividad(f"Contrasena restablecida por recuperacion para {email_usuario}")
+    flash('Contrasena actualizada correctamente. Ya puedes iniciar sesion.', 'success')
+    return redirect(url_for('login'))
 
 @app.route('/registro', methods=['GET', 'POST'])
 def registro():
+    def _render_registro(nombre='', email=''):
+        return render_template(
+            'Usuarios/Autenticacion/registro.html',
+            nombre_registro=nombre,
+            email_registro=email,
+            registro_code_minutes=REGISTER_CODE_EXP_MINUTES
+        )
+
     if request.method == 'POST':
-        nombre = request.form['nombre']
-        email = request.form['email']
-        password = request.form['password']
-        rol = 'normal'
+        nombre = request.form.get('nombre', '').strip()
+        email = normalizar_email(request.form.get('email', ''))
+        password = request.form.get('password', '')
+        confirm_password = request.form.get('confirm_password', '')
+
+        if not nombre or not email or not password or not confirm_password:
+            flash('Debes completar todos los campos del formulario.', 'danger')
+            return _render_registro(nombre, email), 400
+
+        if not email_es_valido(email):
+            flash('Debes ingresar un correo electrónico válido.', 'danger')
+            return _render_registro(nombre, email), 400
+
+        if password != confirm_password:
+            flash('Las contraseñas no coinciden.', 'danger')
+            return _render_registro(nombre, email), 400
 
         usuarios = cargar_usuarios_df()
+        usuarios['email'] = usuarios['email'].astype(str).str.strip().str.lower()
 
         if email in usuarios['email'].values:
-            return "Este correo ya está registrado."
+            flash(
+                'El correo electronico ya esta registrado con otra cuenta. '
+                'Por favor, utiliza otro correo electronico valido.',
+                'warning'
+            )
+            return _render_registro(nombre, email), 409
+
+        codigo = generar_codigo_verificacion()
+        password_hash = crear_hash_password(password)
+        guardar_registro_pendiente(email, codigo, nombre=nombre, password=password_hash)
+        session['registro_pendiente_email'] = email
+
+        envio_ok, mensaje_envio = enviar_codigo_registro(email, codigo)
+        if not envio_ok:
+            PENDING_REGISTRATIONS.pop(email, None)
+            session.pop('registro_pendiente_email', None)
+            flash(mensaje_envio, 'danger')
+            return _render_registro(nombre, email), 500
+
+        flash(mensaje_envio, 'success')
+        flash('Ingresa el codigo de verificacion para activar tu cuenta.', 'info')
+        return redirect(url_for('registro_verificacion'))
+
+    return _render_registro()
+
+
+@app.route('/registro/check-email', methods=['POST'])
+def registro_check_email():
+    try:
+        payload = request.get_json(silent=True) or request.form
+        email = normalizar_email(payload.get('email', ''))
+
+        if not email:
+            return jsonify({'success': False, 'exists': False, 'message': 'Debes ingresar un correo electronico.'}), 400
+
+        if not email_es_valido(email):
+            return jsonify({'success': False, 'exists': False, 'message': 'El correo electronico no es valido.'}), 400
+
+        usuarios = cargar_usuarios_df()
+        usuarios['email'] = usuarios['email'].astype(str).str.strip().str.lower()
+        email_existente = email in usuarios['email'].values
+
+        if email_existente:
+            return jsonify({
+                'success': True,
+                'exists': True,
+                'message': (
+                    'El correo electronico ya esta registrado con otra cuenta. '
+                    'Por favor, utiliza otro correo electronico valido.'
+                )
+            })
+
+        return jsonify({
+            'success': True,
+            'exists': False,
+            'message': 'Correo electronico disponible.'
+        })
+    except Exception as e:
+        print(f"Error validando correo de registro: {str(e)}")
+        return jsonify({'success': False, 'exists': False, 'message': 'Error interno validando el correo.'}), 500
+
+
+@app.route('/registro/send-code', methods=['POST'])
+def registro_send_code():
+    try:
+        payload = request.get_json(silent=True) or request.form
+        email = normalizar_email(payload.get('email', ''))
+
+        if not email:
+            return jsonify({'success': False, 'message': 'Debes ingresar un correo electrónico.'}), 400
+
+        if not email_es_valido(email):
+            return jsonify({'success': False, 'message': 'El correo electrónico no es válido.'}), 400
+
+        usuarios = cargar_usuarios_df()
+        usuarios['email'] = usuarios['email'].astype(str).str.strip().str.lower()
+        if email in usuarios['email'].values:
+            return jsonify({
+                'success': False,
+                'message': (
+                    'El correo electronico ya esta registrado con otra cuenta. '
+                    'Por favor, utiliza otro correo electronico valido.'
+                )
+            }), 409
+
+        pendiente_actual = obtener_registro_pendiente(email) or {}
+        nombre = str(pendiente_actual.get('nombre', '')).strip()
+        password = str(pendiente_actual.get('password', ''))
+
+        codigo = generar_codigo_verificacion()
+        guardar_registro_pendiente(email, codigo, nombre=nombre, password=password)
+        envio_ok, mensaje_envio = enviar_codigo_registro(email, codigo)
+
+        if not envio_ok:
+            PENDING_REGISTRATIONS.pop(email, None)
+            session.pop('registro_pendiente_email', None)
+            return jsonify({'success': False, 'message': mensaje_envio}), 500
+
+        session['registro_pendiente_email'] = email
+        return jsonify({
+            'success': True,
+            'message': mensaje_envio
+        })
+    except Exception as e:
+        print(f"Error al enviar codigo de registro: {str(e)}")
+        return jsonify({'success': False, 'message': 'Error interno enviando el codigo.'}), 500
+
+
+@app.route('/registro/verificacion', methods=['GET', 'POST'])
+def registro_verificacion():
+    def _render_verificacion(email=''):
+        return render_template(
+            'Usuarios/Autenticacion/registro_verificacion.html',
+            email_registro=email,
+            registro_code_minutes=REGISTER_CODE_EXP_MINUTES
+        )
+
+    email = normalizar_email(session.get('registro_pendiente_email', ''))
+    if not email:
+        flash('Primero debes completar el formulario de registro.', 'warning')
+        return redirect(url_for('registro'))
+
+    registro_pendiente = obtener_registro_pendiente(email)
+    if not registro_pendiente:
+        session.pop('registro_pendiente_email', None)
+        flash('No hay un registro pendiente o el codigo ya expiro. Registra tus datos nuevamente.', 'warning')
+        return redirect(url_for('registro'))
+
+    if request.method == 'POST':
+        accion = request.form.get('action', 'verify')
+        if accion == 'resend':
+            codigo_nuevo = generar_codigo_verificacion()
+            nombre = str(registro_pendiente.get('nombre', '')).strip()
+            password = str(registro_pendiente.get('password', ''))
+            guardar_registro_pendiente(email, codigo_nuevo, nombre=nombre, password=password)
+            envio_ok, mensaje_envio = enviar_codigo_registro(email, codigo_nuevo)
+            flash(mensaje_envio, 'success' if envio_ok else 'danger')
+            if not envio_ok:
+                PENDING_REGISTRATIONS.pop(email, None)
+                session.pop('registro_pendiente_email', None)
+                return redirect(url_for('registro'))
+            return _render_verificacion(email)
+
+        codigo_ingresado = request.form.get('verification_code', '').strip()
+        if not codigo_ingresado:
+            flash('Debes ingresar el codigo de verificacion.', 'danger')
+            return _render_verificacion(email), 400
+
+        registro_pendiente = obtener_registro_pendiente(email)
+        if not registro_pendiente:
+            session.pop('registro_pendiente_email', None)
+            flash('El codigo expiro. Debes iniciar el registro nuevamente.', 'warning')
+            return redirect(url_for('registro'))
+
+        if str(codigo_ingresado) != str(registro_pendiente.get('code', '')).strip():
+            flash('Codigo de verificacion incorrecto.', 'danger')
+            return _render_verificacion(email), 400
+
+        usuarios = cargar_usuarios_df()
+        usuarios['email'] = usuarios['email'].astype(str).str.strip().str.lower()
+        if email in usuarios['email'].values:
+            PENDING_REGISTRATIONS.pop(email, None)
+            session.pop('registro_pendiente_email', None)
+            flash(
+                'El correo electronico ya esta registrado con otra cuenta. '
+                'Por favor, utiliza otro correo electronico valido.',
+                'warning'
+            )
+            return redirect(url_for('registro'))
+
+        nombre = str(registro_pendiente.get('nombre', '')).strip()
+        password_guardado = str(registro_pendiente.get('password', ''))
+        if not nombre or not password_guardado:
+            PENDING_REGISTRATIONS.pop(email, None)
+            session.pop('registro_pendiente_email', None)
+            flash('No se encontraron los datos del registro pendiente. Intenta nuevamente.', 'warning')
+            return redirect(url_for('registro'))
+
+        if not password_esta_hasheado(password_guardado):
+            password_guardado = crear_hash_password(password_guardado)
 
         ultimo_id = pd.to_numeric(usuarios['id_usuario'], errors='coerce').max()
         nuevo_id = int(ultimo_id + 1) if pd.notna(ultimo_id) else 1
@@ -1041,25 +1503,31 @@ def registro():
             'id_usuario': nuevo_id,
             'nombre': nombre,
             'email': email,
-            'password_hash': password,
-            'rol': rol,
+            'password_hash': password_guardado,
+            'rol': 'normal',
             'estado': 'activo',
-            'fecha_registro': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            'fecha_registro': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            'email_verified': True,
+            'verification_code': '',
+            'verification_code_expiry': '',
+            'reset_token': '',
+            'reset_token_expiry': ''
         }
 
         usuarios = pd.concat([usuarios, pd.DataFrame([nuevo_usuario])], ignore_index=True)
         guardar_usuarios_df(usuarios)
-        registrar_actividad(f"Nuevo usuario registrado: {nombre}")
+        PENDING_REGISTRATIONS.pop(email, None)
+        session.pop('registro_pendiente_email', None)
 
-        # Iniciar sesión automáticamente después del registro
+        registrar_actividad(f"Nuevo usuario registrado y verificado: {nombre}")
         session['usuario'] = email
         session['id_usuario'] = int(nuevo_id)
-        session['rol'] = rol
+        session['rol'] = 'normal'
         session['nombre'] = nombre
-
+        flash('Cuenta creada correctamente. Correo verificado.', 'success')
         return redirect(url_for('user_dashboard'))
 
-    return render_template('Usuarios/Autenticacion/registro.html')
+    return _render_verificacion(email)
 
 @app.route('/logout')
 def logout():
@@ -1536,7 +2004,7 @@ def admin_guardar_usuario():
 
     id_usuario_raw = request.form.get('id_usuario', '').strip()
     nombre = request.form.get('nombre', '').strip()
-    email = request.form.get('email', '').strip()
+    email = normalizar_email(request.form.get('email', ''))
     password = request.form.get('password', '').strip()
     rol = request.form.get('rol', 'normal').strip().lower()
     estado = request.form.get('estado', 'activo').strip().lower()
@@ -1584,7 +2052,7 @@ def admin_guardar_usuario():
         usuarios.at[idx[0], 'rol'] = rol
         usuarios.at[idx[0], 'estado'] = estado
         if password:
-            usuarios.at[idx[0], 'password_hash'] = password
+            usuarios.at[idx[0], 'password_hash'] = crear_hash_password(password)
 
         guardar_usuarios_df(usuarios[USUARIO_COLUMNS])
         registrar_actividad(f"Actualizo usuario {email} (ID {edit_id})\n- rol: {rol}\n- estado: {estado}")
@@ -1597,10 +2065,12 @@ def admin_guardar_usuario():
             'id_usuario': nuevo_id,
             'nombre': nombre,
             'email': email,
-            'password_hash': password,
+            'password_hash': crear_hash_password(password),
             'rol': rol,
             'estado': estado,
-            'fecha_registro': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            'fecha_registro': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            'reset_token': '',
+            'reset_token_expiry': ''
         }
         usuarios = pd.concat([usuarios, pd.DataFrame([nuevo_usuario])], ignore_index=True)
         guardar_usuarios_df(usuarios[USUARIO_COLUMNS])
@@ -3229,13 +3699,16 @@ def change_password():
         return redirect(url_for('user_profile'))
     
     # Verificar contraseña actual
-    if usuario.iloc[0]['password_hash'] != current_password:
+    password_guardado = usuario.iloc[0].get('password_hash', '')
+    if not password_coincide(password_guardado, current_password):
         flash('La contraseña actual es incorrecta', 'danger')
         return redirect(url_for('user_profile'))
     
     # Actualizar contraseña
     idx = usuarios[usuarios['email'] == usuario_email].index
-    usuarios.loc[idx, 'password_hash'] = new_password
+    usuarios.loc[idx, 'password_hash'] = crear_hash_password(new_password)
+    usuarios.loc[idx, 'reset_token'] = ''
+    usuarios.loc[idx, 'reset_token_expiry'] = ''
     
     guardar_usuarios_df(usuarios)
     registrar_actividad(f"Usuario {usuario_email} cambió su contraseña")
@@ -3295,10 +3768,6 @@ def send_verification_code():
         return jsonify({'success': False, 'message': 'Acceso denegado'}), 403
     
     try:
-        # Verificar si está en modo desarrollo (sin configuración de Gmail)
-        modo_desarrollo = (config_email.MAIL_USERNAME == 'tu_correo@gmail.com' or 
-                          'xxxx' in config_email.MAIL_PASSWORD)
-        
         # Cargar usuarios
         usuarios = cargar_usuarios_df()
         usuario_email = session.get('usuario')
@@ -3318,7 +3787,7 @@ def send_verification_code():
         
         # Generar código de verificación (sin importar si ya está verificado)
         codigo = generar_codigo_verificacion()
-        expiry = datetime.now() + timedelta(minutes=10)
+        expiry = datetime.now() + timedelta(minutes=REGISTER_CODE_EXP_MINUTES)
         
         # Guardar código en la base de datos (forzar como string)
         usuarios.loc[usuario_idx, 'verification_code'] = str(codigo)
@@ -3328,38 +3797,29 @@ def send_verification_code():
         usuarios['verification_code'] = usuarios['verification_code'].astype(str).str.replace('.0', '', regex=False).replace('nan', '')
         
         guardar_usuarios_df(usuarios)
-        
-        # MODO DESARROLLO: Mostrar código en consola sin enviar email
-        if modo_desarrollo:
-            print("\n" + "="*60)
-            print("MODO DESARROLLO - CÓDIGO DE VERIFICACIÓN")
-            print("="*60)
-            print(f"Usuario: {usuario_email}")
-            print(f"Código: {codigo}")
-            print(f"Válido hasta: {expiry.strftime('%H:%M:%S')}")
-            print("="*60 + "\n")
-            
-            registrar_actividad(f"Código de autenticación generado para {usuario_email} (modo desarrollo)")
-            return jsonify({
-                'success': True, 
-                'message': f'Código generado: {codigo} (revisa la consola del servidor)'
-            })
-        
-        # MODO PRODUCCIÓN: Enviar email real
-        if enviar_codigo_verificacion(usuario_email, codigo):
+
+        if enviar_codigo_verificacion(
+            usuario_email,
+            codigo,
+            tipo='autenticacion',
+            minutos_expiracion=REGISTER_CODE_EXP_MINUTES
+        ):
             registrar_actividad(f"Código de autenticación enviado a {usuario_email}")
             return jsonify({
                 'success': True, 
                 'message': 'Código enviado correctamente. Revisa tu correo.'
             })
-        else:
-            # Si falla el envío, mostrar en consola como fallback
-            print("\nERROR AL ENVIAR EMAIL - MOSTRANDO CÓDIGO EN CONSOLA:")
-            print(f"Código para {usuario_email}: {codigo}\n")
-            return jsonify({
-                'success': True, 
-                'message': f'Email no configurado. Tu código es: {codigo}'
-            })
+
+        usuarios.loc[usuario_idx, 'verification_code'] = ''
+        usuarios.loc[usuario_idx, 'verification_code_expiry'] = ''
+        guardar_usuarios_df(usuarios)
+        return jsonify({
+            'success': False,
+            'message': (
+                'No fue posible enviar el codigo de verificacion al correo indicado. '
+                'Verifica la configuracion SMTP del sistema e intenta nuevamente.'
+            )
+        }), 500
             
     except Exception as e:
         print(f"Error al enviar código: {str(e)}")
@@ -4014,7 +4474,4 @@ def sobre_nosotros():
 
 if __name__ == '__main__':
     app.run(debug=True)
-
-
-
-
+    
