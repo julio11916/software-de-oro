@@ -123,12 +123,16 @@ def guardar_usuarios_df(usuarios):
     # Convertir columnas de tokens a string antes de guardar
     if 'verification_code' in usuarios.columns:
         usuarios['verification_code'] = usuarios['verification_code'].astype(str)
-    if 'verification_code_expiry' in usuarios.columns:
-        usuarios['verification_code_expiry'] = usuarios['verification_code_expiry'].astype(str)
     if 'reset_token' in usuarios.columns:
         usuarios['reset_token'] = usuarios['reset_token'].astype(str)
+    if 'verification_code_expiry' in usuarios.columns:
+        verification_expiry = usuarios['verification_code_expiry'].replace('', pd.NA)
+        verification_expiry = pd.to_datetime(verification_expiry, errors='coerce')
+        usuarios['verification_code_expiry'] = verification_expiry.where(verification_expiry.notna(), None)
     if 'reset_token_expiry' in usuarios.columns:
-        usuarios['reset_token_expiry'] = usuarios['reset_token_expiry'].astype(str)
+        reset_expiry = usuarios['reset_token_expiry'].replace('', pd.NA)
+        reset_expiry = pd.to_datetime(reset_expiry, errors='coerce')
+        usuarios['reset_token_expiry'] = reset_expiry.where(reset_expiry.notna(), None)
     replace_table_df('usuarios', usuarios[USUARIO_COLUMNS])
 
 
