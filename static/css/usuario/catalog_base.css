@@ -380,8 +380,22 @@ input[type="submit"]:focus {
     position: relative;
 }
 
+.home-carousel {
+    margin: -32px auto 48px;
+    max-width: 1100px;
+}
+
 .destacados-carousel .carousel-item {
     padding: 8px 14px;
+}
+
+.destacados-carousel .carousel-item .carousel-image {
+    height: 360px;
+    object-fit: contain;
+    background: #f7f7f3;
+    border-radius: 18px;
+    border: 1px solid rgba(20, 20, 20, 0.12);
+    padding: 18px;
 }
 
 .destacados-carousel .carousel-control-prev,
@@ -464,5 +478,13 @@ input[type="submit"]:focus {
 
     .page-with-catalog-header {
         padding-top: 78px;
+    }
+
+    .home-carousel {
+        margin: -16px auto 32px;
+    }
+
+    .destacados-carousel .carousel-item .carousel-image {
+        height: 240px;
     }
 }

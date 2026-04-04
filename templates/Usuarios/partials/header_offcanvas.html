@@ -15,6 +15,11 @@
             </a>
 
             <div class="header-actions">
+                {% if request.endpoint == 'orden_personalizada' %}
+                <button class="icon-btn-dark" type="button" id="btn-orden-volver" aria-label="Volver">
+                    <i class="fas fa-arrow-left"></i>
+                </button>
+                {% endif %}
                 {% if session.get('rol') == 'normal' %}
                 <a href="{{ url_for('cart') }}" class="icon-btn-dark">
                 {% else %}
