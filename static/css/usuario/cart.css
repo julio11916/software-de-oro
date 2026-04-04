@@ -1,6 +1,6 @@
 :root {
     --primary-color: #2c3e50;
-    --secondary-color: #ffc107;
+    --secondary-color: #17a2b8; /* cian */
     --hover-color: #34495e;
     --success-color: #28a745;
     --danger-color: #dc3545;
@@ -276,19 +276,21 @@ body {
 }
 
 .btn-remove {
-    background: var(--danger-color);
-    color: white;
-    border: none;
+    background: linear-gradient(135deg, hsl(226, 43%, 38%) 0%, #3263a3 60%, #1794d2 100%);
+    color: #fff;
+    border: 1px solid #3263a3;
     padding: 0.75rem 1rem;
     border-radius: 8px;
     cursor: pointer;
     transition: all 0.3s;
     font-size: 1rem;
+    box-shadow: 0 6px 14px rgba(23, 162, 184, 0.25);
 }
 
 .btn-remove:hover {
-    background: #c82333;
-    transform: scale(1.1);
+    filter: brightness(1.05);
+    transform: scale(1.05);
+    color: #fff;
 }
 
 .btn-text {
@@ -309,9 +311,9 @@ body {
 }
 
 .btn-continue {
-    background: white;
-    color: var(--primary-color);
-    border: 2px solid var(--primary-color);
+    background: linear-gradient(135deg, hsl(226, 43%, 38%) 0%, #3263a3 60%, #1794d2 100%);
+    color: #fff;
+    border: 1px solid #3263a3;
     padding: 0.8rem 2rem;
     border-radius: 8px;
     text-decoration: none;
@@ -320,11 +322,12 @@ body {
     gap: 0.5rem;
     transition: all 0.3s;
     font-weight: 600;
+    box-shadow: 0 8px 16px rgba(23, 162, 184, 0.25);
 }
 
 .btn-continue:hover {
-    background: var(--primary-color);
-    color: white;
+    filter: brightness(1.05);
+    color: #fff;
 }
 
 .cart-info {
@@ -468,9 +471,9 @@ body {
 
 .btn-checkout {
     width: 100%;
-    background: var(--success-color);
-    color: white;
-    border: none;
+    background: linear-gradient(135deg, hsl(226, 43%, 38%) 0%, #3263a3 60%, #1794d2 100%);
+    color: #fff;
+    border: 1px solid #3263a3;
     padding: 1rem;
     border-radius: 8px;
     font-size: 1.1rem;
@@ -481,20 +484,22 @@ body {
     align-items: center;
     justify-content: center;
     gap: 0.5rem;
+    box-shadow: 0 8px 16px rgba(23, 162, 184, 0.25);
 }
 
 .btn-checkout:hover {
-    background: #218838;
+    filter: brightness(1.05);
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+    box-shadow: 0 6px 14px rgba(23, 162, 184, 0.3);
+    color: #fff;
 }
 
 /* Botón Continuar con Pago */
 .btn-continuar-pago {
     width: 100%;
-    background: var(--secondary-color);
-    color: var(--primary-color);
-    border: none;
+    background: linear-gradient(135deg, hsl(226, 43%, 38%) 0%, #3263a3 60%, #1794d2 100%);
+    color: #fff;
+    border: 1px solid #3263a3;
     padding: 1rem;
     border-radius: 8px;
     font-size: 1.1rem;
@@ -507,13 +512,14 @@ body {
     gap: 0.5rem;
     margin-top: 1.5rem;
     text-decoration: none;
+    box-shadow: 0 8px 16px rgba(23, 162, 184, 0.25);
 }
 
 .btn-continuar-pago:hover {
-    background: #e0a800;
-    color: var(--primary-color);
+    filter: brightness(1.05);
+    color: #fff;
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(255, 193, 7, 0.3);
+    box-shadow: 0 6px 14px rgba(23, 162, 184, 0.3);
 }
 
 /* Payment Features */
@@ -613,19 +619,22 @@ body {
     display: inline-flex;
     align-items: center;
     gap: 0.5rem;
-    background: var(--secondary-color);
-    color: var(--primary-color);
+    background: linear-gradient(135deg, hsl(226, 43%, 38%) 0%, #3263a3 60%, #1794d2 100%);
+    color: #fff;
     padding: 1rem 2rem;
     border-radius: 8px;
     text-decoration: none;
     font-weight: 600;
     font-size: 1.1rem;
     transition: all 0.3s;
+    border: 1px solid #3263a3;
+    box-shadow: 0 8px 16px rgba(23, 162, 184, 0.25);
 }
 
 .btn-shop-now:hover {
     transform: translateY(-3px);
-    box-shadow: 0 4px 12px rgba(255, 193, 7, 0.3);
+    box-shadow: 0 6px 14px rgba(23, 162, 184, 0.3);
+    color: #fff;
 }
 
 /* Bootstrap overrides */

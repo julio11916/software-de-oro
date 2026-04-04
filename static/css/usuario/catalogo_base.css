@@ -7,6 +7,9 @@
     --leaf: #a8f35e;
     --sage: #c9cab4;
     --stone: #f3f2ed;
+    --btn-start: hsl(226, 43%, 38%);
+    --btn-mid: #3263a3;
+    --btn-end: #1794d2;
 }
 
 * {
@@ -44,21 +47,23 @@ body {
 
 .store-header-inner {
     height: 74px;
-    display: flex;
+    display: grid;
+    grid-template-columns: auto auto 1fr;
     align-items: center;
-    justify-content: space-between;
-}
-
-.brand-logo img {
-    height: 28px;
-    width: auto;
-    filter: brightness(0) saturate(0);
+    column-gap: 10px;
 }
 
 .header-actions {
     display: flex;
     align-items: center;
     gap: 10px;
+    justify-self: end;
+}
+
+.brand-logo img {
+    height: 50px;
+    width: auto;
+    filter: brightness(0) saturate(0);
 }
 
 .icon-btn-dark {
@@ -178,6 +183,39 @@ body {
 
 .dropdown-menu-custom.show {
     display: block;
+}
+
+/* Botones unificados */
+.btn,
+button,
+input[type="submit"] {
+    background: linear-gradient(135deg, var(--btn-start) 0%, var(--btn-mid) 60%, var(--btn-end) 100%);
+    border: 1px solid var(--btn-mid);
+    color: #fff;
+    border-radius: 12px;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, var(--btn-start) 0%, var(--btn-mid) 60%, var(--btn-end) 100%);
+    border: 1px solid var(--btn-mid);
+    border-radius: 12px;
+    color: #fff;
+    box-shadow: 0 6px 14px rgba(50, 99, 163, 0.22);
+}
+
+.btn-primary:hover,
+.btn:hover,
+button:hover,
+input[type="submit"]:hover {
+    filter: brightness(1.05);
+    color: #fff;
+}
+
+.btn:focus,
+button:focus,
+input[type="submit"]:focus {
+    outline: none;
+    box-shadow: 0 0 0 0.2rem rgba(31, 58, 147, 0.25);
 }
 
 .footer-compact {
@@ -362,13 +400,13 @@ body {
 }
 
 .btn-costs {
-    background: var(--leaf);
-    border: 0;
-    color: #1b1b1b;
+    background: linear-gradient(135deg, var(--btn-start) 0%, var(--btn-mid) 60%, var(--btn-end) 100%);
+    border: 1px solid var(--btn-mid);
+    color: #fff;
     font-weight: 600;
     padding: 10px 22px;
     border-radius: 12px;
-    box-shadow: 0 10px 18px rgba(120, 170, 60, 0.25);
+    box-shadow: 0 10px 18px rgba(23, 148, 210, 0.25);
     text-decoration: none;
     display: inline-flex;
     align-items: center;
@@ -376,8 +414,8 @@ body {
 }
 
 .btn-costs:hover {
-    background: #98e84e;
-    color: #1b1b1b;
+    filter: brightness(1.05);
+    color: #fff;
 }
 
 @media (max-width: 991px) {
@@ -386,7 +424,7 @@ body {
     }
 
     .brand-logo img {
-        height: 24px;
+        height: 48px;
     }
 
     .page-with-catalog-header {

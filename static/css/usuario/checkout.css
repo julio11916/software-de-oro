@@ -1,6 +1,6 @@
 :root {
     --primary-color: #2c3e50;
-    --secondary-color: #ffc107;
+    --secondary-color: #17a2b8; /* cian */
     --hover-color: #34495e;
     --success-color: #28a745;
     --danger-color: #dc3545;
@@ -146,9 +146,9 @@ body {
 /* Botón Procesar Pago */
 .btn-payment {
     width: 100%;
-    background: var(--success-color);
-    color: white;
-    border: none;
+    background: linear-gradient(135deg, hsl(226, 43%, 38%) 0%, #3263a3 60%, #1794d2 100%);
+    color: #fff;
+    border: 1px solid #3263a3;
     padding: 1.2rem;
     border-radius: 8px;
     font-size: 1.1rem;
@@ -160,12 +160,14 @@ body {
     justify-content: center;
     gap: 0.5rem;
     margin-bottom: 1.5rem;
+    box-shadow: 0 8px 16px rgba(23, 162, 184, 0.25);
 }
 
 .btn-payment:hover {
-    background: #218838;
+    filter: brightness(1.05);
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+    box-shadow: 0 6px 14px rgba(23, 162, 184, 0.3);
+    color: #fff;
 }
 
 /* Features de Seguridad */
@@ -250,9 +252,9 @@ body {
 
 /* Botón Volver */
 .btn-back {
-    background: white;
-    color: var(--primary-color);
-    border: 2px solid var(--primary-color);
+    background: linear-gradient(135deg, hsl(226, 43%, 38%) 0%, #3263a3 60%, #1794d2 100%);
+    color: #fff;
+    border: 1px solid #3263a3;
     padding: 0.8rem 2rem;
     border-radius: 8px;
     text-decoration: none;
@@ -262,11 +264,12 @@ body {
     transition: all 0.3s;
     font-weight: 600;
     margin-top: 1rem;
+    box-shadow: 0 8px 16px rgba(23, 162, 184, 0.25);
 }
 
 .btn-back:hover {
-    background: var(--primary-color);
-    color: white;
+    filter: brightness(1.05);
+    color: #fff;
 }
 
 /* Responsive */
