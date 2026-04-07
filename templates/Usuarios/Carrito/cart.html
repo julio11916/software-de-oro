@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mi Carrito - Ropa Militar</title>
+    <title>Mi Carrito-Nachoher</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/usuario/catalog_base.css') }}">
@@ -33,7 +33,7 @@
             <div class="col-lg-8">
                 <div class="cart-section">
                     <div class="section-header">
-                        <h2><i class="fas fa-shopping-basket"></i> Productos en tu Carrito</h2>
+                        <h2><i class="fas fa-shopping-basket"></i> Productos en tu carrito</h2>
                         <span class="items-count">{{ carrito|length }} producto(s)</span>
                     </div>
 
@@ -47,6 +47,9 @@
                                 <div class="item-details">
                                     <h5 class="item-name">{{ item.nombre }}</h5>
                                     <p class="item-description">{{ item.descripcion|default('Producto de alta calidad', true) }}</p>
+                                    {% if item.talla %}
+                                    <p class="item-description"><strong>Talla:</strong> {{ item.talla }}</p>
+                                    {% endif %}
                                     <p class="item-price">
                                         <i class="fas fa-tag"></i>
                                         Precio unitario: <span class="price-value">{{ item.precio|cop }}</span>
@@ -75,7 +78,7 @@
 
                     <div class="cart-actions">
                         <a href="{{ url_for('user_dashboard') }}" class="btn-continue">
-                            <i class="fas fa-arrow-left"></i> Continuar Comprando
+                            <i class="fas fa-arrow-left"></i> Continuar comprando
                         </a>
                         <div class="cart-info">
                             <i class="fas fa-info-circle"></i>
@@ -88,10 +91,20 @@
             <div class="col-lg-4">
                 <div class="order-summary">
                     <h3 class="summary-title">
-                        <i class="fas fa-file-invoice-dollar"></i> Resumen del Pedido
+                        <i class="fas fa-file-invoice-dollar"></i> Resumen del pedido
                     </h3>
 
                     <div class="summary-details">
+                        {% if carrito %}
+                        <div class="summary-row" style="align-items: flex-start;">
+                            <span><i class="fas fa-list"></i> Detalle:</span>
+                            <span>
+                                {% for item in carrito %}
+                                    <div>{{ item.nombre }}{% if item.talla %} ({{ item.talla }}){% endif %} x{{ item.cantidad }}</div>
+                                {% endfor %}
+                            </span>
+                        </div>
+                        {% endif %}
                         <div class="summary-row">
                             <span><i class="fas fa-shopping-bag"></i> Productos ({{ carrito|length }}):</span>
                             <span>{{ total|cop }}</span>
@@ -108,13 +121,13 @@
                         </div>
                         <div class="summary-divider"></div>
                         <div class="summary-row total-row">
-                            <span>Total a Pagar:</span>
+                            <span>Total a pagar:</span>
                             <span class="total-amount">{{ total|cop }}</span>
                         </div>
                     </div>
 
                     <a href="{{ url_for('checkout') }}" class="btn-continuar-pago">
-                        <i class="fas fa-arrow-right"></i> Continua con tu Pago
+                        <i class="fas fa-arrow-right"></i> Continua con tu pago
                     </a>
                 </div>
             </div>
@@ -126,9 +139,9 @@
                 <i class="fas fa-shopping-cart"></i>
             </div>
             <h2>Tu carrito está vacío</h2>
-            <p>Explora nuestro cat&aacute;logo y encuentra productos increibles.</p>
+            <p>Explora nuestro catálogo y encuentra productos increíbles.</p>
             <a href="{{ url_for('user_dashboard') }}" class="btn-shop-now">
-                <i class="fas fa-store"></i> Ir a la Tienda
+                <i class="fas fa-store"></i> Ir a la tienda
             </a>
         </div>
         {% endif %}
