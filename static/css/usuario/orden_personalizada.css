@@ -138,7 +138,11 @@ body {
     border: 1px solid #e0e0e0;
     display: flex;
     flex-direction: column;
-    
+}
+
+/* Ocultar en paso 1 - SIMPLE */
+.panel-derecho.hidden-paso1 {
+    display: none;
 }
 
 .titulo-seccion {
@@ -149,7 +153,6 @@ body {
     align-items: center;
     gap: 0.75rem;
     margin-bottom: 1.5rem;
-
 }
 
 .numero-seccion {
@@ -247,7 +250,7 @@ body {
 
 .grid-colores {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+    grid-template-columns: repeat(4, 1fr);
     gap: 1rem;
     margin-bottom: 2rem;
 }
@@ -259,7 +262,10 @@ body {
     text-align: center;
     cursor: pointer;
     transition: all 0.3s;
-  
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
 }
 
 .tarjeta-color:hover {
@@ -281,11 +287,15 @@ body {
 }
 
 .muestra-color {
-    width: 60px;
-    height: 60px;
+    width: 80px;
+    height: 100px;
     margin: 0 auto 0.5rem;
     border-radius: 6px;
     border: 1px solid #ddd;
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-color: #f5f5f5;
 }
 
 .nombre-color {
