@@ -128,11 +128,15 @@ body {
 .sidebar {
     width: 250px;
     height: 100vh;
+    max-height: 100vh;
     background: linear-gradient(180deg, #0a2962, #1882a9);
     color: white;
     display: flex;
     flex-direction: column;
     padding: 20px;
+    position: sticky;
+    top: 0;
+    overflow: hidden;
 }
 
 body {
@@ -198,31 +202,68 @@ body {
 
 .sidebar-bottom {
     margin-top: auto;
-    padding-top: 14px;
+    width: calc(100% + 40px);
+    margin-left: -20px;
+    margin-right: -20px;
+    margin-bottom: -20px;
+    align-self: stretch;
+    padding: 14px 20px 16px;
+    border-top: 1px solid rgba(255, 255, 255, 0.24);
+    border-left: 0;
+    border-right: 0;
+    border-bottom: 0;
+    border-radius: 0;
+    background: linear-gradient(180deg, rgba(8, 35, 78, 0.5), rgba(8, 35, 78, 0.2));
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 -6px 16px rgba(0, 0, 0, 0.14);
+    overflow: hidden;
 }
 
 .sidebar .nav {
     flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    flex-wrap: nowrap !important;
+    overflow-y: auto;
+    overflow-x: hidden;
+    margin-top: 14px !important;
+    padding-right: 4px;
+}
+
+.sidebar .nav .nav-item {
+    width: 100%;
+}
+
+.sidebar .nav .nav-link {
+    display: block;
+    width: 100%;
+    white-space: normal;
 }
 
 /* Botones sidebar */
 
-.sidebar .btn-success {
-    background-color: #1abc9c;
+.sidebar-bottom .btn {
     border: none;
+    border-radius: 11px;
+    font-weight: 600;
+    padding: 10px 12px;
+    box-shadow: none;
+}
+
+.sidebar .btn-success {
+    background: linear-gradient(135deg, #147aa4, #1db28a);
 }
 
 .sidebar .btn-success:hover {
-    background-color: #16a085;
+    background: linear-gradient(135deg, #126f95, #189c79);
 }
 
 .sidebar .btn-danger {
-    background-color: #e74c3c;
-    border: none;
+    background: linear-gradient(135deg, #b52263, #d93b46);
 }
 
 .sidebar .btn-danger:hover {
-    background-color: #c0392b;
+    background: linear-gradient(135deg, #9f1d57, #c9343f);
 }
 
 
@@ -305,19 +346,42 @@ body {
     padding: 10px 12px;
 }
 
-/* Ajuste solo para el Dashboard principal:
-   permite que el sidebar crezca hasta el final del contenido */
 .dashboard-layout {
-    align-items: stretch;
+    align-items: flex-start;
     min-height: 100vh;
 }
 
 .dashboard-layout .sidebar {
-    height: auto;
-    min-height: 100%;
+    height: 100vh;
+    max-height: 100vh;
 }
 
 .dashboard-layout .main-content {
-    height: auto;
     min-height: 100vh;
+    height: auto;
+}
+
+@media (max-width: 991px) {
+    .sidebar {
+        position: relative;
+        top: auto;
+        height: auto;
+        max-height: none;
+    }
+
+    .sidebar .nav {
+        overflow-y: visible;
+        padding-right: 0;
+    }
+
+    .sidebar-bottom {
+        width: 100%;
+        margin-left: 0;
+        margin-right: 0;
+        margin-bottom: 0;
+        padding: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 14px;
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 8px 18px rgba(0, 0, 0, 0.16);
+    }
 }
