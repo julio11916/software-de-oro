@@ -811,12 +811,8 @@
     }
 
     function bindTopbar() {
-        document.getElementById("btn-salir")?.addEventListener("click", () => {
+        document.getElementById("btn-orden-volver")?.addEventListener("click", () => {
             window.history.back();
-        });
-
-        document.getElementById("btn-menu")?.addEventListener("click", () => {
-            alert("Menu en construccion.");
         });
 
         document.querySelectorAll("[data-area]").forEach((button) => {

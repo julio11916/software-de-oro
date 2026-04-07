@@ -21,9 +21,9 @@
     <!-- Mensajes Flash -->
     {% with messages = get_flashed_messages(with_categories=true) %}
     {% if messages %}
-    <div class="container mt-3">
+    <div class="cart-alerts">
         {% for category, message in messages %}
-        <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+        <div class="alert alert-{{ category }} alert-dismissible fade show cart-alert" role="alert">
             <i class="fas fa-check-circle"></i> {{ message }}
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
@@ -69,7 +69,7 @@
                     <div class="thumbnail-container">
                         {% for imagen in imagenes_producto %}
                         <img src="{{ url_for('static', filename=imagen) }}" class="thumbnail {% if loop.first %}active{% endif %}"
-                            onclick="changeSlide({{ loop.index0 }})" alt="Vista {{ loop.index }}">
+                            data-slide-index="{{ loop.index0 }}" alt="Vista {{ loop.index }}">
                         {% endfor %}
                     </div>
                 </div>
@@ -99,10 +99,25 @@
                                     <i class="fas fa-shopping-basket"></i> Cantidad:
                                 </label>
                                 <input type="number" name="cantidad" class="form-control form-control-lg" value="1"
-                                    min="1" max="{{ producto.stock|int }}" style="max-width: 150px;" {% if producto.stock|int <=0 %}disabled{% endif %}>
+                                    min="1" max="{{ producto.stock|int }}" style="max-width: 150px;" {% if producto.stock|int <= 0 %}disabled{% endif %}>
+                            </div>
+                            <div class="mb-4">
+                                <label class="form-label" style="font-size: 1.1rem; font-weight: bold;">
+                                    <i class="fas fa-ruler-combined"></i> Talla:
+                                </label>
+                                <select name="talla" class="form-select form-select-lg" style="max-width: 240px;" required {% if producto.stock|int <= 0 %}disabled{% endif %}>
+                                    <option value="" selected>Selecciona una talla</option>
+                                    <option value="XS">XS</option>
+                                    <option value="S">S</option>
+                                    <option value="M">M</option>
+                                    <option value="L">L</option>
+                                    <option value="XL">XL</option>
+                                    <option value="XXL">XXL</option>
+                                    <option value="XXXL">XXXL</option>
+                                </select>
                             </div>
                             <div class="d-flex gap-3">
-                                <button type="submit" class="btn btn-add-cart" {% if producto.stock|int <=0 %}disabled{% endif %}>
+                                <button type="submit" class="btn btn-add-cart" {% if producto.stock|int <= 0 %}disabled{% endif %}>
                                     <i class="fas fa-cart-plus"></i> Agregar al Carrito
                                 </button>
                                 {% set origen = request.args.get('from') %}
@@ -114,6 +129,8 @@
                                 <a href="{{ url_for('gaula') }}" class="btn btn-back">
                                 {% elif origen == 'ejercito' %}
                                 <a href="{{ url_for('ejercito') }}" class="btn btn-back">
+                                {% elif origen == 'accesorios' %}
+                                <a href="{{ url_for('accesorios') }}" class="btn btn-back">
                                 {% else %}
                                 <a href="{{ url_for('user_dashboard') }}" class="btn btn-back">
                                 {% endif %}

@@ -1,4 +1,11 @@
 /* ==================== ESTILOS GLOBALES ==================== */
+:root {
+    --btn-start: hsl(226, 43%, 38%);
+    --btn-mid: #3263a3;
+    --btn-end: #1794d2;
+    --accent: #17a2b8;
+}
+
 * {
     margin: 0;
     padding: 0;
@@ -26,9 +33,9 @@ body {
 }
 
 .btn-back {
-    background: #667eea;
+    background: linear-gradient(135deg, var(--btn-start) 0%, var(--btn-mid) 60%, var(--btn-end) 100%);
     color: #fff;
-    border: none;
+    border: 1px solid var(--btn-mid);
     padding: 0.6rem 1rem;
     border-radius: 8px;
     cursor: pointer;
@@ -36,12 +43,13 @@ body {
     text-decoration: none;
     display: flex;
     align-items: center;
+    box-shadow: 0 6px 14px rgba(23, 162, 184, 0.25);
 }
 
 .btn-back:hover {
-    background: #5568d3;
     transform: translateX(-3px);
     color: #fff;
+    filter: brightness(1.05);
 }
 
 .page-title {
@@ -54,7 +62,7 @@ body {
 }
 
 .page-title i {
-    color: #667eea;
+    color: var(--accent);
 }
 
 /* ==================== ICONOS DE NAVEGACIÓN ==================== */
@@ -78,7 +86,7 @@ body {
 }
 
 .icon-btn:hover {
-    background: #667eea;
+    background: linear-gradient(135deg, var(--btn-start) 0%, var(--btn-mid) 60%, var(--btn-end) 100%);
     color: #fff;
     transform: translateY(-2px);
 }
@@ -119,8 +127,8 @@ body {
 }
 
 .dropdown-menu-custom a:hover {
-    background: #f8f9fa;
-    color: #667eea;
+    background: #f0f9fc;
+    color: var(--accent);
 }
 
 .dropdown-menu-custom a:first-child {
@@ -142,7 +150,7 @@ body {
 .profile-avatar-lg {
     width: 80px;
     height: 80px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, var(--btn-start) 0%, var(--btn-mid) 60%, var(--btn-end) 100%);
     border-radius: 50%;
     display: flex;
     align-items: center;
@@ -151,6 +159,7 @@ body {
     font-weight: 700;
     color: #fff;
     flex-shrink: 0;
+    box-shadow: 0 10px 18px rgba(23, 162, 184, 0.25);
 }
 
 .profile-header h2 {
@@ -180,7 +189,7 @@ body {
 .option-icon {
     width: 50px;
     height: 50px;
-    background: #f8f9fa;
+    background: #f0f9fc;
     border-radius: 50%;
     display: flex;
     align-items: center;
@@ -191,11 +200,11 @@ body {
 
 .option-icon i {
     font-size: 1.5rem;
-    color: #667eea;
+    color: var(--accent);
 }
 
 .option-card:hover .option-icon {
-    background: #667eea;
+    background: linear-gradient(135deg, var(--btn-start) 0%, var(--btn-mid) 60%, var(--btn-end) 100%);
 }
 
 .option-card:hover .option-icon i {
@@ -217,7 +226,7 @@ body {
 
 /* ==================== MODALES ==================== */
 .modal-header {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, var(--btn-start) 0%, var(--btn-mid) 60%, var(--btn-end) 100%);
     color: #fff;
     border-bottom: none;
 }
@@ -231,8 +240,8 @@ body {
 }
 
 .form-check-input:checked {
-    background-color: #667eea;
-    border-color: #667eea;
+    background-color: var(--accent);
+    border-color: var(--accent);
 }
 
 /* ==================== CONTENIDO PRINCIPAL ==================== */
@@ -266,7 +275,7 @@ body {
 }
 
 .section-header h3 i {
-    color: #667eea;
+    color: var(--accent);
 }
 
 /* ==================== FORMULARIOS ==================== */
@@ -280,7 +289,7 @@ body {
 }
 
 .form-label i {
-    color: #667eea;
+    color: var(--accent);
 }
 
 .form-control {
@@ -291,8 +300,8 @@ body {
 }
 
 .form-control:focus {
-    border-color: #667eea;
-    box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+    border-color: var(--btn-mid);
+    box-shadow: 0 0 0 0.2rem rgba(23, 162, 184, 0.25);
 }
 
 .form-control:read-only {
@@ -302,9 +311,9 @@ body {
 
 /* ==================== BOTONES ==================== */
 .btn-save, .btn-password {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, var(--btn-start) 0%, var(--btn-mid) 60%, var(--btn-end) 100%);
     color: #fff;
-    border: none;
+    border: 1px solid var(--btn-mid);
     padding: 0.8rem 2rem;
     border-radius: 8px;
     font-weight: 600;
@@ -313,37 +322,32 @@ body {
     display: inline-flex;
     align-items: center;
     gap: 0.5rem;
+    box-shadow: 0 8px 16px rgba(23, 162, 184, 0.25);
 }
 
 .btn-save:hover, .btn-password:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
-}
-
-.btn-password {
-    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-}
-
-.btn-password:hover {
-    box-shadow: 0 4px 15px rgba(245, 87, 108, 0.4);
+    box-shadow: 0 6px 14px rgba(23, 162, 184, 0.3);
+    color: #fff;
+    filter: brightness(1.05);
 }
 
 /* ==================== ESTADÍSTICAS ==================== */
 .stat-box {
     padding: 1.5rem;
-    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    background: linear-gradient(135deg, #f8fdff 0%, #e8f5fb 100%);
     border-radius: 12px;
     transition: all 0.3s ease;
 }
 
 .stat-box:hover {
     transform: translateY(-5px);
-    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 5px 20px rgba(23, 162, 184, 0.18);
 }
 
 .stat-box i {
     font-size: 2.5rem;
-    color: #667eea;
+    color: var(--accent);
     margin-bottom: 1rem;
 }
 
@@ -382,6 +386,54 @@ body {
 
 .alert i {
     font-size: 1.2rem;
+}
+
+.profile-main {
+    margin-top: 7rem;
+}
+
+.profile-page {
+    padding-top: 120px;
+}
+
+.profile-page .modal-dialog {
+    margin-top: 6rem;
+}
+
+@media (max-width: 768px) {
+    .profile-page {
+        padding-top: 100px;
+    }
+
+    .profile-page .modal-dialog {
+        margin-top: 4.5rem;
+    }
+}
+
+.profile-alerts {
+    position: fixed;
+    top: 5.5rem;
+    right: 1.25rem;
+    z-index: 1080;
+    width: min(420px, calc(100% - 2.5rem));
+}
+
+.profile-alert {
+    border-radius: 14px;
+    padding: 1rem 3rem 1rem 1.25rem;
+    font-size: 1.05rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    box-shadow: 0 12px 28px rgba(25, 40, 72, 0.18);
+}
+
+.profile-alert .btn-close {
+    position: absolute;
+    right: 0.9rem;
+    top: 0.9rem;
+    padding: 0;
 }
 
 /* ==================== RESPONSIVE ==================== */
