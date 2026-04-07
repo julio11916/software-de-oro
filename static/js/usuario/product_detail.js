@@ -43,4 +43,17 @@ document.getElementById('productCarousel').addEventListener('slid.bs.carousel', 
 // Inicializar al cargar la página
 document.addEventListener('DOMContentLoaded', function () {
     actualizarCarrito();
+    document.querySelectorAll('.cart-alert .btn-close').forEach((closeBtn) => {
+        setTimeout(() => {
+            closeBtn.click();
+        }, 3000);
+    });
+    document.querySelectorAll('.thumbnail[data-slide-index]').forEach((thumb) => {
+        thumb.addEventListener('click', () => {
+            const index = Number(thumb.dataset.slideIndex);
+            if (!Number.isNaN(index)) {
+                changeSlide(index);
+            }
+        });
+    });
 });
