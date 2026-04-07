@@ -15,6 +15,11 @@
             </a>
 
             <div class="header-actions">
+                {% if request.endpoint == 'orden_personalizada' %}
+                <button class="icon-btn-dark" type="button" id="btn-orden-volver" aria-label="Volver">
+                    <i class="fas fa-arrow-left"></i>
+                </button>
+                {% endif %}
                 {% if session.get('rol') == 'normal' %}
                 <a href="{{ url_for('cart') }}" class="icon-btn-dark">
                 {% else %}
@@ -79,7 +84,7 @@
             <a class="offcanvas-link menu-normal" href="{{ url_for('ejercito') }}">  Ej&eacute;rcito</a>
             <a class="offcanvas-link menu-normal" href="{{ url_for('gaula') }}">  Gaula</a>
             <a class="offcanvas-link menu-normal" href="{{ url_for('policia') }}">  Polic&iacute;a</a>
-            <a class="offcanvas-link active" href="{{ url_for('promociones') }}">
+            <a class="offcanvas-link active" href="{{ url_for('accesorios') }}">
                 <i class="fa-solid fa-glasses" style="color: rgb(29, 42, 51);"></i>
                 <span>Accesorios</span>
             </a>
