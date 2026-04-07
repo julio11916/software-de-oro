@@ -19,6 +19,8 @@ import config_email
 from db_utils import engine, read_table_df, replace_table_df, next_id  # Inicializa DB y proxys al importar
 
 app = Flask(__name__)
+app.config["TEMPLATES_AUTO_RELOAD"] = True
+app.jinja_env.auto_reload = True
 app.secret_key = os.getenv("SECRET_KEY", "").strip()
 if not app.secret_key:
     app.secret_key = os.urandom(32)
@@ -4448,5 +4450,5 @@ def sobre_nosotros():
     return render_template('Usuarios/Informacion empresa/sobre_nosotros.html')
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True, use_reloader=True)
     
