@@ -1,4 +1,4 @@
-import os, json, re, shutil, subprocess, base64, secrets, pandas as pd
+import os, json, re, random, shutil, subprocess, base64, secrets, pandas as pd
 from io import BytesIO
 from pathlib import Path
 from openpyxl.chart import BarChart, LineChart, PieChart, Reference
@@ -1191,6 +1191,7 @@ def login():
     nombre = str(usuario.get('nombre', '')).strip()
     email_sesion = str(usuario.get('email', email)).strip() or email
 
+    session.permanent = True  # evita perder la sesión al navegar entre pestañas
     session['usuario'] = email_sesion
     session['id_usuario'] = int(id_usuario)
     session['rol'] = rol
@@ -3206,42 +3207,72 @@ def editar_producto(id_producto):
 
 @app.route('/user')
 def user_dashboard():
-    if session.get('rol') == 'normal':
-        productos = cargar_productos_activos_df()
-        lista_productos = productos.to_dict(orient='records')
+    if session.get('rol') != 'normal':
+        flash('Debes iniciar sesión como usuario para acceder al catálogo.', 'warning')
+        return redirect(url_for('login'))
 
-        # Promoción vigente por producto para mostrar en catálogo
-        promos = cargar_promociones_df()
-        hoy = datetime.now().date()
-        mejor_promo_por_producto = obtener_mejor_promocion_por_producto(productos, promos, hoy)
+    productos = cargar_productos_activos_df()
+    lista_productos = productos.to_dict(orient='records')
 
-        for producto in lista_productos:
-            precio_base = float(pd.to_numeric(producto.get('precio', 0), errors='coerce') or 0)
-            promo = mejor_promo_por_producto.get(int(producto.get('id_producto', 0)))
-            if promo:
-                descuento = calcular_descuento_promocion(precio_base, promo)
-                producto['precio_original'] = precio_base
-                producto['precio_con_descuento'] = max(0.0, precio_base - descuento)
-                producto['promo_activa'] = True
-                producto['promo_nombre'] = promo.get('nombre', '')
-                if promo.get('tipo_descuento') == 'valor_fijo':
-                    producto['promo_etiqueta'] = f"-{formatear_cop(promo.get('valor_descuento', 0))}"
-                else:
-                    valor_pct = float(pd.to_numeric(promo.get('valor_descuento', 0), errors='coerce') or 0)
-                    producto['promo_etiqueta'] = f"-{valor_pct:g}%"
+    # Promoción vigente por producto para mostrar en catálogo
+    promos = cargar_promociones_df()
+    hoy = datetime.now().date()
+    mejor_promo_por_producto = obtener_mejor_promocion_por_producto(productos, promos, hoy)
+
+    for producto in lista_productos:
+        precio_base = float(pd.to_numeric(producto.get('precio', 0), errors='coerce') or 0)
+        promo = mejor_promo_por_producto.get(int(producto.get('id_producto', 0)))
+        if promo:
+            descuento = calcular_descuento_promocion(precio_base, promo)
+            producto['precio_original'] = precio_base
+            producto['precio_con_descuento'] = max(0.0, precio_base - descuento)
+            producto['promo_activa'] = True
+            producto['promo_nombre'] = promo.get('nombre', '')
+            if promo.get('tipo_descuento') == 'valor_fijo':
+                producto['promo_etiqueta'] = f"-{formatear_cop(promo.get('valor_descuento', 0))}"
             else:
-                producto['precio_original'] = precio_base
-                producto['precio_con_descuento'] = precio_base
-                producto['promo_activa'] = False
-                producto['promo_nombre'] = ''
-                producto['promo_etiqueta'] = ''
+                valor_pct = float(pd.to_numeric(promo.get('valor_descuento', 0), errors='coerce') or 0)
+                producto['promo_etiqueta'] = f"-{valor_pct:g}%"
+        else:
+            producto['precio_original'] = precio_base
+            producto['precio_con_descuento'] = precio_base
+            producto['promo_activa'] = False
+            producto['promo_nombre'] = ''
+            producto['promo_etiqueta'] = ''
         
-        # Obtener el contador del carrito
-        carrito = session.get('carrito', [])
-        cart_count = len(carrito)
-        
-        return render_template('Usuarios/user_dashboard.html', productos=lista_productos, cart_count=cart_count)
-    return "Acceso denegado"
+        # Galería para destacados (hasta 5 imágenes: 1 principal + 4 miniaturas; rellena con la principal si faltan)
+        galeria = obtener_galeria_producto(
+            int(producto.get('id_producto', 0)),
+            producto.get('imagen_url', '')
+        )
+        if not galeria:
+            galeria = [producto.get('imagen_url', '')]
+        while len(galeria) < 5:
+            galeria.append(galeria[0])
+        producto['galeria_dashboard'] = galeria[:5]
+    
+    # Filtrar prendas militares para el carrusel destacado
+    patron_militar = re.compile(r'(milit|camuf|ejerc)', re.IGNORECASE)
+    productos_militares = [
+        p for p in lista_productos if patron_militar.search(str(p.get('nombre', '')))
+    ]
+    # asegurar 5 productos destacados; si hay menos, completar con aleatorios de la misma fuerza
+    productos_militares_destacados = productos_militares[:5]
+    if len(productos_militares_destacados) < 5 and productos_militares:
+        faltantes = 5 - len(productos_militares_destacados)
+        productos_extra = random.choices(productos_militares, k=faltantes)
+        productos_militares_destacados.extend(productos_extra)
+    
+    # Obtener el contador del carrito
+    carrito = session.get('carrito', [])
+    cart_count = len(carrito)
+    
+    return render_template(
+        'Usuarios/user_dashboard.html',
+        productos=lista_productos,
+        productos_militares=productos_militares_destacados,
+        cart_count=cart_count
+    )
 
 
 @app.route('/product/<int:id_producto>')
