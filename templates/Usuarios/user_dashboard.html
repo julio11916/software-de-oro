@@ -102,7 +102,7 @@
                 class="logo">
             </a>
             <p class="hero-subtitle">Cat&aacute;logo premium de prendas y accesorios</p>
-            <a href="#catalogo" class="hero-cta">Ver destacados</a>
+            <a href="#catalogo" class="hero-cta">Ver prendas destacadas</a>
         </div>
     </section>
 
@@ -120,63 +120,68 @@
     {% endwith %}
 
     <main class="main-content" id="catalogo">
-        <div class="container catalog-shell">
-            <h2 class="section-title">Destacados</h2>
+        <div class="container catalog-shell destacados-shell">
+            <h2 class="section-title">Prendas destacadas del Ej&eacute;rcito</h2>
 
-            <div id="destacadosCarousel" class="carousel slide destacados-carousel" data-bs-ride="carousel" data-bs-interval="4500">
+            {% if productos_militares %}
+            <div id="destacadosCarousel" class="carousel slide destacados-carousel" data-bs-ride="carousel" data-bs-interval="10000">
                 <div class="carousel-inner">
-                    {% for grupo in productos|batch(4, None) %}
+                    {% for destacado in productos_militares %}
+                    {% set galeria = destacado.galeria_dashboard if destacado.galeria_dashboard is defined and destacado.galeria_dashboard else [destacado.imagen_url, destacado.imagen_url, destacado.imagen_url, destacado.imagen_url, destacado.imagen_url] %}
+                    {% set imagen_principal = galeria[0] if galeria else destacado.imagen_url %}
                     <div class="carousel-item {% if loop.first %}active{% endif %}">
-                        <div class="row g-4 justify-content-center">
-                            {% for producto in grupo if producto %}
-                            <div class="col-lg-3 col-md-4 col-sm-6 producto-item" data-nombre="{{ producto.nombre|lower }}"
-                                data-precio="{{ producto.precio }}">
-                                <div class="card producto-card h-100">
-                                    <a href="{{ url_for('product_detail', id_producto=producto.id_producto) }}">
-                                        {% if producto.imagen_url %}
-                                        <img src="{{ url_for('static', filename=producto.imagen_url) }}" class="card-img-top"
-                                            alt="{{ producto.nombre }}">
+                        <div class="row g-4 align-items-center destacado-layout">
+                            <div class="col-lg-6">
+                                <div class="destacado-card shadow-sm">
+                                    <a href="{{ url_for('product_detail', id_producto=destacado.id_producto) }}">
+                                        {% if imagen_principal %}
+                                        <img src="{{ url_for('static', filename=imagen_principal) }}" class="destacado-image"
+                                            alt="{{ destacado.nombre }}">
                                         {% else %}
-                                        <img src="{{ url_for('static', filename='img/Pagina/logo.jpeg') }}" class="card-img-top"
-                                            alt="Imagen por defecto">
+                                        <img src="{{ url_for('static', filename='img/Pagina/logo.jpeg') }}" class="destacado-image"
+                                            alt="{{ destacado.nombre }}">
                                         {% endif %}
                                     </a>
-
-                                    <div class="card-body">
-                                        <h5 class="card-title">{{ producto.nombre }}</h5>
-
-                                        {% if producto.promo_activa %}
-                                        <div class="promo-badge mb-2">
-                                            <span class="promo-tag">{{ producto.promo_etiqueta }}</span>
-                                            <small>{{ producto.promo_nombre }}</small>
-                                        </div>
-                                        <p class="price mb-1">{{ producto.precio_con_descuento|cop }}</p>
-                                        <p class="price-original">{{ producto.precio_original|cop }}</p>
-                                        {% else %}
-                                        <p class="price">{{ producto.precio|cop }}</p>
-                                        {% endif %}
-
-                                        {% if producto.stock|int <= 0 %}
-                                        <p class="text-danger fw-bold mb-2 text-center">Agotado</p>
-                                        {% endif %}
-                                    </div>
                                 </div>
                             </div>
-                            {% endfor %}
+
+                            <div class="col-lg-6">
+                                <div class="thumb-grid thumb-grid-4">
+                                    {% for imagen in galeria[1:5] %}
+                                    <a href="{{ url_for('product_detail', id_producto=destacado.id_producto) }}" class="thumb-card alt-angle d-block">
+                                        {% if imagen %}
+                                        <img src="{{ url_for('static', filename=imagen) }}" alt="{{ destacado.nombre }} - vista {{ loop.index }}">
+                                        {% else %}
+                                        <img src="{{ url_for('static', filename='img/Pagina/logo.jpeg') }}" alt="{{ destacado.nombre }}">
+                                        {% endif %}
+                                    </a>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="destacado-info text-center mt-4">
+                            <h3 class="destacado-title">{{ destacado.nombre }}</h3>
+                            <p class="destacado-price">{{ destacado.precio|cop }}</p>
                         </div>
                     </div>
                     {% endfor %}
                 </div>
 
-                <button class="carousel-control-prev" type="button" data-bs-target="#destacadosCarousel" data-bs-slide="prev">
+                <button class="carousel-control-prev rounded-circle shadow-sm" type="button" data-bs-target="#destacadosCarousel" data-bs-slide="prev">
                     <span class="carousel-control-prev-icon" aria-hidden="true"></span>
                     <span class="visually-hidden">Anterior</span>
                 </button>
-                <button class="carousel-control-next" type="button" data-bs-target="#destacadosCarousel" data-bs-slide="next">
+                <button class="carousel-control-next rounded-circle shadow-sm" type="button" data-bs-target="#destacadosCarousel" data-bs-slide="next">
                     <span class="carousel-control-next-icon" aria-hidden="true"></span>
                     <span class="visually-hidden">Siguiente</span>
                 </button>
             </div>
+            {% else %}
+            <div class="alert alert-info text-center mt-3 mb-0">
+                A&uacute;n no hay prendas militares destacadas disponibles.
+            </div>
+            {% endif %}
         </div>
     </main>
 

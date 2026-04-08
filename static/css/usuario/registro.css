@@ -87,31 +87,32 @@ body.auth-page {
 .btn,
 button,
 input[type="submit"] {
-    background: linear-gradient(135deg, hsl(226, 43%, 38%) 0%, #3263a3 60%, #1794d2 100%);
-    border: 1px solid #3263a3;
-    color: #fff;
+    background: transparent;
+    border: 1px solid #000;
+    color: #000;
     border-radius: 12px;
+    transition: all 0.25s;
 }
 
 .btn-primary {
-    background: linear-gradient(135deg, hsl(226, 43%, 38%) 0%, #3263a3 60%, #1794d2 100%);
-    border: 1px solid #3263a3;
+    background: transparent;
+    border: 1px solid #000;
     border-radius: 12px;
-    color: #fff;
-    box-shadow: 0 6px 14px rgba(50, 99, 163, 0.22);
+    color: #000;
+    box-shadow: none;
 }
 
 .btn:hover,
 .btn-primary:hover,
 button:hover,
 input[type="submit"]:hover {
-    filter: brightness(1.05);
-    color: #fff;
+    background: rgba(255, 255, 255, 0.55);
+    color: #000;
 }
 
 .btn:focus,
 button:focus,
 input[type="submit"]:focus {
     outline: none;
-    box-shadow: 0 0 0 0.2rem rgba(31, 58, 147, 0.25);
+    box-shadow: 0 0 0 0.2rem rgba(216, 243, 249, 0.6);
 }

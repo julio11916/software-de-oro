@@ -363,20 +363,21 @@ body {
     gap: 0.5rem;
     width: 100%;
     padding: 0.8rem;
-    background: linear-gradient(135deg, hsl(226, 43%, 38%) 0%, #3263a3 60%, #1794d2 100%);
-    color: #fff;
+    background: transparent;
+    color: #000;
     text-decoration: none;
     border-radius: 8px;
     font-weight: 600;
-    transition: all 0.3s;
-    border: 1px solid #3263a3;
-    box-shadow: 0 8px 16px rgba(23, 162, 184, 0.25);
+    transition: all 0.25s;
+    border: 1px solid #000;
+    box-shadow: none;
 }
 
 .btn-view-details:hover {
-    filter: brightness(1.05);
+    background: #d8f3f9;
     transform: translateY(-2px);
-    color: #fff;
+    color: #000;
+    box-shadow: 0 6px 14px rgba(216, 243, 249, 0.35);
 }
 
 /* Sin Pedidos */
@@ -409,22 +410,23 @@ body {
     display: inline-flex;
     align-items: center;
     gap: 0.5rem;
-    background: linear-gradient(135deg, hsl(226, 43%, 38%) 0%, #3263a3 60%, #1794d2 100%);
-    color: #fff;
+    background: transparent;
+    color: #000;
     padding: 1rem 2rem;
     border-radius: 8px;
     text-decoration: none;
     font-weight: 600;
     font-size: 1.1rem;
-    transition: all 0.3s;
-    border: 1px solid #3263a3;
-    box-shadow: 0 8px 16px rgba(23, 162, 184, 0.25);
+    transition: all 0.25s;
+    border: 1px solid #000;
+    box-shadow: none;
 }
 
 .btn-start-shopping:hover {
     transform: translateY(-3px);
-    box-shadow: 0 6px 14px rgba(23, 162, 184, 0.3);
-    color: #fff;
+    box-shadow: 0 6px 14px rgba(216, 243, 249, 0.35);
+    color: #000;
+    background: #d8f3f9;
 }
 
 /* Animaciones */
