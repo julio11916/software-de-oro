@@ -61,7 +61,7 @@ USUARIO_COLUMNS = [
 REGISTRO_COLUMNS = ['id_registro', 'id_usuario', 'accion', 'fecha_accion']
 PRODUCTO_COLUMNS = ['id_producto', 'nombre', 'descripcion', 'precio', 'stock', 'id_categoria', 'fuerza', 'intendencia', 'imagen_url', 'eliminado']
 PEDIDO_COLUMNS = ['id_pedido', 'id_usuario', 'fecha_pedido', 'estado']
-DETALLE_PEDIDO_COLUMNS = ['id_detalle', 'id_pedido', 'id_producto', 'cantidad', 'subtotal']
+DETALLE_PEDIDO_COLUMNS = ['id_detalle', 'id_pedido', 'id_producto', 'cantidad', 'subtotal', 'talla']
 PAGO_COLUMNS = ['id_pago', 'id_pedido', 'monto', 'metodo_pago', 'fecha_pago', 'estado_pago', 'id_promo', 'codigo_promo', 'tipo_descuento', 'valor_descuento', 'monto_descuento']
 
 # Column definitions for promociones
@@ -80,6 +80,7 @@ INTENDENCIAS_OPCIONES = [
     "Pantalonetas", "Colchas", "Tendidos", "Chuspas para ropa sucia",
     "Fundas para almohadas", "Camuflados", "Accesorios", "Presillas"
 ]
+TALLAS_OPCIONES = ["XS", "S", "M", "L", "XL", "XXL", "XXXL"]
 ALLOWED_IMAGE_EXTENSIONS = {'jpg', 'jpeg', 'png', 'gif', 'webp'}
 MAX_IMAGE_SIZE_BYTES = 3 * 1024 * 1024
 MAX_IMAGES_PER_PRODUCT = 5
@@ -546,12 +547,14 @@ def cargar_detalle_pedido_df():
     detalle = read_table_df('detalle_pedido')
     for column in DETALLE_PEDIDO_COLUMNS:
         if column not in detalle.columns:
-            detalle[column] = 0
+            detalle[column] = '' if column == 'talla' else 0
     detalle['id_detalle'] = pd.to_numeric(detalle['id_detalle'], errors='coerce')
     detalle['id_pedido'] = pd.to_numeric(detalle['id_pedido'], errors='coerce')
     detalle['id_producto'] = pd.to_numeric(detalle['id_producto'], errors='coerce')
     detalle['cantidad'] = pd.to_numeric(detalle['cantidad'], errors='coerce').fillna(0)
     detalle['subtotal'] = pd.to_numeric(detalle['subtotal'], errors='coerce').fillna(0.0)
+    if 'talla' in detalle.columns:
+        detalle['talla'] = detalle['talla'].fillna('').astype(str)
     return detalle[DETALLE_PEDIDO_COLUMNS]
 
 
@@ -559,7 +562,7 @@ def guardar_detalle_pedido_df(detalle):
     detalle = detalle.copy()
     for column in DETALLE_PEDIDO_COLUMNS:
         if column not in detalle.columns:
-            detalle[column] = 0
+            detalle[column] = '' if column == 'talla' else 0
     replace_table_df('detalle_pedido', detalle[DETALLE_PEDIDO_COLUMNS])
 
 
@@ -1124,12 +1127,14 @@ def normalizar_carrito_por_stock(carrito):
             cambios.append(f'Se ajusto "{nombre_item}" de {cantidad} a {cantidad_final} por stock disponible.')
 
         precio_final = float(referencia['precio']) if referencia['precio'] > 0 else float(item.get('precio', 0))
+        talla_item = str(item.get('talla', '')).strip()
         carrito_limpio.append({
             'id_producto': id_producto,
             'nombre': referencia['nombre'] or nombre_item,
             'cantidad': cantidad_final,
             'precio': precio_final,
-            'subtotal': float(precio_final) * cantidad_final
+            'subtotal': float(precio_final) * cantidad_final,
+            'talla': talla_item
         })
 
     return carrito_limpio, cambios
@@ -1168,13 +1173,15 @@ def login():
     usuarios['email'] = usuarios['email'].astype(str).str.strip()
     candidatos = usuarios[usuarios['email'].str.lower() == email]
     if candidatos.empty:
-        return "Credenciales inválidas. Intenta de nuevo."
+        flash('Correo equivocado.', 'email_error')
+        return render_template('Usuarios/Autenticacion/login_form.html'), 401
 
     idx_usuario = candidatos.index[0]
     usuario = candidatos.loc[idx_usuario]
 
     if not password_coincide(usuario.get('password_hash', ''), password):
-        return "Credenciales inválidas. Intenta de nuevo."
+        flash('Contrasena incorrecta.', 'password_error')
+        return render_template('Usuarios/Autenticacion/login_form.html'), 401
 
     # Migracion transparente: si la contraseña antigua estaba en texto plano, se hashea al iniciar sesion.
     password_guardado = str(usuario.get('password_hash', '') or '')
@@ -2929,7 +2936,8 @@ def _construir_items_detalle_desde_carrito(carrito):
         items_detalle.append({
             'id_producto': item['id_producto'],
             'cantidad': item['cantidad'],
-            'subtotal': item['subtotal']
+            'subtotal': item['subtotal'],
+            'talla': str(item.get('talla', '')).strip()
         })
     return items_detalle
 
@@ -2953,7 +2961,8 @@ def _crear_pedido_y_detalle(pedidos, detalle_pedido, id_usuario, estado_pedido, 
             'id_pedido': nuevo_id_pedido,
             'id_producto': item['id_producto'],
             'cantidad': item['cantidad'],
-            'subtotal': item['subtotal']
+            'subtotal': item['subtotal'],
+            'talla': str(item.get('talla', '')).strip()
         })
         next_detalle_id += 1
     detalle_pedido = pd.concat([detalle_pedido, pd.DataFrame(nuevos_detalles)], ignore_index=True)
@@ -3332,7 +3341,20 @@ def add_to_cart(id_producto):
         return redirect(url_for('user_dashboard'))
 
     carrito = session.get('carrito', [])
-    item_existente = next((item for item in carrito if int(item.get('id_producto', 0)) == int(id_producto)), None)
+    talla = str(request.form.get('talla', '')).strip().upper()
+    if talla not in TALLAS_OPCIONES:
+        flash('Selecciona una talla v\u00e1lida antes de agregar al carrito.', 'warning')
+        return redirect(url_for('product_detail', id_producto=id_producto))
+
+    item_existente = next(
+        (
+            item
+            for item in carrito
+            if int(item.get('id_producto', 0)) == int(id_producto)
+            and str(item.get('talla', '')).strip().upper() == talla
+        ),
+        None
+    )
     if item_existente:
         nueva_cantidad = int(item_existente.get('cantidad', 0)) + cantidad
         if nueva_cantidad > stock_actual:
@@ -3346,14 +3368,15 @@ def add_to_cart(id_producto):
             'nombre': producto['nombre'],
             'cantidad': cantidad,
             'precio': float(producto['precio']),
-            'subtotal': float(producto['precio']) * cantidad
+            'subtotal': float(producto['precio']) * cantidad,
+            'talla': talla
         }
         carrito.append(item_carrito)
 
     session['carrito'] = carrito
     session.modified = True
 
-    flash(f'¡{producto["nombre"]} agregado al carrito exitosamente!', 'success')
+    flash('Prenda guardada con éxito', 'success')
 
     referer = request.referrer
     if referer and 'product' in referer:
@@ -3624,6 +3647,8 @@ def user_order_details(id_pedido):
     
     productos = cargar_productos_df()
     detalles = pd.merge(detalles, productos[['id_producto', 'nombre', 'precio']], on='id_producto')
+    if 'talla' not in detalles.columns:
+        detalles['talla'] = ''
     
     return render_template('Usuarios/Informacion compras pedido/user_order_details.html',
                           pedido=pedido.iloc[0].to_dict(),

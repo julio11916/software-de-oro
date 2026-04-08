@@ -18,6 +18,13 @@ function showMessage(message, type) {
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
     `;
+
+    const closeBtn = container.querySelector(".btn-close");
+    if (closeBtn) {
+        setTimeout(() => {
+            closeBtn.click();
+        }, 3000);
+    }
 }
 
 function enviarCodigoVerificacion() {
@@ -148,6 +155,41 @@ function setupCodigoInput() {
 }
 
 document.addEventListener("DOMContentLoaded", function () {
+    const addressForm = document.querySelector("#modalDirecciones form");
+    const addressInput = document.getElementById("direccion");
+    const addressAlert = document.getElementById("direccionAlert");
+
+    if (addressForm && addressInput && addressAlert) {
+        addressForm.addEventListener("submit", (event) => {
+            const value = addressInput.value.trim();
+            if (!value) {
+                event.preventDefault();
+                addressAlert.classList.remove("d-none");
+                addressAlert.classList.add("show");
+                addressInput.classList.add("is-invalid");
+                addressInput.focus();
+                return;
+            }
+            addressAlert.classList.add("d-none");
+            addressAlert.classList.remove("show");
+            addressInput.classList.remove("is-invalid");
+        });
+
+        addressInput.addEventListener("input", () => {
+            if (addressInput.value.trim()) {
+                addressAlert.classList.add("d-none");
+                addressAlert.classList.remove("show");
+                addressInput.classList.remove("is-invalid");
+            }
+        });
+    }
+
+    document.querySelectorAll(".profile-alert .btn-close").forEach((closeBtn) => {
+        setTimeout(() => {
+            closeBtn.click();
+        }, 3000);
+    });
+
     window.addEventListener("click", function (event) {
         if (!event.target.matches(".user-dropdown-btn") && !event.target.closest(".user-dropdown")) {
             const dropdown = document.getElementById("userDropdown");

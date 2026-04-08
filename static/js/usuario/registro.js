@@ -5,6 +5,12 @@ document.addEventListener("DOMContentLoaded", () => {
     const showPasswords = document.getElementById("showPasswords");
     const emailInput = document.getElementById("email");
     const emailStatus = document.getElementById("emailStatus");
+    const ruleLength = document.getElementById("rule-length");
+    const ruleUpper = document.getElementById("rule-uppercase");
+    const ruleLower = document.getElementById("rule-lowercase");
+    const ruleNumber = document.getElementById("rule-number");
+    const ruleSymbol = document.getElementById("rule-symbol");
+    const ruleList = document.querySelector(".password-rules");
 
     if (!form || !passwordInput || !confirmInput || !showPasswords || !emailInput || !emailStatus) {
         return;
@@ -38,6 +44,61 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
         confirmInput.setCustomValidity("");
+    };
+
+    const setRuleState = (element, cumple) => {
+        if (!element) {
+            return;
+        }
+        if (cumple) {
+            element.classList.add("password-rule-hidden");
+            element.classList.remove("text-danger", "text-success");
+            return;
+        }
+        element.classList.remove("password-rule-hidden");
+        element.classList.remove("text-success");
+        element.classList.add("text-danger");
+    };
+
+    const validarPassword = () => {
+        const value = passwordInput.value || "";
+        const tieneLongitud = value.length >= 8;
+        const tieneMayus = /[A-Z]/.test(value);
+        const tieneMinus = /[a-z]/.test(value);
+        const tieneNumero = /\d/.test(value);
+        const tieneSimbolo = /[^A-Za-z0-9]/.test(value);
+
+        const cumpleTodo = tieneLongitud && tieneMayus && tieneMinus && tieneNumero && tieneSimbolo;
+
+        if (ruleList) {
+            if (cumpleTodo) {
+                ruleList.classList.add("password-rule-hidden");
+            } else {
+                ruleList.classList.remove("password-rule-hidden");
+            }
+        }
+
+        if (cumpleTodo) {
+            [ruleLength, ruleUpper, ruleLower, ruleNumber, ruleSymbol].forEach((el) => {
+                if (!el) {
+                    return;
+                }
+                el.classList.add("password-rule-hidden");
+                el.classList.remove("text-danger", "text-success");
+            });
+            passwordInput.setCustomValidity("");
+            return;
+        }
+
+        setRuleState(ruleLength, tieneLongitud);
+        setRuleState(ruleUpper, tieneMayus);
+        setRuleState(ruleLower, tieneMinus);
+        setRuleState(ruleNumber, tieneNumero);
+        setRuleState(ruleSymbol, tieneSimbolo);
+
+        passwordInput.setCustomValidity(
+            "La contrasena debe cumplir todas las condiciones."
+        );
     };
 
     const verificarCorreoExistente = async () => {
@@ -75,7 +136,11 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     };
 
-    passwordInput.addEventListener("input", validarConfirmacion);
+    passwordInput.addEventListener("input", () => {
+        validarPassword();
+        validarConfirmacion();
+    });
+    validarPassword();
     confirmInput.addEventListener("input", validarConfirmacion);
 
     showPasswords.addEventListener("change", () => {
