@@ -33,23 +33,23 @@ body {
 }
 
 .btn-back {
-    background: linear-gradient(135deg, var(--btn-start) 0%, var(--btn-mid) 60%, var(--btn-end) 100%);
-    color: #fff;
-    border: 1px solid var(--btn-mid);
+    background: transparent;
+    color: #000;
+    border: 1px solid #000;
     padding: 0.6rem 1rem;
     border-radius: 8px;
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: all 0.25s ease;
     text-decoration: none;
     display: flex;
     align-items: center;
-    box-shadow: 0 6px 14px rgba(23, 162, 184, 0.25);
+    box-shadow: none;
 }
 
 .btn-back:hover {
     transform: translateX(-3px);
-    color: #fff;
-    filter: brightness(1.05);
+    color: #000;
+    background: #d8f3f9;
 }
 
 .page-title {
@@ -311,25 +311,25 @@ body {
 
 /* ==================== BOTONES ==================== */
 .btn-save, .btn-password {
-    background: linear-gradient(135deg, var(--btn-start) 0%, var(--btn-mid) 60%, var(--btn-end) 100%);
-    color: #fff;
-    border: 1px solid var(--btn-mid);
+    background: transparent;
+    color: #000;
+    border: 1px solid #000;
     padding: 0.8rem 2rem;
     border-radius: 8px;
     font-weight: 600;
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: all 0.25s ease;
     display: inline-flex;
     align-items: center;
     gap: 0.5rem;
-    box-shadow: 0 8px 16px rgba(23, 162, 184, 0.25);
+    box-shadow: none;
 }
 
 .btn-save:hover, .btn-password:hover {
     transform: translateY(-2px);
-    box-shadow: 0 6px 14px rgba(23, 162, 184, 0.3);
-    color: #fff;
-    filter: brightness(1.05);
+    box-shadow: 0 6px 14px rgba(216, 243, 249, 0.35);
+    color: #000;
+    background: #d8f3f9;
 }
 
 /* ==================== ESTADÍSTICAS ==================== */

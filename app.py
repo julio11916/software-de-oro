@@ -122,20 +122,29 @@ def cargar_usuarios_df():
 
 
 def guardar_usuarios_df(usuarios):
-    # Convertir columnas de tokens a string antes de guardar
-    if 'verification_code' in usuarios.columns:
-        usuarios['verification_code'] = usuarios['verification_code'].astype(str)
-    if 'reset_token' in usuarios.columns:
-        usuarios['reset_token'] = usuarios['reset_token'].astype(str)
-    if 'verification_code_expiry' in usuarios.columns:
-        verification_expiry = usuarios['verification_code_expiry'].replace('', pd.NA)
-        verification_expiry = pd.to_datetime(verification_expiry, errors='coerce')
-        usuarios['verification_code_expiry'] = verification_expiry.where(verification_expiry.notna(), None)
-    if 'reset_token_expiry' in usuarios.columns:
-        reset_expiry = usuarios['reset_token_expiry'].replace('', pd.NA)
-        reset_expiry = pd.to_datetime(reset_expiry, errors='coerce')
-        usuarios['reset_token_expiry'] = reset_expiry.where(reset_expiry.notna(), None)
-    replace_table_df('usuarios', usuarios[USUARIO_COLUMNS])
+    """
+    Persiste el DataFrame de usuarios en PostgreSQL manteniendo tipos correctos
+    para fechas y booleanos, y normalizando los tokens a texto.
+    """
+    df = usuarios.copy()
+
+    # Normalizar columnas de texto
+    if 'verification_code' in df.columns:
+        df['verification_code'] = df['verification_code'].fillna('').astype(str)
+    if 'reset_token' in df.columns:
+        df['reset_token'] = df['reset_token'].fillna('').astype(str)
+
+    # Convertir columnas de fecha/hora a datetime o None
+    for col in ['fecha_registro', 'verification_code_expiry', 'reset_token_expiry']:
+        if col in df.columns:
+            col_series = df[col].replace('', pd.NA)
+            df[col] = pd.to_datetime(col_series, errors='coerce')
+
+    # Asegurar booleanos
+    if 'email_verified' in df.columns:
+        df['email_verified'] = df['email_verified'].fillna(False).astype(bool)
+
+    replace_table_df('usuarios', df[USUARIO_COLUMNS])
 
 
 def cargar_registros_df():

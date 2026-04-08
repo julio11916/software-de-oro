@@ -315,31 +315,66 @@ body {
 }
 
 .btn-primary {
-    background: linear-gradient(135deg, var(--btn-start) 0%, var(--btn-mid) 60%, var(--btn-end) 100%);
-    border: 1px solid var(--btn-mid);
+    background: transparent;
+    border: 1px solid #000;
     border-radius: 12px;
-    color: #fff;
-    box-shadow: 0 6px 14px rgba(50, 99, 163, 0.22);
+    color: #000;
+    box-shadow: none;
+    transition: all 0.25s;
 }
 
 .btn-primary:hover {
-    filter: brightness(1.05);
-    color: #fff;
+    background: #d8f3f9;
+    color: #000;
 }
 
 .btn,
 button,
 input[type="submit"] {
-    background: linear-gradient(135deg, var(--btn-start) 0%, var(--btn-mid) 60%, var(--btn-end) 100%);
-    border: 1px solid var(--btn-mid);
-    color: #fff;
+    background: transparent;
+    border: 1px solid #000;
+    color: #000;
+    transition: all 0.25s;
+}
+
+.btn-dark,
+.btn-outline-dark {
+    background: transparent !important;
+    border: 1px solid #000 !important;
+    color: #000 !important;
+}
+
+.btn-dark:hover,
+.btn-outline-dark:hover {
+    background: rgba(255, 255, 255, 0.55) !important;
+    color: #000 !important;
+}
+
+/* Hover específico para páginas de autenticación */
+.auth-page .btn,
+.auth-page button,
+.auth-page input[type="submit"],
+.auth-page .btn-dark,
+.auth-page .btn-outline-dark {
+    background: transparent;
+    border: 1px solid #000;
+    color: #000;
+}
+
+.auth-page .btn:hover,
+.auth-page button:hover,
+.auth-page input[type="submit"]:hover,
+.auth-page .btn-dark:hover,
+.auth-page .btn-outline-dark:hover {
+    background: rgba(255, 255, 255, 0.55);
+    color: #000;
 }
 
 .btn:focus,
 button:focus,
 input[type="submit"]:focus {
     outline: none;
-    box-shadow: 0 0 0 0.2rem rgba(31, 58, 147, 0.25);
+    box-shadow: 0 0 0 0.2rem rgba(216, 243, 249, 0.6);
 }
 
 .user-dropdown {
