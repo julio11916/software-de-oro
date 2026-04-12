@@ -47,7 +47,7 @@
                     <a class="nav-link" href="{{ url_for('admin_pedidos') }}">Pedidos</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('admin_charts') }}">Ventas y Graficas</a>
+                    <a class="nav-link" href="{{ url_for('admin_charts') }}">Ventas y Gráficas</a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" href="{{ url_for('admin_ajustes') }}">Ajustes</a>
@@ -75,14 +75,17 @@
 
             <!-- Centro vac&iacute;o -->
             <div class="content-area">
-                {% set ing_act = ingresos_mes_actual|default(0) %}
-                {% set ing_prev = ingresos_mes_anterior|default(0) %}
-                {% set egr_act = egresos_mes_actual|default(0) %}
-                {% set egr_prev = egresos_mes_anterior|default(0) %}
-                {% set bal_act = ing_act - egr_act %}
-                {% set bal_prev = ing_prev - egr_prev %}
-                {% set delta_abs = bal_act - bal_prev %}
-                {% set delta_pct = (delta_abs / bal_prev * 100) if bal_prev else 0 %}
+                {% with mensajes = get_flashed_messages(with_categories=true) %}
+                {% if mensajes %}
+                <div class="mb-3">
+                    {% for categoria, mensaje in mensajes %}
+                    <div class="alert alert-{{ 'warning' if categoria == 'message' else categoria }} mb-2">
+                        {{ mensaje }}
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+                {% endwith %}
 
                 <div class="card-grid">
 
@@ -150,47 +153,42 @@
                         </div>
                     </div>
 
-                    <div class="dash-card card-ingresos">
-                        <div class="gradient-section-title">
-                            <h5 class="mb-0">Ingresos y Egresos</h5>
-                            <small style="font-weight:500;">Balance del mes actual vs. anterior</small>
+                    <div class="dash-card card-ingresos card-destacados">
+                        <div class="gradient-section-title d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">Prendas destacadas</h5>
+                            <span class="badge bg-light text-dark">{{ destacados_count|default(0) }}/{{ destacados_max|default(5) }}</span>
                         </div>
-                        <div class="dash-body balance-body">
-                            <div class="balance-row">
-                                <div class="balance-tile">
-                                    <div class="balance-label">Ingresos mes actual</div>
-                                    <div class="balance-value">{{ ing_act|cop }}</div>
+                        <div class="dash-body">
+                            <p class="text-muted mb-3">
+                                Selecciona las prendas que se mostrar&aacute;n en el carrusel de
+                                <strong>Prendas destacadas</strong> para usuarios.
+                            </p>
+                            <form method="POST" action="{{ url_for('admin_actualizar_destacados') }}">
+                                <div class="featured-list" id="featuredList" data-max="{{ destacados_max|default(5) }}">
+                                    {% if productos_destacables %}
+                                        {% for p in productos_destacables %}
+                                        <label class="featured-item">
+                                            <input
+                                                type="checkbox"
+                                                name="destacados_ids"
+                                                value="{{ p.id_producto }}"
+                                                {% if p.destacado_dashboard %}checked{% endif %}
+                                            >
+                                            <span class="featured-item-main">
+                                                <strong>{{ p.nombre }}</strong>
+                                                <small>ID {{ p.id_producto }} | {{ p.fuerza or 'Sin fuerza' }} | {{ p.intendencia or 'Sin intendencia' }}</small>
+                                            </span>
+                                        </label>
+                                        {% endfor %}
+                                    {% else %}
+                                        <p class="mb-0 text-muted">No hay productos activos para destacar.</p>
+                                    {% endif %}
                                 </div>
-                                <div class="balance-tile">
-                                    <div class="balance-label">Ingresos mes anterior</div>
-                                    <div class="balance-value">{{ ing_prev|cop }}</div>
+                                <small class="text-muted d-block mt-2">M&aacute;ximo {{ destacados_max|default(5) }} prendas destacadas.</small>
+                                <div class="mt-3">
+                                    <button type="submit" class="btn btn-primary">Guardar destacadas</button>
                                 </div>
-                                <div class="balance-tile">
-                                    <div class="balance-label">Egresos mes actual</div>
-                                    <div class="balance-value">{{ egr_act|cop }}</div>
-                                </div>
-                                <div class="balance-tile">
-                                    <div class="balance-label">Egresos mes anterior</div>
-                                    <div class="balance-value">{{ egr_prev|cop }}</div>
-                                </div>
-                            </div>
-                            <div class="balance-row">
-                                <div class="balance-tile">
-                                    <div class="balance-label">Balance actual</div>
-                                    <div class="balance-value">{{ bal_act|cop }}</div>
-                                </div>
-                                <div class="balance-tile">
-                                    <div class="balance-label">Balance anterior</div>
-                                    <div class="balance-value">{{ bal_prev|cop }}</div>
-                                </div>
-                                <div class="balance-tile">
-                                    <div class="balance-label">Variaci&oacute;n</div>
-                                    <div class="delta-pill {{ 'delta-positive' if delta_abs >= 0 else 'delta-negative' }}">
-                                        <i class="fas {{ 'fa-arrow-up' if delta_abs >=0 else 'fa-arrow-down' }}"></i>
-                                        {{ delta_abs|cop }} ({{ '%.1f' % delta_pct }}%)
-                                    </div>
-                                </div>
-                            </div>
+                            </form>
                         </div>
                     </div>
 

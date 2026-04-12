@@ -105,16 +105,17 @@
                                 <label class="form-label" style="font-size: 1.1rem; font-weight: bold;">
                                     <i class="fas fa-ruler-combined"></i> Talla:
                                 </label>
+                                {% if producto.requiere_talla %}
                                 <select name="talla" class="form-select form-select-lg" style="max-width: 240px;" required {% if producto.stock|int <= 0 %}disabled{% endif %}>
                                     <option value="" selected>Selecciona una talla</option>
-                                    <option value="XS">XS</option>
-                                    <option value="S">S</option>
-                                    <option value="M">M</option>
-                                    <option value="L">L</option>
-                                    <option value="XL">XL</option>
-                                    <option value="XXL">XXL</option>
-                                    <option value="XXXL">XXXL</option>
+                                    {% for talla in tallas_opciones %}
+                                    <option value="{{ talla }}">{{ talla }}</option>
+                                    {% endfor %}
                                 </select>
+                                {% else %}
+                                <input type="hidden" name="talla" value="">
+                                <input type="text" class="form-control form-control-lg" style="max-width: 240px;" value="No requiere talla" readonly>
+                                {% endif %}
                             </div>
                             <div class="d-flex gap-3">
                                 <button type="submit" class="btn btn-add-cart" {% if producto.stock|int <= 0 %}disabled{% endif %}>

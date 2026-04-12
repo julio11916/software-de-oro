@@ -64,7 +64,11 @@ def ensure_tables():
         fecha_registro TIMESTAMPTZ NOT NULL DEFAULT NOW(),
         email_verified BOOLEAN NOT NULL DEFAULT FALSE,
         verification_code TEXT,
-        verification_code_expiry TIMESTAMPTZ
+        verification_code_expiry TIMESTAMPTZ,
+        reset_token TEXT,
+        reset_token_expiry TIMESTAMPTZ,
+        password_change_code TEXT,
+        password_change_code_expiry TIMESTAMPTZ
     );
     CREATE TABLE IF NOT EXISTS registros (
         id_registro BIGSERIAL PRIMARY KEY,
@@ -86,6 +90,7 @@ def ensure_tables():
         id_categoria BIGINT,
         imagen_url TEXT,
         eliminado BOOLEAN DEFAULT FALSE,
+        destacado_dashboard BOOLEAN DEFAULT FALSE,
         fuerza TEXT,
         intendencia TEXT
     );
@@ -100,7 +105,8 @@ def ensure_tables():
         id_pedido BIGINT,
         id_producto BIGINT,
         cantidad INT,
-        subtotal NUMERIC(12,2)
+        subtotal NUMERIC(12,2),
+        talla TEXT
     );
     CREATE TABLE IF NOT EXISTS promociones (
         id_promo BIGSERIAL PRIMARY KEY,
@@ -127,14 +133,36 @@ def ensure_tables():
         valor_descuento NUMERIC(12,2),
         monto_descuento NUMERIC(12,2)
     );
+    CREATE TABLE IF NOT EXISTS carrito_usuario (
+        email TEXT PRIMARY KEY,
+        carrito_json TEXT NOT NULL DEFAULT '[]',
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+    CREATE TABLE IF NOT EXISTS stripe_checkout (
+        session_id TEXT PRIMARY KEY,
+        usuario_email TEXT NOT NULL,
+        codigo_promo TEXT NOT NULL DEFAULT '',
+        carrito_json TEXT NOT NULL DEFAULT '[]',
+        cart_hash TEXT NOT NULL DEFAULT '',
+        total_esperado NUMERIC(12,2) NOT NULL DEFAULT 0,
+        estado TEXT NOT NULL DEFAULT 'creado',
+        id_pedido BIGINT,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
     """
     with engine.begin() as conn:
         conn.execute(sa.text(ddl))
         conn.execute(sa.text("ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS reset_token TEXT"))
         conn.execute(sa.text("ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS reset_token_expiry TIMESTAMPTZ"))
+        conn.execute(sa.text("ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS password_change_code TEXT"))
+        conn.execute(sa.text("ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS password_change_code_expiry TIMESTAMPTZ"))
         conn.execute(sa.text("ALTER TABLE producto ADD COLUMN IF NOT EXISTS fuerza TEXT"))
         conn.execute(sa.text("ALTER TABLE producto ADD COLUMN IF NOT EXISTS intendencia TEXT"))
+        conn.execute(sa.text("ALTER TABLE producto ADD COLUMN IF NOT EXISTS destacado_dashboard BOOLEAN DEFAULT FALSE"))
+        conn.execute(sa.text("ALTER TABLE detalle_pedido ADD COLUMN IF NOT EXISTS talla TEXT"))
         conn.execute(sa.text("ALTER TABLE promociones ADD COLUMN IF NOT EXISTS id_producto BIGINT"))
+        conn.execute(sa.text("ALTER TABLE stripe_checkout ADD COLUMN IF NOT EXISTS carrito_json TEXT NOT NULL DEFAULT '[]'"))
 
 
 def read_table_df(table_name):

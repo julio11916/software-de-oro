@@ -110,6 +110,57 @@ body {
 .card-productos .dash-body { min-height: 180px; }
 .card-notif .dash-body { min-height: 150px; }
 
+.card-destacados .dash-body {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.featured-list {
+    border: 1px solid #dfe8f4;
+    border-radius: 12px;
+    background: #f9fbff;
+    padding: 8px;
+    max-height: 290px;
+    overflow-y: auto;
+}
+
+.featured-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 8px 10px;
+    border-radius: 10px;
+    transition: background-color 0.2s ease;
+    cursor: pointer;
+}
+
+.featured-item:hover {
+    background: #eef5ff;
+}
+
+.featured-item input[type="checkbox"] {
+    margin-top: 3px;
+}
+
+.featured-item-main {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.featured-item-main strong {
+    color: #0b2f64;
+    font-weight: 700;
+    line-height: 1.2;
+}
+
+.featured-item-main small {
+    color: #60748f;
+    line-height: 1.2;
+}
+
 @media (max-width: 991px) {
     .card-grid {
         grid-template-columns: 1fr;
@@ -251,19 +302,27 @@ body {
 }
 
 .sidebar .btn-success {
-    background: linear-gradient(135deg, #147aa4, #1db28a);
+    background: linear-gradient(135deg, #1684ad 0%, #1a9fc2 100%);
+    color: #ffffff;
+    border: 1px solid rgba(210, 240, 255, 0.25);
 }
 
 .sidebar .btn-success:hover {
-    background: linear-gradient(135deg, #126f95, #189c79);
+    background: linear-gradient(135deg, #14779d 0%, #168eb0 100%);
+    color: #ffffff;
+    border-color: rgba(210, 240, 255, 0.4);
 }
 
 .sidebar .btn-danger {
-    background: linear-gradient(135deg, #b52263, #d93b46);
+    background: linear-gradient(135deg, #0b2f66 0%, #145184 100%);
+    color: #ffffff;
+    border: 1px solid rgba(190, 220, 255, 0.28);
 }
 
 .sidebar .btn-danger:hover {
-    background: linear-gradient(135deg, #9f1d57, #c9343f);
+    background: linear-gradient(135deg, #0a2959 0%, #114674 100%);
+    color: #ffffff;
+    border-color: rgba(190, 220, 255, 0.45);
 }
 
 
