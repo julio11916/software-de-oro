@@ -17,3 +17,4 @@ Werkzeug==3.1.6
 SQLAlchemy==2.0.37
 psycopg[binary]==3.3.3
 python-dotenv==1.0.1
+stripe==13.1.1

@@ -27,6 +27,181 @@ function showMessage(message, type) {
     }
 }
 
+function showPasswordChangeMessage(message, type) {
+    const container = document.getElementById("passwordChangeMessageContainer");
+    if (!container) return;
+
+    const alertClass = type === "success" ? "alert-success" : "alert-danger";
+    const icon = type === "success" ? "fa-check-circle" : "fa-exclamation-circle";
+
+    container.innerHTML = `
+        <div class="alert ${alertClass} alert-dismissible fade show" role="alert">
+            <i class="fas ${icon} me-2"></i>${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    `;
+}
+
+function setPasswordChangeStep(step) {
+    const stepRequest = document.getElementById("passwordStepRequest");
+    const stepVerify = document.getElementById("passwordStepVerify");
+    const stepForm = document.getElementById("changePasswordForm");
+
+    if (stepRequest) stepRequest.style.display = step === "request" ? "block" : "none";
+    if (stepVerify) stepVerify.style.display = step === "verify" ? "block" : "none";
+    if (stepForm) stepForm.style.display = step === "form" ? "block" : "none";
+}
+
+function enviarCodigoCambioPassword() {
+    const btn = document.getElementById("btnEnviarCodigoCambioPassword");
+    if (!btn) return;
+
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Enviando...';
+
+    fetch("/user/profile/send-password-change-code", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+    })
+        .then((response) => response.json())
+        .then((data) => {
+            if (data.success) {
+                showPasswordChangeMessage(data.message, "success");
+                setPasswordChangeStep("verify");
+                const codeInput = document.getElementById("password_change_code_step");
+                if (codeInput) codeInput.focus();
+            } else {
+                showPasswordChangeMessage(data.message || "No fue posible enviar el codigo.", "error");
+            }
+        })
+        .catch((error) => {
+            console.error("Error:", error);
+            showPasswordChangeMessage("Error al enviar el codigo. Intenta nuevamente.", "error");
+        })
+        .finally(() => {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-paper-plane me-2"></i>Solicitar codigo de seguridad';
+        });
+}
+
+function verificarCodigoCambioPassword() {
+    const codeInput = document.getElementById("password_change_code_step");
+    const btn = document.getElementById("btnValidarCodigoCambioPassword");
+    const hiddenCode = document.getElementById("password_change_code");
+    if (!codeInput || !btn || !hiddenCode) return;
+
+    const codigo = codeInput.value.replace(/\D/g, "").trim();
+    if (!/^\d{6}$/.test(codigo)) {
+        showPasswordChangeMessage("El codigo debe tener exactamente 6 digitos.", "error");
+        return;
+    }
+
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Validando...';
+
+    fetch("/user/profile/verify-password-change-code", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ code: codigo }),
+    })
+        .then((response) => response.json())
+        .then((data) => {
+            if (data.success) {
+                hiddenCode.value = codigo;
+                setPasswordChangeStep("form");
+                showPasswordChangeMessage(data.message, "success");
+                const currentPassword = document.getElementById("current_password");
+                if (currentPassword) currentPassword.focus();
+                return;
+            }
+
+            showPasswordChangeMessage(data.message || "Codigo invalido.", "error");
+        })
+        .catch((error) => {
+            console.error("Error:", error);
+            showPasswordChangeMessage("Error validando el codigo. Intenta nuevamente.", "error");
+        })
+        .finally(() => {
+            btn.disabled = false;
+            btn.innerHTML = "Validar codigo y continuar";
+        });
+}
+
+function togglePasswordVisibility(event) {
+    const btn = event.currentTarget;
+    const targetId = btn.getAttribute("data-target");
+    const input = document.getElementById(targetId);
+    if (!input) return;
+
+    const icon = btn.querySelector("i");
+    if (input.type === "password") {
+        input.type = "text";
+        if (icon) {
+            icon.classList.remove("fa-eye");
+            icon.classList.add("fa-eye-slash");
+        }
+    } else {
+        input.type = "password";
+        if (icon) {
+            icon.classList.remove("fa-eye-slash");
+            icon.classList.add("fa-eye");
+        }
+    }
+}
+
+function setupPasswordChangeSection() {
+    const btnSendCode = document.getElementById("btnEnviarCodigoCambioPassword");
+    if (btnSendCode) {
+        btnSendCode.removeEventListener("click", enviarCodigoCambioPassword);
+        btnSendCode.addEventListener("click", enviarCodigoCambioPassword);
+    }
+
+    const btnVerifyCode = document.getElementById("btnValidarCodigoCambioPassword");
+    if (btnVerifyCode) {
+        btnVerifyCode.removeEventListener("click", verificarCodigoCambioPassword);
+        btnVerifyCode.addEventListener("click", verificarCodigoCambioPassword);
+    }
+
+    const btnResendCode = document.getElementById("btnReenviarCodigoCambioPassword");
+    if (btnResendCode) {
+        btnResendCode.removeEventListener("click", enviarCodigoCambioPassword);
+        btnResendCode.addEventListener("click", enviarCodigoCambioPassword);
+    }
+
+    const codeInput = document.getElementById("password_change_code_step");
+    if (codeInput) {
+        codeInput.addEventListener("input", (event) => {
+            event.target.value = event.target.value.replace(/\D/g, "").slice(0, 6);
+        });
+    }
+
+    const form = document.getElementById("changePasswordForm");
+    if (form && form.dataset.codeGuardBound !== "1") {
+        form.addEventListener("submit", function (event) {
+            const hiddenCode = document.getElementById("password_change_code");
+            if (!hiddenCode || !/^\d{6}$/.test((hiddenCode.value || "").trim())) {
+                event.preventDefault();
+                showPasswordChangeMessage(
+                    "Primero debes solicitar y validar el codigo de seguridad para continuar.",
+                    "error"
+                );
+                setPasswordChangeStep("verify");
+            }
+        });
+        form.dataset.codeGuardBound = "1";
+    }
+
+    const toggleButtons = document.querySelectorAll("[data-password-toggle]");
+    toggleButtons.forEach((btn) => {
+        btn.removeEventListener("click", togglePasswordVisibility);
+        btn.addEventListener("click", togglePasswordVisibility);
+    });
+}
+
 function enviarCodigoVerificacion() {
     const btn = document.getElementById("btnEnviarCodigo");
     if (!btn) return;
@@ -223,5 +398,38 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
+    const modalSeguridad = document.getElementById("modalSeguridad");
+    if (modalSeguridad) {
+        modalSeguridad.addEventListener("shown.bs.modal", function () {
+            setupPasswordChangeSection();
+        });
+
+        modalSeguridad.addEventListener("hidden.bs.modal", function () {
+            const container = document.getElementById("passwordChangeMessageContainer");
+            if (container) container.innerHTML = "";
+            const codeStepInput = document.getElementById("password_change_code_step");
+            if (codeStepInput) codeStepInput.value = "";
+            const hiddenCode = document.getElementById("password_change_code");
+            if (hiddenCode) hiddenCode.value = "";
+            const currentPassword = document.getElementById("current_password");
+            const newPassword = document.getElementById("new_password");
+            if (currentPassword) {
+                currentPassword.value = "";
+                currentPassword.type = "password";
+            }
+            if (newPassword) {
+                newPassword.value = "";
+                newPassword.type = "password";
+            }
+            document.querySelectorAll("[data-password-toggle] i").forEach((icon) => {
+                icon.classList.remove("fa-eye-slash");
+                icon.classList.add("fa-eye");
+            });
+            setPasswordChangeStep("request");
+        });
+    }
+
     setupCodigoInput();
+    setupPasswordChangeSection();
+    setPasswordChangeStep("request");
 });

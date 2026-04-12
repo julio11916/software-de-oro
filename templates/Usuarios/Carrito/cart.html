@@ -42,11 +42,14 @@
                         <div class="cart-item">
                             <div class="item-info">
                                 <div class="item-image">
+                                    {% if item.imagen_url %}
+                                    <img src="{{ url_for('static', filename=item.imagen_url) }}" alt="{{ item.nombre }}" loading="lazy">
+                                    {% else %}
                                     <i class="fas fa-box-open"></i>
+                                    {% endif %}
                                 </div>
                                 <div class="item-details">
                                     <h5 class="item-name">{{ item.nombre }}</h5>
-                                    <p class="item-description">{{ item.descripcion|default('Producto de alta calidad', true) }}</p>
                                     {% if item.talla %}
                                     <p class="item-description"><strong>Talla:</strong> {{ item.talla }}</p>
                                     {% endif %}

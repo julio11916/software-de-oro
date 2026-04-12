@@ -45,16 +45,7 @@
                     <h2 class="mb-1">{{ usuario.nombre }}</h2>
                     <p class="text-muted mb-2">{{ usuario.email }}</p>
 
-                    {% if usuario.email_verified %}
-                    <!-- Email Verificado -->
-                    <div class="alert alert-success d-flex align-items-center py-2 mb-0"
-                        style="background-color: #d4edda; border-color: #28a745; border-left: 4px solid #28a745;">
-                        <i class="fas fa-shield-alt me-2" style="color: #28a745;"></i>
-                        <span style="color: #155724;">Tu correo est&aacute; verificado. Autenticaci&oacute;n disponible</span>
-                        <button class="btn btn-sm ms-auto" data-bs-toggle="modal" data-bs-target="#modalVerificacion"
-                            style="background: linear-gradient(135deg, hsl(226, 43%, 38%) 0%, #3263a3 60%, #1794d2 100%); color: white; border: 1px solid #3263a3; padding: 0.4rem 1rem; border-radius: 6px; box-shadow: 0 6px 14px rgba(23, 162, 184, 0.25);">Autenticar</button>
-                    </div>
-                    {% else %}
+                    {% if not usuario.email_verified %}
                     <!-- Email No Verificado -->
                     <div class="alert alert-info d-flex align-items-center py-2 mb-0"
                         style="background-color: #fff3cd; border-color: #ffc107; border-left: 4px solid #ffc107;">
@@ -104,7 +95,7 @@
                     </div>
                     <div class="option-content">
                         <h5>Seguridad</h5>
-                        <p class="text-muted mb-0">Activa contraseñas visibles</p>
+                        <p class="text-muted mb-0">Cambio de contraseña seguro en dos pasos</p>
                     </div>
                 </div>
             </div>
@@ -242,25 +233,73 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <form method="POST" action="{{ url_for('change_password') }}">
-                        <h6 class="mb-3">Cambiar Contrasena</h6>
-                        <div class="mb-3">
-                            <label for="current_password" class="form-label">Contrasena Actual</label>
-                            <input type="password" class="form-control" id="current_password" name="current_password"
-                                required>
+                    <h6 class="mb-2">Cambiar Contrasena</h6>
+                    <div id="passwordChangeMessageContainer" class="mb-3"></div>
+
+                    <div id="passwordStepRequest">
+                        <p class="text-muted mb-3">
+                            Paso 1: solicita un codigo de seguridad al correo <strong>{{ usuario.email }}</strong>.
+                            El codigo es valido por
+                            {{ PASSWORD_CHANGE_CODE_EXP_MINUTES if PASSWORD_CHANGE_CODE_EXP_MINUTES else 7 }} minutos.
+                        </p>
+                        <div class="d-grid gap-2 mb-2">
+                            <button type="button" class="btn btn-outline-primary" id="btnEnviarCodigoCambioPassword">
+                                <i class="fas fa-paper-plane me-2"></i>Solicitar codigo de seguridad
+                            </button>
                         </div>
+                    </div>
+
+                    <div id="passwordStepVerify" style="display: none;">
+                        <p class="text-muted mb-3">
+                            Paso 2: escribe el codigo de 6 digitos que recibiste para continuar.
+                        </p>
                         <div class="mb-3">
-                            <label for="new_password" class="form-label">Nueva Contrasena</label>
-                            <input type="password" class="form-control" id="new_password" name="new_password" required>
+                            <label for="password_change_code_step" class="form-label">Codigo de seguridad</label>
+                            <input type="text" class="form-control" id="password_change_code_step"
+                                maxlength="6" inputmode="numeric" autocomplete="one-time-code">
                         </div>
+                        <div class="d-flex gap-2 mb-3">
+                            <button type="button" class="btn btn-primary" id="btnValidarCodigoCambioPassword">
+                                Validar codigo y continuar
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary" id="btnReenviarCodigoCambioPassword">
+                                Reenviar codigo
+                            </button>
+                        </div>
+                    </div>
+
+                    <form method="POST" action="{{ url_for('change_password') }}" id="changePasswordForm" style="display: none;">
+                        <input type="hidden" id="password_change_code" name="password_change_code">
+                        <p class="text-success small mb-3">
+                            <i class="fas fa-check-circle me-1"></i>Codigo validado correctamente.
+                        </p>
+
                         <div class="mb-3">
-                            <label for="confirm_password" class="form-label">Confirmar Nueva Contrasena</label>
-                            <input type="password" class="form-control" id="confirm_password" name="confirm_password"
-                                required>
+                            <label for="current_password" class="form-label">Contrasena actual</label>
+                            <div class="input-group">
+                                <input type="password" class="form-control" id="current_password" name="current_password" required>
+                                <button type="button" class="btn btn-outline-secondary" data-password-toggle data-target="current_password">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
                         </div>
+
+                        <div class="mb-3">
+                            <label for="new_password" class="form-label">Nueva contrasena</label>
+                            <div class="input-group">
+                                <input type="password" class="form-control" id="new_password" name="new_password" required>
+                                <button type="button" class="btn btn-outline-secondary" data-password-toggle data-target="new_password">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                            <small class="text-muted">
+                                Minimo 8 caracteres, con mayuscula, minuscula, numero y caracter especial.
+                            </small>
+                        </div>
+
                         <div class="text-end">
                             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                            <button type="submit" class="btn btn-primary">Cambiar Contrasena</button>
+                            <button type="submit" class="btn btn-primary">Cambiar contrasena</button>
                         </div>
                     </form>
                 </div>

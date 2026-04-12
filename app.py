@@ -1,4 +1,4 @@
-import os, json, re, random, shutil, subprocess, base64, secrets, pandas as pd
+import os, json, re, random, shutil, subprocess, base64, secrets, hashlib, pandas as pd, sqlalchemy as sa
 from io import BytesIO
 from pathlib import Path
 from openpyxl.chart import BarChart, LineChart, PieChart, Reference
@@ -13,6 +13,11 @@ from email_service import (
     generar_codigo_verificacion,
     enviar_codigo_verificacion,
     enviar_recuperacion_password,
+)
+from stripe_service import (
+    stripe_estado_configuracion,
+    crear_checkout_sesion_tarjeta,
+    obtener_checkout_sesion,
 )
 load_dotenv()
 import config_email
@@ -29,7 +34,7 @@ if not app.secret_key:
         "Usando una clave temporal para esta ejecucion."
     )
 
-# Configuración de Flask-Mail para Gmail
+# ConfiguraciÃƒÂ³n de Flask-Mail para Gmail
 app.config['MAIL_SERVER'] = config_email.MAIL_SERVER
 app.config['MAIL_PORT'] = config_email.MAIL_PORT
 app.config['MAIL_USE_TLS'] = config_email.MAIL_USE_TLS
@@ -57,6 +62,8 @@ USUARIO_COLUMNS = [
     'verification_code_expiry',
     'reset_token',
     'reset_token_expiry',
+    'password_change_code',
+    'password_change_code_expiry',
 ]
 REGISTRO_COLUMNS = ['id_registro', 'id_usuario', 'accion', 'fecha_accion']
 PRODUCTO_COLUMNS = ['id_producto', 'nombre', 'descripcion', 'precio', 'stock', 'id_categoria', 'fuerza', 'intendencia', 'imagen_url', 'eliminado']
@@ -86,6 +93,7 @@ MAX_IMAGE_SIZE_BYTES = 3 * 1024 * 1024
 MAX_IMAGES_PER_PRODUCT = 5
 REGISTER_CODE_EXP_MINUTES = 7
 PASSWORD_RESET_EXP_MINUTES = 30
+PASSWORD_CHANGE_CODE_EXP_MINUTES = 7
 PENDING_REGISTRATIONS = {}
 
 # DB init y proxys se hacen al importar db_utils
@@ -114,6 +122,10 @@ def cargar_usuarios_df():
         usuarios['reset_token'] = usuarios['reset_token'].fillna('').astype(str)
     if 'reset_token_expiry' in usuarios.columns:
         usuarios['reset_token_expiry'] = usuarios['reset_token_expiry'].fillna('').astype(str)
+    if 'password_change_code' in usuarios.columns:
+        usuarios['password_change_code'] = usuarios['password_change_code'].fillna('').astype(str)
+    if 'password_change_code_expiry' in usuarios.columns:
+        usuarios['password_change_code_expiry'] = usuarios['password_change_code_expiry'].fillna('').astype(str)
     if 'email_verified' in usuarios.columns:
         usuarios['email_verified'] = usuarios['email_verified'].fillna(False).astype(bool)
     
@@ -130,16 +142,16 @@ def guardar_usuarios_df(usuarios):
     df = usuarios.copy()
 
     # Normalizar columnas de texto
-    if 'verification_code' in df.columns:
-        df['verification_code'] = df['verification_code'].fillna('').astype(str)
-    if 'reset_token' in df.columns:
-        df['reset_token'] = df['reset_token'].fillna('').astype(str)
+    for col in ['verification_code', 'reset_token', 'password_change_code']:
+        if col in df.columns:
+            df[col] = df[col].fillna('').astype(str)
 
     # Convertir columnas de fecha/hora a datetime o None
-    for col in ['fecha_registro', 'verification_code_expiry', 'reset_token_expiry']:
+    for col in ['fecha_registro', 'verification_code_expiry', 'reset_token_expiry', 'password_change_code_expiry']:
         if col in df.columns:
             col_series = df[col].replace('', pd.NA)
-            df[col] = pd.to_datetime(col_series, errors='coerce')
+            parsed = pd.to_datetime(col_series, errors='coerce')
+            df[col] = parsed.where(parsed.notna(), None)
 
     # Asegurar booleanos
     if 'email_verified' in df.columns:
@@ -285,6 +297,47 @@ def password_coincide(password_guardado, password_plano):
     return guardado == plano
 
 
+def password_cumple_estandares(password):
+    patron = r'(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}'
+    return bool(re.fullmatch(patron, str(password or '')))
+
+
+def timestamp_expirado(valor_expiry):
+    expiry_dt = pd.to_datetime(valor_expiry, errors='coerce')
+    if pd.isna(expiry_dt):
+        return True
+
+    tz = getattr(expiry_dt, 'tz', None)
+    if tz is not None:
+        ahora = pd.Timestamp.now(tz=tz)
+    else:
+        ahora = pd.Timestamp.now()
+    return ahora > expiry_dt
+
+
+def asegurar_columnas_cambio_password(usuarios):
+    if 'password_change_code' not in usuarios.columns:
+        usuarios['password_change_code'] = ''
+    if 'password_change_code_expiry' not in usuarios.columns:
+        usuarios['password_change_code_expiry'] = ''
+    usuarios['password_change_code'] = usuarios['password_change_code'].fillna('').astype(str)
+    usuarios['password_change_code_expiry'] = usuarios['password_change_code_expiry'].fillna('').astype(str)
+    return usuarios
+
+
+def codigo_cambio_password_expirado(usuario):
+    expiry_raw = str(usuario.get('password_change_code_expiry', '') or '').strip()
+    if not expiry_raw:
+        return True
+
+    return timestamp_expirado(expiry_raw)
+
+
+def limpiar_codigo_cambio_password(usuarios, idx_usuario):
+    usuarios.at[idx_usuario, 'password_change_code'] = ''
+    usuarios.at[idx_usuario, 'password_change_code_expiry'] = ''
+
+
 def generar_token_recuperacion():
     return secrets.token_urlsafe(32)
 
@@ -308,10 +361,7 @@ def token_recuperacion_expirado(usuario):
     if not expiry_raw:
         return True
 
-    expiry_dt = pd.to_datetime(expiry_raw, errors='coerce')
-    if pd.isna(expiry_dt):
-        return True
-    return pd.Timestamp.now() > expiry_dt
+    return timestamp_expirado(expiry_raw)
 
 
 def limpiar_token_recuperacion(usuarios, idx_usuario):
@@ -343,7 +393,7 @@ def validar_archivo_imagen(archivo):
     tamano = archivo.tell()
     archivo.seek(0)
     if tamano > MAX_IMAGE_SIZE_BYTES:
-        return "La imagen excede el tamaño máximo permitido (3MB)."
+        return "La imagen excede el tamaÃƒÂ±o mÃƒÂ¡ximo permitido (3MB)."
     return None
 
 
@@ -1140,6 +1190,239 @@ def normalizar_carrito_por_stock(carrito):
     return carrito_limpio, cambios
 
 
+def _obtener_carrito_guardado_usuario(email):
+    email_norm = normalizar_email(email)
+    if not email_norm:
+        return []
+
+    try:
+        with engine.connect() as conn:
+            row = conn.execute(
+                sa.text("SELECT carrito_json FROM carrito_usuario WHERE email = :email"),
+                {"email": email_norm}
+            ).fetchone()
+        if not row:
+            return []
+
+        carrito = json.loads(str(row[0] or '[]'))
+        if isinstance(carrito, list):
+            return carrito
+        return []
+    except Exception as exc:
+        print(f"No se pudo cargar carrito guardado para {email_norm}: {exc}")
+        return []
+
+
+def _guardar_carrito_guardado_usuario(email, carrito):
+    email_norm = normalizar_email(email)
+    if not email_norm:
+        return
+
+    payload = carrito if isinstance(carrito, list) else []
+    try:
+        with engine.begin() as conn:
+            conn.execute(
+                sa.text(
+                    """
+                    INSERT INTO carrito_usuario (email, carrito_json, updated_at)
+                    VALUES (:email, :carrito_json, NOW())
+                    ON CONFLICT (email)
+                    DO UPDATE SET
+                        carrito_json = EXCLUDED.carrito_json,
+                        updated_at = NOW()
+                    """
+                ),
+                {
+                    "email": email_norm,
+                    "carrito_json": json.dumps(payload, ensure_ascii=False)
+                }
+            )
+    except Exception as exc:
+        print(f"No se pudo guardar carrito para {email_norm}: {exc}")
+
+
+def _sincronizar_carrito_usuario_desde_sesion():
+    if session.get('rol') != 'normal':
+        return
+    _guardar_carrito_guardado_usuario(session.get('usuario', ''), session.get('carrito', []))
+
+
+def _obtener_carrito_sesion_usuario():
+    if session.get('rol') != 'normal':
+        return []
+
+    carrito_actual = session.get('carrito', None)
+    if not isinstance(carrito_actual, list):
+        carrito_actual = _obtener_carrito_guardado_usuario(session.get('usuario', ''))
+        session['carrito'] = carrito_actual
+        session.modified = True
+
+    return carrito_actual
+
+
+def _enriquecer_carrito_con_imagenes(carrito):
+    if not isinstance(carrito, list) or not carrito:
+        return []
+
+    productos = cargar_productos_df()
+    referencias = {}
+    if not productos.empty:
+        for _, row in productos.iterrows():
+            id_producto = pd.to_numeric(row.get('id_producto'), errors='coerce')
+            if pd.isna(id_producto):
+                continue
+            referencias[int(id_producto)] = {
+                'imagen_url': str(row.get('imagen_url', '') or '').strip(),
+                'descripcion': str(row.get('descripcion', '') or '').strip()
+            }
+
+    carrito_enriquecido = []
+    for item in carrito:
+        item_enriquecido = dict(item) if isinstance(item, dict) else {}
+        id_producto = pd.to_numeric(item_enriquecido.get('id_producto'), errors='coerce')
+        if pd.isna(id_producto):
+            item_enriquecido['imagen_url'] = normalizar_imagen_url(item_enriquecido.get('imagen_url', ''))
+            carrito_enriquecido.append(item_enriquecido)
+            continue
+
+        id_producto = int(id_producto)
+        ref = referencias.get(id_producto, {})
+        imagen_actual = str(item_enriquecido.get('imagen_url', '') or '').strip()
+        imagen_principal = str(ref.get('imagen_url', '') or '').strip()
+        galeria = obtener_galeria_producto(id_producto, imagen_principal)
+        imagen_final = ''
+        if galeria:
+            imagen_final = normalizar_imagen_url(galeria[0])
+        elif imagen_actual:
+            imagen_final = normalizar_imagen_url(imagen_actual)
+
+        item_enriquecido['imagen_url'] = imagen_final
+        if not str(item_enriquecido.get('descripcion', '') or '').strip() and ref.get('descripcion'):
+            item_enriquecido['descripcion'] = ref.get('descripcion')
+        carrito_enriquecido.append(item_enriquecido)
+
+    return carrito_enriquecido
+
+
+def _hash_carrito_checkout(carrito):
+    payload = carrito if isinstance(carrito, list) else []
+    texto = json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(',', ':'))
+    return hashlib.sha256(texto.encode('utf-8')).hexdigest()
+
+
+def _stripe_checkout_guardar_creado(session_id, usuario_email, codigo_promo, carrito, cart_hash, total_esperado):
+    carrito_json = "[]"
+    if isinstance(carrito, list):
+        carrito_json = json.dumps(carrito, ensure_ascii=False)
+    with engine.begin() as conn:
+        conn.execute(
+            sa.text(
+                """
+                INSERT INTO stripe_checkout (
+                    session_id, usuario_email, codigo_promo, carrito_json, cart_hash, total_esperado,
+                    estado, id_pedido, created_at, updated_at
+                )
+                VALUES (
+                    :session_id, :usuario_email, :codigo_promo, :carrito_json, :cart_hash, :total_esperado,
+                    'creado', NULL, NOW(), NOW()
+                )
+                ON CONFLICT (session_id)
+                DO UPDATE SET
+                    usuario_email = EXCLUDED.usuario_email,
+                    codigo_promo = EXCLUDED.codigo_promo,
+                    carrito_json = EXCLUDED.carrito_json,
+                    cart_hash = EXCLUDED.cart_hash,
+                    total_esperado = EXCLUDED.total_esperado,
+                    estado = 'creado',
+                    id_pedido = NULL,
+                    updated_at = NOW()
+                """
+            ),
+            {
+                "session_id": str(session_id or "").strip(),
+                "usuario_email": normalizar_email(usuario_email),
+                "codigo_promo": str(codigo_promo or "").strip().upper(),
+                "carrito_json": carrito_json,
+                "cart_hash": str(cart_hash or "").strip(),
+                "total_esperado": float(total_esperado or 0.0),
+            },
+        )
+
+
+def _stripe_checkout_obtener(session_id):
+    sid = str(session_id or "").strip()
+    if not sid:
+        return None
+    with engine.connect() as conn:
+        row = conn.execute(
+            sa.text(
+                """
+                SELECT session_id, usuario_email, codigo_promo, carrito_json, cart_hash,
+                       total_esperado, estado, id_pedido
+                FROM stripe_checkout
+                WHERE session_id = :session_id
+                """
+            ),
+            {"session_id": sid},
+        ).mappings().first()
+    return dict(row) if row else None
+
+
+def _stripe_checkout_marcar_estado(session_id, estado, id_pedido=None):
+    sid = str(session_id or "").strip()
+    if not sid:
+        return
+    with engine.begin() as conn:
+        conn.execute(
+            sa.text(
+                """
+                UPDATE stripe_checkout
+                SET estado = :estado,
+                    id_pedido = :id_pedido,
+                    updated_at = NOW()
+                WHERE session_id = :session_id
+                """
+            ),
+            {
+                "session_id": sid,
+                "estado": str(estado or "").strip() or "creado",
+                "id_pedido": id_pedido,
+            },
+        )
+
+
+def _stripe_obj_get(data, key, default=None):
+    if isinstance(data, Mapping):
+        return data.get(key, default)
+    try:
+        return data.get(key, default)
+    except Exception:
+        return getattr(data, key, default)
+
+
+def _stripe_checkout_cargar_carrito(registro_checkout):
+    raw = str((registro_checkout or {}).get("carrito_json", "") or "").strip()
+    if not raw:
+        return []
+    try:
+        data = json.loads(raw)
+    except (json.JSONDecodeError, TypeError, ValueError):
+        return []
+    return data if isinstance(data, list) else []
+
+
+def _obtener_usuario_por_email(email):
+    email_norm = normalizar_email(email)
+    if not email_norm:
+        return None
+    usuarios = cargar_usuarios_df()
+    usuarios['email'] = usuarios['email'].astype(str).str.strip().str.lower()
+    candidatos = usuarios[usuarios['email'] == email_norm]
+    if candidatos.empty:
+        return None
+    return candidatos.iloc[0].to_dict()
+
+
 @app.template_filter('cop')
 def cop_filter(valor):
     return formatear_cop(valor)
@@ -1183,7 +1466,7 @@ def login():
         flash('Contrasena incorrecta.', 'password_error')
         return render_template('Usuarios/Autenticacion/login_form.html'), 401
 
-    # Migracion transparente: si la contraseña antigua estaba en texto plano, se hashea al iniciar sesion.
+    # Migracion transparente: si la contraseÃƒÂ±a antigua estaba en texto plano, se hashea al iniciar sesion.
     password_guardado = str(usuario.get('password_hash', '') or '')
     if not password_esta_hasheado(password_guardado):
         usuarios.at[idx_usuario, 'password_hash'] = crear_hash_password(password)
@@ -1191,7 +1474,7 @@ def login():
 
     estado = str(usuario.get('estado', 'activo')).strip().lower()
     if estado != 'activo':
-        return "Tu usuario está inactivo. Contacta al administrador."
+        return "Tu usuario estÃƒÂ¡ inactivo. Contacta al administrador."
 
     rol = usuario['rol']
     id_usuario = usuario['id_usuario']
@@ -1204,7 +1487,12 @@ def login():
     session['rol'] = rol
     session['nombre'] = nombre
 
-    registrar_actividad("Inicio de sesión exitoso")
+    if rol == 'normal':
+        session['carrito'] = _obtener_carrito_guardado_usuario(email_sesion)
+    else:
+        session.pop('carrito', None)
+
+    registrar_actividad("Inicio de sesiÃƒÂ³n exitoso")
 
     if rol == 'admin':
         return redirect(url_for('admin_dashboard'))
@@ -1296,7 +1584,7 @@ def reset_password(token):
         flash('Las contrasenas no coinciden.', 'danger')
         return render_template('Usuarios/Autenticacion/reset_password.html', token=token), 400
 
-    if not re.fullmatch(r'(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}', new_password):
+    if not password_cumple_estandares(new_password):
         flash(
             'La contrasena debe tener minimo 8 caracteres, mayuscula, minuscula, numero y caracter especial.',
             'danger'
@@ -1333,11 +1621,18 @@ def registro():
             return _render_registro(nombre, email), 400
 
         if not email_es_valido(email):
-            flash('Debes ingresar un correo electrónico válido.', 'danger')
+            flash('Debes ingresar un correo electrÃƒÂ³nico vÃƒÂ¡lido.', 'danger')
             return _render_registro(nombre, email), 400
 
         if password != confirm_password:
-            flash('Las contraseñas no coinciden.', 'danger')
+            flash('Las contraseÃƒÂ±as no coinciden.', 'danger')
+            return _render_registro(nombre, email), 400
+
+        if not password_cumple_estandares(password):
+            flash(
+                'La contrasena debe tener minimo 8 caracteres, mayuscula, minuscula, numero y caracter especial.',
+                'danger'
+            )
             return _render_registro(nombre, email), 400
 
         usuarios = cargar_usuarios_df()
@@ -1413,10 +1708,10 @@ def registro_send_code():
         email = normalizar_email(payload.get('email', ''))
 
         if not email:
-            return jsonify({'success': False, 'message': 'Debes ingresar un correo electrónico.'}), 400
+            return jsonify({'success': False, 'message': 'Debes ingresar un correo electrÃƒÂ³nico.'}), 400
 
         if not email_es_valido(email):
-            return jsonify({'success': False, 'message': 'El correo electrónico no es válido.'}), 400
+            return jsonify({'success': False, 'message': 'El correo electrÃƒÂ³nico no es vÃƒÂ¡lido.'}), 400
 
         usuarios = cargar_usuarios_df()
         usuarios['email'] = usuarios['email'].astype(str).str.strip().str.lower()
@@ -1559,6 +1854,8 @@ def registro_verificacion():
 
 @app.route('/logout')
 def logout():
+    if session.get('rol') == 'normal':
+        _guardar_carrito_guardado_usuario(session.get('usuario', ''), _obtener_carrito_sesion_usuario())
     session.clear()
     return redirect(url_for('home'))
 
@@ -1570,7 +1867,7 @@ def admin_dashboard():
         productos_agotados = obtener_productos_agotados()
         admin_nombre = obtener_nombre_sesion()
 
-        # Métricas de usuarios y ventas últimos 30 días
+        # MÃƒÂ©tricas de usuarios y ventas ÃƒÂºltimos 30 dÃƒÂ­as
         hoy = datetime.now()
         hace_30 = hoy - timedelta(days=30)
 
@@ -1696,7 +1993,7 @@ def agregar_producto():
         fuerza = request.form.get('fuerza', '').strip()
         intendencia = request.form.get('intendencia', '').strip()
         if fuerza not in FUERZAS_OPCIONES or intendencia not in INTENDENCIAS_OPCIONES:
-            flash('Selecciona una fuerza e intendencia válidas.', 'danger')
+            flash('Selecciona una fuerza e intendencia vÃƒÂ¡lidas.', 'danger')
             return redirect(url_for('admin_productos'))
 
         imagenes = [
@@ -1709,7 +2006,7 @@ def agregar_producto():
                 imagenes = [imagen_unica]
 
         if len(imagenes) > MAX_IMAGES_PER_PRODUCT:
-            flash(f'Solo puedes subir hasta {MAX_IMAGES_PER_PRODUCT} imágenes por producto.', 'danger')
+            flash(f'Solo puedes subir hasta {MAX_IMAGES_PER_PRODUCT} imÃƒÂ¡genes por producto.', 'danger')
             return redirect(url_for('admin_productos'))
 
         for imagen in imagenes:
@@ -1743,7 +2040,7 @@ def agregar_producto():
             f"- stock: {int(request.form['stock'])}\n"
             f"- fuerza: {fuerza}\n"
             f"- intendencia: {intendencia}\n"
-            f"- imágenes: {len(galeria_guardada)}"
+            f"- imÃƒÂ¡genes: {len(galeria_guardada)}"
         )
 
         return redirect(url_for('admin_productos'))
@@ -1791,11 +2088,11 @@ def subir_imagen(id_producto):
             imagenes = [imagen_unica]
 
     if not imagenes:
-        flash("No se seleccionó ninguna imagen.")
+        flash("No se seleccionÃƒÂ³ ninguna imagen.")
         return redirect(url_for('admin_productos'))
 
     if len(imagenes) > MAX_IMAGES_PER_PRODUCT:
-        flash(f'Solo puedes subir hasta {MAX_IMAGES_PER_PRODUCT} imágenes por producto.', 'danger')
+        flash(f'Solo puedes subir hasta {MAX_IMAGES_PER_PRODUCT} imÃƒÂ¡genes por producto.', 'danger')
         return redirect(url_for('admin_productos'))
 
     for imagen in imagenes:
@@ -1811,7 +2108,7 @@ def subir_imagen(id_producto):
     if not idx.empty:
         productos.at[idx[0], 'imagen_url'] = galeria_guardada[0] if galeria_guardada else ''
         guardar_productos_df(productos)
-        flash(f"Galería reemplazada ({len(galeria_guardada)} imágenes).", 'success')
+        flash(f"GalerÃƒÂ­a reemplazada ({len(galeria_guardada)} imÃƒÂ¡genes).", 'success')
     else:
         flash("Producto no encontrado.", 'danger')
 
@@ -1834,7 +2131,7 @@ def agregar_imagenes_producto(id_producto):
         ]
 
     if not imagenes:
-        flash("No se seleccionaron imágenes para agregar.", 'warning')
+        flash("No se seleccionaron imÃƒÂ¡genes para agregar.", 'warning')
         return redirect(url_for('admin_productos'))
 
     for imagen in imagenes:
@@ -1855,7 +2152,7 @@ def agregar_imagenes_producto(id_producto):
         disponibles = max(0, MAX_IMAGES_PER_PRODUCT - len(galeria_actual))
         flash(
             f"Este producto ya tiene {len(galeria_actual)} imagen(es). "
-            f"Solo puedes agregar {disponibles} más (máximo {MAX_IMAGES_PER_PRODUCT}).",
+            f"Solo puedes agregar {disponibles} mÃƒÂ¡s (mÃƒÂ¡ximo {MAX_IMAGES_PER_PRODUCT}).",
             'danger'
         )
         return redirect(url_for('admin_productos'))
@@ -1865,7 +2162,7 @@ def agregar_imagenes_producto(id_producto):
     productos.at[idx[0], 'imagen_url'] = galeria_actualizada[0] if galeria_actualizada else ''
     guardar_productos_df(productos)
 
-    flash(f"Se agregaron {len(imagenes)} imágenes. Total: {len(galeria_actualizada)}.", 'success')
+    flash(f"Se agregaron {len(imagenes)} imÃƒÂ¡genes. Total: {len(galeria_actualizada)}.", 'success')
     return redirect(url_for('admin_productos'))
 
 
@@ -2055,24 +2352,24 @@ def admin_guardar_usuario():
         try:
             edit_id = int(float(id_usuario_raw))
         except ValueError:
-            flash('ID de usuario inválido.', 'danger')
+            flash('ID de usuario invÃƒÂ¡lido.', 'danger')
             return redirect(url_for('admin_usuarios'))
 
     if edit_id is None and not password:
-        flash('La contraseña es obligatoria para crear usuarios.', 'danger')
+        flash('La contraseÃƒÂ±a es obligatoria para crear usuarios.', 'danger')
         return redirect(url_for('admin_usuarios'))
 
     existe_email = usuarios[usuarios['email'].str.lower() == email.lower()]
     if edit_id is not None:
         existe_email = existe_email[existe_email['id_usuario'] != edit_id]
     if not existe_email.empty:
-        flash('Ese email ya está registrado por otro usuario.', 'danger')
+        flash('Ese email ya estÃƒÂ¡ registrado por otro usuario.', 'danger')
         return redirect(url_for('admin_usuarios'))
 
     if edit_id is not None:
         idx = usuarios[usuarios['id_usuario'] == edit_id].index
         if idx.empty:
-            flash('Usuario no encontrado para edición.', 'danger')
+            flash('Usuario no encontrado para ediciÃƒÂ³n.', 'danger')
             return redirect(url_for('admin_usuarios'))
 
         usuarios.at[idx[0], 'nombre'] = nombre
@@ -2743,12 +3040,12 @@ def admin_pedidos_estado(id_pedido):
     estado_nuevo = request.form.get('estado', '').strip().lower()
     estados_validos = {'pendiente', 'enviado', 'entregado', 'cancelado'}
     if estado_nuevo not in estados_validos:
-        flash('Estado de pedido inválido.', 'danger')
+        flash('Estado de pedido invÃƒÂ¡lido.', 'danger')
         return _redirigir_admin_pedidos_con_filtros(filtros, pago_filtros)
 
     pedidos = cargar_pedidos_df()
     if 'id_pedido' not in pedidos.columns:
-        flash('Estructura de pedidos inválida.', 'danger')
+        flash('Estructura de pedidos invÃƒÂ¡lida.', 'danger')
         return _redirigir_admin_pedidos_con_filtros(filtros, pago_filtros)
     if 'estado' not in pedidos.columns:
         pedidos['estado'] = 'pendiente'
@@ -2775,14 +3072,14 @@ def admin_pedidos_estado(id_pedido):
 def _validar_cliente_pos(cliente_nombre, cliente_correo, cliente_documento, cliente_telefono):
     if not cliente_nombre or not cliente_correo or not cliente_documento or not cliente_telefono:
         return ('Debes completar todos los datos del cliente para registrar la venta.', 'warning')
-    if not re.fullmatch(r'[A-Za-zÁÉÍÓÚáéíóúÑñÜü\s]+', cliente_nombre):
+    if not re.fullmatch(r'[A-Za-zÃƒÂÃƒâ€°ÃƒÂÃƒâ€œÃƒÅ¡ÃƒÂ¡ÃƒÂ©ÃƒÂ­ÃƒÂ³ÃƒÂºÃƒâ€˜ÃƒÂ±ÃƒÅ“ÃƒÂ¼\s]+', cliente_nombre):
         return ('El nombre del cliente solo puede contener letras y espacios.', 'warning')
     if not re.fullmatch(r'[^@\s]+@[^@\s]+\.[^@\s]+', cliente_correo):
-        return ('Debes ingresar un correo electrónico válido.', 'warning')
+        return ('Debes ingresar un correo electrÃƒÂ³nico vÃƒÂ¡lido.', 'warning')
     if not cliente_documento.isdigit():
-        return ('La cédula solo puede contener números.', 'warning')
+        return ('La cÃƒÂ©dula solo puede contener nÃƒÂºmeros.', 'warning')
     if not cliente_telefono.isdigit() or len(cliente_telefono) > 10:
-        return ('El teléfono solo puede contener números y máximo 10 dígitos.', 'warning')
+        return ('El telÃƒÂ©fono solo puede contener nÃƒÂºmeros y mÃƒÂ¡ximo 10 dÃƒÂ­gitos.', 'warning')
     return None
 
 
@@ -2817,7 +3114,7 @@ def _validar_y_preparar_carrito_pos(items, productos, mejor_promo_por_producto):
             id_producto = int(item.get('id_producto', 0))
             cantidad = int(item.get('cantidad', 0))
         except (TypeError, ValueError):
-            return None, ('Hay productos inválidos en el carrito POS.', 'danger')
+            return None, ('Hay productos invÃƒÂ¡lidos en el carrito POS.', 'danger')
 
         if cantidad <= 0:
             return None, ('La cantidad debe ser mayor a cero.', 'danger')
@@ -2828,7 +3125,7 @@ def _validar_y_preparar_carrito_pos(items, productos, mejor_promo_por_producto):
 
         row_idx = idx[0]
         if bool(productos.at[row_idx, 'eliminado']):
-            return None, (f'El producto ID {id_producto} está eliminado.', 'danger')
+            return None, (f'El producto ID {id_producto} estÃƒÂ¡ eliminado.', 'danger')
 
         stock_actual = int(pd.to_numeric(productos.at[row_idx, 'stock'], errors='coerce') or 0)
         if cantidad > stock_actual:
@@ -3057,7 +3354,7 @@ def admin_pos_checkout():
 
     productos = cargar_productos_df()
     if productos.empty:
-        flash('No existe el catálogo de productos.', 'danger')
+        flash('No existe el catÃƒÂ¡logo de productos.', 'danger')
         return redirect(url_for('admin_pos'))
 
     promos = cargar_promociones_df()
@@ -3099,7 +3396,7 @@ def admin_pos_checkout():
         f"- cliente: {cliente_nombre}\n"
         f"- correo: {cliente_correo}\n"
         f"- documento: {cliente_documento}\n"
-        f"- teléfono: {cliente_telefono}"
+        f"- telÃƒÂ©fono: {cliente_telefono}"
     )
     if total_descuento > 0:
         flash(
@@ -3152,7 +3449,7 @@ def editar_producto(id_producto):
         nueva_fuerza = request.form.get('fuerza', anterior['fuerza']).strip()
         nueva_intendencia = request.form.get('intendencia', anterior['intendencia']).strip()
         if nueva_fuerza not in FUERZAS_OPCIONES or nueva_intendencia not in INTENDENCIAS_OPCIONES:
-            flash('Selecciona una fuerza e intendencia válidas.', 'danger')
+            flash('Selecciona una fuerza e intendencia vÃƒÂ¡lidas.', 'danger')
             return redirect(url_for('admin_productos'))
 
         nueva_categoria = anterior['id_categoria']
@@ -3204,7 +3501,7 @@ def editar_producto(id_producto):
 
         return redirect(url_for('admin_productos'))
 
-    # Render formulario de edición (plantilla propia en Gestion productos)
+    # Render formulario de ediciÃƒÂ³n (plantilla propia en Gestion productos)
     return render_template(
         'Administrador/Gestion productos/editar_producto.html',
         producto=producto.iloc[0],
@@ -3249,7 +3546,7 @@ def user_dashboard():
             producto['promo_nombre'] = ''
             producto['promo_etiqueta'] = ''
         
-        # Galería para destacados (hasta 5 imágenes: 1 principal + 4 miniaturas; rellena con la principal si faltan)
+        # Galer?a para destacados (hasta 5 im?genes: 1 principal + 4 miniaturas; rellena con la principal si faltan)
         galeria = obtener_galeria_producto(
             int(producto.get('id_producto', 0)),
             producto.get('imagen_url', '')
@@ -3273,7 +3570,7 @@ def user_dashboard():
         productos_militares_destacados.extend(productos_extra)
     
     # Obtener el contador del carrito
-    carrito = session.get('carrito', [])
+    carrito = _obtener_carrito_sesion_usuario()
     cart_count = len(carrito)
     
     return render_template(
@@ -3300,7 +3597,7 @@ def product_detail(id_producto):
             producto_dict['imagen_url'] = galeria[0]
         
         # Obtener el contador del carrito
-        carrito = session.get('carrito', [])
+        carrito = _obtener_carrito_sesion_usuario()
         cart_count = len(carrito)
         
         return render_template('Usuarios/Detalle pedido/product_detail.html', producto=producto_dict, cart_count=cart_count)
@@ -3312,9 +3609,6 @@ def add_to_cart(id_producto):
     if session.get('rol') != 'normal':
         return "Acceso denegado"
 
-    if 'carrito' not in session:
-        session['carrito'] = []
-
     productos = cargar_productos_activos_df()
 
     try:
@@ -3323,28 +3617,31 @@ def add_to_cart(id_producto):
         cantidad = 1
 
     if cantidad <= 0:
-        flash('Cantidad inválida.', 'warning')
+        flash('Cantidad invÃƒÂ¡lida.', 'warning')
         return redirect(url_for('user_dashboard'))
 
     producto_df = productos[productos['id_producto'] == id_producto]
     if producto_df.empty:
-        flash('El producto no existe o ya no está disponible.', 'warning')
+        flash('El producto no existe o ya no estÃƒÂ¡ disponible.', 'warning')
         return redirect(url_for('user_dashboard'))
 
     producto = producto_df.iloc[0]
     stock_actual = int(producto.get('stock', 0))
     if stock_actual <= 0:
-        flash(f'El producto "{producto["nombre"]}" está agotado.', 'warning')
+        flash(f'El producto "{producto["nombre"]}" estÃƒÂ¡ agotado.', 'warning')
         return redirect(url_for('user_dashboard'))
     if cantidad > stock_actual:
         flash(f'Solo hay {stock_actual} unidad(es) disponibles de "{producto["nombre"]}".', 'warning')
         return redirect(url_for('user_dashboard'))
 
-    carrito = session.get('carrito', [])
+    carrito = _obtener_carrito_sesion_usuario()
     talla = str(request.form.get('talla', '')).strip().upper()
     if talla not in TALLAS_OPCIONES:
-        flash('Selecciona una talla v\u00e1lida antes de agregar al carrito.', 'warning')
+        flash('Selecciona una talla valida antes de agregar al carrito.', 'warning')
         return redirect(url_for('product_detail', id_producto=id_producto))
+
+    galeria_producto = obtener_galeria_producto(id_producto, producto.get('imagen_url', ''))
+    imagen_principal = normalizar_imagen_url(galeria_producto[0]) if galeria_producto else ''
 
     item_existente = next(
         (
@@ -3358,25 +3655,30 @@ def add_to_cart(id_producto):
     if item_existente:
         nueva_cantidad = int(item_existente.get('cantidad', 0)) + cantidad
         if nueva_cantidad > stock_actual:
-            flash(f'No puedes agregar más de {stock_actual} unidad(es) de "{producto["nombre"]}".', 'warning')
+            flash(f'No puedes agregar mÃƒÂ¡s de {stock_actual} unidad(es) de "{producto["nombre"]}".', 'warning')
             return redirect(url_for('cart'))
         item_existente['cantidad'] = nueva_cantidad
         item_existente['subtotal'] = float(item_existente['precio']) * nueva_cantidad
+        if not str(item_existente.get('imagen_url', '') or '').strip() and imagen_principal:
+            item_existente['imagen_url'] = imagen_principal
     else:
         item_carrito = {
             'id_producto': int(id_producto),
             'nombre': producto['nombre'],
+            'descripcion': str(producto.get('descripcion', '') or '').strip(),
             'cantidad': cantidad,
             'precio': float(producto['precio']),
             'subtotal': float(producto['precio']) * cantidad,
-            'talla': talla
+            'talla': talla,
+            'imagen_url': imagen_principal
         }
         carrito.append(item_carrito)
 
     session['carrito'] = carrito
     session.modified = True
+    _sincronizar_carrito_usuario_desde_sesion()
 
-    flash('Prenda guardada con éxito', 'success')
+    flash(f'{producto["nombre"]} agregado al carrito correctamente.', 'success')
 
     referer = request.referrer
     if referer and 'product' in referer:
@@ -3387,54 +3689,42 @@ def add_to_cart(id_producto):
 @app.route('/cart')
 def cart():
     if session.get('rol') == 'normal':
-        carrito = session.get('carrito', [])
-        carrito_limpio, cambios = normalizar_carrito_por_stock(carrito)
-        if carrito_limpio != carrito:
-            session['carrito'] = carrito_limpio
+        carrito = _obtener_carrito_sesion_usuario()
+        carrito_enriquecido = _enriquecer_carrito_con_imagenes(carrito)
+        if carrito_enriquecido != carrito:
+            session['carrito'] = carrito_enriquecido
             session.modified = True
-        for cambio in cambios[:3]:
-            flash(cambio, 'warning')
-        if len(cambios) > 3:
-            flash(f'Se aplicaron {len(cambios)} ajustes de stock en tu carrito.', 'warning')
-        carrito = carrito_limpio
-        total = sum(item['subtotal'] for item in carrito)
-        return render_template('Usuarios/Carrito/cart.html', carrito=carrito, total=total)
+            _sincronizar_carrito_usuario_desde_sesion()
+        total = sum(float(item.get('subtotal', 0)) for item in carrito_enriquecido)
+        return render_template('Usuarios/Carrito/cart.html', carrito=carrito_enriquecido, total=total)
     return "Acceso denegado"
 
 @app.route('/get_cart_count')
 def get_cart_count():
-    carrito = session.get('carrito', [])
+    carrito = _obtener_carrito_sesion_usuario()
     count = len(carrito)
     return {'count': count}
 
 @app.route('/cart/remove/<int:index>', methods=['POST'])
 def remove_from_cart(index):
     if session.get('rol') == 'normal':
-        carrito = session.get('carrito', [])
+        carrito = _obtener_carrito_sesion_usuario()
         if 0 <= index < len(carrito):
             carrito.pop(index)
             session['carrito'] = carrito
             session.modified = True
+            _sincronizar_carrito_usuario_desde_sesion()
     return redirect(url_for('cart'))
 
 @app.route('/checkout')
 def checkout():
     if session.get('rol') == 'normal':
-        carrito = session.get('carrito', [])
+        carrito = _obtener_carrito_sesion_usuario()
         if not carrito:
             flash('No hay productos en el carrito.', 'warning')
             return redirect(url_for('cart'))
-        
-        carrito_limpio, cambios = normalizar_carrito_por_stock(carrito)
-        if carrito_limpio != carrito:
-            session['carrito'] = carrito_limpio
-            session.modified = True
-        for cambio in cambios[:3]:
-            flash(cambio, 'warning')
-        if len(cambios) > 3:
-            flash(f'Se aplicaron {len(cambios)} ajustes de stock en tu carrito.', 'warning')
-        carrito = carrito_limpio
-        total = sum(item['subtotal'] for item in carrito)
+
+        total = sum(float(item.get('subtotal', 0)) for item in carrito)
         return render_template('Usuarios/Carrito/checkout.html', carrito=carrito, total=total)
     return "Acceso denegado"
 
@@ -3459,7 +3749,7 @@ def _resolver_promocion_checkout(codigo_promo, promos, total):
 
     promo_aplicada = buscar_promocion_por_codigo(promos, codigo_promo, datetime.now().date())
     if promo_aplicada is None:
-        return None, 0.0, ('El código promocional no es válido o no está vigente.', 'warning')
+        return None, 0.0, ('El cÃƒÂ³digo promocional no es vÃƒÂ¡lido o no estÃƒÂ¡ vigente.', 'warning')
 
     descuento_promo = calcular_descuento_promocion(total, promo_aplicada)
     return promo_aplicada, descuento_promo, None
@@ -3471,11 +3761,21 @@ def _validar_stock_checkout(productos, carrito):
         cantidad = int(item.get('cantidad', 0))
         fila = productos[(productos['id_producto'] == id_producto) & (productos['eliminado'] == False)]
         if fila.empty:
-            return (f'El producto "{item.get("nombre", id_producto)}" ya no está disponible.', 'warning')
+            return (
+                f'El producto "{item.get("nombre", id_producto)}" ya no esta disponible o fue retirado del catalogo.',
+                'warning'
+            )
         stock_actual = int(fila.iloc[0].get('stock', 0))
+        if stock_actual <= 0:
+            nombre = str(fila.iloc[0].get('nombre', item.get('nombre', id_producto)))
+            return (f'El producto "{nombre}" esta agotado y no se puede procesar el pedido.', 'warning')
         if cantidad > stock_actual:
             nombre = str(fila.iloc[0].get('nombre', item.get('nombre', id_producto)))
-            return (f'Stock insuficiente para "{nombre}". Disponible: {stock_actual}.', 'warning')
+            return (
+                f'Stock insuficiente para "{nombre}". Disponible: {stock_actual}. '
+                'Ajusta la cantidad para continuar.',
+                'warning'
+            )
     return None
 
 
@@ -3501,14 +3801,15 @@ def _registrar_compra_checkout_usuario(
     metodo_pago,
     total_final,
     promo_aplicada,
-    descuento_promo
+    descuento_promo,
+    estado_pedido='pendiente'
 ):
     items_detalle = _construir_items_detalle_desde_carrito(carrito)
     nuevo_id_pedido = _crear_pedido_y_detalle(
         pedidos=pedidos,
         detalle_pedido=detalle_pedido,
         id_usuario=session.get('id_usuario', session['usuario']),
-        estado_pedido='pendiente',
+        estado_pedido=estado_pedido,
         items_detalle=items_detalle
     )
 
@@ -3526,90 +3827,272 @@ def _registrar_compra_checkout_usuario(
 
 @app.route('/pay', methods=['POST'])
 def pay():
-    if session.get('rol') == 'normal':
-        carrito = session.get('carrito', [])
-        carrito_limpio, cambios = normalizar_carrito_por_stock(carrito)
-        if carrito_limpio != carrito:
-            session['carrito'] = carrito_limpio
-            session.modified = True
-        if cambios:
-            flash('Actualizamos tu carrito por cambios de stock. Revisa antes de pagar.', 'warning')
-            return redirect(url_for('cart'))
-        carrito = carrito_limpio
-        
-        if not carrito:
-            flash('No hay productos en el carrito.', 'warning')
-            return redirect(url_for('cart'))
-        
-        total = sum(item['subtotal'] for item in carrito)
-        codigo_promo = request.form.get('codigo_promo', '').strip().upper()
-        metodo_pago = request.form['metodo_pago']
+    if session.get('rol') != 'normal':
+        return "Acceso denegado"
 
-        pagos = cargar_pagos_df()
-        pagos = _asegurar_columnas_descuento_pagos(pagos)
+    carrito = _obtener_carrito_sesion_usuario()
+    if not carrito:
+        flash('No hay productos en el carrito.', 'warning')
+        return redirect(url_for('cart'))
 
-        pedidos = cargar_pedidos_df()
-        detalle_pedido = cargar_detalle_pedido_df()
+    total = sum(float(item.get('subtotal', 0)) for item in carrito)
+    codigo_promo = request.form.get('codigo_promo', '').strip().upper()
+    metodo_pago = str(request.form.get('metodo_pago', '') or '').strip().lower()
 
-        productos = cargar_productos_df()
-        if productos.empty:
-            flash('No existe la base de productos.', 'danger')
-            return redirect(url_for('cart'))
+    pagos = cargar_pagos_df()
+    pagos = _asegurar_columnas_descuento_pagos(pagos)
+    pedidos = cargar_pedidos_df()
+    detalle_pedido = cargar_detalle_pedido_df()
 
+    productos = cargar_productos_df()
+    if productos.empty:
+        flash('No existe la base de productos.', 'danger')
+        return redirect(url_for('cart'))
+
+    promos = cargar_promociones_df()
+    promo_aplicada, descuento_promo, error_promo = _resolver_promocion_checkout(codigo_promo, promos, total)
+    if error_promo:
+        flash(error_promo[0], error_promo[1])
+        return redirect(url_for('cart'))
+
+    total_final = max(0.0, float(total) - float(descuento_promo))
+    error_stock = _validar_stock_checkout(productos, carrito)
+    if error_stock:
+        flash(error_stock[0], error_stock[1])
+        return redirect(url_for('cart'))
+
+    if metodo_pago == 'tarjeta':
+        ok_stripe, msg_stripe = stripe_estado_configuracion()
+        if not ok_stripe:
+            flash(
+                f'El pago con tarjeta no esta disponible en este momento. Detalle: {msg_stripe}',
+                'warning'
+            )
+            return redirect(url_for('checkout'))
+
+        cart_hash = _hash_carrito_checkout(carrito)
+        try:
+            stripe_session = crear_checkout_sesion_tarjeta(
+                amount_total=total_final,
+                success_url=url_for('pay_stripe_success', _external=True),
+                cancel_url=url_for('pay_stripe_cancel', _external=True),
+                customer_email=session.get('usuario', ''),
+                descripcion=f"Compra NACHOHER ({len(carrito)} item(s))",
+                metadata={
+                    "usuario": session.get('usuario', ''),
+                    "codigo_promo": codigo_promo,
+                    "cart_hash": cart_hash,
+                    "total_esperado": f"{total_final:.2f}",
+                },
+            )
+        except Exception as exc:
+            app.logger.exception("Error creando sesion Stripe Checkout: %s", exc)
+            flash('No fue posible iniciar el pago con tarjeta. Intenta de nuevo.', 'danger')
+            return redirect(url_for('checkout'))
+
+        stripe_session_id = str(_stripe_obj_get(stripe_session, "id", "") or "").strip()
+        stripe_session_url = str(_stripe_obj_get(stripe_session, "url", "") or "").strip()
+        if not stripe_session_id or not stripe_session_url:
+            flash('Stripe no devolvio una sesion valida para continuar el pago.', 'danger')
+            return redirect(url_for('checkout'))
+
+        _stripe_checkout_guardar_creado(
+            session_id=stripe_session_id,
+            usuario_email=session.get('usuario', ''),
+            codigo_promo=codigo_promo,
+            carrito=carrito,
+            cart_hash=cart_hash,
+            total_esperado=total_final,
+        )
+        return redirect(stripe_session_url, code=303)
+
+    agotados_en_compra = _descontar_stock_checkout(productos, carrito)
+    guardar_productos_df(productos)
+
+    nuevo_id_pedido = _registrar_compra_checkout_usuario(
+        carrito=carrito,
+        pedidos=pedidos,
+        detalle_pedido=detalle_pedido,
+        pagos=pagos,
+        metodo_pago=metodo_pago,
+        total_final=total_final,
+        promo_aplicada=promo_aplicada,
+        descuento_promo=descuento_promo
+    )
+
+    registrar_actividad(
+        f"Creo pedido #{nuevo_id_pedido} con {len(carrito)} producto(s) por {formatear_cop(total_final)}"
+    )
+    if agotados_en_compra:
+        registrar_actividad("Stock agotado por pedido: " + ", ".join(agotados_en_compra))
+
+    session['carrito'] = []
+    session.modified = True
+    _sincronizar_carrito_usuario_desde_sesion()
+
+    metodo_pago_nombres = {
+        'tarjeta': 'Tarjeta de Credito/Debito',
+        'transferencia': 'Transferencia Bancaria',
+        'efectivo': 'Efectivo',
+        'paypal': 'PayPal'
+    }
+
+    return render_template(
+        'Usuarios/Carrito/order_confirmation.html',
+        pedido_id=nuevo_id_pedido,
+        metodo_pago=metodo_pago_nombres.get(metodo_pago, metodo_pago),
+        fecha=datetime.now().strftime("%d/%m/%Y %H:%M"),
+        total=total_final,
+        promo_codigo=promo_aplicada.get('codigo', '') if promo_aplicada else None,
+        descuento=descuento_promo if promo_aplicada else 0
+    )
+
+
+@app.route('/pay/stripe/success')
+def pay_stripe_success():
+    if session.get('rol') != 'normal':
+        return "Acceso denegado"
+
+    session_id = str(request.args.get('session_id', '') or '').strip()
+    if not session_id:
+        flash('Stripe no envio el identificador de la sesion de pago.', 'warning')
+        return redirect(url_for('checkout'))
+
+    registro = _stripe_checkout_obtener(session_id)
+    if not registro:
+        flash('No se encontro el registro local del pago con tarjeta.', 'warning')
+        return redirect(url_for('checkout'))
+
+    usuario_registro = normalizar_email(registro.get('usuario_email', ''))
+    usuario_sesion = normalizar_email(session.get('usuario', ''))
+    if usuario_registro and usuario_sesion and usuario_registro != usuario_sesion:
+        flash('La sesion de pago no pertenece al usuario autenticado.', 'danger')
+        return redirect(url_for('checkout'))
+
+    estado_actual = str(registro.get('estado', '') or '').strip().lower()
+    id_pedido_existente = pd.to_numeric(registro.get('id_pedido'), errors='coerce')
+    if estado_actual == 'pagado' and pd.notna(id_pedido_existente):
+        flash(f'El pago ya fue procesado en el pedido #{int(id_pedido_existente)}.', 'info')
+        return redirect(url_for('user_orders'))
+
+    try:
+        stripe_session = obtener_checkout_sesion(session_id)
+    except Exception as exc:
+        app.logger.exception("Error validando sesion Stripe %s: %s", session_id, exc)
+        flash('No se pudo validar el pago con Stripe. Intenta nuevamente en unos segundos.', 'danger')
+        return redirect(url_for('checkout'))
+
+    payment_status = str(_stripe_obj_get(stripe_session, 'payment_status', '') or '').strip().lower()
+    if payment_status != 'paid':
+        _stripe_checkout_marcar_estado(session_id, 'pendiente')
+        flash('El pago aun no aparece como confirmado por Stripe.', 'warning')
+        return redirect(url_for('checkout'))
+
+    carrito_checkout = _stripe_checkout_cargar_carrito(registro)
+    if not carrito_checkout:
+        carrito_checkout = _obtener_carrito_sesion_usuario()
+    if not carrito_checkout:
+        _stripe_checkout_marcar_estado(session_id, 'pagado_sin_carrito')
+        flash(
+            'El pago se confirmo, pero no se encontro el carrito asociado. '
+            'Contacta al administrador con el id de sesion.',
+            'danger'
+        )
+        return redirect(url_for('user_orders'))
+
+    hash_registrado = str(registro.get('cart_hash', '') or '').strip()
+    hash_actual = _hash_carrito_checkout(carrito_checkout)
+    if hash_registrado and hash_registrado != hash_actual:
+        app.logger.warning(
+            "Diferencia de hash de carrito en Stripe session %s (registro=%s, actual=%s)",
+            session_id,
+            hash_registrado,
+            hash_actual,
+        )
+
+    subtotal_checkout = sum(float(item.get('subtotal', 0)) for item in carrito_checkout)
+    total_esperado = float(pd.to_numeric(registro.get('total_esperado', 0), errors='coerce') or 0.0)
+    total_final = round(total_esperado if total_esperado > 0 else subtotal_checkout, 2)
+    descuento_promo = round(max(0.0, float(subtotal_checkout) - float(total_final)), 2)
+
+    codigo_promo = str(registro.get('codigo_promo', '') or '').strip().upper()
+    promo_aplicada = None
+    if codigo_promo:
         promos = cargar_promociones_df()
-        promo_aplicada, descuento_promo, error_promo = _resolver_promocion_checkout(codigo_promo, promos, total)
-        if error_promo:
-            flash(error_promo[0], error_promo[1])
-            return redirect(url_for('cart'))
+        promo_aplicada = buscar_promocion_por_codigo(promos, codigo_promo, datetime.now().date())
+        if promo_aplicada is None:
+            promo_aplicada = {
+                'id_promo': '',
+                'codigo': codigo_promo,
+                'tipo_descuento': '',
+                'valor_descuento': 0.0,
+            }
 
-        total_final = max(0.0, float(total) - float(descuento_promo))
+    productos = cargar_productos_df()
+    pedidos = cargar_pedidos_df()
+    detalle_pedido = cargar_detalle_pedido_df()
+    pagos = _asegurar_columnas_descuento_pagos(cargar_pagos_df())
 
-        error_stock = _validar_stock_checkout(productos, carrito)
-        if error_stock:
-            flash(error_stock[0], error_stock[1])
-            return redirect(url_for('cart'))
-
-        agotados_en_compra = _descontar_stock_checkout(productos, carrito)
+    estado_pedido = 'pendiente'
+    agotados_en_compra = []
+    error_stock = _validar_stock_checkout(productos, carrito_checkout)
+    if error_stock:
+        estado_pedido = 'pendiente_revision'
+        registrar_actividad(
+            f"Pago Stripe {session_id} confirmado con stock en conflicto. Pedido quedo en revision."
+        )
+    else:
+        agotados_en_compra = _descontar_stock_checkout(productos, carrito_checkout)
         guardar_productos_df(productos)
 
-        nuevo_id_pedido = _registrar_compra_checkout_usuario(
-            carrito=carrito,
-            pedidos=pedidos,
-            detalle_pedido=detalle_pedido,
-            pagos=pagos,
-            metodo_pago=metodo_pago,
-            total_final=total_final,
-            promo_aplicada=promo_aplicada,
-            descuento_promo=descuento_promo
-        )
-        
-        # Registrar accion
-        registrar_actividad(f"Creo pedido #{nuevo_id_pedido} con {len(carrito)} producto(s) por {formatear_cop(total_final)}")
+    nuevo_id_pedido = _registrar_compra_checkout_usuario(
+        carrito=carrito_checkout,
+        pedidos=pedidos,
+        detalle_pedido=detalle_pedido,
+        pagos=pagos,
+        metodo_pago='tarjeta',
+        total_final=total_final,
+        promo_aplicada=promo_aplicada,
+        descuento_promo=descuento_promo,
+        estado_pedido=estado_pedido
+    )
+    _stripe_checkout_marcar_estado(session_id, 'pagado', nuevo_id_pedido)
 
-        if agotados_en_compra:
-            registrar_actividad("Stock agotado por pedido: " + ", ".join(agotados_en_compra))
-        
-        # Limpiar carrito
-        session['carrito'] = []
-        session.modified = True
+    registrar_actividad(
+        f"Stripe confirmado. Pedido #{nuevo_id_pedido} creado por {formatear_cop(total_final)}"
+    )
+    if agotados_en_compra:
+        registrar_actividad("Stock agotado por pedido: " + ", ".join(agotados_en_compra))
 
-        # Preparar datos para la página de confirmación
-        metodo_pago_nombres = {
-            'tarjeta': 'Tarjeta de Crédito/Débito',
-            'transferencia': 'Transferencia Bancaria',
-            'efectivo': 'Efectivo',
-            'paypal': 'PayPal'
-        }
-        
-        return render_template('Usuarios/Carrito/order_confirmation.html',
-            pedido_id=nuevo_id_pedido,
-            metodo_pago=metodo_pago_nombres.get(metodo_pago, metodo_pago),
-            fecha=datetime.now().strftime("%d/%m/%Y %H:%M"),
-            total=total_final,
-            promo_codigo=promo_aplicada.get('codigo', '') if promo_aplicada else None,
-            descuento=descuento_promo if promo_aplicada else 0
+    session['carrito'] = []
+    session.modified = True
+    _sincronizar_carrito_usuario_desde_sesion()
+
+    if error_stock:
+        flash(
+            'El pago se registro correctamente, pero hay cambios de stock. '
+            f'Tu pedido #{nuevo_id_pedido} quedo en revision.',
+            'warning'
         )
-    return "Acceso denegado"
+
+    return render_template(
+        'Usuarios/Carrito/order_confirmation.html',
+        pedido_id=nuevo_id_pedido,
+        metodo_pago='Tarjeta de Credito/Debito',
+        fecha=datetime.now().strftime("%d/%m/%Y %H:%M"),
+        total=total_final,
+        promo_codigo=codigo_promo or None,
+        descuento=descuento_promo if descuento_promo > 0 else 0
+    )
+
+
+@app.route('/pay/stripe/cancel')
+def pay_stripe_cancel():
+    if session.get('rol') != 'normal':
+        return "Acceso denegado"
+    flash('Pago con tarjeta cancelado. Tu carrito sigue guardado.', 'info')
+    return redirect(url_for('checkout'))
+
 
 @app.route('/user/orders')
 def user_orders():
@@ -3675,7 +4158,7 @@ def user_profile():
     if 'direccion' not in usuario_dict:
         usuario_dict['direccion'] = ''
     
-    # Asegurar que existan las columnas de verificación
+    # Asegurar que existan las columnas de verificaciÃƒÂ³n
     if 'email_verified' not in usuario_dict:
         usuario_dict['email_verified'] = False
     
@@ -3693,7 +4176,7 @@ def user_profile():
         if key not in usuario_dict or pd.isna(usuario_dict[key]):
             usuario_dict[key] = default_value
     
-    # Obtener estadísticas del usuario
+    # Obtener estadÃƒÂ­sticas del usuario
     pedidos_total = 0
     gasto_total = 0.0
     
@@ -3711,7 +4194,8 @@ def user_profile():
     return render_template('Usuarios/Ajustes/user_profile.html', 
                           usuario=usuario_dict,
                           pedidos_total=pedidos_total,
-                          gasto_total=gasto_total)
+                          gasto_total=gasto_total,
+                          PASSWORD_CHANGE_CODE_EXP_MINUTES=PASSWORD_CHANGE_CODE_EXP_MINUTES)
 
 @app.route('/user/profile/update', methods=['POST'])
 def update_profile():
@@ -3749,47 +4233,182 @@ def update_profile():
     
     return redirect(url_for('user_profile'))
 
+@app.route('/user/profile/send-password-change-code', methods=['POST'])
+def send_password_change_code():
+    if session.get('rol') != 'normal':
+        return jsonify({'success': False, 'message': 'Acceso denegado'}), 403
+
+    try:
+        usuarios = cargar_usuarios_df()
+        usuarios = asegurar_columnas_cambio_password(usuarios)
+
+        usuario_email = normalizar_email(session.get('usuario', ''))
+        usuario_idx = usuarios[usuarios['email'] == usuario_email].index
+        if usuario_idx.empty:
+            return jsonify({'success': False, 'message': 'Usuario no encontrado'}), 404
+
+        codigo = generar_codigo_verificacion()
+        expiry = datetime.now() + timedelta(minutes=PASSWORD_CHANGE_CODE_EXP_MINUTES)
+
+        usuarios.loc[usuario_idx, 'password_change_code'] = str(codigo)
+        usuarios.loc[usuario_idx, 'password_change_code_expiry'] = expiry.strftime('%Y-%m-%d %H:%M:%S')
+        guardar_usuarios_df(usuarios)
+
+        envio_ok = enviar_codigo_verificacion(
+            usuario_email,
+            codigo,
+            tipo='autenticacion',
+            minutos_expiracion=PASSWORD_CHANGE_CODE_EXP_MINUTES
+        )
+        if not envio_ok:
+            limpiar_codigo_cambio_password(usuarios, usuario_idx[0])
+            guardar_usuarios_df(usuarios)
+            return jsonify({
+                'success': False,
+                'message': 'No fue posible enviar el codigo al correo. Intenta nuevamente.'
+            }), 500
+
+        registrar_actividad(f"Codigo de cambio de contrasena enviado a {usuario_email}")
+        return jsonify({
+            'success': True,
+            'message': (
+                f'Codigo enviado a {usuario_email}. '
+                f'Es valido por {PASSWORD_CHANGE_CODE_EXP_MINUTES} minutos.'
+            )
+        })
+    except Exception as e:
+        print(f"Error enviando codigo de cambio de contrasena: {str(e)}")
+        return jsonify({'success': False, 'message': 'Error interno enviando el codigo.'}), 500
+
+
+@app.route('/user/profile/verify-password-change-code', methods=['POST'])
+def verify_password_change_code():
+    if session.get('rol') != 'normal':
+        return jsonify({'success': False, 'message': 'Acceso denegado'}), 403
+
+    try:
+        payload = request.get_json(silent=True) or {}
+        codigo_ingresado = str(payload.get('code', '') or '').strip()
+
+        if not re.fullmatch(r'\d{6}', codigo_ingresado):
+            return jsonify({
+                'success': False,
+                'message': 'El codigo debe tener 6 digitos numericos.'
+            }), 400
+
+        usuarios = cargar_usuarios_df()
+        usuarios = asegurar_columnas_cambio_password(usuarios)
+        usuario_email = normalizar_email(session.get('usuario', ''))
+        usuario_idx = usuarios[usuarios['email'] == usuario_email].index
+
+        if usuario_idx.empty:
+            return jsonify({'success': False, 'message': 'Usuario no encontrado'}), 404
+
+        idx = usuario_idx[0]
+        usuario = usuarios.loc[idx]
+        codigo_guardado = str(usuario.get('password_change_code', '') or '').replace('.0', '').strip()
+        if not codigo_guardado:
+            return jsonify({
+                'success': False,
+                'message': 'No hay un codigo activo. Solicita uno nuevo.'
+            }), 400
+
+        if codigo_cambio_password_expirado(usuario):
+            limpiar_codigo_cambio_password(usuarios, idx)
+            guardar_usuarios_df(usuarios)
+            return jsonify({
+                'success': False,
+                'message': 'El codigo expiro. Solicita uno nuevo.'
+            }), 400
+
+        if codigo_guardado != codigo_ingresado:
+            return jsonify({
+                'success': False,
+                'message': 'El codigo es incorrecto. Verifica e intenta nuevamente.'
+            }), 400
+
+        return jsonify({
+            'success': True,
+            'message': 'Codigo validado. Ya puedes continuar con el cambio de contrasena.'
+        })
+    except Exception as e:
+        print(f"Error verificando codigo de cambio de contrasena: {str(e)}")
+        return jsonify({'success': False, 'message': 'Error interno verificando el codigo.'}), 500
+
+
 @app.route('/user/profile/change-password', methods=['POST'])
 def change_password():
     if session.get('rol') != 'normal':
         flash('Acceso denegado', 'danger')
         return redirect(url_for('home'))
-    
-    # Obtener datos del formulario
-    current_password = request.form.get('current_password')
-    new_password = request.form.get('new_password')
-    confirm_password = request.form.get('confirm_password')
-    
-    # Validar que las contraseñas coincidan
-    if new_password != confirm_password:
-        flash('Las contraseñas nuevas no coinciden', 'danger')
+
+    current_password = request.form.get('current_password', '')
+    new_password = request.form.get('new_password', '')
+    password_change_code = request.form.get('password_change_code', '').strip()
+
+    if not password_change_code:
+        flash('Debes ingresar el codigo de seguridad enviado a tu correo.', 'danger')
         return redirect(url_for('user_profile'))
-    
-    # Cargar usuarios
+
+    if not re.fullmatch(r'\d{6}', password_change_code):
+        flash('El codigo de seguridad debe tener 6 digitos numericos.', 'danger')
+        return redirect(url_for('user_profile'))
+
+    if not current_password or not new_password:
+        flash('Debes completar todos los campos para cambiar la contrasena.', 'danger')
+        return redirect(url_for('user_profile'))
+
+    if not password_cumple_estandares(new_password):
+        flash(
+            'La contrasena debe tener minimo 8 caracteres, mayuscula, minuscula, numero y caracter especial.',
+            'danger'
+        )
+        return redirect(url_for('user_profile'))
+
+    if current_password == new_password:
+        flash('La nueva contrasena debe ser diferente a la actual.', 'warning')
+        return redirect(url_for('user_profile'))
+
     usuarios = cargar_usuarios_df()
-    usuario_email = session.get('usuario')
-    usuario = usuarios[usuarios['email'] == usuario_email]
-    
-    if usuario.empty:
+    usuarios = asegurar_columnas_cambio_password(usuarios)
+    usuario_email = normalizar_email(session.get('usuario', ''))
+    usuario_idx = usuarios[usuarios['email'] == usuario_email].index
+
+    if usuario_idx.empty:
         flash('Usuario no encontrado', 'danger')
         return redirect(url_for('user_profile'))
-    
-    # Verificar contraseña actual
-    password_guardado = usuario.iloc[0].get('password_hash', '')
-    if not password_coincide(password_guardado, current_password):
-        flash('La contraseña actual es incorrecta', 'danger')
+
+    idx = usuario_idx[0]
+    usuario = usuarios.loc[idx]
+
+    codigo_guardado = str(usuario.get('password_change_code', '') or '').replace('.0', '').strip()
+    if not codigo_guardado:
+        flash('No hay un codigo activo. Solicita uno nuevo antes de cambiar la contrasena.', 'warning')
         return redirect(url_for('user_profile'))
-    
-    # Actualizar contraseña
-    idx = usuarios[usuarios['email'] == usuario_email].index
-    usuarios.loc[idx, 'password_hash'] = crear_hash_password(new_password)
-    usuarios.loc[idx, 'reset_token'] = ''
-    usuarios.loc[idx, 'reset_token_expiry'] = ''
-    
+
+    if codigo_cambio_password_expirado(usuario):
+        limpiar_codigo_cambio_password(usuarios, idx)
+        guardar_usuarios_df(usuarios)
+        flash('El codigo de seguridad expiro. Solicita uno nuevo.', 'warning')
+        return redirect(url_for('user_profile'))
+
+    if codigo_guardado != password_change_code:
+        flash('El codigo de seguridad es incorrecto.', 'danger')
+        return redirect(url_for('user_profile'))
+
+    password_guardado = usuario.get('password_hash', '')
+    if not password_coincide(password_guardado, current_password):
+        flash('La contrasena actual es incorrecta.', 'danger')
+        return redirect(url_for('user_profile'))
+
+    usuarios.at[idx, 'password_hash'] = crear_hash_password(new_password)
+    usuarios.at[idx, 'reset_token'] = ''
+    usuarios.at[idx, 'reset_token_expiry'] = ''
+    limpiar_codigo_cambio_password(usuarios, idx)
+
     guardar_usuarios_df(usuarios)
-    registrar_actividad(f"Usuario {usuario_email} cambió su contraseña")
-    flash('Contraseña cambiada correctamente', 'success')
-    
+    registrar_actividad(f"Usuario {usuario_email} cambio su contrasena con codigo de seguridad")
+    flash('Contrasena cambiada correctamente.', 'success')
     return redirect(url_for('user_profile'))
 
 @app.route('/user/profile/settings', methods=['POST'])
@@ -3839,7 +4458,7 @@ def update_settings():
 
 @app.route('/user/send-verification-code', methods=['POST'])
 def send_verification_code():
-    """Envía un código de verificación al correo del usuario (funciona siempre)."""
+    """EnvÃƒÂ­a un cÃƒÂ³digo de verificaciÃƒÂ³n al correo del usuario (funciona siempre)."""
     if session.get('rol') != 'normal':
         return jsonify({'success': False, 'message': 'Acceso denegado'}), 403
     
@@ -3848,7 +4467,7 @@ def send_verification_code():
         usuarios = cargar_usuarios_df()
         usuario_email = session.get('usuario')
         
-        # Asegurar que existan las columnas de verificación
+        # Asegurar que existan las columnas de verificaciÃƒÂ³n
         if 'email_verified' not in usuarios.columns:
             usuarios['email_verified'] = False
         if 'verification_code' not in usuarios.columns:
@@ -3861,11 +4480,11 @@ def send_verification_code():
         if usuario_idx.empty:
             return jsonify({'success': False, 'message': 'Usuario no encontrado'}), 404
         
-        # Generar código de verificación (sin importar si ya está verificado)
+        # Generar cÃƒÂ³digo de verificaciÃƒÂ³n (sin importar si ya estÃƒÂ¡ verificado)
         codigo = generar_codigo_verificacion()
         expiry = datetime.now() + timedelta(minutes=REGISTER_CODE_EXP_MINUTES)
         
-        # Guardar código en la base de datos (forzar como string)
+        # Guardar cÃƒÂ³digo en la base de datos (forzar como string)
         usuarios.loc[usuario_idx, 'verification_code'] = str(codigo)
         usuarios.loc[usuario_idx, 'verification_code_expiry'] = expiry.strftime('%Y-%m-%d %H:%M:%S')
         
@@ -3880,10 +4499,10 @@ def send_verification_code():
             tipo='autenticacion',
             minutos_expiracion=REGISTER_CODE_EXP_MINUTES
         ):
-            registrar_actividad(f"Código de autenticación enviado a {usuario_email}")
+            registrar_actividad(f"CÃƒÂ³digo de autenticaciÃƒÂ³n enviado a {usuario_email}")
             return jsonify({
                 'success': True, 
-                'message': 'Código enviado correctamente. Revisa tu correo.'
+                'message': 'CÃƒÂ³digo enviado correctamente. Revisa tu correo.'
             })
 
         usuarios.loc[usuario_idx, 'verification_code'] = ''
@@ -3898,7 +4517,7 @@ def send_verification_code():
         }), 500
             
     except Exception as e:
-        print(f"Error al enviar código: {str(e)}")
+        print(f"Error al enviar cÃƒÂ³digo: {str(e)}")
         return jsonify({
             'success': False, 
             'message': f'Error: {str(e)}'
@@ -3906,7 +4525,7 @@ def send_verification_code():
 
 @app.route('/user/verify-email', methods=['POST'])
 def verify_email():
-    """Verifica el código ingresado por el usuario (funciona siempre)."""
+    """Verifica el cÃƒÂ³digo ingresado por el usuario (funciona siempre)."""
     if session.get('rol') != 'normal':
         return jsonify({'success': False, 'message': 'Acceso denegado'}), 403
     
@@ -3914,7 +4533,7 @@ def verify_email():
         codigo_ingresado = request.json.get('code', '').strip()
         
         if not codigo_ingresado:
-            return jsonify({'success': False, 'message': 'Debe ingresar un código'}), 400
+            return jsonify({'success': False, 'message': 'Debe ingresar un cÃƒÂ³digo'}), 400
         
         # Cargar usuarios
         usuarios = cargar_usuarios_df()
@@ -3934,32 +4553,28 @@ def verify_email():
         
         usuario = usuarios.loc[usuario_idx[0]]
         
-        # Verificar si existe un código
+        # Verificar si existe un cÃƒÂ³digo
         if not usuario['verification_code']:
-            return jsonify({'success': False, 'message': 'No hay código de verificación. Solicita uno nuevo.'}), 400
+            return jsonify({'success': False, 'message': 'No hay cÃƒÂ³digo de verificaciÃƒÂ³n. Solicita uno nuevo.'}), 400
         
-        # Verificar si el código expiró
-        try:
-            expiry = pd.to_datetime(usuario['verification_code_expiry'])
-            if pd.Timestamp.now() > expiry:
-                return jsonify({'success': False, 'message': 'El código ha expirado. Solicita uno nuevo.'}), 400
-        except:
-            return jsonify({'success': False, 'message': 'Error al verificar la fecha de expiración'}), 500
+        # Verificar si el cÃƒÂ³digo expirÃƒÂ³
+        if timestamp_expirado(usuario.get('verification_code_expiry', '')):
+            return jsonify({'success': False, 'message': 'El c??digo ha expirado. Solicita uno nuevo.'}), 400
         
-        # Verificar el código (limpiar .0 por si acaso)
+        # Verificar el cÃƒÂ³digo (limpiar .0 por si acaso)
         codigo_guardado = str(usuario['verification_code']).replace('.0', '').strip()
         if codigo_guardado == str(codigo_ingresado):
-            # Código correcto
+            # CÃƒÂ³digo correcto
             # Marcar como verificado si no lo estaba
             if not usuario['email_verified']:
                 usuarios.loc[usuario_idx, 'email_verified'] = True
-                mensaje_exito = '¡Correo verificado exitosamente!'
-                actividad = f"Usuario {usuario_email} verificó su correo electrónico"
+                mensaje_exito = 'Ã‚Â¡Correo verificado exitosamente!'
+                actividad = f"Usuario {usuario_email} verificÃƒÂ³ su correo electrÃƒÂ³nico"
             else:
-                mensaje_exito = '¡Autenticación exitosa!'
-                actividad = f"Usuario {usuario_email} se autenticó correctamente"
+                mensaje_exito = 'Ã‚Â¡AutenticaciÃƒÂ³n exitosa!'
+                actividad = f"Usuario {usuario_email} se autenticÃƒÂ³ correctamente"
             
-            # Limpiar código usado
+            # Limpiar cÃƒÂ³digo usado
             usuarios.loc[usuario_idx, 'verification_code'] = ''
             usuarios.loc[usuario_idx, 'verification_code_expiry'] = ''
             guardar_usuarios_df(usuarios)
@@ -3972,17 +4587,17 @@ def verify_email():
         else:
             return jsonify({
                 'success': False, 
-                'message': 'Código incorrecto. Verifica e intenta nuevamente.'
+                'message': 'CÃƒÂ³digo incorrecto. Verifica e intenta nuevamente.'
             }), 400
             
     except Exception as e:
-        print(f"Error al verificar código: {str(e)}")
+        print(f"Error al verificar cÃƒÂ³digo: {str(e)}")
         return jsonify({
             'success': False, 
             'message': 'Error interno del servidor'
         }), 500
 
-# Ruta para el redireccionamiento para ver el catálogo
+# Ruta para el redireccionamiento para ver el catÃƒÂ¡logo
 @app.route('/armada')
 def armada():
     productos = cargar_productos_por_fuerza('Armada')
@@ -4020,13 +4635,13 @@ def producto_detalle(id_producto):
     if galeria:
         producto_dict['imagen_url'] = galeria[0]
 
-    carrito = session.get('carrito', [])
+    carrito = _obtener_carrito_sesion_usuario() if session.get('rol') == 'normal' else []
     cart_count = len(carrito)
     return render_template('Usuarios/Detalle pedido/product_detail.html', producto=producto_dict, cart_count=cart_count)
 
 @app.route('/admin/promo', methods=['GET','POST'])
 def admin_promo():
-    # Página de gestión de promociones para administradores
+    # PÃƒÂ¡gina de gestiÃƒÂ³n de promociones para administradores
     if session.get('rol') != 'admin':
         return "Acceso denegado"
 
@@ -4056,7 +4671,7 @@ def admin_promo():
             flash('La fecha de inicio no puede ser mayor que la fecha de fin.', 'warning')
             return redirect(url_for('admin_promo'))
         if pd.isna(id_producto):
-            flash('Debes seleccionar un producto para la promoción.', 'warning')
+            flash('Debes seleccionar un producto para la promociÃƒÂ³n.', 'warning')
             return redirect(url_for('admin_promo'))
         productos_ref = cargar_productos_activos_df()
         id_producto_num = int(id_producto)
@@ -4064,14 +4679,14 @@ def admin_promo():
             pd.to_numeric(productos_ref.get('id_producto', 0), errors='coerce') == id_producto_num
         ].empty
         if not existe_producto:
-            flash('El producto seleccionado no existe o está inactivo.', 'warning')
+            flash('El producto seleccionado no existe o estÃƒÂ¡ inactivo.', 'warning')
             return redirect(url_for('admin_promo'))
 
         promos = cargar_promociones_df()
         if codigo:
             existe_codigo = promos[promos['codigo'].astype(str).str.upper() == codigo]
             if not existe_codigo.empty:
-                flash('El código promocional ya existe. Usa otro.', 'warning')
+                flash('El cÃƒÂ³digo promocional ya existe. Usa otro.', 'warning')
                 return redirect(url_for('admin_promo'))
         next_id = int(pd.to_numeric(promos['id_promo'], errors='coerce').max() + 1) if not promos.empty else 1
         nuevo = {
@@ -4090,7 +4705,7 @@ def admin_promo():
         guardar_promociones_df(promos)
         detalle_desc = formatear_cop(valor_descuento) if tipo_descuento == 'valor_fijo' else f"{valor_descuento:.2f}%"
         registrar_actividad(
-            f"Promoción creada: {nombre}\n"
+            f"PromociÃƒÂ³n creada: {nombre}\n"
             f"- producto ID: {int(id_producto)}\n"
             f"- descuento: {detalle_desc}\n"
             f"- codigo: {codigo or 'N/A'}"
@@ -4413,13 +5028,13 @@ def admin_charts_export_excel():
         resumen_df.to_excel(writer, sheet_name='Resumen', index=False)
         datos['ventas_producto_df'].to_excel(writer, sheet_name='Ventas por producto', index=False)
         datos['ventas_mes_df'].to_excel(writer, sheet_name='Ventas por mes', index=False)
-        datos['metodos_pago_df'].to_excel(writer, sheet_name='Métodos de pago', index=False)
+        datos['metodos_pago_df'].to_excel(writer, sheet_name='MÃƒÂ©todos de pago', index=False)
         datos['top_productos_df'].to_excel(writer, sheet_name='Top productos', index=False)
 
         wb = writer.book
         ws_producto = wb['Ventas por producto']
         ws_mes = wb['Ventas por mes']
-        ws_metodos = wb['Métodos de pago']
+        ws_metodos = wb['MÃƒÂ©todos de pago']
         ws_top = wb['Top productos']
         formato_cop = '[>=1000]#,##0.00 "COP";0.00 "COP"'
 
@@ -4517,3 +5132,4 @@ def sobre_nosotros():
 if __name__ == '__main__':
     app.run(debug=True, use_reloader=True)
     
+
