@@ -15,7 +15,8 @@
     <script id="posData"
         type="application/json"
         data-currency-code='{{ currency_code | tojson }}'
-        data-productos='{{ productos | tojson }}'></script>
+        data-productos='{{ productos | tojson }}'
+        data-tallas='{{ tallas | tojson }}'></script>
 
     <div class="d-flex dashboard-layout">
         <div class="sidebar">
@@ -46,7 +47,7 @@
                     <a class="nav-link" href="{{ url_for('admin_pedidos') }}">Pedidos</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('admin_charts') }}">Ventas y Graficas</a>
+                    <a class="nav-link" href="{{ url_for('admin_charts') }}">Ventas y Gráficas</a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" href="{{ url_for('admin_ajustes') }}">Ajustes</a>

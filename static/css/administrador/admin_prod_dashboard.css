@@ -185,6 +185,31 @@
 
 .product-body {
     padding: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.product-body form {
+    margin: 0;
+}
+
+.product-body .input-group {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 8px;
+}
+
+.product-body .input-group > .form-control,
+.product-body .input-group > .form-select,
+.product-body .input-group > .btn {
+    width: 100%;
+    min-width: 0;
+    border-radius: 0.25rem !important;
+}
+
+.product-body .input-group > .btn {
+    white-space: normal;
 }
 
 .force-section {

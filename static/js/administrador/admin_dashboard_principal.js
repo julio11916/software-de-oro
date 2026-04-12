@@ -37,3 +37,34 @@ function fadeAndRedirect(event, url) {
         window.location.href = url;
     }, 300);
 }
+
+function initFeaturedSelectionLimit() {
+    const container = document.getElementById('featuredList');
+    if (!container) return;
+
+    const max = Number(container.dataset.max || 5);
+    const checkboxes = Array.from(container.querySelectorAll('input[type="checkbox"][name="destacados_ids"]'));
+    if (!checkboxes.length) return;
+
+    const enforceLimit = (current) => {
+        const selected = checkboxes.filter(cb => cb.checked);
+        if (selected.length > max && current) {
+            current.checked = false;
+            alert(`Solo puedes seleccionar hasta ${max} prendas destacadas.`);
+            return;
+        }
+        const limitReached = checkboxes.filter(cb => cb.checked).length >= max;
+        checkboxes.forEach(cb => {
+            if (!cb.checked) {
+                cb.disabled = limitReached;
+            }
+        });
+    };
+
+    checkboxes.forEach(cb => {
+        cb.addEventListener('change', () => enforceLimit(cb));
+    });
+    enforceLimit(null);
+}
+
+initFeaturedSelectionLimit();

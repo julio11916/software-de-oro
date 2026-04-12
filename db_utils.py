@@ -90,6 +90,7 @@ def ensure_tables():
         id_categoria BIGINT,
         imagen_url TEXT,
         eliminado BOOLEAN DEFAULT FALSE,
+        destacado_dashboard BOOLEAN DEFAULT FALSE,
         fuerza TEXT,
         intendencia TEXT
     );
@@ -104,7 +105,8 @@ def ensure_tables():
         id_pedido BIGINT,
         id_producto BIGINT,
         cantidad INT,
-        subtotal NUMERIC(12,2)
+        subtotal NUMERIC(12,2),
+        talla TEXT
     );
     CREATE TABLE IF NOT EXISTS promociones (
         id_promo BIGSERIAL PRIMARY KEY,
@@ -157,6 +159,8 @@ def ensure_tables():
         conn.execute(sa.text("ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS password_change_code_expiry TIMESTAMPTZ"))
         conn.execute(sa.text("ALTER TABLE producto ADD COLUMN IF NOT EXISTS fuerza TEXT"))
         conn.execute(sa.text("ALTER TABLE producto ADD COLUMN IF NOT EXISTS intendencia TEXT"))
+        conn.execute(sa.text("ALTER TABLE producto ADD COLUMN IF NOT EXISTS destacado_dashboard BOOLEAN DEFAULT FALSE"))
+        conn.execute(sa.text("ALTER TABLE detalle_pedido ADD COLUMN IF NOT EXISTS talla TEXT"))
         conn.execute(sa.text("ALTER TABLE promociones ADD COLUMN IF NOT EXISTS id_producto BIGINT"))
         conn.execute(sa.text("ALTER TABLE stripe_checkout ADD COLUMN IF NOT EXISTS carrito_json TEXT NOT NULL DEFAULT '[]'"))
 

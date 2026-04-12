@@ -93,11 +93,11 @@
                 let hasError = false;
 
                 if (!emailInput.value.trim()) {
-                    showInlineAlert(emailAlert, 'Debes ingresar tu correo electronico.');
+                    showInlineAlert(emailAlert, 'Debes ingresar tu correo electrónico.');
                     emailInput.classList.add('is-invalid');
                     hasError = true;
                 } else if (!emailInput.checkValidity()) {
-                    showInlineAlert(emailAlert, 'Ingresa un correo electronico valido.');
+                    showInlineAlert(emailAlert, 'Ingresa un correo electrónico válido.');
                     emailInput.classList.add('is-invalid');
                     hasError = true;
                 } else {
@@ -105,7 +105,7 @@
                 }
 
                 if (!passwordInput.value.trim()) {
-                    showInlineAlert(passwordAlert, 'Debes ingresar tu contrasena.');
+                    showInlineAlert(passwordAlert, 'Debes ingresar tu contraseña.');
                     passwordInput.classList.add('is-invalid');
                     hasError = true;
                 } else {

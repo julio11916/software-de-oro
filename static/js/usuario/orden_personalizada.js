@@ -21,7 +21,7 @@
         camiseta: "Camiseta",
         buso: "Buso",
         gorra: "Gorra",
-        panoleta: "Panuelo",
+        panoleta: "Pañoleta",
         "buso-manga-larga": "Buso manga larga",
     };
 
@@ -49,7 +49,7 @@
 
     function updateSummary() {
         const producto = productLabels[state.producto] || formatLabel(state.producto);
-        const tecnica = state.tecnica === "bordado" ? "Bordado" : "Impresion";
+        const tecnica = state.tecnica === "bordado" ? "Bordado" : "Impresión";
         const color = formatLabel(state.color);
         const estampado = state.estampado ? formatLabel(state.estampado) : "Pendiente";
         const talla = state.talla || "Pendiente";
@@ -199,12 +199,12 @@
 
         document.getElementById("btn-agregar-carrito")?.addEventListener("click", () => {
             const producto = productLabels[state.producto] || formatLabel(state.producto);
-            const tecnica = state.tecnica === "bordado" ? "Bordado" : "Impresion";
+            const tecnica = state.tecnica === "bordado" ? "Bordado" : "Impresión";
             const estampado = state.estampado ? formatLabel(state.estampado) : "Sin estampado";
             const talla = state.talla || "Pendiente";
 
             alert(
-                `Configuracion actual:\nProducto: ${producto}\nTecnica: ${tecnica}\nColor: ${formatLabel(state.color)}\nEstampado: ${estampado}\nTalla: ${talla}`
+                `Configuración actual:\nProducto: ${producto}\nTécnica: ${tecnica}\nColor: ${formatLabel(state.color)}\nEstampado: ${estampado}\nTalla: ${talla}`
             );
         });
     }

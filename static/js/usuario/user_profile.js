@@ -73,16 +73,16 @@ function enviarCodigoCambioPassword() {
                 const codeInput = document.getElementById("password_change_code_step");
                 if (codeInput) codeInput.focus();
             } else {
-                showPasswordChangeMessage(data.message || "No fue posible enviar el codigo.", "error");
+                showPasswordChangeMessage(data.message || "No fue posible enviar el código.", "error");
             }
         })
         .catch((error) => {
             console.error("Error:", error);
-            showPasswordChangeMessage("Error al enviar el codigo. Intenta nuevamente.", "error");
+            showPasswordChangeMessage("Error al enviar el código. Intenta nuevamente.", "error");
         })
         .finally(() => {
             btn.disabled = false;
-            btn.innerHTML = '<i class="fas fa-paper-plane me-2"></i>Solicitar codigo de seguridad';
+            btn.innerHTML = '<i class="fas fa-paper-plane me-2"></i>Solicitar código de seguridad';
         });
 }
 
@@ -94,7 +94,7 @@ function verificarCodigoCambioPassword() {
 
     const codigo = codeInput.value.replace(/\D/g, "").trim();
     if (!/^\d{6}$/.test(codigo)) {
-        showPasswordChangeMessage("El codigo debe tener exactamente 6 digitos.", "error");
+        showPasswordChangeMessage("El código debe tener exactamente 6 dígitos.", "error");
         return;
     }
 
@@ -119,15 +119,15 @@ function verificarCodigoCambioPassword() {
                 return;
             }
 
-            showPasswordChangeMessage(data.message || "Codigo invalido.", "error");
+            showPasswordChangeMessage(data.message || "Código inválido.", "error");
         })
         .catch((error) => {
             console.error("Error:", error);
-            showPasswordChangeMessage("Error validando el codigo. Intenta nuevamente.", "error");
+            showPasswordChangeMessage("Error validando el código. Intenta nuevamente.", "error");
         })
         .finally(() => {
             btn.disabled = false;
-            btn.innerHTML = "Validar codigo y continuar";
+            btn.innerHTML = "Validar código y continuar";
         });
 }
 
@@ -186,7 +186,7 @@ function setupPasswordChangeSection() {
             if (!hiddenCode || !/^\d{6}$/.test((hiddenCode.value || "").trim())) {
                 event.preventDefault();
                 showPasswordChangeMessage(
-                    "Primero debes solicitar y validar el codigo de seguridad para continuar.",
+                    "Primero debes solicitar y validar el código de seguridad para continuar.",
                     "error"
                 );
                 setPasswordChangeStep("verify");

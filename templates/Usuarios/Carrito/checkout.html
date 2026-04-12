@@ -48,16 +48,22 @@
                         <label class="form-label">
                             <i class="fas fa-ticket-alt"></i> C&oacute;digo promocional (opcional)
                         </label>
-                        <input type="text" name="codigo_promo" class="form-control" placeholder="Ej: ORO10">
+                        <input
+                            type="text"
+                            name="codigo_promo"
+                            class="form-control"
+                            placeholder="Ej: ORO10"
+                            maxlength="30"
+                            value="{{ selected_codigo_promo or '' }}">
                     </div>
 
                     <div class="form-group">
                         <label class="form-label" style="margin-bottom: 0.5rem;">Selecciona un m&eacute;todo de pago</label>
                         <select name="metodo_pago" class="form-select" required>
                             <option value="">Selecciona un m&eacute;todo de pago</option>
-                            <option value="tarjeta">Tarjeta de Cr&eacute;dito/D&eacute;bito</option>
-                            <option value="transferencia">Transferencia Bancaria</option>
-                            <option value="efectivo">Efectivo</option>
+                            <option value="tarjeta" {% if selected_metodo_pago == 'tarjeta' %}selected{% endif %}>Tarjeta de Cr&eacute;dito/D&eacute;bito</option>
+                            <option value="transferencia" {% if selected_metodo_pago == 'transferencia' %}selected{% endif %}>Transferencia Bancaria</option>
+                            <option value="efectivo" {% if selected_metodo_pago == 'efectivo' %}selected{% endif %}>Efectivo</option>
                         </select>
                     </div>
                 </div>

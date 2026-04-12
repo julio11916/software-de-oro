@@ -121,12 +121,12 @@
 
     <main class="main-content" id="catalogo">
         <div class="container catalog-shell destacados-shell">
-            <h2 class="section-title">Prendas destacadas del Ej&eacute;rcito</h2>
+            <h2 class="section-title">Prendas destacadas</h2>
 
-            {% if productos_militares %}
+            {% if productos_destacados %}
             <div id="destacadosCarousel" class="carousel slide destacados-carousel" data-bs-ride="carousel" data-bs-interval="10000">
                 <div class="carousel-inner">
-                    {% for destacado in productos_militares %}
+                    {% for destacado in productos_destacados %}
                     {% set galeria = destacado.galeria_dashboard if destacado.galeria_dashboard is defined and destacado.galeria_dashboard else [destacado.imagen_url, destacado.imagen_url, destacado.imagen_url, destacado.imagen_url, destacado.imagen_url] %}
                     {% set imagen_principal = galeria[0] if galeria else destacado.imagen_url %}
                     <div class="carousel-item {% if loop.first %}active{% endif %}">
@@ -179,7 +179,7 @@
             </div>
             {% else %}
             <div class="alert alert-info text-center mt-3 mb-0">
-                A&uacute;n no hay prendas militares destacadas disponibles.
+                A&uacute;n no hay prendas destacadas disponibles.
             </div>
             {% endif %}
         </div>
