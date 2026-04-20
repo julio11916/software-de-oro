@@ -32,7 +32,8 @@ def load_local_env():
             os.environ.setdefault(key, value)
 
 
-load_local_env()
+if not os.environ.get("RENDER"):
+    load_local_env()
 
 DATABASE_URL = os.environ.get("DATABASE_URL")
 
@@ -237,4 +238,4 @@ engine = sa.create_engine(
 if DATABASE_URL.startswith("postgres://"):
     DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
 
-print("DATABASE_URL:", DATABASE_URL)
+print("🔥 DATABASE_URL REAL:", DATABASE_URL)
