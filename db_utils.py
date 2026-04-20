@@ -34,11 +34,18 @@ def load_local_env():
 
 load_local_env()
 
-DATABASE_URL = os.environ.get(
-    "DATABASE_URL",
-    "postgresql+psycopg://postgres:admin@localhost:5432/software_de_oro",
+DATABASE_URL = os.environ.get("DATABASE_URL")
+
+if not DATABASE_URL:
+    raise ValueError("❌ DATABASE_URL no está configurada en Render")
+
+is_render = "render.com" in DATABASE_URL
+
+engine = sa.create_engine(
+    DATABASE_URL,
+    future=True,
+    connect_args={"sslmode": "require"} if is_render else {}
 )
-engine = sa.create_engine(DATABASE_URL, future=True)
 
 
 IDENTIFIER_PATTERN = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
@@ -205,7 +212,11 @@ def init_db():
     return engine
 
 
-init_db()
+if os.environ.get("DATABASE_URL"):
+    try:
+        init_db()
+    except Exception as e:
+        print("Error inicializando DB:", e)
 
 __all__ = [
     "DATABASE_URL",
@@ -216,3 +227,14 @@ __all__ = [
     "read_table_df",
     "replace_table_df",
 ]
+is_render = "render.com" in (DATABASE_URL or "")
+
+engine = sa.create_engine(
+    DATABASE_URL,
+    future=True,
+    connect_args={"sslmode": "require"} if is_render else {}
+)
+if DATABASE_URL.startswith("postgres://"):
+    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
+
+print("DATABASE_URL:", DATABASE_URL)
