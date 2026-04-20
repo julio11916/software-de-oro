@@ -11,7 +11,7 @@ except ImportError:
 
 
 def load_local_env():
-    """Carga variables desde .env aun si python-dotenv no esta instalado."""
+    """Carga variables desde .env solo en local."""
     if load_dotenv is not None:
         load_dotenv()
         return
@@ -32,20 +32,35 @@ def load_local_env():
             os.environ.setdefault(key, value)
 
 
+# 🔴 SOLO cargar .env en local (NO en Render)
 if not os.environ.get("RENDER"):
     load_local_env()
 
+
+# 🔴 Obtener DATABASE_URL
 DATABASE_URL = os.environ.get("DATABASE_URL")
 
 if not DATABASE_URL:
-    raise ValueError("❌ DATABASE_URL no está configurada en Render")
+    raise ValueError("❌ DATABASE_URL no está configurada")
 
-is_render = "render.com" in DATABASE_URL
 
+# 🔧 Normalizar URL
+if DATABASE_URL.startswith("postgres://"):
+    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
+
+# Opcional: usar psycopg3
+if DATABASE_URL.startswith("postgresql://"):
+    DATABASE_URL = DATABASE_URL.replace("postgresql://", "postgresql+psycopg://", 1)
+
+
+print("🔥 DATABASE_URL REAL:", DATABASE_URL)
+
+
+# 🔴 Crear engine (UNA SOLA VEZ)
 engine = sa.create_engine(
     DATABASE_URL,
     future=True,
-    connect_args={"sslmode": "require"} if is_render else {}
+    connect_args={"sslmode": "require"}
 )
 
 
@@ -60,7 +75,6 @@ def _safe_identifier(value):
 
 
 def ensure_tables():
-    """Crea y ajusta las tablas base de la aplicacion en PostgreSQL."""
     ddl = """
     CREATE TABLE IF NOT EXISTS usuarios (
         id_usuario BIGSERIAL PRIMARY KEY,
@@ -188,9 +202,6 @@ def read_table_df(table_name):
 
 
 def replace_table_df(table_name, df):
-    """
-    Reemplaza el contenido de una tabla preservando su estructura (DDL, constraints e indices).
-    """
     table = _safe_identifier(table_name)
     data = df if df is not None else pd.DataFrame()
 
@@ -213,11 +224,12 @@ def init_db():
     return engine
 
 
-if os.environ.get("DATABASE_URL"):
-    try:
-        init_db()
-    except Exception as e:
-        print("Error inicializando DB:", e)
+# 🔴 Inicializar DB sin romper deploy
+try:
+    init_db()
+except Exception as e:
+    print("Error inicializando DB:", e)
+
 
 __all__ = [
     "DATABASE_URL",
@@ -228,14 +240,3 @@ __all__ = [
     "read_table_df",
     "replace_table_df",
 ]
-is_render = "render.com" in (DATABASE_URL or "")
-
-engine = sa.create_engine(
-    DATABASE_URL,
-    future=True,
-    connect_args={"sslmode": "require"} if is_render else {}
-)
-if DATABASE_URL.startswith("postgres://"):
-    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
-
-print("🔥 DATABASE_URL REAL:", DATABASE_URL)
