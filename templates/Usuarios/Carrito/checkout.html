@@ -13,19 +13,7 @@
 <body class="page-with-catalog-header">
     {% include 'Usuarios/partials/header_offcanvas.html' %}
 
-    <!-- Mensajes Flash -->
-    {% with messages = get_flashed_messages(with_categories=true) %}
-    {% if messages %}
-    <div class="container">
-        {% for category, message in messages %}
-        <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
-            <i class="fas fa-exclamation-triangle"></i> {{ message }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert">&times;</button>
-        </div>
-        {% endfor %}
-    </div>
-    {% endif %}
-    {% endwith %}
+    {% include 'Usuarios/partials/_flash_toasts.html' %}
 
     <!-- Contenido Principal -->
     <div class="checkout-container my-4">
@@ -41,8 +29,47 @@
                 <!-- M&eacute;todo de Pago -->
                 <div class="payment-section">
                     <h3 class="section-title">
-                        <i class="fas fa-credit-card"></i> M&eacute;todo de Pago
+                        <i class="fas fa-university"></i> Transferencia Bancaria
                     </h3>
+
+                    <div class="checkout-customer-card">
+                        <h4 class="checkout-customer-title">
+                            <i class="fas fa-id-card"></i> Datos del cliente
+                        </h4>
+                        <p class="checkout-customer-help">Estos datos son obligatorios para registrar el pedido y coordinar la entrega.</p>
+
+                        <div class="form-group">
+                            <label class="form-label" for="cliente_telefono_checkout">
+                                <i class="fas fa-phone"></i> Teléfono
+                            </label>
+                            <input
+                                id="cliente_telefono_checkout"
+                                type="tel"
+                                name="cliente_telefono"
+                                class="form-control"
+                                placeholder="Ej: 3229393211"
+                                inputmode="numeric"
+                                maxlength="10"
+                                pattern="[0-9]{7,10}"
+                                value="{{ cliente_telefono or '' }}"
+                                required>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="cliente_direccion_checkout">
+                                <i class="fas fa-map-marker-alt"></i> Dirección de entrega
+                            </label>
+                            <input
+                                id="cliente_direccion_checkout"
+                                type="text"
+                                name="cliente_direccion"
+                                class="form-control"
+                                placeholder="Ej: Urbanización Pablo Sexto Manzana A Casa 6"
+                                maxlength="180"
+                                value="{{ cliente_direccion or '' }}"
+                                required>
+                        </div>
+                    </div>
 
                     <div class="form-group">
                         <label class="form-label">
@@ -57,15 +84,7 @@
                             value="{{ selected_codigo_promo or '' }}">
                     </div>
 
-                    <div class="form-group">
-                        <label class="form-label" style="margin-bottom: 0.5rem;">Selecciona un m&eacute;todo de pago</label>
-                        <select name="metodo_pago" class="form-select" required>
-                            <option value="">Selecciona un m&eacute;todo de pago</option>
-                            <option value="tarjeta" {% if selected_metodo_pago == 'tarjeta' %}selected{% endif %}>Tarjeta de Cr&eacute;dito/D&eacute;bito</option>
-                            <option value="transferencia" {% if selected_metodo_pago == 'transferencia' %}selected{% endif %}>Transferencia Bancaria</option>
-                            <option value="efectivo" {% if selected_metodo_pago == 'efectivo' %}selected{% endif %}>Efectivo</option>
-                        </select>
-                    </div>
+                    <input type="hidden" name="metodo_pago" value="transferencia">
                 </div>
 
                 <!-- Bot&oacute;n Procesar Pago -->

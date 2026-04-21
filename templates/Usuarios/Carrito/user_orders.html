@@ -14,18 +14,7 @@
 <body class="page-with-catalog-header">
     {% include 'Usuarios/partials/header_offcanvas.html' %}
 
-    {% with messages = get_flashed_messages(with_categories=true) %}
-    {% if messages %}
-    <div class="container mt-3">
-        {% for category, message in messages %}
-        <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
-            <i class="fas fa-check-circle"></i> {{ message }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-        {% endfor %}
-    </div>
-    {% endif %}
-    {% endwith %}
+    {% include 'Usuarios/partials/_flash_toasts.html' %}
 
     <div class="container main-container">
         {% if pedidos %}
@@ -50,9 +39,9 @@
                         <i class="fas fa-hashtag"></i>
                         <span>Pedido {{ pedido.id_pedido }}</span>
                     </div>
-                    <div class="order-status status-{{ pedido.estado|lower }}">
+                    <div class="order-status status-{{ pedido.estado_ui }}">
                         <i class="fas fa-circle"></i>
-                        {{ pedido.estado }}
+                        {{ pedido.estado_label }}
                     </div>
                 </div>
 
@@ -82,6 +71,15 @@
                             </div>
                         </div>
                     </div>
+
+                    {% if pedido.tracking_steps %}
+                    <div class="tracking-panel">
+                        <span class="tracking-title">Estado de tu pedido</span>
+                        {% with tracking_steps=pedido.tracking_steps %}
+                        {% include 'Usuarios/partials/_order_tracking_steps.html' %}
+                        {% endwith %}
+                    </div>
+                    {% endif %}
                 </div>
 
                 <div class="order-card-footer">

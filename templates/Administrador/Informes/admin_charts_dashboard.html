@@ -45,13 +45,13 @@
                     <a class="nav-link" href="{{ url_for('admin_pos') }}">Sistema POS</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('admin_pedidos') }}">Pedidos</a>
+                    <a class="nav-link" href="{{ url_for('admin_pedidos') }}">Pagos de pedidos</a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link active" href="{{ url_for('admin_charts') }}">Ventas y Gráficas</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('admin_ajustes') }}">Ajustes</a>
+                    <a class="nav-link" href="{{ url_for('admin_ajustes') }}">Pedidos en curso</a>
                 </li>
             </ul>
 
@@ -140,6 +140,7 @@
                     <section class="chart-card">
                     <div class="chart-head gradient-section-title">
                         <h5 class="mb-0">Ventas por Producto</h5>
+                            <small class="chart-subtitle">Top 10 por cantidad vendida</small>
                     </div>
                         <div class="chart-body">
                             <canvas id="chartProductos"></canvas>
@@ -149,6 +150,7 @@
                     <section class="chart-card">
                     <div class="chart-head gradient-section-title">
                         <h5 class="mb-0">Ventas por Mes</h5>
+                            <small class="chart-subtitle">Tendencia del rango filtrado</small>
                     </div>
                         <div class="chart-body">
                             <canvas id="chartMeses"></canvas>
@@ -158,6 +160,7 @@
                     <section class="chart-card">
                     <div class="chart-head gradient-section-title">
                         <h5 class="mb-0">Métodos de Pago</h5>
+                            <small class="chart-subtitle">Distribucion del recaudo</small>
                     </div>
                         <div class="chart-body">
                             <canvas id="chartMetodos"></canvas>

@@ -26,8 +26,8 @@
             <p><strong>N&uacute;mero de Pedido:</strong> #{{ pedido.id_pedido }}</p>
             <p><strong>Fecha de Compra:</strong> {{ pedido.fecha_pedido }}</p>
             <p><strong>Estado:</strong>
-                <span class="estado-{{ pedido.estado }}">
-                    {{ pedido.estado }}
+                <span class="status-badge status-{{ pedido.estado_ui }}">
+                    {{ pedido.estado_label }}
                 </span>
             </p>
         </div>

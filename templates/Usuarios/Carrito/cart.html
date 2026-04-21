@@ -14,18 +14,7 @@
 <body class="page-with-catalog-header">
     {% include 'Usuarios/partials/header_offcanvas.html' %}
 
-    {% with messages = get_flashed_messages(with_categories=true) %}
-    {% if messages %}
-    <div class="container mt-3">
-        {% for category, message in messages %}
-        <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
-            <i class="fas fa-check-circle"></i> {{ message }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-        {% endfor %}
-    </div>
-    {% endif %}
-    {% endwith %}
+    {% include 'Usuarios/partials/_flash_toasts.html' %}
 
     <div class="container my-4">
         {% if carrito %}
@@ -129,7 +118,46 @@
                         </div>
                     </div>
 
-                    <form method="GET" action="{{ url_for('checkout') }}" class="payment-form">
+                    <form method="POST" action="{{ url_for('checkout_select') }}" class="payment-form">
+                        <div class="customer-data-card">
+                            <h4 class="customer-data-title">
+                                <i class="fas fa-user-check"></i> Datos del cliente
+                            </h4>
+                            <p class="customer-data-help">Para continuar con tu compra necesitamos confirmar tu teléfono y tu dirección de entrega.</p>
+
+                            <div class="form-group">
+                                <label class="form-label" for="cliente_telefono_cart">
+                                    <i class="fas fa-phone"></i> Teléfono
+                                </label>
+                                <input
+                                    id="cliente_telefono_cart"
+                                    type="tel"
+                                    name="cliente_telefono"
+                                    class="form-control"
+                                    placeholder="Ej: 3229393211"
+                                    inputmode="numeric"
+                                    maxlength="10"
+                                    pattern="[0-9]{7,10}"
+                                    value="{{ cliente_telefono or '' }}"
+                                    required>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label" for="cliente_direccion_cart">
+                                    <i class="fas fa-map-marker-alt"></i> Dirección de entrega
+                                </label>
+                                <input
+                                    id="cliente_direccion_cart"
+                                    type="text"
+                                    name="cliente_direccion"
+                                    class="form-control"
+                                    placeholder="Ej: Urbanización Pablo Sexto Manzana A Casa 6"
+                                    maxlength="180"
+                                    value="{{ cliente_direccion or '' }}"
+                                    required>
+                            </div>
+                        </div>
+
                         <div class="form-group">
                             <label class="form-label" for="codigo_promo_cart">
                                 <i class="fas fa-ticket-alt"></i> C&oacute;digo promocional (opcional)
@@ -152,7 +180,6 @@
                                 <option value="">Selecciona un m&eacute;todo de pago</option>
                                 <option value="tarjeta" {% if selected_metodo_pago == 'tarjeta' %}selected{% endif %}>Tarjeta de Cr&eacute;dito/D&eacute;bito</option>
                                 <option value="transferencia" {% if selected_metodo_pago == 'transferencia' %}selected{% endif %}>Transferencia Bancaria</option>
-                                <option value="efectivo" {% if selected_metodo_pago == 'efectivo' %}selected{% endif %}>Efectivo</option>
                             </select>
                         </div>
 

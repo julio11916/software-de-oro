@@ -14,19 +14,7 @@
 <body class="page-with-catalog-header profile-page">
     {% include 'Usuarios/partials/header_offcanvas.html' %}
 
-    <!-- Mensajes Flash -->
-    {% with messages = get_flashed_messages(with_categories=true) %}
-    {% if messages %}
-    <div class="profile-alerts">
-        {% for category, message in messages %}
-        <div class="alert alert-{{ category }} alert-dismissible fade show profile-alert" role="alert">
-            <i class="fas fa-check-circle"></i> {{ message }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-        {% endfor %}
-    </div>
-    {% endif %}
-    {% endwith %}
+    {% include 'Usuarios/partials/_flash_toasts.html' %}
 
     <!-- Contenido Principal -->
     <div class="container my-5 profile-main">

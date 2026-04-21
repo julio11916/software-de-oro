@@ -580,6 +580,112 @@ input[type="submit"]:focus {
     opacity: 0.75;
 }
 
+.flash-toast-stack {
+    position: fixed;
+    top: 102px;
+    right: 24px;
+    z-index: 1400;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: min(420px, calc(100vw - 32px));
+    pointer-events: none;
+}
+
+.flash-toast {
+    position: relative;
+    display: flex;
+    align-items: flex-start;
+    gap: 0.9rem;
+    padding: 0.95rem 1rem;
+    border-radius: 18px;
+    background: rgba(255, 255, 255, 0.96);
+    border: 1px solid rgba(20, 20, 20, 0.08);
+    box-shadow: 0 18px 42px rgba(20, 20, 20, 0.12);
+    backdrop-filter: blur(10px);
+    animation: flashToastPresence 7s ease forwards;
+}
+
+.flash-toast::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: linear-gradient(135deg, rgba(50, 99, 163, 0.08), rgba(23, 148, 210, 0.04));
+    pointer-events: none;
+}
+
+.flash-toast-icon,
+.flash-toast-copy {
+    position: relative;
+    z-index: 1;
+}
+
+.flash-toast-icon {
+    width: 44px;
+    height: 44px;
+    flex: 0 0 44px;
+    border-radius: 14px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    color: #fff;
+    box-shadow: 0 10px 24px rgba(20, 20, 20, 0.16);
+}
+
+.flash-toast-copy {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+}
+
+.flash-toast-label {
+    color: #1a1a1a;
+    font-size: 0.98rem;
+    font-weight: 800;
+    line-height: 1.2;
+}
+
+.flash-toast-text {
+    color: #5f6872;
+    font-size: 0.92rem;
+    line-height: 1.35;
+}
+
+.flash-toast-success .flash-toast-icon {
+    background: linear-gradient(135deg, #188e5a, #2fb77c);
+}
+
+.flash-toast-danger .flash-toast-icon {
+    background: linear-gradient(135deg, #8e2f4e, #cf406b);
+}
+
+.flash-toast-warning .flash-toast-icon {
+    background: linear-gradient(135deg, #997127, #c39a3d);
+}
+
+.flash-toast-info .flash-toast-icon {
+    background: linear-gradient(135deg, #244f86, #1794d2);
+}
+
+@keyframes flashToastPresence {
+    0% {
+        opacity: 0;
+        transform: translate3d(0, -12px, 0) scale(0.98);
+    }
+    8%,
+    78% {
+        opacity: 1;
+        transform: translate3d(0, 0, 0) scale(1);
+    }
+    100% {
+        opacity: 0;
+        transform: translate3d(0, -10px, 0) scale(0.98);
+        visibility: hidden;
+    }
+}
+
 @media (max-width: 991px) {
     .store-header-inner {
         height: 66px;
@@ -630,5 +736,12 @@ input[type="submit"]:focus {
 
     .thumb-card {
         height: 120px;
+    }
+
+    .flash-toast-stack {
+        top: 88px;
+        right: 16px;
+        left: 16px;
+        width: auto;
     }
 }

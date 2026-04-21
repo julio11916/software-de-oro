@@ -134,9 +134,16 @@
     color: #856404;
 }
 
+.status-confirmado,
+.status-en_preparacion {
+    background: #e5f2ff;
+    color: #0e5cba;
+}
+
+.status-empaquetado,
 .status-enviado {
-    background: #dbeafe;
-    color: #1e3a8a;
+    background: #dff7fb;
+    color: #0f7f8d;
 }
 
 .status-entregado {

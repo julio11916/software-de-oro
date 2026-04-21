@@ -57,6 +57,8 @@ USUARIO_COLUMNS = [
     'rol',
     'estado',
     'fecha_registro',
+    'telefono',
+    'direccion',
     'email_verified',
     'verification_code',
     'verification_code_expiry',
@@ -71,9 +73,30 @@ PRODUCTO_COLUMNS = [
     'id_categoria', 'fuerza', 'intendencia', 'imagen_url',
     'eliminado', 'destacado_dashboard'
 ]
-PEDIDO_COLUMNS = ['id_pedido', 'id_usuario', 'fecha_pedido', 'estado']
+PEDIDO_COLUMNS = ['id_pedido', 'id_usuario', 'fecha_pedido', 'estado', 'cliente_telefono', 'cliente_direccion']
 DETALLE_PEDIDO_COLUMNS = ['id_detalle', 'id_pedido', 'id_producto', 'cantidad', 'subtotal', 'talla']
 PAGO_COLUMNS = ['id_pago', 'id_pedido', 'monto', 'metodo_pago', 'fecha_pago', 'estado_pago', 'id_promo', 'codigo_promo', 'tipo_descuento', 'valor_descuento', 'monto_descuento']
+PEDIDO_STATUS_FLOW = [
+    ('pendiente', 'Pendiente'),
+    ('confirmado', 'Confirmado'),
+    ('en_preparacion', 'En preparación'),
+    ('empaquetado', 'Empaquetado'),
+    ('enviado', 'Enviado'),
+    ('entregado', 'Entregado'),
+]
+PEDIDO_STATUS_EXTRA = {
+    'cancelado': 'Cancelado',
+    'pendiente_revision': 'Pendiente de revisión',
+    'completado': 'Completado',
+}
+PEDIDO_STATUS_ALIAS = {
+    'pendiente_revision': 'confirmado',
+    'completado': 'entregado',
+}
+PEDIDO_STATUS_LABELS = {
+    **{clave: etiqueta for clave, etiqueta in PEDIDO_STATUS_FLOW},
+    **PEDIDO_STATUS_EXTRA,
+}
 
 # Column definitions for promociones
 PROMO_COLUMNS = [
@@ -607,11 +630,13 @@ def cargar_pedidos_df():
     pedidos = read_table_df('pedidos')
     for column in PEDIDO_COLUMNS:
         if column not in pedidos.columns:
-            pedidos[column] = '' if column in {'id_usuario', 'fecha_pedido', 'estado'} else 0
+            pedidos[column] = '' if column in {'id_usuario', 'fecha_pedido', 'estado', 'cliente_telefono', 'cliente_direccion'} else 0
     pedidos['id_pedido'] = pd.to_numeric(pedidos['id_pedido'], errors='coerce')
     pedidos['id_usuario'] = pedidos['id_usuario'].fillna('')
     pedidos['fecha_pedido'] = pedidos['fecha_pedido'].fillna('')
     pedidos['estado'] = pedidos['estado'].fillna('pendiente')
+    pedidos['cliente_telefono'] = pedidos['cliente_telefono'].fillna('').astype(str)
+    pedidos['cliente_direccion'] = pedidos['cliente_direccion'].fillna('').astype(str)
     return pedidos[PEDIDO_COLUMNS]
 
 
@@ -619,7 +644,7 @@ def guardar_pedidos_df(pedidos):
     pedidos = pedidos.copy()
     for column in PEDIDO_COLUMNS:
         if column not in pedidos.columns:
-            pedidos[column] = '' if column in {'id_usuario', 'fecha_pedido', 'estado'} else 0
+            pedidos[column] = '' if column in {'id_usuario', 'fecha_pedido', 'estado', 'cliente_telefono', 'cliente_direccion'} else 0
     replace_table_df('pedidos', pedidos[PEDIDO_COLUMNS])
 
 
@@ -2627,7 +2652,40 @@ def admin_registros_export_excel():
 def admin_ajustes():
     if session.get('rol') != 'admin':
         return "Acceso denegado"
-    return render_template('Administrador/Ajustes/admin_ajustes_dashboard.html')
+    pedidos = cargar_pedidos_df()
+    pagos = cargar_pagos_df()
+    detalle = cargar_detalle_pedido_df()
+    productos = cargar_productos_df()
+    usuarios = cargar_usuarios_df()
+
+    pedidos, pagos, detalle, productos = _normalizar_dataframes_admin_pedidos(
+        pedidos, pagos, detalle, productos
+    )
+    pedidos_view = _construir_vista_pedidos(pedidos, pagos, detalle, usuarios, productos)
+    pedidos_view = pedidos_view.sort_values(by='id_pedido', ascending=False, na_position='last')
+
+    pagina_actual = _parse_positive_int(request.args.get('ajustes_page', 1), default=1)
+    lista_pedidos = _enriquecer_pedidos_con_tracking(_serializar_pedidos_admin(pedidos_view))
+    pedidos_activos = [pedido for pedido in lista_pedidos if pedido.get('estado_activo')]
+    pedidos_activos_vista, paginacion_ajustes = _paginar_lista(pedidos_activos, pagina_actual, per_page=5)
+
+    resumen_estados = {
+        'activos': len(pedidos_activos),
+        'pendientes': sum(1 for pedido in pedidos_activos if pedido.get('estado_ui') == 'pendiente'),
+        'preparacion': sum(
+            1 for pedido in pedidos_activos
+            if pedido.get('estado_ui') in {'confirmado', 'en_preparacion', 'empaquetado'}
+        ),
+        'enviados': sum(1 for pedido in pedidos_activos if pedido.get('estado_ui') == 'enviado'),
+    }
+
+    return render_template(
+        'Administrador/Ajustes/admin_ajustes_dashboard.html',
+        pedidos_activos=pedidos_activos_vista,
+        resumen_estados=resumen_estados,
+        paginacion_ajustes=paginacion_ajustes,
+        estados_pedido=PEDIDO_STATUS_FLOW[:-1] + [('entregado', 'Entregado'), ('cancelado', 'Cancelado')],
+    )
 
 
 @app.route('/admin/informes')
@@ -2753,6 +2811,10 @@ def _normalizar_dataframes_admin_pedidos(pedidos, pagos, detalle, productos):
         pedidos['fecha_pedido'] = ''
     if 'estado' not in pedidos.columns:
         pedidos['estado'] = 'pendiente'
+    if 'cliente_telefono' not in pedidos.columns:
+        pedidos['cliente_telefono'] = ''
+    if 'cliente_direccion' not in pedidos.columns:
+        pedidos['cliente_direccion'] = ''
 
     if 'id_pedido' not in pagos.columns:
         pagos['id_pedido'] = pd.Series(dtype='int')
@@ -2933,14 +2995,92 @@ def _build_pagination_buttons(total_paginas, pagina_actual):
     return botones
 
 
+def _paginar_lista(items, pagina_actual, per_page=5):
+    total = len(items)
+    total_paginas = max(1, (total + per_page - 1) // per_page)
+    pagina_actual = min(max(1, pagina_actual), total_paginas)
+
+    inicio = (pagina_actual - 1) * per_page
+    fin = inicio + per_page
+    vista = items[inicio:fin]
+
+    paginacion = {
+        'page': pagina_actual,
+        'per_page': per_page,
+        'total': total,
+        'total_paginas': total_paginas,
+        'desde': inicio + 1 if total else 0,
+        'hasta': min(fin, total),
+        'botones': _build_pagination_buttons(total_paginas, pagina_actual),
+    }
+    return vista, paginacion
+
+
+def _estado_pedido_ui(estado):
+    estado_normalizado = str(estado or '').strip().lower() or 'pendiente'
+    return PEDIDO_STATUS_ALIAS.get(estado_normalizado, estado_normalizado)
+
+
+def _etiqueta_estado_pedido(estado):
+    estado_normalizado = str(estado or '').strip().lower() or 'pendiente'
+    return PEDIDO_STATUS_LABELS.get(
+        estado_normalizado,
+        estado_normalizado.replace('_', ' ').capitalize()
+    )
+
+
+def _construir_pasos_estado_pedido(estado):
+    estado_ui = _estado_pedido_ui(estado)
+    flujo = [clave for clave, _ in PEDIDO_STATUS_FLOW]
+
+    if estado_ui == 'cancelado':
+        return []
+
+    try:
+        indice_actual = flujo.index(estado_ui)
+    except ValueError:
+        indice_actual = 0
+
+    pasos = []
+    for indice, (clave, etiqueta) in enumerate(PEDIDO_STATUS_FLOW):
+        if indice < indice_actual:
+            estado_paso = 'done'
+        elif indice == indice_actual:
+            estado_paso = 'current'
+        else:
+            estado_paso = 'upcoming'
+        pasos.append({
+            'key': clave,
+            'label': etiqueta,
+            'state': estado_paso,
+        })
+    return pasos
+
+
+def _enriquecer_pedidos_con_tracking(registros):
+    pedidos_enriquecidos = []
+    for pedido in registros:
+        pedido_item = dict(pedido)
+        estado_original = str(pedido_item.get('estado', '')).strip().lower() or 'pendiente'
+        estado_ui = _estado_pedido_ui(estado_original)
+        pedido_item['estado'] = estado_original
+        pedido_item['estado_ui'] = estado_ui
+        pedido_item['estado_label'] = _etiqueta_estado_pedido(estado_original)
+        pedido_item['estado_activo'] = estado_ui not in {'entregado', 'cancelado'}
+        pedido_item['tracking_steps'] = _construir_pasos_estado_pedido(estado_original)
+        pedidos_enriquecidos.append(pedido_item)
+    return pedidos_enriquecidos
+
+
 def _filtrar_y_paginar_pedidos(pedidos_view, filtros, per_page=10):
     filtros = dict(filtros)
-    estados_validos = {'pendiente', 'enviado', 'entregado', 'cancelado'}
+    estados_validos = {clave for clave, _ in PEDIDO_STATUS_FLOW} | {'cancelado'}
     if filtros.get('estado') not in estados_validos:
         filtros['estado'] = 'todos'
 
     vista = pedidos_view.copy()
     vista['estado'] = vista['estado'].fillna('pendiente').astype(str).str.strip().str.lower()
+    vista['estado_ui'] = vista['estado'].apply(_estado_pedido_ui)
     vista['fecha_pedido'] = vista['fecha_pedido'].fillna('').astype(str)
     vista['fecha_pedido_dt'] = pd.to_datetime(vista['fecha_pedido'], errors='coerce')
     vista['id_pedido_txt'] = vista['id_pedido'].apply(
@@ -2948,7 +3088,7 @@ def _filtrar_y_paginar_pedidos(pedidos_view, filtros, per_page=10):
     )
 
     if filtros['estado'] != 'todos':
-        vista = vista[vista['estado'] == filtros['estado']]
+        vista = vista[vista['estado_ui'] == filtros['estado']]
 
     fecha_desde_dt = pd.to_datetime(filtros.get('fecha_desde', ''), errors='coerce')
     if pd.notna(fecha_desde_dt):
@@ -3165,7 +3305,7 @@ def admin_pedidos():
         pagos, pago_filtros, per_page=10
     )
 
-    lista_pedidos = _serializar_pedidos_admin(pedidos_view)
+    lista_pedidos = _enriquecer_pedidos_con_tracking(_serializar_pedidos_admin(pedidos_view))
     lista_pagos = _serializar_pagos_admin(pagos_view)
 
     return render_template(
@@ -3203,16 +3343,22 @@ def admin_pedidos_estado(id_pedido):
         'fecha_hasta': str(request.form.get('f_pago_fecha_hasta', '')).strip(),
         'page': str(request.form.get('f_pago_page', '1')).strip(),
     }
+    ajustes_page = _parse_positive_int(request.form.get('ajustes_page', '1'), default=1)
 
     estado_nuevo = request.form.get('estado', '').strip().lower()
-    estados_validos = {'pendiente', 'enviado', 'entregado', 'cancelado'}
+    origen = str(request.form.get('origen', '')).strip().lower()
+    estados_validos = {clave for clave, _ in PEDIDO_STATUS_FLOW} | {'cancelado'}
     if estado_nuevo not in estados_validos:
         flash('Estado de pedido inválido.', 'danger')
+        if origen == 'ajustes':
+            return redirect(url_for('admin_ajustes', ajustes_page=ajustes_page))
         return _redirigir_admin_pedidos_con_filtros(filtros, pago_filtros)
 
     pedidos = cargar_pedidos_df()
     if 'id_pedido' not in pedidos.columns:
         flash('Estructura de pedidos inválida.', 'danger')
+        if origen == 'ajustes':
+            return redirect(url_for('admin_ajustes', ajustes_page=ajustes_page))
         return _redirigir_admin_pedidos_con_filtros(filtros, pago_filtros)
     if 'estado' not in pedidos.columns:
         pedidos['estado'] = 'pendiente'
@@ -3221,6 +3367,8 @@ def admin_pedidos_estado(id_pedido):
     idx = pedidos[pedidos['id_pedido'] == id_pedido].index
     if idx.empty:
         flash('Pedido no encontrado.', 'warning')
+        if origen == 'ajustes':
+            return redirect(url_for('admin_ajustes', ajustes_page=ajustes_page))
         return _redirigir_admin_pedidos_con_filtros(filtros, pago_filtros)
 
     estado_anterior = str(pedidos.at[idx[0], 'estado']).strip().lower()
@@ -3233,8 +3381,9 @@ def admin_pedidos_estado(id_pedido):
     else:
         flash(f'El pedido #{id_pedido} ya estaba en "{estado_nuevo}".', 'info')
 
+    if origen == 'ajustes':
+        return redirect(url_for('admin_ajustes', ajustes_page=ajustes_page))
     return _redirigir_admin_pedidos_con_filtros(filtros, pago_filtros)
-
 
 def _validar_cliente_pos(cliente_nombre, cliente_correo, cliente_documento, cliente_telefono):
     if not cliente_nombre or not cliente_correo or not cliente_documento or not cliente_telefono:
@@ -3416,13 +3565,23 @@ def _construir_items_detalle_desde_carrito(carrito):
     return items_detalle
 
 
-def _crear_pedido_y_detalle(pedidos, detalle_pedido, id_usuario, estado_pedido, items_detalle):
+def _crear_pedido_y_detalle(
+    pedidos,
+    detalle_pedido,
+    id_usuario,
+    estado_pedido,
+    items_detalle,
+    cliente_telefono='',
+    cliente_direccion='',
+):
     nuevo_id_pedido = next_id('pedidos', 'id_pedido')
     nuevo_pedido = {
         'id_pedido': nuevo_id_pedido,
         'id_usuario': id_usuario,
         'fecha_pedido': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-        'estado': estado_pedido
+        'estado': estado_pedido,
+        'cliente_telefono': str(cliente_telefono or '').strip(),
+        'cliente_direccion': str(cliente_direccion or '').strip(),
     }
     pedidos = pd.concat([pedidos, pd.DataFrame([nuevo_pedido])], ignore_index=True)
     guardar_pedidos_df(pedidos)
@@ -3871,7 +4030,7 @@ def add_to_cart(id_producto):
 @app.route('/cart')
 def cart():
     if session.get('rol') == 'normal':
-        metodos_validos = {'tarjeta', 'transferencia', 'efectivo'}
+        metodos_validos = {'tarjeta', 'transferencia'}
         metodo_pago = str(request.args.get('metodo_pago', '') or '').strip().lower()
         if metodo_pago not in metodos_validos:
             metodo_pago = str(session.get('checkout_metodo_preferido', '') or '').strip().lower()
@@ -3892,12 +4051,15 @@ def cart():
             session.modified = True
             _sincronizar_carrito_usuario_desde_sesion()
         total = sum(float(item.get('subtotal', 0)) for item in carrito_enriquecido)
+        contacto_cliente = _obtener_contacto_checkout_predeterminado()
         return render_template(
             'Usuarios/Carrito/cart.html',
             carrito=carrito_enriquecido,
             total=total,
             selected_metodo_pago=metodo_pago,
-            selected_codigo_promo=codigo_promo
+            selected_codigo_promo=codigo_promo,
+            cliente_telefono=contacto_cliente['telefono'],
+            cliente_direccion=contacto_cliente['direccion'],
         )
     return "Acceso denegado"
 
@@ -3921,12 +4083,12 @@ def remove_from_cart(index):
 @app.route('/checkout')
 def checkout():
     if session.get('rol') == 'normal':
-        metodos_validos = {'tarjeta', 'transferencia', 'efectivo'}
+        metodos_validos = {'transferencia'}
         metodo_pago = str(request.args.get('metodo_pago', '') or '').strip().lower()
         if metodo_pago not in metodos_validos:
-            metodo_pago = str(session.get('checkout_metodo_preferido', '') or '').strip().lower()
+            metodo_pago = 'transferencia'
         if metodo_pago not in metodos_validos:
-            metodo_pago = ''
+            metodo_pago = 'transferencia'
 
         session['checkout_metodo_preferido'] = metodo_pago
         if 'codigo_promo' in request.args:
@@ -3941,12 +4103,15 @@ def checkout():
             return redirect(url_for('cart'))
 
         total = sum(float(item.get('subtotal', 0)) for item in carrito)
+        contacto_cliente = _obtener_contacto_checkout_predeterminado()
         return render_template(
             'Usuarios/Carrito/checkout.html',
             carrito=carrito,
             total=total,
             selected_metodo_pago=metodo_pago,
-            selected_codigo_promo=codigo_promo
+            selected_codigo_promo=codigo_promo,
+            cliente_telefono=contacto_cliente['telefono'],
+            cliente_direccion=contacto_cliente['direccion'],
         )
     return "Acceso denegado"
 
@@ -3975,6 +4140,70 @@ def _resolver_promocion_checkout(codigo_promo, promos, total):
 
     descuento_promo = calcular_descuento_promocion(total, promo_aplicada)
     return promo_aplicada, descuento_promo, None
+
+
+def _obtener_contacto_checkout_predeterminado():
+    telefono = str(session.get('checkout_cliente_telefono', '') or '').strip()
+    direccion = str(session.get('checkout_cliente_direccion', '') or '').strip()
+    usuario_email = normalizar_email(session.get('usuario', ''))
+
+    if not usuario_email:
+        return {'telefono': telefono, 'direccion': direccion}
+
+    usuarios = cargar_usuarios_df()
+    if usuarios.empty:
+        return {'telefono': telefono, 'direccion': direccion}
+
+    usuario = usuarios[usuarios['email'] == usuario_email]
+    if usuario.empty:
+        return {'telefono': telefono, 'direccion': direccion}
+
+    usuario_dict = usuario.iloc[0].to_dict()
+    if not telefono:
+        telefono = str(usuario_dict.get('telefono', '') or '').strip()
+    if not direccion:
+        direccion = str(usuario_dict.get('direccion', '') or '').strip()
+
+    return {'telefono': telefono, 'direccion': direccion}
+
+
+def _validar_datos_cliente_checkout(telefono, direccion):
+    telefono_limpio = re.sub(r"\D", "", str(telefono or ""))
+    direccion_limpia = re.sub(r"\s+", " ", str(direccion or "")).strip()
+
+    if not telefono_limpio or not direccion_limpia:
+        return None, None, (
+            'Antes de finalizar tu compra debes registrar el telefono y la direccion de entrega.',
+            'warning'
+        )
+
+    if len(telefono_limpio) < 7 or len(telefono_limpio) > 10:
+        return None, None, (
+            'El telefono debe contener solo numeros y tener entre 7 y 10 digitos.',
+            'warning'
+        )
+
+    return telefono_limpio, direccion_limpia, None
+
+
+def _guardar_contacto_checkout_usuario(telefono, direccion):
+    usuario_email = normalizar_email(session.get('usuario', ''))
+    if not usuario_email:
+        return
+
+    usuarios = cargar_usuarios_df()
+    if 'telefono' not in usuarios.columns:
+        usuarios['telefono'] = ''
+    if 'direccion' not in usuarios.columns:
+        usuarios['direccion'] = ''
+
+    idx = usuarios[usuarios['email'] == usuario_email].index
+    if idx.empty:
+        return
+
+    usuarios.loc[idx, 'telefono'] = str(telefono or '').strip()
+    usuarios.loc[idx, 'direccion'] = str(direccion or '').strip()
+    guardar_usuarios_df(usuarios)
 
 
 def _validar_stock_checkout(productos, carrito):
@@ -4024,7 +4253,9 @@ def _registrar_compra_checkout_usuario(
     total_final,
     promo_aplicada,
     descuento_promo,
-    estado_pedido='pendiente'
+    estado_pedido='pendiente',
+    cliente_telefono='',
+    cliente_direccion='',
 ):
     items_detalle = _construir_items_detalle_desde_carrito(carrito)
     nuevo_id_pedido = _crear_pedido_y_detalle(
@@ -4032,7 +4263,9 @@ def _registrar_compra_checkout_usuario(
         detalle_pedido=detalle_pedido,
         id_usuario=session.get('id_usuario', session['usuario']),
         estado_pedido=estado_pedido,
-        items_detalle=items_detalle
+        items_detalle=items_detalle,
+        cliente_telefono=cliente_telefono,
+        cliente_direccion=cliente_direccion,
     )
 
     resumen_promos = _resumen_promocion_desde_promo_aplicada(promo_aplicada)
@@ -4045,6 +4278,108 @@ def _registrar_compra_checkout_usuario(
         monto_descuento=float(descuento_promo)
     )
     return nuevo_id_pedido
+
+
+def _iniciar_pago_stripe_desde_carrito(carrito, codigo_promo, total_final):
+    ok_stripe, msg_stripe = stripe_estado_configuracion()
+    if not ok_stripe:
+        flash(
+            f'El pago con tarjeta no esta disponible en este momento. Detalle: {msg_stripe}',
+            'warning'
+        )
+        return redirect(url_for('cart', metodo_pago='tarjeta', codigo_promo=codigo_promo))
+
+    cart_hash = _hash_carrito_checkout(carrito)
+    try:
+        stripe_session = crear_checkout_sesion_tarjeta(
+            amount_total=total_final,
+            success_url=url_for('pay_stripe_success', _external=True),
+            cancel_url=url_for('pay_stripe_cancel', _external=True),
+            customer_email=session.get('usuario', ''),
+            descripcion=f"Compra NACHOHER ({len(carrito)} item(s))",
+            metadata={
+                "usuario": session.get('usuario', ''),
+                "codigo_promo": codigo_promo,
+                "cart_hash": cart_hash,
+                "total_esperado": f"{total_final:.2f}",
+            },
+        )
+    except Exception as exc:
+        app.logger.exception("Error creando sesion Stripe Checkout: %s", exc)
+        flash('No fue posible iniciar el pago con tarjeta. Intenta de nuevo.', 'danger')
+        return redirect(url_for('cart', metodo_pago='tarjeta', codigo_promo=codigo_promo))
+
+    stripe_session_id = str(_stripe_obj_get(stripe_session, "id", "") or "").strip()
+    stripe_session_url = str(_stripe_obj_get(stripe_session, "url", "") or "").strip()
+    if not stripe_session_id or not stripe_session_url:
+        flash('Stripe no devolvio una sesion valida para continuar el pago.', 'danger')
+        return redirect(url_for('cart', metodo_pago='tarjeta', codigo_promo=codigo_promo))
+
+    _stripe_checkout_guardar_creado(
+        session_id=stripe_session_id,
+        usuario_email=session.get('usuario', ''),
+        codigo_promo=codigo_promo,
+        carrito=carrito,
+        cart_hash=cart_hash,
+        total_esperado=total_final,
+    )
+    return redirect(stripe_session_url, code=303)
+
+
+@app.route('/checkout/select', methods=['POST'])
+def checkout_select():
+    if session.get('rol') != 'normal':
+        return "Acceso denegado"
+
+    carrito = _obtener_carrito_sesion_usuario()
+    if not carrito:
+        flash('No hay productos en el carrito.', 'warning')
+        return redirect(url_for('cart'))
+
+    metodo_pago = str(request.form.get('metodo_pago', '') or '').strip().lower()
+    codigo_promo = str(request.form.get('codigo_promo', '') or '').strip().upper()
+    cliente_telefono, cliente_direccion, error_cliente = _validar_datos_cliente_checkout(
+        request.form.get('cliente_telefono', ''),
+        request.form.get('cliente_direccion', '')
+    )
+    session['checkout_cliente_telefono'] = str(request.form.get('cliente_telefono', '') or '').strip()
+    session['checkout_cliente_direccion'] = str(request.form.get('cliente_direccion', '') or '').strip()
+    metodos_validos = {'tarjeta', 'transferencia'}
+    if metodo_pago not in metodos_validos:
+        flash('Selecciona un metodo de pago valido.', 'warning')
+        return redirect(url_for('cart', codigo_promo=codigo_promo))
+    if error_cliente:
+        flash(error_cliente[0], error_cliente[1])
+        return redirect(url_for('cart', metodo_pago=metodo_pago, codigo_promo=codigo_promo))
+
+    session['checkout_metodo_preferido'] = metodo_pago
+    session['checkout_codigo_promo'] = codigo_promo
+    session['checkout_cliente_telefono'] = cliente_telefono
+    session['checkout_cliente_direccion'] = cliente_direccion
+    _guardar_contacto_checkout_usuario(cliente_telefono, cliente_direccion)
+
+    total = sum(float(item.get('subtotal', 0)) for item in carrito)
+    promos = cargar_promociones_df()
+    promo_aplicada, descuento_promo, error_promo = _resolver_promocion_checkout(codigo_promo, promos, total)
+    if error_promo:
+        flash(error_promo[0], error_promo[1])
+        return redirect(url_for('cart', metodo_pago=metodo_pago, codigo_promo=codigo_promo))
+
+    productos = cargar_productos_df()
+    if productos.empty:
+        flash('No existe la base de productos.', 'danger')
+        return redirect(url_for('cart', metodo_pago=metodo_pago, codigo_promo=codigo_promo))
+
+    error_stock = _validar_stock_checkout(productos, carrito)
+    if error_stock:
+        flash(error_stock[0], error_stock[1])
+        return redirect(url_for('cart', metodo_pago=metodo_pago, codigo_promo=codigo_promo))
+
+    total_final = max(0.0, float(total) - float(descuento_promo))
+    if metodo_pago == 'tarjeta':
+        return _iniciar_pago_stripe_desde_carrito(carrito, codigo_promo, total_final)
+
+    return redirect(url_for('checkout', metodo_pago='transferencia', codigo_promo=codigo_promo))
 
 
 @app.route('/pay', methods=['POST'])
@@ -4060,9 +4395,27 @@ def pay():
     total = sum(float(item.get('subtotal', 0)) for item in carrito)
     codigo_promo = request.form.get('codigo_promo', '').strip().upper()
     metodo_pago = str(request.form.get('metodo_pago', '') or '').strip().lower()
+    cliente_telefono_input = request.form.get('cliente_telefono', '')
+    cliente_direccion_input = request.form.get('cliente_direccion', '')
+    if not str(cliente_telefono_input or '').strip() or not str(cliente_direccion_input or '').strip():
+        contacto_cliente = _obtener_contacto_checkout_predeterminado()
+        cliente_telefono_input = contacto_cliente.get('telefono', '')
+        cliente_direccion_input = contacto_cliente.get('direccion', '')
+    cliente_telefono, cliente_direccion, error_cliente = _validar_datos_cliente_checkout(
+        cliente_telefono_input,
+        cliente_direccion_input
+    )
     metodos_validos = {'tarjeta', 'transferencia', 'efectivo'}
     session['checkout_metodo_preferido'] = metodo_pago if metodo_pago in metodos_validos else ''
     session['checkout_codigo_promo'] = codigo_promo
+    session['checkout_cliente_telefono'] = str(cliente_telefono_input or '').strip()
+    session['checkout_cliente_direccion'] = str(cliente_direccion_input or '').strip()
+    if error_cliente:
+        flash(error_cliente[0], error_cliente[1])
+        return redirect(url_for('checkout', metodo_pago='transferencia', codigo_promo=codigo_promo))
+    session['checkout_cliente_telefono'] = cliente_telefono
+    session['checkout_cliente_direccion'] = cliente_direccion
+    _guardar_contacto_checkout_usuario(cliente_telefono, cliente_direccion)
 
     pagos = cargar_pagos_df()
     pagos = _asegurar_columnas_descuento_pagos(pagos)
@@ -4087,50 +4440,7 @@ def pay():
         return redirect(url_for('cart', metodo_pago=metodo_pago, codigo_promo=codigo_promo))
 
     if metodo_pago == 'tarjeta':
-        ok_stripe, msg_stripe = stripe_estado_configuracion()
-        if not ok_stripe:
-            flash(
-                f'El pago con tarjeta no esta disponible en este momento. Detalle: {msg_stripe}',
-                'warning'
-            )
-            return redirect(url_for('checkout', metodo_pago=metodo_pago, codigo_promo=codigo_promo))
-
-        cart_hash = _hash_carrito_checkout(carrito)
-        try:
-            stripe_session = crear_checkout_sesion_tarjeta(
-                amount_total=total_final,
-                success_url=url_for('pay_stripe_success', _external=True),
-                cancel_url=url_for('pay_stripe_cancel', _external=True),
-                customer_email=session.get('usuario', ''),
-                descripcion=f"Compra NACHOHER ({len(carrito)} item(s))",
-                metadata={
-                    "usuario": session.get('usuario', ''),
-                    "codigo_promo": codigo_promo,
-                    "cart_hash": cart_hash,
-                    "total_esperado": f"{total_final:.2f}",
-                },
-            )
-        except Exception as exc:
-            app.logger.exception("Error creando sesión Stripe Checkout: %s", exc)
-            flash('No fue posible iniciar el pago con tarjeta. Intenta de nuevo.', 'danger')
-            return redirect(url_for('checkout', metodo_pago=metodo_pago, codigo_promo=codigo_promo))
-
-        stripe_session_id = str(_stripe_obj_get(stripe_session, "id", "") or "").strip()
-        stripe_session_url = str(_stripe_obj_get(stripe_session, "url", "") or "").strip()
-        if not stripe_session_id or not stripe_session_url:
-            flash('Stripe no devolvió una sesión válida para continuar el pago.', 'danger')
-            return redirect(url_for('checkout', metodo_pago=metodo_pago, codigo_promo=codigo_promo))
-
-        _stripe_checkout_guardar_creado(
-            session_id=stripe_session_id,
-            usuario_email=session.get('usuario', ''),
-            codigo_promo=codigo_promo,
-            carrito=carrito,
-            cart_hash=cart_hash,
-            total_esperado=total_final,
-        )
-        return redirect(stripe_session_url, code=303)
-
+        return _iniciar_pago_stripe_desde_carrito(carrito, codigo_promo, total_final)
     agotados_en_compra = _descontar_stock_checkout(productos, carrito)
     guardar_productos_df(productos)
 
@@ -4142,7 +4452,9 @@ def pay():
         metodo_pago=metodo_pago,
         total_final=total_final,
         promo_aplicada=promo_aplicada,
-        descuento_promo=descuento_promo
+        descuento_promo=descuento_promo,
+        cliente_telefono=cliente_telefono,
+        cliente_direccion=cliente_direccion,
     )
 
     registrar_actividad(
@@ -4181,18 +4493,18 @@ def pay_stripe_success():
     session_id = str(request.args.get('session_id', '') or '').strip()
     if not session_id:
         flash('Stripe no envió el identificador de la sesión de pago.', 'warning')
-        return redirect(url_for('checkout'))
+        return redirect(url_for('cart', metodo_pago='tarjeta'))
 
     registro = _stripe_checkout_obtener(session_id)
     if not registro:
         flash('No se encontro el registro local del pago con tarjeta.', 'warning')
-        return redirect(url_for('checkout'))
+        return redirect(url_for('cart', metodo_pago='tarjeta'))
 
     usuario_registro = normalizar_email(registro.get('usuario_email', ''))
     usuario_sesion = normalizar_email(session.get('usuario', ''))
     if usuario_registro and usuario_sesion and usuario_registro != usuario_sesion:
         flash('La sesión de pago no pertenece al usuario autenticado.', 'danger')
-        return redirect(url_for('checkout'))
+        return redirect(url_for('cart', metodo_pago='tarjeta'))
 
     estado_actual = str(registro.get('estado', '') or '').strip().lower()
     id_pedido_existente = pd.to_numeric(registro.get('id_pedido'), errors='coerce')
@@ -4205,13 +4517,13 @@ def pay_stripe_success():
     except Exception as exc:
         app.logger.exception("Error validando sesión Stripe %s: %s", session_id, exc)
         flash('No se pudo validar el pago con Stripe. Intenta nuevamente en unos segundos.', 'danger')
-        return redirect(url_for('checkout'))
+        return redirect(url_for('cart', metodo_pago='tarjeta'))
 
     payment_status = str(_stripe_obj_get(stripe_session, 'payment_status', '') or '').strip().lower()
     if payment_status != 'paid':
         _stripe_checkout_marcar_estado(session_id, 'pendiente')
         flash('El pago aun no aparece como confirmado por Stripe.', 'warning')
-        return redirect(url_for('checkout'))
+        return redirect(url_for('cart', metodo_pago='tarjeta'))
 
     carrito_checkout = _stripe_checkout_cargar_carrito(registro)
     if not carrito_checkout:
@@ -4239,6 +4551,20 @@ def pay_stripe_success():
     total_esperado = float(pd.to_numeric(registro.get('total_esperado', 0), errors='coerce') or 0.0)
     total_final = round(total_esperado if total_esperado > 0 else subtotal_checkout, 2)
     descuento_promo = round(max(0.0, float(subtotal_checkout) - float(total_final)), 2)
+    contacto_cliente = _obtener_contacto_checkout_predeterminado()
+    cliente_telefono, cliente_direccion, error_cliente = _validar_datos_cliente_checkout(
+        contacto_cliente.get('telefono', ''),
+        contacto_cliente.get('direccion', '')
+    )
+    if error_cliente:
+        app.logger.warning(
+            "Pedido Stripe %s confirmado sin datos completos del cliente. telefono=%r direccion=%r",
+            session_id,
+            contacto_cliente.get('telefono', ''),
+            contacto_cliente.get('direccion', ''),
+        )
+        cliente_telefono = str(contacto_cliente.get('telefono', '') or '').strip()
+        cliente_direccion = str(contacto_cliente.get('direccion', '') or '').strip()
 
     codigo_promo = str(registro.get('codigo_promo', '') or '').strip().upper()
     promo_aplicada = None
@@ -4279,7 +4605,9 @@ def pay_stripe_success():
         total_final=total_final,
         promo_aplicada=promo_aplicada,
         descuento_promo=descuento_promo,
-        estado_pedido=estado_pedido
+        estado_pedido=estado_pedido,
+        cliente_telefono=cliente_telefono,
+        cliente_direccion=cliente_direccion,
     )
     _stripe_checkout_marcar_estado(session_id, 'pagado', nuevo_id_pedido)
 
@@ -4316,7 +4644,7 @@ def pay_stripe_cancel():
     if session.get('rol') != 'normal':
         return "Acceso denegado"
     flash('Pago con tarjeta cancelado. Tu carrito sigue guardado.', 'info')
-    return redirect(url_for('checkout'))
+    return redirect(url_for('cart', metodo_pago='tarjeta'))
 
 
 @app.route('/user/orders')
@@ -4325,16 +4653,21 @@ def user_orders():
         return "Acceso denegado"
     
     pedidos = cargar_pedidos_df()
-    id_usuario = session.get('id_usuario')
-    pedidos_usuario = pedidos[pedidos['id_usuario'] == id_usuario] if not pedidos.empty else pd.DataFrame(columns=PEDIDO_COLUMNS)
+    id_usuario = pd.to_numeric(session.get('id_usuario'), errors='coerce')
+    pedidos_usuario = pd.DataFrame(columns=PEDIDO_COLUMNS)
+    if not pedidos.empty and pd.notna(id_usuario):
+        pedidos = pedidos.copy()
+        pedidos['id_usuario_num'] = pd.to_numeric(pedidos['id_usuario'], errors='coerce')
+        pedidos_usuario = pedidos[pedidos['id_usuario_num'] == id_usuario].copy()
     
     # Obtener montos de pagos
     if not pedidos_usuario.empty:
         pagos = cargar_pagos_df()
         pedidos_usuario = pd.merge(pedidos_usuario, pagos[['id_pedido', 'monto', 'metodo_pago']], 
                                    on='id_pedido', how='left')
+        pedidos_usuario = pedidos_usuario.sort_values(by='id_pedido', ascending=False, na_position='last')
     
-    lista_pedidos = pedidos_usuario.to_dict(orient='records')
+    lista_pedidos = _enriquecer_pedidos_con_tracking(pedidos_usuario.fillna('').to_dict(orient='records'))
     return render_template('Usuarios/Carrito/user_orders.html', pedidos=lista_pedidos)
 
 @app.route('/user/orders/details/<int:id_pedido>')
@@ -4344,8 +4677,14 @@ def user_order_details(id_pedido):
     
     # Verificar que el pedido pertenece al usuario
     pedidos = cargar_pedidos_df()
-    pedido = pedidos[(pedidos['id_pedido'] == id_pedido) & 
-                     (pedidos['id_usuario'] == session.get('id_usuario'))]
+    pedidos = pedidos.copy()
+    pedidos['id_pedido_num'] = pd.to_numeric(pedidos['id_pedido'], errors='coerce')
+    pedidos['id_usuario_num'] = pd.to_numeric(pedidos['id_usuario'], errors='coerce')
+    id_usuario = pd.to_numeric(session.get('id_usuario'), errors='coerce')
+    pedido = pedidos[
+        (pedidos['id_pedido_num'] == id_pedido) &
+        (pedidos['id_usuario_num'] == id_usuario)
+    ]
     
     if pedido.empty:
         return "Pedido no encontrado o no tienes permiso para verlo"
@@ -4357,9 +4696,11 @@ def user_order_details(id_pedido):
     detalles = pd.merge(detalles, productos[['id_producto', 'nombre', 'precio']], on='id_producto')
     if 'talla' not in detalles.columns:
         detalles['talla'] = ''
+
+    pedido_info = _enriquecer_pedidos_con_tracking([pedido.iloc[0].to_dict()])[0]
     
     return render_template('Usuarios/Informacion compras pedido/user_order_details.html',
-                          pedido=pedido.iloc[0].to_dict(),
+                          pedido=pedido_info,
                           detalles=detalles.to_dict(orient='records'))
 
 @app.route('/user/profile')
@@ -5154,11 +5495,12 @@ def obtener_datos_charts(periodo, fecha_desde_raw, fecha_hasta_raw):
     ventas_por_producto_df = detalle_filtrado.groupby('id_producto', as_index=False)['cantidad'].sum()
     ventas_por_producto_df = pd.merge(
         ventas_por_producto_df,
-        productos[['id_producto', 'nombre']],
+        productos[['id_producto', 'nombre', 'precio']],
         on='id_producto',
         how='left'
     )
     ventas_por_producto_df['nombre'] = ventas_por_producto_df['nombre'].fillna('Producto sin nombre')
+    ventas_por_producto_df['precio'] = pd.to_numeric(ventas_por_producto_df['precio'], errors='coerce').fillna(0)
 
     pedidos_fechas = pedidos_filtrados.copy()
     pedidos_fechas['mes'] = pedidos_fechas['fecha_pedido'].dt.to_period('M').astype(str)
@@ -5174,13 +5516,14 @@ def obtener_datos_charts(periodo, fecha_desde_raw, fecha_hasta_raw):
     kpis = calcular_kpis_desde_pedidos(pedidos_filtrados)
 
     top_productos_df = ventas_por_producto_df.sort_values('cantidad', ascending=False).head(5).copy()
-    top_productos_df = pd.merge(
-        top_productos_df,
-        productos[['id_producto', 'precio']],
-        on='id_producto',
-        how='left'
-    )
-    top_productos_df['precio'] = pd.to_numeric(top_productos_df['precio'], errors='coerce').fillna(0)
+    if 'precio' not in top_productos_df.columns:
+        top_productos_df = pd.merge(
+            top_productos_df,
+            productos[['id_producto', 'precio']],
+            on='id_producto',
+            how='left'
+        )
+    top_productos_df['precio'] = pd.to_numeric(top_productos_df.get('precio', 0), errors='coerce').fillna(0)
 
     kpis_anterior = {'total_ventas': 0, 'total_pedidos': 0, 'ticket_promedio': 0, 'total_items': 0}
     comparacion_texto = 'Sin comparacion de periodo'

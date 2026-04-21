@@ -405,6 +405,112 @@ body {
     padding: 10px 12px;
 }
 
+.flash-toast-stack {
+    position: fixed;
+    top: 96px;
+    right: 28px;
+    z-index: 1400;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: min(430px, calc(100vw - 40px));
+    pointer-events: none;
+}
+
+.flash-toast {
+    position: relative;
+    display: flex;
+    align-items: flex-start;
+    gap: 0.9rem;
+    padding: 0.95rem 1.05rem;
+    border-radius: 18px;
+    background: rgba(255, 255, 255, 0.97);
+    border: 1px solid rgba(9, 34, 80, 0.12);
+    box-shadow: 0 18px 42px rgba(9, 34, 80, 0.16);
+    backdrop-filter: blur(10px);
+    animation: flashToastPresence 7s ease forwards;
+}
+
+.flash-toast::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: linear-gradient(135deg, rgba(11, 47, 100, 0.09), rgba(24, 138, 180, 0.05));
+    pointer-events: none;
+}
+
+.flash-toast-icon,
+.flash-toast-copy {
+    position: relative;
+    z-index: 1;
+}
+
+.flash-toast-icon {
+    width: 44px;
+    height: 44px;
+    flex: 0 0 44px;
+    border-radius: 14px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    color: #fff;
+    box-shadow: 0 10px 24px rgba(9, 34, 80, 0.18);
+}
+
+.flash-toast-copy {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+}
+
+.flash-toast-label {
+    color: #123d76;
+    font-size: 0.98rem;
+    font-weight: 800;
+    line-height: 1.2;
+}
+
+.flash-toast-text {
+    color: #5f7691;
+    font-size: 0.92rem;
+    line-height: 1.35;
+}
+
+.flash-toast-success .flash-toast-icon {
+    background: linear-gradient(135deg, #0b2f66, #1794d2);
+}
+
+.flash-toast-danger .flash-toast-icon {
+    background: linear-gradient(135deg, #8f2747, #c63f61);
+}
+
+.flash-toast-warning .flash-toast-icon {
+    background: linear-gradient(135deg, #8b6d22, #c59a34);
+}
+
+.flash-toast-info .flash-toast-icon {
+    background: linear-gradient(135deg, #0c4c82, #17a2b8);
+}
+
+@keyframes flashToastPresence {
+    0% {
+        opacity: 0;
+        transform: translate3d(0, -12px, 0) scale(0.98);
+    }
+    8%,
+    78% {
+        opacity: 1;
+        transform: translate3d(0, 0, 0) scale(1);
+    }
+    100% {
+        opacity: 0;
+        transform: translate3d(0, -10px, 0) scale(0.98);
+        visibility: hidden;
+    }
+}
+
 .dashboard-layout {
     align-items: flex-start;
     min-height: 100vh;
@@ -442,5 +548,12 @@ body {
         border: 1px solid rgba(255, 255, 255, 0.2);
         border-radius: 14px;
         box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 8px 18px rgba(0, 0, 0, 0.16);
+    }
+
+    .flash-toast-stack {
+        top: 82px;
+        right: 16px;
+        left: 16px;
+        width: auto;
     }
 }

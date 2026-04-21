@@ -1,0 +1,32 @@
+{% with mensajes = get_flashed_messages(with_categories=true) %}
+{% if mensajes %}
+<div class="flash-toast-stack flash-toast-stack-admin" aria-live="polite" aria-atomic="true">
+    {% for categoria, mensaje in mensajes %}
+    {% set tone = 'warning' if categoria == 'message' else 'danger' if categoria in ['danger', 'email_error', 'password_error'] else 'success' if categoria == 'success' else 'warning' if categoria == 'warning' else 'info' %}
+    <div class="flash-toast flash-toast-{{ tone }}" role="status">
+        <div class="flash-toast-icon">
+            {% if tone == 'success' %}
+            <i class="fas fa-check"></i>
+            {% elif tone == 'danger' %}
+            <i class="fas fa-xmark"></i>
+            {% elif tone == 'warning' %}
+            <i class="fas fa-exclamation"></i>
+            {% else %}
+            <i class="fas fa-info"></i>
+            {% endif %}
+        </div>
+        <div class="flash-toast-copy">
+            <span class="flash-toast-label">
+                {% if tone == 'success' %}Actualización completada
+                {% elif tone == 'danger' %}Revisa esta acción
+                {% elif tone == 'warning' %}Atención
+                {% else %}Información
+                {% endif %}
+            </span>
+            <span class="flash-toast-text">{{ mensaje }}</span>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+{% endwith %}
