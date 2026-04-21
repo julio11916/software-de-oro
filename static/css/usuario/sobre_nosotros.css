@@ -27,7 +27,8 @@ body {
     margin-top: 74px;
     background-image: url("../../img/Pagina/nachoher_fondo_logo.jpg");
     background-size: cover;
-    background-position: center center;
+    background-position: 50% 22%;
+    background-repeat: no-repeat;
     background-attachment: fixed;
     min-height: calc(100vh - 74px);
     padding: 2.5rem 0 3rem;
@@ -181,5 +182,11 @@ body {
     .info-card-content {
         font-size: 1rem;
         text-align: left;
+    }
+}
+
+@media (max-width: 768px) {
+    .about-hero {
+        background-position: 50% 30%;
     }
 }
