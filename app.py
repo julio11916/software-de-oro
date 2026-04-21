@@ -1478,7 +1478,53 @@ def inyectar_nombre_admin():
 def home():
     productos = cargar_productos_activos_df()
     lista_productos = productos.to_dict(orient='records')
-    return render_template('Usuarios/Autenticacion/login.html', productos=lista_productos)
+
+    # Promoción vigente por producto para mostrar en catálogo
+    promos = cargar_promociones_df()
+    hoy = datetime.now().date()
+    mejor_promo_por_producto = obtener_mejor_promocion_por_producto(productos, promos, hoy)
+
+    for producto in lista_productos:
+        precio_base = float(pd.to_numeric(producto.get('precio', 0), errors='coerce') or 0)
+        promo = mejor_promo_por_producto.get(int(producto.get('id_producto', 0)))
+        if promo:
+            descuento = calcular_descuento_promocion(precio_base, promo)
+            producto['precio_original'] = precio_base
+            producto['precio_con_descuento'] = max(0.0, precio_base - descuento)
+            producto['promo_activa'] = True
+            producto['promo_nombre'] = promo.get('nombre', '')
+            if promo.get('tipo_descuento') == 'valor_fijo':
+                producto['promo_etiqueta'] = f"-{formatear_cop(promo.get('valor_descuento', 0))}"
+            else:
+                valor_pct = float(pd.to_numeric(promo.get('valor_descuento', 0), errors='coerce') or 0)
+                producto['promo_etiqueta'] = f"-{valor_pct:g}%"
+        else:
+            producto['precio_original'] = precio_base
+            producto['precio_con_descuento'] = precio_base
+            producto['promo_activa'] = False
+            producto['promo_nombre'] = ''
+            producto['promo_etiqueta'] = ''
+        galeria = obtener_galeria_producto(
+            int(producto.get('id_producto', 0)),
+            producto.get('imagen_url', '')
+        )
+        if not galeria:
+            galeria = [producto.get('imagen_url', '')]
+        while len(galeria) < 5:
+            galeria.append(galeria[0])
+        producto['galeria_dashboard'] = galeria[:5]
+
+    productos_destacados_ejercito = [p for p in lista_productos if bool(p.get('destacado_dashboard', False)) and p.get('fuerza') == 'Ejercito'][:5]
+    productos_destacados_policia = [p for p in lista_productos if bool(p.get('destacado_dashboard', False)) and p.get('fuerza') == 'Policia'][:5]
+    productos_destacados_armada = [p for p in lista_productos if bool(p.get('destacado_dashboard', False)) and p.get('fuerza') == 'Armada'][:5]
+
+    return render_template(
+        'Usuarios/Autenticacion/login.html',
+        productos=lista_productos,
+        productos_destacados_ejercito=productos_destacados_ejercito,
+        productos_destacados_policia=productos_destacados_policia,
+        productos_destacados_armada=productos_destacados_armada
+    )
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
