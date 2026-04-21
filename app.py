@@ -1978,29 +1978,44 @@ def admin_actualizar_destacados():
         .tolist()
     )
 
-    ids_raw = request.form.getlist('destacados_ids')
-    ids_seleccionados = []
-    for valor in ids_raw:
-        try:
-            valor_int = int(valor)
-        except (TypeError, ValueError):
-            continue
-        if valor_int in ids_disponibles and valor_int not in ids_seleccionados:
-            ids_seleccionados.append(valor_int)
+    # Obtener listas por categoría
+    ids_ejercito_raw = request.form.getlist('destacados_ejercito')
+    ids_policia_raw = request.form.getlist('destacados_policia')
+    ids_armada_raw = request.form.getlist('destacados_armada')
 
-    max_destacados = 5
-    if len(ids_seleccionados) > max_destacados:
-        ids_seleccionados = ids_seleccionados[:max_destacados]
-        flash(f'Solo se permiten {max_destacados} prendas destacadas. Se guardaron las primeras {max_destacados}.', 'warning')
+    def procesar_ids(ids_raw):
+        ids_seleccionados = []
+        for valor in ids_raw:
+            try:
+                valor_int = int(valor)
+            except (TypeError, ValueError):
+                continue
+            if valor_int in ids_disponibles and valor_int not in ids_seleccionados:
+                ids_seleccionados.append(valor_int)
+        return ids_seleccionados[:5]  # Máximo 5 por categoría
 
-    productos['destacado_dashboard'] = productos['id_producto'].fillna(-1).astype(int).isin(ids_seleccionados)
+    ids_ejercito = procesar_ids(ids_ejercito_raw)
+    ids_policia = procesar_ids(ids_policia_raw)
+    ids_armada = procesar_ids(ids_armada_raw)
+
+    # Resetear destacados
+    productos['destacado_dashboard'] = False
     productos.loc[productos['eliminado'] == True, 'destacado_dashboard'] = False
+
+    # Asignar destacados por categoría
+    productos.loc[productos['id_producto'].isin(ids_ejercito), 'destacado_dashboard'] = True
+    productos.loc[productos['id_producto'].isin(ids_policia), 'destacado_dashboard'] = True
+    productos.loc[productos['id_producto'].isin(ids_armada), 'destacado_dashboard'] = True
+
     guardar_productos_df(productos)
 
+    total_destacados = len(ids_ejercito) + len(ids_policia) + len(ids_armada)
     registrar_actividad(
-        "Administrador actualizó prendas destacadas:\n"
-        f"- total destacadas: {len(ids_seleccionados)}\n"
-        f"- ids: {', '.join(str(x) for x in ids_seleccionados) if ids_seleccionados else 'ninguna'}"
+        "Administrador actualizó prendas destacadas por categoría:\n"
+        f"- Ejército: {len(ids_ejercito)} ({', '.join(str(x) for x in ids_ejercito) if ids_ejercito else 'ninguna'})\n"
+        f"- Policía: {len(ids_policia)} ({', '.join(str(x) for x in ids_policia) if ids_policia else 'ninguna'})\n"
+        f"- Armada: {len(ids_armada)} ({', '.join(str(x) for x in ids_armada) if ids_armada else 'ninguna'})\n"
+        f"- Total destacadas: {total_destacados}"
     )
 
     flash('Prendas destacadas actualizadas correctamente.', 'success')
@@ -3673,8 +3688,10 @@ def user_dashboard():
             galeria.append(galeria[0])
         producto['galeria_dashboard'] = galeria[:5]
     
-    # Mostrar en el carrusel solo las prendas marcadas como destacadas en panel admin.
-    productos_destacados = [p for p in lista_productos if bool(p.get('destacado_dashboard', False))][:5]
+    # Mostrar en los carruseles solo las prendas marcadas como destacadas en panel admin, filtradas por categoría.
+    productos_destacados_ejercito = [p for p in lista_productos if bool(p.get('destacado_dashboard', False)) and p.get('fuerza') == 'Ejercito'][:5]
+    productos_destacados_policia = [p for p in lista_productos if bool(p.get('destacado_dashboard', False)) and p.get('fuerza') == 'Policia'][:5]
+    productos_destacados_armada = [p for p in lista_productos if bool(p.get('destacado_dashboard', False)) and p.get('fuerza') == 'Armada'][:5]
     
     # Obtener el contador del carrito
     carrito = _obtener_carrito_sesion_usuario()
@@ -3683,7 +3700,9 @@ def user_dashboard():
     return render_template(
         'Usuarios/user_dashboard.html',
         productos=lista_productos,
-        productos_destacados=productos_destacados,
+        productos_destacados_ejercito=productos_destacados_ejercito,
+        productos_destacados_policia=productos_destacados_policia,
+        productos_destacados_armada=productos_destacados_armada,
         cart_count=cart_count
     )
 

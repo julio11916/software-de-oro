@@ -120,66 +120,84 @@
     {% endwith %}
 
     <main class="main-content" id="catalogo">
+        <!-- Carrusel Ejército -->
         <div class="container catalog-shell destacados-shell">
-            <h2 class="section-title">Prendas destacadas</h2>
-
-            {% if productos_destacados %}
-            <div id="destacadosCarousel" class="carousel slide destacados-carousel" data-bs-ride="carousel" data-bs-interval="10000">
+            <h2 class="section-title">Prendas destacadas - Ejército</h2>
+            {% if productos_destacados_ejercito %}
+            <div id="ejercitoCarousel" class="carousel slide destacados-carousel" data-bs-ride="carousel" data-bs-interval="10000">
                 <div class="carousel-inner">
-                    {% for destacado in productos_destacados %}
-                    {% set galeria = destacado.galeria_dashboard if destacado.galeria_dashboard is defined and destacado.galeria_dashboard else [destacado.imagen_url, destacado.imagen_url, destacado.imagen_url, destacado.imagen_url, destacado.imagen_url] %}
-                    {% set imagen_principal = galeria[0] if galeria else destacado.imagen_url %}
+                    {% for chunk in productos_destacados_ejercito | batch(5) %}
                     <div class="carousel-item {% if loop.first %}active{% endif %}">
-                        <div class="row g-4 align-items-center destacado-layout">
-                            <div class="col-lg-6">
-                                <div class="destacado-card shadow-sm">
-                                    <a href="{{ url_for('product_detail', id_producto=destacado.id_producto) }}">
-                                        {% if imagen_principal %}
-                                        <img src="{{ url_for('static', filename=imagen_principal) }}" class="destacado-image"
-                                            alt="{{ destacado.nombre }}">
-                                        {% else %}
-                                        <img src="{{ url_for('static', filename='img/Pagina/logo.jpeg') }}" class="destacado-image"
-                                            alt="{{ destacado.nombre }}">
-                                        {% endif %}
-                                    </a>
+                        <div class="productos-grid">
+                            {% for destacado in chunk %}
+                            <div class="producto-card-destacado">
+                                <a href="{{ url_for('product_detail', id_producto=destacado.id_producto) }}">
+                                    <img src="{{ url_for('static', filename=destacado.imagen_url) }}" class="producto-image-destacado" alt="{{ destacado.nombre }}">
+                                </a>
+                                <div class="producto-info-destacado">
+                                    <h5 class="producto-title-destacado">{{ destacado.nombre }}</h5>
+                                    <p class="producto-price-destacado">{{ destacado.precio|cop }}</p>
                                 </div>
                             </div>
-
-                            <div class="col-lg-6">
-                                <div class="thumb-grid thumb-grid-4">
-                                    {% for imagen in galeria[1:5] %}
-                                    <a href="{{ url_for('product_detail', id_producto=destacado.id_producto) }}" class="thumb-card alt-angle d-block">
-                                        {% if imagen %}
-                                        <img src="{{ url_for('static', filename=imagen) }}" alt="{{ destacado.nombre }} - vista {{ loop.index }}">
-                                        {% else %}
-                                        <img src="{{ url_for('static', filename='img/Pagina/logo.jpeg') }}" alt="{{ destacado.nombre }}">
-                                        {% endif %}
-                                    </a>
-                                    {% endfor %}
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="destacado-info text-center mt-4">
-                            <h3 class="destacado-title">{{ destacado.nombre }}</h3>
-                            <p class="destacado-price">{{ destacado.precio|cop }}</p>
+                            {% endfor %}
                         </div>
                     </div>
                     {% endfor %}
                 </div>
-
-                <button class="carousel-control-prev rounded-circle shadow-sm" type="button" data-bs-target="#destacadosCarousel" data-bs-slide="prev">
+                <button class="carousel-control-prev rounded-circle shadow-sm" type="button" data-bs-target="#ejercitoCarousel" data-bs-slide="prev">
                     <span class="carousel-control-prev-icon" aria-hidden="true"></span>
                     <span class="visually-hidden">Anterior</span>
                 </button>
-                <button class="carousel-control-next rounded-circle shadow-sm" type="button" data-bs-target="#destacadosCarousel" data-bs-slide="next">
+                <button class="carousel-control-next rounded-circle shadow-sm" type="button" data-bs-target="#ejercitoCarousel" data-bs-slide="next">
                     <span class="carousel-control-next-icon" aria-hidden="true"></span>
                     <span class="visually-hidden">Siguiente</span>
                 </button>
             </div>
             {% else %}
             <div class="alert alert-info text-center mt-3 mb-0">
-                A&uacute;n no hay prendas destacadas disponibles.
+                Aún no hay prendas destacadas disponibles para Ejército.
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Carrusel Policía (tipo Netflix) -->
+        <div class="container catalog-shell destacados-shell">
+            <h2 class="section-title">Prendas destacadas - Policía</h2>
+            {% if productos_destacados_policia %}
+            <div class="netflix-carousel-container">
+                <div class="netflix-carousel" id="policiaCarousel">
+                    {% for destacado in productos_destacados_policia %}
+                    <div class="netflix-item">
+                        <a href="{{ url_for('product_detail', id_producto=destacado.id_producto) }}">
+                            <img src="{{ url_for('static', filename=destacado.imagen_url) }}" alt="{{ destacado.nombre }}">
+                        </a>
+                        <div class="netflix-info">
+                            <h5>{{ destacado.nombre }}</h5>
+                            <p>{{ destacado.precio|cop }}</p>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                <button class="netflix-prev" id="policiaPrev">&lt;</button>
+                <button class="netflix-next" id="policiaNext">&gt;</button>
+            </div>
+            {% else %}
+            <div class="alert alert-info text-center mt-3 mb-0">
+                Aún no hay prendas destacadas disponibles para Policía.
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Banner Armada -->
+        <div class="container catalog-shell destacados-shell">
+            <h2 class="section-title">Prendas destacadas - Armada</h2>
+            {% if productos_destacados_armada %}
+            <div class="armada-banner">
+                <p>Contenido de armada aquí</p>
+            </div>
+            {% else %}
+            <div class="alert alert-info text-center mt-3 mb-0">
+                Aún no hay prendas destacadas disponibles para Armada.
             </div>
             {% endif %}
         </div>

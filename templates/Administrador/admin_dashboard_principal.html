@@ -160,31 +160,49 @@
                         </div>
                         <div class="dash-body">
                             <p class="text-muted mb-3">
-                                Selecciona las prendas que se mostrar&aacute;n en el carrusel de
-                                <strong>Prendas destacadas</strong> para usuarios.
+                                Selecciona las prendas que se mostrar&aacute;n en los carruseles de
+                                <strong>Prendas destacadas</strong> para usuarios por categor&iacute;a.
                             </p>
                             <form method="POST" action="{{ url_for('admin_actualizar_destacados') }}">
-                                <div class="featured-list" id="featuredList" data-max="{{ destacados_max|default(5) }}">
-                                    {% if productos_destacables %}
-                                        {% for p in productos_destacables %}
-                                        <label class="featured-item">
-                                            <input
-                                                type="checkbox"
-                                                name="destacados_ids"
-                                                value="{{ p.id_producto }}"
-                                                {% if p.destacado_dashboard %}checked{% endif %}
-                                            >
-                                            <span class="featured-item-main">
-                                                <strong>{{ p.nombre }}</strong>
-                                                <small>ID {{ p.id_producto }} | {{ p.fuerza or 'Sin fuerza' }} | {{ p.intendencia or 'Sin intendencia' }}</small>
-                                            </span>
-                                        </label>
-                                        {% endfor %}
-                                    {% else %}
-                                        <p class="mb-0 text-muted">No hay productos activos para destacar.</p>
-                                    {% endif %}
+                                <ul class="nav nav-tabs" id="destacadosTabs" role="tablist">
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link active" id="ejercito-tab" data-bs-toggle="tab" data-bs-target="#ejercito" type="button" role="tab" aria-controls="ejercito" aria-selected="true">Ej&eacute;rcito</button>
+                                    </li>
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link" id="policia-tab" data-bs-toggle="tab" data-bs-target="#policia" type="button" role="tab" aria-controls="policia" aria-selected="false">Polic&iacute;a</button>
+                                    </li>
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link" id="armada-tab" data-bs-toggle="tab" data-bs-target="#armada" type="button" role="tab" aria-controls="armada" aria-selected="false">Armada</button>
+                                    </li>
+                                </ul>
+                                <div class="tab-content" id="destacadosTabContent">
+                                    {% for fuerza in ['Ejercito', 'Policia', 'Armada'] %}
+                                    <div class="tab-pane fade {% if loop.first %}show active{% endif %}" id="{{ fuerza.lower() }}" role="tabpanel" aria-labelledby="{{ fuerza.lower() }}-tab">
+                                        <div class="featured-list mt-3" data-max="5">
+                                            {% set productos_fuerza = productos_destacables | selectattr('fuerza', 'equalto', fuerza) | list %}
+                                            {% if productos_fuerza %}
+                                                {% for p in productos_fuerza %}
+                                                <label class="featured-item">
+                                                    <input
+                                                        type="checkbox"
+                                                        name="destacados_{{ fuerza.lower() }}"
+                                                        value="{{ p.id_producto }}"
+                                                        {% if p.destacado_dashboard %}checked{% endif %}
+                                                    >
+                                                    <span class="featured-item-main">
+                                                        <strong>{{ p.nombre }}</strong>
+                                                        <small>ID {{ p.id_producto }} | {{ p.fuerza or 'Sin fuerza' }} | {{ p.intendencia or 'Sin intendencia' }}</small>
+                                                    </span>
+                                                </label>
+                                                {% endfor %}
+                                            {% else %}
+                                                <p class="mb-0 text-muted">No hay productos activos para {{ fuerza }}.</p>
+                                            {% endif %}
+                                        </div>
+                                        <small class="text-muted d-block mt-2">M&aacute;ximo 5 prendas destacadas por categor&iacute;a.</small>
+                                    </div>
+                                    {% endfor %}
                                 </div>
-                                <small class="text-muted d-block mt-2">M&aacute;ximo {{ destacados_max|default(5) }} prendas destacadas.</small>
                                 <div class="mt-3">
                                     <button type="submit" class="btn btn-primary">Guardar destacadas</button>
                                 </div>

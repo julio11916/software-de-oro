@@ -6,7 +6,8 @@ body.auth-page {
     justify-content: center;
     background-image: url("../../img/Pagina/nachoher_fondo_logo.jpg");
     background-size: cover;
-    background-position: center center;
+    background-position: 50% 22%;
+    background-repeat: no-repeat;
     background-attachment: fixed;
 }
 
@@ -80,6 +81,12 @@ body.auth-page {
         position: static;
         margin: 1rem 0 0;
         width: 100%;
+    }
+}
+
+@media (max-width: 768px) {
+    body.auth-page {
+        background-position: 50% 30%;
     }
 }
 

@@ -154,7 +154,8 @@ body {
     margin-top: 74px;
     background-image: url("../../img/Pagina/nachoher_fondo_logo.jpg");
     background-size: cover;
-    background-position: center center;
+    background-position: 50% 22%;
+    background-repeat: no-repeat;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -164,7 +165,7 @@ body {
 
 .logo {
     display: block;
-    width: min(92vw, 1000px);
+    width: min(76vw, 500px);
     height: auto;
     margin: 0 auto 24px;
 }
@@ -196,8 +197,14 @@ body {
     margin-bottom: 10px;
 }
 
+@media (max-width: 768px) {
+    .hero {
+        background-position: 50% 30%;
+    }
+}
+
 .hero-subtitle {
-    font-size: clamp(2rem, 4vw, 1rem);
+    font-size: clamp(1rem, 4vw, 2rem);
     color: rgba(255, 255, 255, 0.9);
     font-family: "Brush Script MT", "Segoe Script", cursive;
 }
