@@ -279,9 +279,16 @@ body {
     color: #856404;
 }
 
+.status-confirmado,
+.status-en_preparacion {
+    background: #e5f2ff;
+    color: #0e5cba;
+}
+
+.status-empaquetado,
 .status-enviado {
-    background: #cfe2ff;
-    color: #084298;
+    background: #dff7fb;
+    color: #0f7f8d;
 }
 
 .status-entregado {
@@ -347,6 +354,87 @@ body {
 .info-value.price {
     color: var(--success-color);
     font-size: 1.2rem;
+}
+
+.tracking-panel {
+    margin-top: 1.25rem;
+    padding: 1rem;
+    background: #f7fbff;
+    border: 1px solid #dbeafb;
+    border-radius: 12px;
+}
+
+.tracking-title {
+    display: block;
+    color: var(--primary-color);
+    font-weight: 700;
+    margin-bottom: 0.85rem;
+}
+
+.tracking-steps {
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 0.5rem;
+}
+
+.tracking-step {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.45rem;
+    text-align: center;
+}
+
+.tracking-step::after {
+    content: "";
+    position: absolute;
+    top: 7px;
+    left: calc(50% + 14px);
+    width: calc(100% - 10px);
+    height: 2px;
+    border-radius: 999px;
+    background: #d7e5f4;
+}
+
+.tracking-step:last-child::after {
+    display: none;
+}
+
+.tracking-dot {
+    position: relative;
+    z-index: 1;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    border: 3px solid #b9cde4;
+    background: #fff;
+}
+
+.tracking-label {
+    font-size: 0.74rem;
+    line-height: 1.2;
+    color: #6c7f95;
+}
+
+.tracking-step-done .tracking-dot,
+.tracking-step-current .tracking-dot {
+    border-color: var(--secondary-color);
+    background: var(--secondary-color);
+}
+
+.tracking-step-done::after {
+    background: var(--secondary-color);
+}
+
+.tracking-step-current .tracking-dot {
+    box-shadow: 0 0 0 5px rgba(23, 162, 184, 0.16);
+}
+
+.tracking-step-done .tracking-label,
+.tracking-step-current .tracking-label {
+    color: var(--primary-color);
+    font-weight: 700;
 }
 
 /* Pie de la Tarjeta */
@@ -488,5 +576,24 @@ body {
 
     .orders-header h2 {
         font-size: 1.4rem;
+    }
+
+    .tracking-steps {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        row-gap: 1rem;
+    }
+
+    .tracking-step:nth-child(3n)::after {
+        display: none;
+    }
+}
+
+@media (max-width: 576px) {
+    .tracking-steps {
+        grid-template-columns: 1fr;
+    }
+
+    .tracking-step::after {
+        display: none;
     }
 }

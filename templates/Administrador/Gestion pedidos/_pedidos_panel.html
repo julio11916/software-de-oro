@@ -1,6 +1,6 @@
 <section class="orders-panel mb-4">
     <div class="panel-head d-flex justify-content-between align-items-center">
-        <h5 class="mb-0">Pedidos</h5>
+        <h5 class="mb-0">Pagos de pedidos</h5>
         <span class="badge bg-light text-dark">Total: {{ paginacion.total if paginacion else pedidos|length }}</span>
     </div>
     <div class="panel-body">
@@ -22,10 +22,13 @@
                     <label class="form-label mb-1">Estado</label>
                     <select name="estado" class="form-select form-select-sm">
                         <option value="todos" {% if filtros and filtros.estado == 'todos' %}selected{% endif %}>Todos</option>
-                        <option value="pendiente" {% if filtros and filtros.estado == 'pendiente' %}selected{% endif %}>pendiente</option>
-                        <option value="enviado" {% if filtros and filtros.estado == 'enviado' %}selected{% endif %}>enviado</option>
-                        <option value="entregado" {% if filtros and filtros.estado == 'entregado' %}selected{% endif %}>entregado</option>
-                        <option value="cancelado" {% if filtros and filtros.estado == 'cancelado' %}selected{% endif %}>cancelado</option>
+                        <option value="pendiente" {% if filtros and filtros.estado == 'pendiente' %}selected{% endif %}>Pendiente</option>
+                        <option value="confirmado" {% if filtros and filtros.estado == 'confirmado' %}selected{% endif %}>Confirmado</option>
+                        <option value="en_preparacion" {% if filtros and filtros.estado == 'en_preparacion' %}selected{% endif %}>En preparación</option>
+                        <option value="empaquetado" {% if filtros and filtros.estado == 'empaquetado' %}selected{% endif %}>Empaquetado</option>
+                        <option value="enviado" {% if filtros and filtros.estado == 'enviado' %}selected{% endif %}>Enviado</option>
+                        <option value="entregado" {% if filtros and filtros.estado == 'entregado' %}selected{% endif %}>Entregado</option>
+                        <option value="cancelado" {% if filtros and filtros.estado == 'cancelado' %}selected{% endif %}>Cancelado</option>
                     </select>
                 </div>
                 <div class="col-6 col-lg-2">
@@ -55,8 +58,7 @@
                         <th>Producto(s)</th>
                         <th>Fecha</th>
                         <th>Total</th>
-                        <th>Estado actual</th>
-                        <th>Actualizar estado</th>
+                        <th>Estado</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -67,31 +69,7 @@
                         <td>{{ pedido.productos_pedido }}</td>
                         <td>{{ pedido.fecha_pedido }}</td>
                         <td>{{ pedido.monto|cop if pedido.monto else pedido.total_productos|cop }}</td>
-                        <td>
-                            <span class="status-badge status-{{ pedido.estado }}">{{ pedido.estado }}</span>
-                        </td>
-                        <td>
-                            <form method="POST" action="{{ url_for('admin_pedidos_estado', id_pedido=pedido.id_pedido) }}" class="d-flex gap-2">
-                                <input type="hidden" name="f_q" value="{{ filtros.q if filtros else '' }}">
-                                <input type="hidden" name="f_estado" value="{{ filtros.estado if filtros else 'todos' }}">
-                                <input type="hidden" name="f_fecha_desde" value="{{ filtros.fecha_desde if filtros else '' }}">
-                                <input type="hidden" name="f_fecha_hasta" value="{{ filtros.fecha_hasta if filtros else '' }}">
-                                <input type="hidden" name="f_page" value="{{ paginacion.page if paginacion else 1 }}">
-                                <input type="hidden" name="f_pago_q" value="{{ pago_filtros.q if pago_filtros else '' }}">
-                                <input type="hidden" name="f_pago_metodo" value="{{ pago_filtros.metodo if pago_filtros else 'todos' }}">
-                                <input type="hidden" name="f_pago_estado" value="{{ pago_filtros.estado if pago_filtros else 'todos' }}">
-                                <input type="hidden" name="f_pago_fecha_desde" value="{{ pago_filtros.fecha_desde if pago_filtros else '' }}">
-                                <input type="hidden" name="f_pago_fecha_hasta" value="{{ pago_filtros.fecha_hasta if pago_filtros else '' }}">
-                                <input type="hidden" name="f_pago_page" value="{{ pago_filtros.page if pago_filtros else 1 }}">
-                                <select name="estado" class="form-select form-select-sm" style="min-width: 140px;">
-                                    <option value="pendiente" {% if pedido.estado == 'pendiente' %}selected{% endif %}>pendiente</option>
-                                    <option value="enviado" {% if pedido.estado == 'enviado' %}selected{% endif %}>enviado</option>
-                                    <option value="entregado" {% if pedido.estado == 'entregado' %}selected{% endif %}>entregado</option>
-                                    <option value="cancelado" {% if pedido.estado == 'cancelado' %}selected{% endif %}>cancelado</option>
-                                </select>
-                                <button type="submit" class="btn btn-sm btn-outline-primary">Guardar</button>
-                            </form>
-                        </td>
+                                                <td><span class="status-badge status-{{ pedido.estado_ui }}">{{ pedido.estado_label }}</span></td>
                     </tr>
                     {% endfor %}
                 </tbody>

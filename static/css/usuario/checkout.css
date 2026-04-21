@@ -99,6 +99,33 @@ body {
     margin-bottom: 2rem;
 }
 
+.checkout-customer-card {
+    margin-bottom: 1.5rem;
+    padding: 1rem;
+    border: 1px solid #d8e7ef;
+    border-radius: 12px;
+    background: #f9fcfe;
+}
+
+.checkout-customer-title {
+    color: var(--primary-color);
+    font-size: 1rem;
+    font-weight: 700;
+    margin-bottom: 0.35rem;
+}
+
+.checkout-customer-title i {
+    color: var(--secondary-color);
+    margin-right: 0.35rem;
+}
+
+.checkout-customer-help {
+    color: #6c7a86;
+    font-size: 0.9rem;
+    line-height: 1.45;
+    margin-bottom: 1rem;
+}
+
 .section-title {
     display: flex;
     align-items: center;

@@ -382,6 +382,33 @@ body {
     margin-bottom: 2rem;
 }
 
+.customer-data-card {
+    margin-bottom: 1.5rem;
+    padding: 1rem;
+    border: 1px solid #d8e7ef;
+    border-radius: 12px;
+    background: #f9fcfe;
+}
+
+.customer-data-title {
+    color: var(--primary-color);
+    font-size: 1rem;
+    font-weight: 700;
+    margin-bottom: 0.35rem;
+}
+
+.customer-data-title i {
+    color: var(--secondary-color);
+    margin-right: 0.35rem;
+}
+
+.customer-data-help {
+    color: #6c7a86;
+    font-size: 0.9rem;
+    line-height: 1.45;
+    margin-bottom: 1rem;
+}
+
 .summary-row {
     display: flex;
     justify-content: space-between;

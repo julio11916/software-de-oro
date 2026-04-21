@@ -62,6 +62,8 @@ def ensure_tables():
         rol TEXT NOT NULL DEFAULT 'usuario',
         estado TEXT NOT NULL DEFAULT 'activo',
         fecha_registro TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        telefono TEXT,
+        direccion TEXT,
         email_verified BOOLEAN NOT NULL DEFAULT FALSE,
         verification_code TEXT,
         verification_code_expiry TIMESTAMPTZ,
@@ -98,7 +100,9 @@ def ensure_tables():
         id_pedido BIGSERIAL PRIMARY KEY,
         id_usuario BIGINT,
         fecha_pedido TIMESTAMPTZ DEFAULT NOW(),
-        estado TEXT
+        estado TEXT,
+        cliente_telefono TEXT,
+        cliente_direccion TEXT
     );
     CREATE TABLE IF NOT EXISTS detalle_pedido (
         id_detalle BIGSERIAL PRIMARY KEY,
@@ -157,9 +161,13 @@ def ensure_tables():
         conn.execute(sa.text("ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS reset_token_expiry TIMESTAMPTZ"))
         conn.execute(sa.text("ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS password_change_code TEXT"))
         conn.execute(sa.text("ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS password_change_code_expiry TIMESTAMPTZ"))
+        conn.execute(sa.text("ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS telefono TEXT"))
+        conn.execute(sa.text("ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS direccion TEXT"))
         conn.execute(sa.text("ALTER TABLE producto ADD COLUMN IF NOT EXISTS fuerza TEXT"))
         conn.execute(sa.text("ALTER TABLE producto ADD COLUMN IF NOT EXISTS intendencia TEXT"))
         conn.execute(sa.text("ALTER TABLE producto ADD COLUMN IF NOT EXISTS destacado_dashboard BOOLEAN DEFAULT FALSE"))
+        conn.execute(sa.text("ALTER TABLE pedidos ADD COLUMN IF NOT EXISTS cliente_telefono TEXT"))
+        conn.execute(sa.text("ALTER TABLE pedidos ADD COLUMN IF NOT EXISTS cliente_direccion TEXT"))
         conn.execute(sa.text("ALTER TABLE detalle_pedido ADD COLUMN IF NOT EXISTS talla TEXT"))
         conn.execute(sa.text("ALTER TABLE promociones ADD COLUMN IF NOT EXISTS id_producto BIGINT"))
         conn.execute(sa.text("ALTER TABLE stripe_checkout ADD COLUMN IF NOT EXISTS carrito_json TEXT NOT NULL DEFAULT '[]'"))

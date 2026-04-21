@@ -39,13 +39,13 @@
                     <a class="nav-link" href="{{ url_for('admin_pos') }}">Sistema POS</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('admin_pedidos') }}">Pedidos</a>
+                    <a class="nav-link" href="{{ url_for('admin_pedidos') }}">Pagos de pedidos</a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" href="{{ url_for('admin_charts') }}">Ventas y Gráficas</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('admin_ajustes') }}">Ajustes</a>
+                    <a class="nav-link" href="{{ url_for('admin_ajustes') }}">Pedidos en curso</a>
                 </li>
             </ul>
 
@@ -73,13 +73,7 @@
                         </div>
 
                         <div class="panel-body">
-                            {% with mensajes = get_flashed_messages(with_categories=true) %}
-                            {% if mensajes %}
-                            {% for categoria, mensaje in mensajes %}
-                            <div class="flash-box flash-{{ categoria }}">{{ mensaje }}</div>
-                            {% endfor %}
-                            {% endif %}
-                            {% endwith %}
+                            {% include 'Administrador/partials/_flash_toasts.html' %}
 
                             <form method="POST" action="{{ url_for('admin_guardar_usuario') }}">
                                 <input type="hidden" name="id_usuario"

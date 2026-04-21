@@ -29,9 +29,9 @@
                 <li class="nav-item"><a class="nav-link" href="{{ url_for('admin_productos') }}">Productos</a></li>
                 <li class="nav-item"><a class="nav-link active" href="{{ url_for('admin_promo') }}">Promociones</a></li>
                 <li class="nav-item"><a class="nav-link" href="{{ url_for('admin_pos') }}">Sistema POS</a></li>
-                <li class="nav-item"><a class="nav-link" href="{{ url_for('admin_pedidos') }}">Pedidos</a></li>
+                <li class="nav-item"><a class="nav-link" href="{{ url_for('admin_pedidos') }}">Pagos de pedidos</a></li>
                 <li class="nav-item"><a class="nav-link" href="{{ url_for('admin_charts') }}">Ventas y Gráficas</a></li>
-                <li class="nav-item"><a class="nav-link" href="{{ url_for('admin_ajustes') }}">Ajustes</a></li>
+                <li class="nav-item"><a class="nav-link" href="{{ url_for('admin_ajustes') }}">Pedidos en curso</a></li>
             </ul>
 
             <div class="sidebar-bottom mt-auto">
@@ -52,15 +52,7 @@
             </div>
 
             <div class="content-area promo-content">
-                {% with mensajes = get_flashed_messages(with_categories=true) %}
-                {% if mensajes %}
-                <div class="mb-3">
-                    {% for categoria, mensaje in mensajes %}
-                    <div class="alert alert-{{ 'warning' if categoria == 'message' else categoria }} mb-2">{{ mensaje }}</div>
-                    {% endfor %}
-                </div>
-                {% endif %}
-                {% endwith %}
+                {% include 'Administrador/partials/_flash_toasts.html' %}
 
                 <section class="promo-panel mb-4">
                     <div class="panel-header gradient-section-title d-flex justify-content-between align-items-center">
