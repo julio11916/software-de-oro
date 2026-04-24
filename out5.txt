@@ -1,0 +1,284 @@
+412 [03]     function updateSummary() {
+413 [03]         const producto = productLabels[state.producto] || formatLabel(state.producto);
+414 [03]         const identidad = formatLabel(state.identidad);
+415 [03]         const tecnica = state.tecnica === "bordado" ? "Bordado" : "Impresion";
+416 [03]         const color = formatLabel(state.color);
+417 [03]         const estampado = state.estampado ? formatLabel(state.estampado) : "Pendiente";
+418 [03]         const talla = state.talla || "Pendiente";
+419 [03] 
+420 [03]         // Formatear mes/ao
+421 [03]         let contingenciaFmt = state.anoContingencia ? state.anoContingencia : "Pendiente";
+422 [03]         
+423 [03]         // Crear descripcin completa con TODOS los pasos
+424 [03]         let modeloTxt = "";
+425 [04]         if (state.producto === "rh" && state.modeloRh) {
+426 [04]             modeloTxt = ` | Tipo de Sangre: ${state.modeloRh}`;
+427 [03]         }
+428 [03]         
+429 [03]         const isEspecial = ["rh", "presillas", "gafete", "gafete del nombre o apellido", "paoleta", "panoleta", "pa\u00f1oleta", "gorra"].includes((state.producto || "").toLowerCase());
+430 [03]         
+431 [03]         let descripcionCompleta = `${identidad} | ${tecnica}`;
+432 [03]         
+433 [04]         if (!isEspecial) {
+434 [04]             descripcionCompleta += ` | ${contingenciaFmt}`;
+435 [03]         }
+436 [03]         
+437 [03]         descripcionCompleta += ` | ${producto}${modeloTxt} | Color: ${color}`;
+438 [03]         
+439 [04]         if (!isEspecial) {
+440 [04]             descripcionCompleta += ` | Talla: ${talla}`;
+441 [03]         }
+442 [03]         
+443 [03]         // El estampado s aplica a paoletas y se quita para otros especiales, lo definimos ac:
+444 [03]         const llevaEstampado = !["rh", "presillas", "gafete", "gafete del nombre o apellido"].includes((state.producto || "").toLowerCase());
+445 [04]         if (llevaEstampado && (state.pasoActual >= 4)) {
+446 [04]             descripcionCompleta += ` | Estampado: ${estampado}`;
+447 [03]         }
+448 [03] 
+449 [03]         // Ocultar Talla, Contingencia y Estampado del panel derecho si no aplican 
+450 [03]         let pTal = document.getElementById("preview-talla");
+451 [04]         if (pTal && pTal.parentElement) {
+452 [04]             pTal.parentElement.style.display = isEspecial ? "none" : "flex";
+453 [03]         }
+454 [03] 
+455 [03]         let pEst = document.getElementById("preview-estampado");
+456 [04]         if (pEst && pEst.parentElement) {
+457 [04]             pEst.parentElement.style.display = (isEspecial && (state.producto || "").toLowerCase() !== "gorra" && (state.producto || "").toLowerCase() !== "pa\u00f1oleta" && (state.producto || "").toLowerCase() !== "panoleta") ? "none" : "flex";
+458 [03]         }
+459 [03]         // Actualizar panel derecho (vista previa)
+460 [03]         if (productoInfoPreview) productoInfoPreview.textContent = producto;
+461 [03]         
+462 [03]         // Mostrar color con cuadro de color
+463 [04]         if (colorInfoPreview) {
+464 [05]             if (state.pasoActual === 3 || state.pasoActual === 4 || state.pasoActual === 5) {
+465 [05]                 const colorHex = getColorHex(state.color) || "#cccccc";
+466 [05]                 colorInfoPreview.innerHTML = `
+467 [05]                     <span style="display: inline-flex; align-items: center; gap: 0.5rem;">
+468 [05]                         <span style="display: inline-block; width: 20px; height: 20px; border-radius: 3px; border: 1px solid #999; background-color: ${colorHex};"></span>
+469 [05]                         ${color}
+470 [05]                     </span>
+471 [05]                 `;
+472 [05]             } else {
+473 [05]                 colorInfoPreview.textContent = color;
+474 [04]             }
+475 [03]         }
+476 [03]         
+477 [04]         if (estampadoInfoPreview) {
+478 [04]             estampadoInfoPreview.textContent = !llevaEstampado ? "No aplica" : estampado;
+479 [04]             // Ocultar el elemento padre si no lleva estampado
+480 [04]             const filaEstampado = estampadoInfoPreview.parentElement;
+481 [05]             if (filaEstampado && filaEstampado.classList.contains('info-item')) {
+482 [05]                 filaEstampado.style.display = !llevaEstampado ? 'none' : '';
+483 [04]             }
+484 [03]         }
+485 [03]         
+486 [04]         if (tallaInfoPreview) {
+487 [04]             tallaInfoPreview.textContent = isEspecial ? "No aplica" : talla;
+488 [04]             const filaTalla = tallaInfoPreview.parentElement;
+489 [05]             if (filaTalla && filaTalla.classList.contains('info-item')) {
+490 [05]                 filaTalla.style.display = isEspecial ? 'none' : '';
+491 [04]             }
+492 [03]         }
+493 [03]         if (precioInfoPreview) precioInfoPreview.textContent = priceMap[state.producto] || "$ 45.000";
+494 [03]         if (descripcionInfoPreview) descripcionInfoPreview.textContent = descripcionCompleta;
+495 [03]         
+496 [03]         // Actualizar identidad y tcnica
+497 [03]         const identidadPreview = document.getElementById("preview-identidad");
+498 [03]         const tecnicaPreview = document.getElementById("preview-tecnica");
+499 [03]         if (identidadPreview) identidadPreview.textContent = identidad;
+500 [03]         if (tecnicaPreview) tecnicaPreview.textContent = tecnica;
+501 [03] 
+502 [03]         // Mostrar preview con imagen del producto o cono
+503 [03]         // En Paso 3 o superior, mostrar la imagen con el color seleccionado
+504 [03]         // Mapeo de colores a cdigos hexadecimales
+505 [04]         function getColorHex(colorName) {
+506 [05]             const hexMap = {
+507 [05]                 "blanco": "#ffffff",
+508 [05]                 "negro": "#151515",
+509 [05]                 "verde-claro": "#4d5b3c", // verde oliva
+510 [05]                 "beiches": "#d5caac", // beige claro
+511 [05]                 "dorado": "#d4af37",
+512 [05]                 "cafe": "#4a3c31",
+513 [05]                 "azul-noche": "#1a242f"
+514 [04]             };
+515 [04]             return hexMap[colorName] || "#cccccc";
+516 [03]         }
+517 [03]         
+518 [03]         let imagen = null;
+519 [04]         if (state.pasoActual >= 3) {
+520 [04]             // Solo si el producto es pañoleta o gorra usar color de la prenda, o en general si tiene color seleccionado
+521 [05]             if ((state.producto || "").toLowerCase() === "rh" && (!state.color || !state.modeloRh)) {
+522 [05]                 imagen = getProductImage();
+523 [05]             } else if (state.color) {
+524 [05]                 imagen = getProductColorImage(state.color);
+525 [04]             }
+526 [03]         }
+527 [03] 
+528 [03]         // Si no hay imagen de color o estamos antes del paso 3, usar la imagen base
+529 [04]         if (!imagen) {
+530 [04]             const p = (state.producto || "").toLowerCase();
+531 [04]             // Para pañoletas y gorras no mostrar molde preliminar hasta que haya un color seleccionado
+532 [05]             if (["gorra", "pañoleta", "panoleta", "paoleta"].includes(p) && !state.color) {
+533 [05]                 imagen = ""; // Sin imagen
+534 [05]             } else {
+535 [05]                 imagen = getProductImage();
+536 [04]             }
+537 [03]         }
+538 [03] 
+539 [03]         // Siempre crear o actualizar el preview-container
+540 [03]         // Aumentar un poco el tamaño si es un accesorio pequeño como Gafetes, RH o Presillas
+541 [03]         let scaleStyle = "";
+542 [03]             const isGafete = state.producto === "gafete del nombre o apellido" || state.producto === "gafete";
+543 [03]             const isRh = state.producto === "rh";
+544 [03]             const isSmallItem = isRh || state.producto === "presillas";
+545 [03]             
+546 [04]             if (isGafete || isRh) {
+547 [04]                 scaleStyle = "transform: scale(2.2);";
+548 [04]             } else if (isSmallItem) {
+549 [04]                 scaleStyle = "transform: scale(1.6);";
+550 [03]             }
+551 [03] 
+552 [03]             let existingContainer = preview.querySelector("#preview-container");
+553 [03]             
+554 [04]             if (!existingContainer) {
+555 [04]                 preview.innerHTML = `
+556 [04]                     <div id="preview-container" style="position: relative; text-align: center; background: white; width: 100%; height: 300px; display: flex; justify-content: center; align-items: center; overflow: hidden; border-radius: 8px;">
+557 [04]                         <img id="imagen-producto" src="" alt="Vista Previa" style="width: 100%; height: 100%; max-width: 260px; max-height: 260px; object-fit: contain; transition: transform 0.2s ease-in-out; z-index: 1; display: none;">
+558 [04]                         <div id="gafete-overlay" style="display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(1.2); text-align: center; width: 60%; color: #000; font-family: 'Arial Rounded MT Bold', 'Helvetica Rounded', Arial, sans-serif; white-space: nowrap; z-index: 5; flex-direction: column; align-items: center; justify-content: center; letter-spacing: 0.5px; background: transparent; padding: 0;">
+559 [04]                             <div id="overlay-rango" style="font-size: 6px; font-weight: 800; margin-bottom: 0px; line-height: 1;"></div>
+560 [04]                             <div id="overlay-nombre" style="font-size: 8px; font-weight: 900; text-transform: uppercase; letter-spacing: 0px; line-height: 1;"></div>
+561 [04]                         </div>
+562 [04]                         <div id="rh-overlay" style="display: none; position: absolute; top: 45%; left: 50%; transform: translate(-50%, -50%) scale(2.5); text-align: center; color: #000; font-family: 'Arial Black', Arial, sans-serif; white-space: nowrap; z-index: 5; font-size: 18px; font-weight: 900; text-shadow: 1px 1px 2px rgba(255,255,255,0.4); background: transparent; padding: 0;">
+563 [04]                         </div>
+564 [04]                     </div>
+565 [04]                 `;
+566 [03]             }
+567 [03]             
+568 [03]             let imgEl = preview.querySelector("#imagen-producto");
+569 [04]             if (imagen) {
+570 [04]                 imgEl.src = imagen;
+571 [04]                 imgEl.alt = state.producto || 'Vista Previa de Prenda';
+572 [05]                 imgEl.onerror = function() {
+573 [05]                     // Fallback si la imagen de color especfico no existe
+574 [05]                     const fallbackImg = getProductImage();
+575 [06]                     if (this.src !== window.location.origin + fallbackImg && fallbackImg) {
+576 [06]                         this.src = fallbackImg;
+577 [06]                     } else {
+578 [06]                         this.style.display = 'none';
+579 [05]                     }
+580 [04]                 };
+581 [04]                 imgEl.style.display = 'block';
+582 [04]             } else {
+583 [04]                 imgEl.style.display = 'none';
+584 [03]             }
+585 [03]             
+586 [03]             if (isGafete || isRh) { imgEl.style.transform = "scale(2.2)"; } else if (isSmallItem) { imgEl.style.transform = "scale(1.6)"; } else { imgEl.style.transform = "none"; }
+587 [03]             
+588 [03]         // Ocultar ambos por defecto
+589 [03]         if (overlayEl) overlayEl.style.display = "none";
+590 [03]         if (rhOverlayEl) rhOverlayEl.style.display = "none";
+591 [03] 
+592 [04]             if (isRh && state.vistaPrenda !== "trasera") {
+593 [05]                 if (rhOverlayEl && state.modeloRh) {
+594 [05]                     rhOverlayEl.style.display = "block";
+595 [05]                     // Colocar el tipo de sangre en el div, ej: "A+", "O-", o "POS" si es lo que eligi
+596 [05]                     let txtSangre = state.modeloRh || "";
+597 [05]                     if (txtSangre.includes("+")) txtSangre = txtSangre.replace("+", " POS");
+598 [05]                     if (txtSangre.includes("-")) txtSangre = txtSangre.replace("-", " NEG");
+599 [05]                     
+600 [06]                     if (state.identidad === "policia" && (state.color === "azul-noche" || state.color === "negro")) {
+601 [06]                     rhOverlayEl.style.color = "#ccff00"; // Nen para policas oscuros
+602 [06]                     rhOverlayEl.style.textShadow = "-1px -1px 0 #0d1b2a, 1px -1px 0 #0d1b2a, -1px 1px 0 #0d1b2a, 1px 1px 0 #0d1b2a";
+603 [06]                 } else if (state.identidad === "policia" && state.color === "verde-claro") {
+604 [06]                     rhOverlayEl.style.color = "#d0d6c0"; // Hueso
+605 [06]                     rhOverlayEl.style.textShadow = "-1px -1px 0 #394524, 1px -1px 0 #394524, -1px 1px 0 #394524, 1px 1px 0 #394524";
+606 [06]                 } else {
+607 [06]                     rhOverlayEl.style.color = "#000000"; // Negro slido estndar para otras fuerzas
+608 [06]                     rhOverlayEl.style.textShadow = "none";
+609 [05]                 }
+610 [05] 
+611 [05]                 rhOverlayEl.textContent = txtSangre;
+612 [04]             }
+613 [03]         }
+614 [04]         else if (isGafete && state.vistaPrenda !== "trasera") {
+615 [04]                 overlayEl.style.display = "flex";
+616 [04]                 
+617 [04]                 // Determinar colores basados en la seleccin o en la imagen mostrada
+618 [04]                 let textColor = "#000000"; // Negro por defecto para la mayora de fuerzas
+619 [04]                 let shadowColor = "transparent"; // Sin sombra por defecto
+620 [04]                 let marginTopRango = "-1px";
+621 [04]                 let topPosition = "50%";
+622 [04]                 
+623 [05]                 if (state.identidad === "policia") {
+624 [05]                     // La Polica usa texto con estilo "nen"
+625 [06]                     if ((imagen && imagen.includes("verde")) || state.color === "verde-claro") {
+626 [06]                         textColor = "#d0d6c0"; // Blanco hueso / verde muy claro
+627 [06]                         shadowColor = "#394524"; // Sombra verde oliva oscuro
+628 [06]                     } else if ((imagen && (imagen.includes("azul") || imagen.includes("negro"))) || state.color === "azul-noche" || state.color === "negro") {
+629 [06]                         textColor = "#ccff00"; // Neon green
+630 [06]                         shadowColor = "#0d1b2a"; // Sombra negra/azul oscuro
+631 [06]                     } else if (!state.color) {
+632 [07]                         if (imagen && imagen.includes("frente-gafete")) {
+633 [07]                             textColor = "#d0d6c0"; 
+634 [07]                             shadowColor = "#394524";
+635 [07]                         } else {
+636 [07]                             textColor = "#ccff00";
+637 [07]                             shadowColor = "#0d1b2a";
+638 [06]                         }
+639 [06]                     } else if (state.color === "blanco") {
+640 [06]                         textColor = "#000000"; 
+641 [06]                         shadowColor = "#ffffff";
+642 [05]                     }
+643 [05]                     topPosition = "50%";
+644 [05]                 } else if (state.identidad === "ejercito" || state.identidad === "gaula" || state.identidad === "armada") {
+645 [05]                     // Ejrcito, Gaula y Armada usan texto negro slido, sin sombra
+646 [05]                     textColor = "#000000";
+647 [05]                     shadowColor = "transparent";
+648 [05]                     // Para Ejrcito y Gaula usualmente el texto va centrado diferente, probemos 50% tb para que quede en medio
+649 [05]                     topPosition = "50%";
+650 [04]                 }
+651 [04] 
+652 [04]                 overlayEl.style.top = topPosition;
+653 [04]                 overlayEl.style.color = textColor;
+654 [04]                 
+655 [04]                 const shadowVal = shadowColor !== "transparent" 
+656 [04]                     ? `-1px -1px 0 ${shadowColor}, 1px -1px 0 ${shadowColor}, -1px 1px 0 ${shadowColor}, 1px 1px 0 ${shadowColor}` 
+657 [04]                     : 'none';
+658 [04]                 
+659 [04]                 // Aplicar estilos
+660 [04]                 const divRango = preview.querySelector("#overlay-rango");
+661 [04]                 const divNombre = preview.querySelector("#overlay-nombre");
+662 [04]                 
+663 [04]                 divRango.style.textShadow = shadowVal;
+664 [04]                 divNombre.style.textShadow = shadowVal;
+665 [04]                 
+666 [04]                 // En el ejrcito/Gaula a veces la placa tiene fondo de tela que dificulta la lectura
+667 [04]                 // Si gustan del fondo se puede usar background-color: rgba(255,255,255,0.7)
+668 [04]                 // Pero lo dejaremos transparente si no piden fondo blanco.
+669 [04]                 divRango.style.background = "transparent";
+670 [04]                 divNombre.style.background = "transparent";
+671 [04]                 
+672 [04]                 const rangoFinal = state.rango ? state.rango.charAt(0).toUpperCase() + state.rango.slice(1).toLowerCase() : 'Rango';
+673 [04]                 const nombreFinal = state.nombre ? state.nombre.toUpperCase() : 'NOMBRE';
+674 [04]                 
+675 [04]                 divRango.textContent = rangoFinal;
+676 [04]                 divNombre.textContent = nombreFinal;
+677 [04]             } else {
+678 [04]                 overlayEl.style.display = "none";
+679 [03]             }
+680 [04]             if (!isRh || state.vistaPrenda === "trasera") {
+681 [04]                 if (rhOverlayEl) rhOverlayEl.style.display = "none";
+682 [03]             }
+683 [03]         } else {
+684 [03]             let iconClass = getProductIcon() || "fa-palette";
+685 [03]             preview.innerHTML = `
+686 [03]                 <div style="text-align: center;">
+687 [03]                     <i class="fas ${iconClass}" style="font-size: 3rem; margin-bottom: 1rem; color: #555;"></i>
+688 [03]                     <p style="color: #666;">Selecciona opciones para tu prenda</p>
+689 [03]                 </div>
+690 [03]             `;
+691 [02]         }
+692 [01]     }
+693 [01] 
+694 [02]     function updateStepIndicators() {
+695 [03]         for (let i = 1; i <= 4; i += 1) {
