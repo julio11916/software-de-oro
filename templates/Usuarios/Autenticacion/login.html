@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+ï»¿<!DOCTYPE html>
 <html lang="es">
 
 <head>
@@ -24,7 +24,7 @@
                 </button>
 
                 <a class="brand-logo" href="{{ url_for('home') }}">
-                    <img src="{{ url_for('static', filename='img/pagina/logo_header.png') }}" alt="Logo Nachoher">
+                    <img src="{{ url_for('static', filename='img/Pagina/logo_header.png') }}" alt="Logo Nachoher">
                 </a>
 
                 <div class="header-actions">
@@ -38,7 +38,7 @@
                         </button>
                         <div class="dropdown-menu-custom" id="userDropdown">
                             <a href="{{ url_for('login') }}">
-                                <i class="fas fa-sign-in-alt me-2"></i>Iniciar sesión
+                                <i class="fas fa-sign-in-alt me-2"></i>Iniciar sesiÃ³n
                             </a>
                             <a href="{{ url_for('registro') }}">
                                 <i class="fas fa-user-plus me-2"></i>Crear cuenta
@@ -55,7 +55,7 @@
             <button type="button" class="btn-close-custom" data-bs-dismiss="offcanvas" aria-label="Close">
                 <i class="fas fa-xmark"></i>
             </button>
-            <img src="{{ url_for('static', filename='img/pagina/logo_header.png') }}" class="offcanvas-logo" alt="Logo">
+            <img src="{{ url_for('static', filename='img/Pagina/logo_header.png') }}" class="offcanvas-logo" alt="Logo">
             <span></span>
         </div>
         <div class="offcanvas-body">
@@ -66,12 +66,12 @@
                 </a>
                 <a class="offcanvas-link active">
                     <i class="fas fa-shirt"></i>
-                    <span>Catálogo</span>
+                    <span>CatÃ¡logo</span>
                 </a>
                 <a class="offcanvas-link menu-normal" href="{{ url_for('armada') }}">  Armada</a>
-                <a class="offcanvas-link menu-normal" href="{{ url_for('ejercito') }}">  Ejército</a>
+                <a class="offcanvas-link menu-normal" href="{{ url_for('ejercito') }}">  EjÃ©rcito</a>
                 <a class="offcanvas-link menu-normal" href="{{ url_for('gaula') }}">  Gaula</a>
-                <a class="offcanvas-link menu-normal" href="{{ url_for('policia') }}">  Policía</a>
+                <a class="offcanvas-link menu-normal" href="{{ url_for('policia') }}">  PolicÃ­a</a>
                 <a class="offcanvas-link active" href="{{ url_for('accesorios') }}">
                     <i class="fa-solid fa-glasses" style="color: rgb(29, 42, 51);"></i>
                     <span>Accesorios</span>
@@ -98,19 +98,19 @@
         <div class="hero-content text-center">
             <p class="hero-kicker">BIENVENIDOS A</p>
             <a href="{{ url_for('user_dashboard') }}">
-                <img src="{{ url_for('static', filename='img/pagina/logo_transparente_2.png') }}" alt="Logo del proyecto"
+                <img src="{{ url_for('static', filename='img/Pagina/logo_transparente_2.png') }}" alt="Logo del proyecto"
                     class="logo">
             </a>
-            <p class="hero-subtitle">Catálogo premium de prendas y accesorios</p>
+            <p class="hero-subtitle">CatÃ¡logo premium de prendas y accesorios</p>
             <a href="#catalogo" class="hero-cta">Ver destacados</a>
         </div>
     </section>
 
 
     <main class="main-content" id="catalogo">
-        <!-- Carrusel Ejército -->
+        <!-- Carrusel EjÃ©rcito -->
         <div class="container catalog-shell destacados-shell">
-            <h2 class="section-title">Prendas destacadas - Ejército</h2>
+            <h2 class="section-title">Prendas destacadas - EjÃ©rcito</h2>
             {% if productos_destacados_ejercito %}
             <div id="ejercitoCarousel" class="carousel slide destacados-carousel" data-bs-ride="carousel" data-bs-interval="10000">
                 <div class="carousel-inner">
@@ -120,7 +120,7 @@
                             {% for destacado in chunk %}
                             <div class="producto-card-destacado">
                                 <a href="{{ url_for('login') }}">
-                                    <img src="{{ asset_url(destacado.imagen_url) }}" class="producto-image-destacado" alt="{{ destacado.nombre }}">
+                                    <img src="{{ url_for('static', filename=destacado.imagen_url) }}" class="producto-image-destacado" alt="{{ destacado.nombre }}">
                                 </a>
                                 <div class="producto-info-destacado">
                                     <h5 class="producto-title-destacado">{{ destacado.nombre }}</h5>
@@ -143,21 +143,21 @@
             </div>
             {% else %}
             <div class="alert alert-info text-center mt-3 mb-0">
-                Aún no hay prendas destacadas disponibles para Ejército.
+                AÃºn no hay prendas destacadas disponibles para EjÃ©rcito.
             </div>
             {% endif %}
         </div>
 
-        <!-- Carrusel Policía (tipo Netflix) -->
+        <!-- Carrusel PolicÃ­a (tipo Netflix) -->
         <div class="container catalog-shell destacados-shell">
-            <h2 class="section-title">Prendas destacadas - Policía</h2>
+            <h2 class="section-title">Prendas destacadas - PolicÃ­a</h2>
             {% if productos_destacados_policia %}
             <div class="netflix-carousel-container">
                 <div class="netflix-carousel" id="policiaCarousel">
                     {% for destacado in productos_destacados_policia %}
                     <div class="netflix-item">
                         <a href="{{ url_for('login') }}">
-                            <img src="{{ asset_url(destacado.imagen_url) }}" alt="{{ destacado.nombre }}">
+                            <img src="{{ url_for('static', filename=destacado.imagen_url) }}" alt="{{ destacado.nombre }}">
                         </a>
                         <div class="netflix-info">
                             <h5>{{ destacado.nombre }}</h5>
@@ -171,7 +171,7 @@
             </div>
             {% else %}
             <div class="alert alert-info text-center mt-3 mb-0">
-                Aún no hay prendas destacadas disponibles para Policía.
+                AÃºn no hay prendas destacadas disponibles para PolicÃ­a.
             </div>
             {% endif %}
         </div>
@@ -181,11 +181,11 @@
             <h2 class="section-title">Prendas destacadas - Armada</h2>
             {% if productos_destacados_armada %}
             <div class="armada-banner">
-                <p>Contenido de armada aquí</p>
+                <p>Contenido de armada aquÃ­</p>
             </div>
             {% else %}
             <div class="alert alert-info text-center mt-3 mb-0">
-                Aún no hay prendas destacadas disponibles para Armada.
+                AÃºn no hay prendas destacadas disponibles para Armada.
             </div>
             {% endif %}
         </div>
@@ -198,7 +198,7 @@
                     <i class="fas fa-crown"></i> <strong>Nachoher</strong>
                 </div>
                 <div class="footer-item">
-                    <i class="fas fa-map-marker-alt"></i> Urbanización Pablo Sexto
+                    <i class="fas fa-map-marker-alt"></i> UrbanizaciÃ³n Pablo Sexto
                 </div>
                 <div class="footer-item">
                     <i class="fas fa-phone"></i> +57 3229393211

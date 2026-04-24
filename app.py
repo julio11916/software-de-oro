@@ -3,7 +3,7 @@ from io import BytesIO
 from pathlib import Path
 from openpyxl.chart import BarChart, LineChart, PieChart, Reference
 from openpyxl.chart.series import DataPoint
-from flask import Flask, render_template, request, redirect, url_for, session, Response, flash, send_file, jsonify, send_from_directory
+from flask import Flask, render_template, request, redirect, url_for, session, Response, flash, send_file, jsonify
 from datetime import datetime, timedelta, date
 from typing import Any, Mapping, Optional
 from dotenv import load_dotenv
@@ -45,33 +45,6 @@ app.config['PROJECT_NAME'] = 'NACHOHER'
 
 # Inicializar Flask-Mail
 mail.init_app(app)
-
-PROJECT_ROOT = Path(__file__).resolve().parent
-LEGACY_UPLOADS_DIR = (PROJECT_ROOT / 'static' / 'img' / 'empresa').resolve()
-UPLOADS_DIR_ENV = os.getenv("UPLOADS_DIR", "").strip()
-if UPLOADS_DIR_ENV:
-    uploads_base = Path(UPLOADS_DIR_ENV)
-    if not uploads_base.is_absolute():
-        uploads_base = PROJECT_ROOT / uploads_base
-    UPLOADS_DIR = uploads_base.resolve()
-else:
-    UPLOADS_DIR = LEGACY_UPLOADS_DIR
-
-DEFAULT_UPLOADS_PREFIX = "img/empresa" if UPLOADS_DIR == LEGACY_UPLOADS_DIR else "uploads"
-UPLOADS_URL_PREFIX = os.getenv("UPLOADS_URL_PREFIX", DEFAULT_UPLOADS_PREFIX).strip().strip("/")
-UPLOADS_PREFIX_LOWER = UPLOADS_URL_PREFIX.lower()
-os.makedirs(UPLOADS_DIR, exist_ok=True)
-if UPLOADS_DIR != LEGACY_UPLOADS_DIR and LEGACY_UPLOADS_DIR.exists():
-    for legacy_file in LEGACY_UPLOADS_DIR.iterdir():
-        if not legacy_file.is_file():
-            continue
-        destino = UPLOADS_DIR / legacy_file.name
-        if destino.exists():
-            continue
-        try:
-            shutil.copy2(legacy_file, destino)
-        except Exception:
-            pass
 
 CURRENCY_CODE = "COP"
 CURRENCY_NAME = "Peso colombiano"
@@ -171,31 +144,6 @@ def normalizar_intendencia(valor):
 
 def producto_requiere_talla(intendencia):
     return normalizar_intendencia(intendencia) not in INTENDENCIAS_SIN_TALLA
-
-
-def ruta_relativa_subida(nombre_archivo):
-    nombre = str(nombre_archivo or '').strip().replace('\\', '/').lstrip('/')
-    return f"{UPLOADS_URL_PREFIX}/{nombre}" if nombre else ''
-
-
-def nombre_archivo_subida_desde_ruta(ruta_relativa):
-    ruta = str(ruta_relativa or '').strip().replace('\\', '/').lstrip('/')
-    if not ruta:
-        return ''
-
-    ruta_lower = ruta.lower()
-    if ruta_lower.startswith('img/empresa/'):
-        return ruta.split('/', 2)[-1]
-
-    prefijo = f"{UPLOADS_PREFIX_LOWER}/"
-    if ruta_lower.startswith(prefijo):
-        return ruta[len(UPLOADS_URL_PREFIX) + 1:]
-
-    return ''
-
-
-def es_ruta_subida(ruta_relativa):
-    return bool(nombre_archivo_subida_desde_ruta(ruta_relativa))
 
 
 def cargar_usuarios_df():
@@ -317,16 +265,10 @@ def normalizar_imagen_url(valor):
     ruta = str(valor or '').strip().replace('\\', '/')
     if not ruta or ruta.lower() == 'nan':
         return ''
-    ruta_lower = ruta.lower()
-    if ruta_lower.startswith('img/empresa/') or ruta_lower.startswith(f"{UPLOADS_PREFIX_LOWER}/"):
-        nombre_archivo = nombre_archivo_subida_desde_ruta(ruta)
-        return ruta_relativa_subida(nombre_archivo)
-    if ruta_lower.startswith('img/pagina/'):
-        return f"img/pagina/{ruta.split('/')[-1]}"
-    if ruta_lower.startswith('img/catalogo/'):
-        return f"img/catalogo/{ruta.split('/', 2)[-1]}"
-    if ruta_lower.startswith('img/'):
-        return ruta_relativa_subida(ruta.split('/')[-1])
+    if ruta.startswith('img/Empresa/') or ruta.startswith('img/Pagina/') or ruta.startswith('img/catalogo/'):
+        return ruta
+    if ruta.startswith('img/'):
+        return f"img/Empresa/{ruta.split('/')[-1]}"
     return ruta
 
 
@@ -504,22 +446,18 @@ def validar_archivo_imagen(archivo):
 
 def ruta_imagen_producto_absoluta(ruta_relativa):
     ruta = str(ruta_relativa or '').strip().replace('\\', '/').lstrip('/')
-    if not es_ruta_subida(ruta):
+    if not ruta.startswith('img/Empresa/'):
         return ''
 
-    nombre_archivo = nombre_archivo_subida_desde_ruta(ruta)
-    if not nombre_archivo:
-        return ''
-
-    base = os.path.abspath(str(UPLOADS_DIR))
-    candidata = os.path.abspath(os.path.join(str(UPLOADS_DIR), nombre_archivo))
+    base = os.path.abspath(os.path.join('static', 'img', 'Empresa'))
+    candidata = os.path.abspath(os.path.join('static', ruta))
     if os.path.commonpath([base, candidata]) != base:
         return ''
     return candidata
 
 
 def listar_archivos_galeria_producto(id_producto):
-    carpeta_destino = str(UPLOADS_DIR)
+    carpeta_destino = os.path.join('static', 'img', 'Empresa')
     prefijo = f'producto_{id_producto}_'
     resultados = []
 
@@ -545,7 +483,7 @@ def migrar_legacy_a_galeria(id_producto):
     if listar_archivos_galeria_producto(id_producto):
         return
 
-    carpeta_destino = str(UPLOADS_DIR)
+    carpeta_destino = os.path.join('static', 'img', 'Empresa')
     if not os.path.isdir(carpeta_destino):
         return
 
@@ -561,7 +499,7 @@ def migrar_legacy_a_galeria(id_producto):
 
 
 def limpiar_imagenes_producto(id_producto):
-    carpeta_destino = str(UPLOADS_DIR)
+    carpeta_destino = os.path.join('static', 'img', 'Empresa')
     if not os.path.isdir(carpeta_destino):
         return
 
@@ -579,7 +517,7 @@ def limpiar_imagenes_producto(id_producto):
 
 
 def guardar_galeria_producto(id_producto, imagenes, reemplazar=True):
-    carpeta_destino = str(UPLOADS_DIR)
+    carpeta_destino = os.path.join('static', 'img', 'Empresa')
     os.makedirs(carpeta_destino, exist_ok=True)
 
     imagenes_validas = [img for img in imagenes if img and str(getattr(img, 'filename', '')).strip()]
@@ -597,7 +535,7 @@ def guardar_galeria_producto(id_producto, imagenes, reemplazar=True):
         nombre_archivo = f'producto_{id_producto}_{indice}.{extension}'
         ruta_absoluta = os.path.join(carpeta_destino, nombre_archivo)
         imagen.save(ruta_absoluta)
-        rutas_guardadas.append(ruta_relativa_subida(nombre_archivo))
+        rutas_guardadas.append(f"img/Empresa/{nombre_archivo}".replace('\\', '/'))
     return rutas_guardadas
 
 
@@ -608,48 +546,20 @@ def obtener_galeria_producto(id_producto, imagen_principal=''):
         return [normalizar_imagen_url(imagen_principal)] if str(imagen_principal).strip() else []
 
     galeria = listar_archivos_galeria_producto(id_producto_int)
-    rutas = [ruta_relativa_subida(nombre) for _, nombre in galeria]
+    rutas = [f"img/Empresa/{nombre}".replace('\\', '/') for _, nombre in galeria]
 
     if not rutas:
+        carpeta_destino = os.path.join('static', 'img', 'Empresa')
         if str(imagen_principal).strip():
             rutas.append(normalizar_imagen_url(imagen_principal))
         else:
-            carpetas_busqueda = [str(UPLOADS_DIR)]
-            if LEGACY_UPLOADS_DIR != UPLOADS_DIR:
-                carpetas_busqueda.append(str(LEGACY_UPLOADS_DIR))
             for extension in sorted(ALLOWED_IMAGE_EXTENSIONS):
                 legacy_name = f'producto_{id_producto_int}.{extension}'
-                encontrado = False
-                for carpeta in carpetas_busqueda:
-                    legacy_path = os.path.join(carpeta, legacy_name)
-                    if os.path.exists(legacy_path):
-                        rutas.append(ruta_relativa_subida(legacy_name))
-                        encontrado = True
-                        break
-                if encontrado:
+                legacy_path = os.path.join(carpeta_destino, legacy_name)
+                if os.path.exists(legacy_path):
+                    rutas.append(f"img/Empresa/{legacy_name}")
                     break
     return rutas
-
-
-def asset_url_for_template(ruta_relativa):
-    ruta = normalizar_imagen_url(ruta_relativa)
-    if not ruta:
-        return url_for('static', filename='img/pagina/logo.jpeg')
-    if es_ruta_subida(ruta):
-        nombre_archivo = nombre_archivo_subida_desde_ruta(ruta)
-        if nombre_archivo:
-            return url_for('uploaded_image', filename=nombre_archivo)
-    return url_for('static', filename=ruta)
-
-
-@app.context_processor
-def inject_asset_helpers():
-    return {'asset_url': asset_url_for_template}
-
-
-@app.route(f'/{UPLOADS_URL_PREFIX}/<path:filename>')
-def uploaded_image(filename):
-    return send_from_directory(str(UPLOADS_DIR), filename)
 
 
 def cargar_productos_df():
