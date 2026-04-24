@@ -1,9 +1,9 @@
-Ôªø<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 
 <head>
     <meta charset="UTF-8">
-    <title>Gesti√≥n de Usuarios</title>
+    <title>GestiÛn de Usuarios</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -16,7 +16,7 @@
         <div class="sidebar">
 
             <a href="{{ url_for('admin_dashboard') }}">
-                <img src="{{ url_for('static', filename='img/Pagina/logo_transparente.png') }}" alt="Logo del proyecto"
+                <img src="{{ url_for('static', filename='img/pagina/logo_transparente.png') }}" alt="Logo del proyecto"
                 class="sidebar-logo">
             </a>
 
@@ -42,7 +42,7 @@
                     <a class="nav-link" href="{{ url_for('admin_pedidos') }}">Pagos de pedidos</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('admin_charts') }}">Ventas y Gr√°ficas</a>
+                    <a class="nav-link" href="{{ url_for('admin_charts') }}">Ventas y Gr·ficas</a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" href="{{ url_for('admin_ajustes') }}">Pedidos en curso</a>
@@ -58,7 +58,7 @@
         <div class="main-content w-100">
             <div class="topbar d-flex justify-content-between align-items-center">
                 <div>
-                    <h4 class="mb-0">Gesti√≥n de Usuarios</h4>
+                    <h4 class="mb-0">GestiÛn de Usuarios</h4>
                     <small>Crear, editar, filtrar y revisar cuentas del sistema</small>
                 </div>
                 <div id="fechaHora"></div>
@@ -91,8 +91,8 @@
                                             value="{{ usuario_editar.email if usuario_editar else '' }}">
                                     </div>
                                     <div class="col-md-6">
-                                        <label class="form-label">{% if usuario_editar %}Nueva contrase√±a (opcional){%
-                                            else %}Contrase√±a{% endif %}</label>
+                                        <label class="form-label">{% if usuario_editar %}Nueva contraseÒa (opcional){%
+                                            else %}ContraseÒa{% endif %}</label>
                                         <input class="form-control" type="text" name="password" {% if not usuario_editar
                                             %}required{% endif %}>
                                     </div>

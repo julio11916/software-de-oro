@@ -16,7 +16,7 @@
         <div class="sidebar">
 
             <a href="{{ url_for('admin_dashboard') }}">
-                <img src="{{ url_for('static', filename='img/Pagina/logo_transparente.png') }}" alt="Logo del proyecto"
+                <img src="{{ url_for('static', filename='img/pagina/logo_transparente.png') }}" alt="Logo del proyecto"
                     class="sidebar-logo">
             </a>
 
@@ -221,7 +221,7 @@
                                                 {% if imagenes_producto %}
                                                 <button type="button" class="image-nav image-nav-left" data-action="prev" aria-label="Imagen anterior">&#10094;</button>
                                                 <img
-                                                    src="{{ url_for('static', filename=imagenes_producto[0]) }}"
+                                                    src="{{ asset_url(imagenes_producto[0]) }}"
                                                     alt="{{ producto.nombre }}"
                                                     class="product-image js-product-image"
                                                     data-images='{{ imagenes_producto | tojson | safe }}'

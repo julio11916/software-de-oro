@@ -1,4 +1,4 @@
-ï»¿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 
 <head>
@@ -21,7 +21,7 @@
                 </button>
 
                 <a class="brand-logo" href="{{ url_for('user_dashboard') }}">
-                    <img src="{{ url_for('static', filename='img/Pagina/logo_header.png') }}" alt="Logo Nachoher">
+                    <img src="{{ url_for('static', filename='img/pagina/logo_header.png') }}" alt="Logo Nachoher">
                 </a>
 
                 <div class="header-actions">
@@ -55,7 +55,7 @@
             <button type="button" class="btn-close-custom" data-bs-dismiss="offcanvas" aria-label="Close">
                 <i class="fas fa-xmark"></i>
             </button>
-            <img src="{{ url_for('static', filename='img/Pagina/logo_header.png') }}" class="offcanvas-logo" alt="Logo">
+            <img src="{{ url_for('static', filename='img/pagina/logo_header.png') }}" class="offcanvas-logo" alt="Logo">
             <span></span>
         </div>
         <div class="offcanvas-body">
@@ -98,7 +98,7 @@
         <div class="hero-content text-center">
             <p class="hero-kicker">BIENVENIDOS A</p>
             <a href="{{ url_for('user_dashboard') }}">
-                <img src="{{ url_for('static', filename='img/Pagina/logo_transparente_2.png') }}" alt="Logo del proyecto"
+                <img src="{{ url_for('static', filename='img/pagina/logo_transparente_2.png') }}" alt="Logo del proyecto"
                 class="logo">
             </a>
             <p class="hero-subtitle">Cat&aacute;logo premium de prendas y accesorios</p>
@@ -109,9 +109,9 @@
     {% include 'Usuarios/partials/_flash_toasts.html' %}
 
     <main class="main-content" id="catalogo">
-        <!-- Carrusel EjÃ©rcito -->
+        <!-- Carrusel Ejército -->
         <div class="container catalog-shell destacados-shell">
-            <h2 class="section-title">Prendas destacadas - EjÃ©rcito</h2>
+            <h2 class="section-title">Prendas destacadas - Ejército</h2>
             {% if productos_destacados_ejercito %}
             <div id="ejercitoCarousel" class="carousel slide destacados-carousel" data-bs-ride="carousel" data-bs-interval="10000">
                 <div class="carousel-inner">
@@ -121,7 +121,7 @@
                             {% for destacado in chunk %}
                             <div class="producto-card-destacado">
                                 <a href="{{ url_for('product_detail', id_producto=destacado.id_producto) }}">
-                                    <img src="{{ url_for('static', filename=destacado.imagen_url) }}" class="producto-image-destacado" alt="{{ destacado.nombre }}">
+                                    <img src="{{ asset_url(destacado.imagen_url) }}" class="producto-image-destacado" alt="{{ destacado.nombre }}">
                                 </a>
                                 <div class="producto-info-destacado">
                                     <h5 class="producto-title-destacado">{{ destacado.nombre }}</h5>
@@ -144,21 +144,21 @@
             </div>
             {% else %}
             <div class="alert alert-info text-center mt-3 mb-0">
-                AÃºn no hay prendas destacadas disponibles para EjÃ©rcito.
+                Aún no hay prendas destacadas disponibles para Ejército.
             </div>
             {% endif %}
         </div>
 
-        <!-- Carrusel PolicÃ­a (tipo Netflix) -->
+        <!-- Carrusel Policía (tipo Netflix) -->
         <div class="container catalog-shell destacados-shell">
-            <h2 class="section-title">Prendas destacadas - PolicÃ­a</h2>
+            <h2 class="section-title">Prendas destacadas - Policía</h2>
             {% if productos_destacados_policia %}
             <div class="netflix-carousel-container">
                 <div class="netflix-carousel" id="policiaCarousel">
                     {% for destacado in productos_destacados_policia %}
                     <div class="netflix-item">
                         <a href="{{ url_for('product_detail', id_producto=destacado.id_producto) }}">
-                            <img src="{{ url_for('static', filename=destacado.imagen_url) }}" alt="{{ destacado.nombre }}">
+                            <img src="{{ asset_url(destacado.imagen_url) }}" alt="{{ destacado.nombre }}">
                         </a>
                         <div class="netflix-info">
                             <h5>{{ destacado.nombre }}</h5>
@@ -172,7 +172,7 @@
             </div>
             {% else %}
             <div class="alert alert-info text-center mt-3 mb-0">
-                AÃºn no hay prendas destacadas disponibles para PolicÃ­a.
+                Aún no hay prendas destacadas disponibles para Policía.
             </div>
             {% endif %}
         </div>
@@ -182,11 +182,11 @@
             <h2 class="section-title">Prendas destacadas - Armada</h2>
             {% if productos_destacados_armada %}
             <div class="armada-banner">
-                <p>Contenido de armada aquÃ­</p>
+                <p>Contenido de armada aquí</p>
             </div>
             {% else %}
             <div class="alert alert-info text-center mt-3 mb-0">
-                AÃºn no hay prendas destacadas disponibles para Armada.
+                Aún no hay prendas destacadas disponibles para Armada.
             </div>
             {% endif %}
         </div>

@@ -28,13 +28,13 @@
                 <div class="col-md-6">
                     {% set imagenes_producto = producto.imagenes if producto.imagenes is defined and producto.imagenes else ([] if not producto.imagen_url else [producto.imagen_url]) %}
                     {% if not imagenes_producto %}
-                    {% set imagenes_producto = ['img/Pagina/logo.jpeg'] %}
+                    {% set imagenes_producto = ['img/pagina/logo.jpeg'] %}
                     {% endif %}
                     <div id="productCarousel" class="carousel slide" data-bs-ride="false">
                         <div class="carousel-inner">
                             {% for imagen in imagenes_producto %}
                             <div class="carousel-item {% if loop.first %}active{% endif %}">
-                                <img src="{{ url_for('static', filename=imagen) }}" class="d-block w-100"
+                                <img src="{{ asset_url(imagen) }}" class="d-block w-100"
                                     alt="{{ producto.nombre }} - Vista {{ loop.index }}">
                             </div>
                             {% endfor %}
@@ -56,7 +56,7 @@
                     <!-- Miniaturas -->
                     <div class="thumbnail-container">
                         {% for imagen in imagenes_producto %}
-                        <img src="{{ url_for('static', filename=imagen) }}" class="thumbnail {% if loop.first %}active{% endif %}"
+                        <img src="{{ asset_url(imagen) }}" class="thumbnail {% if loop.first %}active{% endif %}"
                             data-slide-index="{{ loop.index0 }}" alt="Vista {{ loop.index }}">
                         {% endfor %}
                     </div>

@@ -32,7 +32,7 @@
                             <div class="item-info">
                                 <div class="item-image">
                                     {% if item.imagen_url %}
-                                    <img src="{{ url_for('static', filename=item.imagen_url) }}" alt="{{ item.nombre }}" loading="lazy">
+                                    <img src="{{ asset_url(item.imagen_url) }}" alt="{{ item.nombre }}" loading="lazy">
                                     {% else %}
                                     <i class="fas fa-box-open"></i>
                                     {% endif %}

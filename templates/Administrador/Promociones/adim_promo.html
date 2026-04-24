@@ -15,7 +15,7 @@
     <div class="d-flex dashboard-layout">
         <div class="sidebar">
             <a href="{{ url_for('admin_dashboard') }}">
-                <img src="{{ url_for('static', filename='img/Pagina/logo_transparente.png') }}" alt="Logo del proyecto"
+                <img src="{{ url_for('static', filename='img/pagina/logo_transparente.png') }}" alt="Logo del proyecto"
                     class="sidebar-logo">
             </a>
 
@@ -99,7 +99,7 @@
                                         <article class="promo-product-card h-100">
                                             <div class="promo-image-wrap">
                                                 {% if producto.imagen_url %}
-                                                <img src="{{ url_for('static', filename=producto.imagen_url) }}" alt="{{ producto.nombre }}"
+                                                <img src="{{ asset_url(producto.imagen_url) }}" alt="{{ producto.nombre }}"
                                                     class="promo-image">
                                                 {% else %}
                                                 <div class="promo-image promo-placeholder">Sin imagen</div>

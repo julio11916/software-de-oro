@@ -34,7 +34,7 @@
                 {% for producto in productos %}
                 <div class="catalog-row {% if loop.index0 % 2 == 1 %}is-reverse{% endif %}">
                     <div class="catalog-media">
-                        <img src="{{ url_for('static', filename=producto.imagen_url if producto.imagen_url else 'img/catalogo/armada/guerrera_ejercito.png') }}"
+                        <img src="{{ asset_url(producto.imagen_url if producto.imagen_url else 'img/catalogo/armada/guerrera_ejercito.png') }}"
                             alt="{{ producto.nombre }}">
                     </div>
                     <div class="catalog-details">
