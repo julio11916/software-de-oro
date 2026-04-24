@@ -134,9 +134,16 @@
     color: #856404;
 }
 
+.status-confirmado,
+.status-en_preparacion {
+    background: #e5f2ff;
+    color: #0e5cba;
+}
+
+.status-empaquetado,
 .status-enviado {
-    background: #dbeafe;
-    color: #1e3a8a;
+    background: #dff7fb;
+    color: #0f7f8d;
 }
 
 .status-entregado {
@@ -147,4 +154,35 @@
 .status-cancelado {
     background: #fee2e2;
     color: #991b1b;
+}
+
+.status-pago_en_revision {
+    background: #fff4d9;
+    color: #8d6106;
+}
+
+.status-pago-pendiente_comprobante,
+.status-pago-en_revision {
+    background: #eef8ff;
+    color: #176b8a;
+}
+
+.status-pago-aprobado {
+    background: #e8f7ec;
+    color: #1f7a44;
+}
+
+.status-pago-rechazado {
+    background: #fdebec;
+    color: #b42318;
+}
+
+.table-proof-link {
+    color: #0e5cba;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.table-proof-link:hover {
+    text-decoration: underline;
 }

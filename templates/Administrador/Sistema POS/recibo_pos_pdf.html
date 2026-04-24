@@ -24,7 +24,7 @@
                 <span>Fecha: {{ fecha_txt }}</span>
             </div>
             {% if total_paginas > 1 %}
-                <p class="page-number">Pag. {{ pagina.numero }}/{{ total_paginas }}</p>
+                <p class="page-number">Pág. {{ pagina.numero }}/{{ total_paginas }}</p>
             {% endif %}
         </header>
 
@@ -67,6 +67,7 @@
             <table class="detail-table">
                 <colgroup>
                     <col class="col-cantidad">
+                    <col class="col-talla">
                     <col class="col-descripcion">
                     <col class="col-unitario">
                     <col class="col-total">
@@ -74,6 +75,7 @@
                 <thead>
                     <tr>
                         <th>CANTIDAD</th>
+                        <th>TALLA</th>
                         <th>DESCRIPCION</th>
                         <th>VALOR UNITARIO</th>
                         <th>TOTAL</th>
@@ -83,6 +85,7 @@
                     {% for item in pagina.detalle_items %}
                         <tr>
                             <td class="center">{{ item.cantidad }}</td>
+                            <td class="center">{{ item.talla }}</td>
                             <td class="descripcion">{{ item.descripcion }}</td>
                             <td class="right">{{ item.valor_unitario }}</td>
                             <td class="right">{{ item.total }}</td>
@@ -90,6 +93,7 @@
                     {% endfor %}
                     {% if not pagina.detalle_items %}
                         <tr>
+                            <td class="center">-</td>
                             <td class="center">-</td>
                             <td>Sin productos</td>
                             <td class="right">COP 0,00</td>

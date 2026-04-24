@@ -23,6 +23,7 @@
         buso: "$ 78.000",
         gorra: "$ 35.000",
         pañoleta: "$ 28.000",
+        panoleta: "$ 28.000",
         "buso-manga-larga": "$ 85.000",
         "buso_tactico": "$ 95.000",
         "buso tactico": "$ 95.000",
@@ -35,6 +36,7 @@
         buso: "Buso",
         gorra: "Gorra",
         pañoleta: "Pañoleta",
+        panoleta: "Pañoleta",
         "buso-manga-larga": "Buso manga larga",
         "buso_tactico": "Buso Táctico",
         "buso tactico": "Buso Táctico",
@@ -74,6 +76,7 @@
             buso: "👔",
             gorra: "🧢",
             pañoleta: "🧣",
+            panoleta: "🧣",
             "buso-manga-larga": "👚",
             "buso_tactico": "🪖",
             "buso tactico": "🪖",
@@ -340,7 +343,7 @@
     function updateSummary() {
         const producto = productLabels[state.producto] || formatLabel(state.producto);
         const identidad = formatLabel(state.identidad);
-        const tecnica = state.tecnica === "bordado" ? "Bordado" : "Impresion";
+        const tecnica = state.tecnica === "bordado" ? "Bordado" : "Impresión";
         const color = formatLabel(state.color);
         const estampado = state.estampado ? formatLabel(state.estampado) : "Pendiente";
         const talla = state.talla || "Pendiente";
@@ -962,7 +965,9 @@
 
         document.querySelectorAll("[data-producto]").forEach((button) => {
             button.addEventListener("click", () => {
-                state.producto = button.dataset.producto;
+                let productoSeleccionado = button.dataset.producto;
+                if (productoSeleccionado === "panoleta") productoSeleccionado = "pañoleta";
+                state.producto = productoSeleccionado;
                 setActiveClass(
                     document.querySelectorAll("[data-producto]"),
                     (element) => element === button,
@@ -1105,7 +1110,7 @@
         document.getElementById("btn-finalizar-paso5")?.addEventListener("click", () => {
             if (validarPaso(5)) {
                 updateSummary();
-                alert("✅ Personalización completada. Resumen:\n\nNombre: " + state.nombre + "\nRango: " + state.rango + "\nDirección: " + state.direccion + "\nCorreo: " + state.correo + "\nTeléfono: " + state.telefono + "\n\nIdentidad: " + formatLabel(state.identidad) + "\nTécnica: " + (state.tecnica === "bordado" ? "Bordado" : "Impresion") + "\nProducto: " + (productLabels[state.producto] || formatLabel(state.producto)) + "\nColor: " + formatLabel(state.color) + "\nEstampado: " + (state.estampado ? formatLabel(state.estampado) : "Ninguno") + "\nTalla: " + state.talla);
+                alert("✅ Personalización completada. Resumen:\n\nNombre: " + state.nombre + "\nRango: " + state.rango + "\nDirección: " + state.direccion + "\nCorreo: " + state.correo + "\nTeléfono: " + state.telefono + "\n\nIdentidad: " + formatLabel(state.identidad) + "\nTécnica: " + (state.tecnica === "bordado" ? "Bordado" : "Impresión") + "\nProducto: " + (productLabels[state.producto] || formatLabel(state.producto)) + "\nColor: " + formatLabel(state.color) + "\nEstampado: " + (state.estampado ? formatLabel(state.estampado) : "Ninguno") + "\nTalla: " + state.talla);
             }
         });
 
@@ -1123,7 +1128,7 @@
             if (validarPaso(6)) {
                 const producto = productLabels[state.producto] || formatLabel(state.producto);
                 const identidad = formatLabel(state.identidad);
-                const tecnica = state.tecnica === "bordado" ? "Bordado" : "Impresion";
+                const tecnica = state.tecnica === "bordado" ? "Bordado" : "Impresión";
                 const color = formatLabel(state.color);
                 const estampado = state.estampado ? formatLabel(state.estampado) : "Ninguno";
                 const talla = state.talla || "Sin talla";

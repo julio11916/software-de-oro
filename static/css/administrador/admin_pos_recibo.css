@@ -171,37 +171,49 @@ body {
 }
 
 .col-cantidad {
-    width: 24mm;
+    width: 28mm;
+}
+
+.col-talla {
+    width: 20mm;
 }
 
 .col-descripcion {
-    width: 74mm;
+    width: 51mm;
 }
 
 .col-unitario {
-    width: 38mm;
+    width: 35mm;
 }
 
 .col-total {
-    width: 30mm;
+    width: 32mm;
 }
 
 .detail-table th,
 .detail-table td {
     border: 1px solid #6f5a43;
-    padding: 6px 7px;
+    padding: 6px 6px;
     font-size: 10.2pt;
     vertical-align: middle;
-    overflow: hidden;
+    overflow: visible;
 }
 
 .detail-table th {
-    font-size: 10.4pt;
+    font-size: 10.1pt;
     font-weight: 700;
     text-align: center;
     background: rgba(190, 169, 142, 0.14);
+    white-space: normal;
+    overflow-wrap: anywhere;
+    word-break: normal;
+    line-height: 1.15;
+}
+
+.detail-table thead th:first-child {
     white-space: nowrap;
-    line-height: 1.1;
+    word-break: keep-all;
+    overflow-wrap: normal;
 }
 
 .detail-table td.center {

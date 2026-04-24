@@ -15,7 +15,8 @@
     <script id="posData"
         type="application/json"
         data-currency-code='{{ currency_code | tojson }}'
-        data-productos='{{ productos | tojson }}'></script>
+        data-productos='{{ productos | tojson }}'
+        data-tallas='{{ tallas | tojson }}'></script>
 
     <div class="d-flex dashboard-layout">
         <div class="sidebar">
@@ -43,13 +44,13 @@
                     <a class="nav-link active" href="{{ url_for('admin_pos') }}">Sistema POS</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('admin_pedidos') }}">Pedidos</a>
+                    <a class="nav-link" href="{{ url_for('admin_pedidos') }}">Pagos y pedidos</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('admin_charts') }}">Ventas y Graficas</a>
+                    <a class="nav-link" href="{{ url_for('admin_charts') }}">Ventas y Gráficas</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('admin_ajustes') }}">Ajustes</a>
+                    <a class="nav-link" href="{{ url_for('admin_ajustes') }}">Prendas personalizadas</a>
                 </li>
             </ul>
 
@@ -63,22 +64,13 @@
             <div class="topbar d-flex justify-content-between align-items-center">
                 <div>
                     <h4 class="mb-0">Sistema POS</h4>
-                    <small>Punto de venta y registro rapido de operaciones (Moneda: {{ currency_code }})</small>
+                    <small>Punto de venta y registro rapido de operaciones</small>
                 </div>
                 <div id="fechaHora"></div>
             </div>
 
             <div class="content-area pos-content">
-                {% with mensajes = get_flashed_messages(with_categories=true) %}
-                {% if mensajes %}
-                <div class="mb-3">
-                    {% for categoria, mensaje in mensajes %}
-                    <div class="alert alert-{{ 'warning' if categoria == 'message' else categoria }} mb-2">{{ mensaje }}
-                    </div>
-                    {% endfor %}
-                </div>
-                {% endif %}
-                {% endwith %}
+                {% include 'Administrador/partials/_flash_toasts.html' %}
 
                 <div class="pos-grid">
                     <section class="pos-panel">
