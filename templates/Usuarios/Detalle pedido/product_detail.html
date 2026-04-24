@@ -28,7 +28,7 @@
                 <div class="col-md-6">
                     {% set imagenes_producto = producto.imagenes if producto.imagenes is defined and producto.imagenes else ([] if not producto.imagen_url else [producto.imagen_url]) %}
                     {% if not imagenes_producto %}
-                    {% set imagenes_producto = ['img/Pagina/logo.jpeg'] %}
+                    {% set imagenes_producto = ['img/pagina/logo.jpeg'] %}
                     {% endif %}
                     <div id="productCarousel" class="carousel slide" data-bs-ride="false">
                         <div class="carousel-inner">

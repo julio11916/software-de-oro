@@ -265,10 +265,15 @@ def normalizar_imagen_url(valor):
     ruta = str(valor or '').strip().replace('\\', '/')
     if not ruta or ruta.lower() == 'nan':
         return ''
-    if ruta.startswith('img/Empresa/') or ruta.startswith('img/Pagina/') or ruta.startswith('img/catalogo/'):
-        return ruta
-    if ruta.startswith('img/'):
-        return f"img/Empresa/{ruta.split('/')[-1]}"
+    ruta_lower = ruta.lower()
+    if ruta_lower.startswith('img/empresa/'):
+        return f"img/empresa/{ruta.split('/')[-1]}"
+    if ruta_lower.startswith('img/pagina/'):
+        return f"img/pagina/{ruta.split('/')[-1]}"
+    if ruta_lower.startswith('img/catalogo/'):
+        return f"img/catalogo/{ruta.split('/', 2)[-1]}"
+    if ruta_lower.startswith('img/'):
+        return f"img/empresa/{ruta.split('/')[-1]}"
     return ruta
 
 
@@ -446,18 +451,19 @@ def validar_archivo_imagen(archivo):
 
 def ruta_imagen_producto_absoluta(ruta_relativa):
     ruta = str(ruta_relativa or '').strip().replace('\\', '/').lstrip('/')
-    if not ruta.startswith('img/Empresa/'):
+    if not ruta.lower().startswith('img/empresa/'):
         return ''
 
-    base = os.path.abspath(os.path.join('static', 'img', 'Empresa'))
-    candidata = os.path.abspath(os.path.join('static', ruta))
+    ruta_normalizada = f"img/empresa/{ruta.split('/', 2)[-1]}"
+    base = os.path.abspath(os.path.join('static', 'img', 'empresa'))
+    candidata = os.path.abspath(os.path.join('static', ruta_normalizada))
     if os.path.commonpath([base, candidata]) != base:
         return ''
     return candidata
 
 
 def listar_archivos_galeria_producto(id_producto):
-    carpeta_destino = os.path.join('static', 'img', 'Empresa')
+    carpeta_destino = os.path.join('static', 'img', 'empresa')
     prefijo = f'producto_{id_producto}_'
     resultados = []
 
@@ -483,7 +489,7 @@ def migrar_legacy_a_galeria(id_producto):
     if listar_archivos_galeria_producto(id_producto):
         return
 
-    carpeta_destino = os.path.join('static', 'img', 'Empresa')
+    carpeta_destino = os.path.join('static', 'img', 'empresa')
     if not os.path.isdir(carpeta_destino):
         return
 
@@ -499,7 +505,7 @@ def migrar_legacy_a_galeria(id_producto):
 
 
 def limpiar_imagenes_producto(id_producto):
-    carpeta_destino = os.path.join('static', 'img', 'Empresa')
+    carpeta_destino = os.path.join('static', 'img', 'empresa')
     if not os.path.isdir(carpeta_destino):
         return
 
@@ -517,7 +523,7 @@ def limpiar_imagenes_producto(id_producto):
 
 
 def guardar_galeria_producto(id_producto, imagenes, reemplazar=True):
-    carpeta_destino = os.path.join('static', 'img', 'Empresa')
+    carpeta_destino = os.path.join('static', 'img', 'empresa')
     os.makedirs(carpeta_destino, exist_ok=True)
 
     imagenes_validas = [img for img in imagenes if img and str(getattr(img, 'filename', '')).strip()]
@@ -535,7 +541,7 @@ def guardar_galeria_producto(id_producto, imagenes, reemplazar=True):
         nombre_archivo = f'producto_{id_producto}_{indice}.{extension}'
         ruta_absoluta = os.path.join(carpeta_destino, nombre_archivo)
         imagen.save(ruta_absoluta)
-        rutas_guardadas.append(f"img/Empresa/{nombre_archivo}".replace('\\', '/'))
+        rutas_guardadas.append(f"img/empresa/{nombre_archivo}".replace('\\', '/'))
     return rutas_guardadas
 
 
@@ -546,10 +552,10 @@ def obtener_galeria_producto(id_producto, imagen_principal=''):
         return [normalizar_imagen_url(imagen_principal)] if str(imagen_principal).strip() else []
 
     galeria = listar_archivos_galeria_producto(id_producto_int)
-    rutas = [f"img/Empresa/{nombre}".replace('\\', '/') for _, nombre in galeria]
+    rutas = [f"img/empresa/{nombre}".replace('\\', '/') for _, nombre in galeria]
 
     if not rutas:
-        carpeta_destino = os.path.join('static', 'img', 'Empresa')
+        carpeta_destino = os.path.join('static', 'img', 'empresa')
         if str(imagen_principal).strip():
             rutas.append(normalizar_imagen_url(imagen_principal))
         else:
@@ -557,7 +563,7 @@ def obtener_galeria_producto(id_producto, imagen_principal=''):
                 legacy_name = f'producto_{id_producto_int}.{extension}'
                 legacy_path = os.path.join(carpeta_destino, legacy_name)
                 if os.path.exists(legacy_path):
-                    rutas.append(f"img/Empresa/{legacy_name}")
+                    rutas.append(f"img/empresa/{legacy_name}")
                     break
     return rutas
 
