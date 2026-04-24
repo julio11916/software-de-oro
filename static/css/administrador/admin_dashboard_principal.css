@@ -413,7 +413,7 @@ body {
     display: flex;
     flex-direction: column;
     gap: 12px;
-    width: min(430px, calc(100vw - 40px));
+    width: min(450px, calc(100vw - 36px));
     pointer-events: none;
 }
 
@@ -421,8 +421,8 @@ body {
     position: relative;
     display: flex;
     align-items: flex-start;
-    gap: 0.9rem;
-    padding: 0.95rem 1.05rem;
+    gap: 1rem;
+    padding: 1.08rem 1.18rem;
     border-radius: 18px;
     background: rgba(255, 255, 255, 0.97);
     border: 1px solid rgba(9, 34, 80, 0.12);
@@ -447,14 +447,14 @@ body {
 }
 
 .flash-toast-icon {
-    width: 44px;
-    height: 44px;
-    flex: 0 0 44px;
+    width: 46px;
+    height: 46px;
+    flex: 0 0 46px;
     border-radius: 14px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    font-size: 1rem;
+    font-size: 1.12rem;
     color: #fff;
     box-shadow: 0 10px 24px rgba(9, 34, 80, 0.18);
 }
@@ -467,14 +467,14 @@ body {
 
 .flash-toast-label {
     color: #123d76;
-    font-size: 0.98rem;
+    font-size: 1.1rem;
     font-weight: 800;
     line-height: 1.2;
 }
 
 .flash-toast-text {
     color: #5f7691;
-    font-size: 0.92rem;
+    font-size: 1.04rem;
     line-height: 1.35;
 }
 

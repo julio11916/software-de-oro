@@ -1,0 +1,202 @@
+<section class="orders-panel orders-stage-panel">
+    <div class="panel-head d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">Seguimiento de pedidos en curso</h5>
+        <span class="badge bg-light text-dark">Activos: {{ resumen_estados.activos if resumen_estados else 0 }}</span>
+    </div>
+    <div class="panel-body">
+        <section class="summary-strip">
+            <article class="summary-card">
+                <span class="summary-label">Pedidos activos</span>
+                <strong class="summary-value">{{ resumen_estados.activos }}</strong>
+            </article>
+            <article class="summary-card">
+                <span class="summary-label">Confirmados</span>
+                <strong class="summary-value">{{ resumen_estados.confirmados }}</strong>
+            </article>
+            <article class="summary-card">
+                <span class="summary-label">Empaquetados</span>
+                <strong class="summary-value">{{ resumen_estados.empaquetados }}</strong>
+            </article>
+            <article class="summary-card">
+                <span class="summary-label">Enviados</span>
+                <strong class="summary-value">{{ resumen_estados.enviados }}</strong>
+            </article>
+        </section>
+
+        {% if pedidos_activos %}
+        <section class="orders-stage-board">
+            <div class="orders-stage-grid">
+                {% for pedido in pedidos_activos %}
+                <article class="stage-card">
+                    <div class="stage-card-head">
+                        <div>
+                            <p class="stage-kicker">Pedido #{{ pedido.id_pedido }}</p>
+                            <h5>{{ pedido.usuario_nombre }}</h5>
+                        </div>
+                        <span class="stage-badge stage-badge-{{ pedido.estado_ui }}">{{ pedido.estado_label }}</span>
+                    </div>
+
+                    <div class="stage-meta">
+                        <span><strong>Total:</strong> {{ pedido.monto|cop if pedido.monto else pedido.total_productos|cop }}</span>
+                        <span><strong>Pago:</strong> {{ pedido.metodo_pago_label if pedido.metodo_pago_label else 'Sin registrar' }}</span>
+                    </div>
+
+                    {% if pedido.estado_pago_label and pedido.metodo_pago == 'transferencia' %}
+                    <div class="stage-payment-review stage-payment-review-{{ pedido.estado_pago_ui if pedido.estado_pago_ui else 'sin_estado' }}">
+                        <div class="stage-payment-review-head">
+                            <strong>Revision del pago</strong>
+                            <span class="stage-payment-badge stage-payment-badge-{{ pedido.estado_pago_ui if pedido.estado_pago_ui else 'sin_estado' }}">
+                                {{ pedido.estado_pago_label }}
+                            </span>
+                        </div>
+                        {% if pedido.metodo_pago == 'transferencia' and pedido.estado_pago_ui != 'aprobado' %}
+                        <p class="stage-payment-note">
+                            Este pedido no entra al flujo normal hasta validar el comprobante enviado por el cliente.
+                        </p>
+                        {% if pedido.comprobante_url %}
+                        <a href="{{ url_for('static', filename=pedido.comprobante_url) }}" target="_blank" rel="noopener noreferrer" class="stage-proof-link">
+                            <i class="fas fa-image"></i> Ver comprobante adjunto
+                        </a>
+                        {% else %}
+                        <p class="stage-payment-note">No hay comprobante adjunto en la web. Valida con el correo y el WhatsApp enviados por el cliente.</p>
+                        {% endif %}
+                        <div class="stage-payment-actions">
+                            <form method="POST" action="{{ url_for('admin_pedidos_pago', id_pedido=pedido.id_pedido) }}">
+                                <input type="hidden" name="origen" value="pedidos">
+                                <input type="hidden" name="curso_page" value="{{ paginacion_curso.page if paginacion_curso else 1 }}">
+                                <input type="hidden" name="f_q" value="{{ filtros.q if filtros else '' }}">
+                                <input type="hidden" name="f_estado" value="{{ filtros.estado if filtros else 'todos' }}">
+                                <input type="hidden" name="f_estado_pago" value="{{ filtros.estado_pago if filtros else 'todos' }}">
+                                <input type="hidden" name="f_fecha_desde" value="{{ filtros.fecha_desde if filtros else '' }}">
+                                <input type="hidden" name="f_fecha_hasta" value="{{ filtros.fecha_hasta if filtros else '' }}">
+                                <input type="hidden" name="f_page" value="{{ paginacion.page if paginacion else 1 }}">
+                                <input type="hidden" name="accion_pago" value="revision">
+                                <button type="submit" class="btn btn-outline-info">Marcar en revision</button>
+                            </form>
+                            <form method="POST" action="{{ url_for('admin_pedidos_pago', id_pedido=pedido.id_pedido) }}">
+                                <input type="hidden" name="origen" value="pedidos">
+                                <input type="hidden" name="curso_page" value="{{ paginacion_curso.page if paginacion_curso else 1 }}">
+                                <input type="hidden" name="f_q" value="{{ filtros.q if filtros else '' }}">
+                                <input type="hidden" name="f_estado" value="{{ filtros.estado if filtros else 'todos' }}">
+                                <input type="hidden" name="f_estado_pago" value="{{ filtros.estado_pago if filtros else 'todos' }}">
+                                <input type="hidden" name="f_fecha_desde" value="{{ filtros.fecha_desde if filtros else '' }}">
+                                <input type="hidden" name="f_fecha_hasta" value="{{ filtros.fecha_hasta if filtros else '' }}">
+                                <input type="hidden" name="f_page" value="{{ paginacion.page if paginacion else 1 }}">
+                                <input type="hidden" name="accion_pago" value="aprobar">
+                                <button type="submit" class="btn btn-success">Aprobar comprobante</button>
+                            </form>
+                            <form method="POST" action="{{ url_for('admin_pedidos_pago', id_pedido=pedido.id_pedido) }}">
+                                <input type="hidden" name="origen" value="pedidos">
+                                <input type="hidden" name="curso_page" value="{{ paginacion_curso.page if paginacion_curso else 1 }}">
+                                <input type="hidden" name="f_q" value="{{ filtros.q if filtros else '' }}">
+                                <input type="hidden" name="f_estado" value="{{ filtros.estado if filtros else 'todos' }}">
+                                <input type="hidden" name="f_estado_pago" value="{{ filtros.estado_pago if filtros else 'todos' }}">
+                                <input type="hidden" name="f_fecha_desde" value="{{ filtros.fecha_desde if filtros else '' }}">
+                                <input type="hidden" name="f_fecha_hasta" value="{{ filtros.fecha_hasta if filtros else '' }}">
+                                <input type="hidden" name="f_page" value="{{ paginacion.page if paginacion else 1 }}">
+                                <input type="hidden" name="accion_pago" value="rechazar">
+                                <button type="submit" class="btn btn-outline-danger">Rechazar transferencia</button>
+                            </form>
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+
+                    <div class="stage-products">
+                        <strong>Productos</strong>
+                        <p>{{ pedido.productos_pedido }}</p>
+                    </div>
+
+                    <div class="stage-customer">
+                        <strong>Datos del cliente</strong>
+                        <div class="stage-customer-grid">
+                            <span><strong>Telefono:</strong> {{ pedido.cliente_telefono if pedido.cliente_telefono else 'Sin registrar' }}</span>
+                            <span><strong>Direccion:</strong> {{ pedido.cliente_direccion if pedido.cliente_direccion else 'Sin registrar' }}</span>
+                        </div>
+                    </div>
+
+                    {% if pedido.metodo_pago == 'transferencia' and pedido.estado_pago_ui != 'aprobado' %}
+                    <div class="stage-review-placeholder">
+                        <strong>Esperando validacion manual</strong>
+                        <p>Cuando apruebes el comprobante, el pedido pasara automaticamente a confirmado y podras continuar con el seguimiento normal.</p>
+                    </div>
+                    {% else %}
+                    {% with tracking_steps=pedido.tracking_steps %}
+                    {% include 'Administrador/partials/_order_tracking_steps.html' %}
+                    {% endwith %}
+                    {% endif %}
+
+                    {% if not (pedido.metodo_pago == 'transferencia' and pedido.estado_pago_ui != 'aprobado') %}
+                    <form method="POST" action="{{ url_for('admin_pedidos_estado', id_pedido=pedido.id_pedido) }}" class="stage-form">
+                        <input type="hidden" name="origen" value="pedidos">
+                        <input type="hidden" name="curso_page" value="{{ paginacion_curso.page if paginacion_curso else 1 }}">
+                        <input type="hidden" name="f_q" value="{{ filtros.q if filtros else '' }}">
+                        <input type="hidden" name="f_estado" value="{{ filtros.estado if filtros else 'todos' }}">
+                        <input type="hidden" name="f_estado_pago" value="{{ filtros.estado_pago if filtros else 'todos' }}">
+                        <input type="hidden" name="f_fecha_desde" value="{{ filtros.fecha_desde if filtros else '' }}">
+                        <input type="hidden" name="f_fecha_hasta" value="{{ filtros.fecha_hasta if filtros else '' }}">
+                        <input type="hidden" name="f_page" value="{{ paginacion.page if paginacion else 1 }}">
+                        <div class="stage-form-row">
+                            <select name="estado" class="form-select">
+                                {% for valor, etiqueta in estados_pedido %}
+                                <option value="{{ valor }}" {% if pedido.estado_ui == valor %}selected{% endif %}>{{ etiqueta }}</option>
+                                {% endfor %}
+                            </select>
+                            <button type="submit" class="btn btn-primary">Actualizar</button>
+                        </div>
+                    </form>
+                    {% endif %}
+                </article>
+                {% endfor %}
+            </div>
+        </section>
+
+        {% if paginacion_curso and paginacion_curso.total > 0 %}
+        <div class="orders-pagination orders-pagination-stage">
+            <small class="text-muted">Mostrando {{ paginacion_curso.desde }} - {{ paginacion_curso.hasta }} de {{ paginacion_curso.total }} pedidos</small>
+            {% if paginacion_curso.total_paginas > 1 %}
+            <div class="pagination-controls">
+                {% set prev_page = paginacion_curso.page - 1 %}
+                {% set next_page = paginacion_curso.page + 1 %}
+
+                {% if paginacion_curso.page > 1 %}
+                <a class="btn btn-sm btn-outline-primary page-arrow"
+                    href="{{ url_for('admin_pedidos', q=(filtros.q if filtros else ''), estado=(filtros.estado if filtros else 'todos'), estado_pago=(filtros.estado_pago if filtros else 'todos'), fecha_desde=(filtros.fecha_desde if filtros else ''), fecha_hasta=(filtros.fecha_hasta if filtros else ''), page=(paginacion.page if paginacion else 1), curso_page=prev_page) }}"
+                    title="Pagina anterior" aria-label="Pagina anterior">&larr;</a>
+                {% else %}
+                <span class="btn btn-sm btn-outline-secondary page-arrow disabled" title="Pagina anterior">&larr;</span>
+                {% endif %}
+
+                <nav class="page-numbers" aria-label="Paginacion de pedidos en curso">
+                    {% for b in paginacion_curso.botones %}
+                    {% if b == '...' %}
+                    <span class="page-ellipsis">...</span>
+                    {% elif b == paginacion_curso.page %}
+                    <span class="page-number active">{{ b }}</span>
+                    {% else %}
+                    <a class="page-number"
+                        href="{{ url_for('admin_pedidos', q=(filtros.q if filtros else ''), estado=(filtros.estado if filtros else 'todos'), estado_pago=(filtros.estado_pago if filtros else 'todos'), fecha_desde=(filtros.fecha_desde if filtros else ''), fecha_hasta=(filtros.fecha_hasta if filtros else ''), page=(paginacion.page if paginacion else 1), curso_page=b) }}">{{ b }}</a>
+                    {% endif %}
+                    {% endfor %}
+                </nav>
+
+                {% if paginacion_curso.page < paginacion_curso.total_paginas %}
+                <a class="btn btn-sm btn-outline-primary page-arrow"
+                    href="{{ url_for('admin_pedidos', q=(filtros.q if filtros else ''), estado=(filtros.estado if filtros else 'todos'), estado_pago=(filtros.estado_pago if filtros else 'todos'), fecha_desde=(filtros.fecha_desde if filtros else ''), fecha_hasta=(filtros.fecha_hasta if filtros else ''), page=(paginacion.page if paginacion else 1), curso_page=next_page) }}"
+                    title="Pagina siguiente" aria-label="Pagina siguiente">&rarr;</a>
+                {% else %}
+                <span class="btn btn-sm btn-outline-secondary page-arrow disabled" title="Pagina siguiente">&rarr;</span>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+        {% endif %}
+        {% else %}
+        <section class="empty-stage-board">
+            <div class="empty-icon">OK</div>
+            <h5>No hay pedidos en curso</h5>
+            <p>Cuando entren nuevos pedidos activos los veras aqui organizados por avance.</p>
+        </section>
+        {% endif %}
+    </div>
+</section>

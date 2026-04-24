@@ -588,7 +588,7 @@ input[type="submit"]:focus {
     display: flex;
     flex-direction: column;
     gap: 12px;
-    width: min(420px, calc(100vw - 32px));
+    width: min(440px, calc(100vw - 28px));
     pointer-events: none;
 }
 
@@ -596,8 +596,8 @@ input[type="submit"]:focus {
     position: relative;
     display: flex;
     align-items: flex-start;
-    gap: 0.9rem;
-    padding: 0.95rem 1rem;
+    gap: 1rem;
+    padding: 1.08rem 1.12rem;
     border-radius: 18px;
     background: rgba(255, 255, 255, 0.96);
     border: 1px solid rgba(20, 20, 20, 0.08);
@@ -622,14 +622,14 @@ input[type="submit"]:focus {
 }
 
 .flash-toast-icon {
-    width: 44px;
-    height: 44px;
-    flex: 0 0 44px;
+    width: 46px;
+    height: 46px;
+    flex: 0 0 46px;
     border-radius: 14px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    font-size: 1rem;
+    font-size: 1.12rem;
     color: #fff;
     box-shadow: 0 10px 24px rgba(20, 20, 20, 0.16);
 }
@@ -642,14 +642,14 @@ input[type="submit"]:focus {
 
 .flash-toast-label {
     color: #1a1a1a;
-    font-size: 0.98rem;
+    font-size: 1.1rem;
     font-weight: 800;
     line-height: 1.2;
 }
 
 .flash-toast-text {
     color: #5f6872;
-    font-size: 0.92rem;
+    font-size: 1.04rem;
     line-height: 1.35;
 }
 

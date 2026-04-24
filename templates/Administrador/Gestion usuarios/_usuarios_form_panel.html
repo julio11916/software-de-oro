@@ -1,0 +1,112 @@
+﻿<section id="form-usuario" class="admin-panel user-form-panel">
+    <div class="panel-header d-flex justify-content-between align-items-center">
+        <div>
+            <h5 class="mb-1">{% if usuario_editar %}Editar usuario{% else %}Crear usuario{% endif %}</h5>
+            <small>{% if usuario_editar %}Actualiza la cuenta sin perder su historial{% else %}Crea una cuenta nueva con datos limpios y seguros{% endif %}</small>
+        </div>
+        {% if usuario_editar %}
+        <span class="panel-chip">ID {{ usuario_editar.id_usuario }}</span>
+        {% else %}
+        <span class="panel-chip">Alta rápida</span>
+        {% endif %}
+    </div>
+
+    <div class="panel-body panel-body-spacious">
+        <form method="POST" action="{{ url_for('admin_guardar_usuario') }}" class="user-form-grid">
+            <input type="hidden" name="id_usuario" value="{{ usuario_editar.id_usuario if usuario_editar else '' }}">
+            <input type="hidden" name="buscar" value="{{ filtros.buscar if filtros else '' }}">
+            <input type="hidden" name="rol_filtro" value="{{ filtros.rol if filtros else '' }}">
+            <input type="hidden" name="estado_filtro" value="{{ filtros.estado if filtros else '' }}">
+            <input type="hidden" name="orden" value="{{ filtros.orden if filtros else 'reciente' }}">
+            <input type="hidden" name="page" value="{{ filtros.page if filtros else 1 }}">
+
+            <div class="user-form-section">
+                <div class="section-head">
+                    <h6>Datos principales</h6>
+                    <p>Solo estos datos son obligatorios para crear la cuenta.</p>
+                </div>
+                <div class="row g-3 g-lg-4">
+                    <div class="col-12">
+                        <label class="form-label">Nombre completo</label>
+                        <input class="form-control form-control-lg" type="text" name="nombre" required
+                            value="{{ usuario_editar.nombre if usuario_editar else '' }}"
+                            placeholder="Ej: Julio Cesar Otalvaro">
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label">Correo electrónico</label>
+                        <input class="form-control form-control-lg" type="email" name="email" required
+                            inputmode="email" autocomplete="email"
+                            value="{{ usuario_editar.email if usuario_editar else '' }}"
+                            placeholder="usuario@dominio.com">
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label">{% if usuario_editar %}Nueva contraseña{% else %}Contraseña segura{% endif %}</label>
+                        <div class="password-field-wrap">
+                            <input id="admin-user-password" class="form-control form-control-lg" type="password" name="password" {% if not usuario_editar %}required{% endif %}
+                                placeholder="{% if usuario_editar %}Déjala vacía si no vas a cambiarla{% else %}Crea una contraseña fuerte{% endif %}">
+                            <div class="password-actions">
+                                <button type="button" class="btn btn-outline-secondary btn-sm icon-toggle-btn js-toggle-password" data-target="#admin-user-password" aria-label="Mostrar contraseña" title="Mostrar contraseña">
+                                    <span class="password-icon-eye" aria-hidden="true">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                            <path d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8M1.173 8a13 13 0 0 1 1.66-2.043C4.12 4.668 5.88 3.5 8 3.5s3.879 1.168 5.168 2.457A13 13 0 0 1 14.828 8c-.058.087-.122.183-.195.288-.335.48-.83 1.12-1.465 1.755C11.879 11.332 10.12 12.5 8 12.5s-3.879-1.168-5.168-2.457A13 13 0 0 1 1.172 8z"/>
+                                            <path d="M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5M4.5 8a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0"/>
+                                        </svg>
+                                    </span>
+                                </button>
+                                <button type="button" class="btn btn-outline-primary btn-sm js-generate-password" data-target="#admin-user-password">Generar</button>
+                                <button type="button" class="btn btn-outline-dark btn-sm js-copy-password" data-target="#admin-user-password">Copiar</button>
+                            </div>
+                        </div>
+                        <small class="field-help">Mínimo 8 caracteres, mayúscula, minúscula, número y símbolo.</small>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Rol</label>
+                        <select class="form-select form-select-lg" name="rol">
+                            <option value="normal" {% if not usuario_editar or usuario_editar.rol=='normal' %}selected{% endif %}>Usuario</option>
+                            <option value="admin" {% if usuario_editar and usuario_editar.rol=='admin' %}selected{% endif %}>Administrador</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Estado</label>
+                        <select class="form-select form-select-lg" name="estado">
+                            <option value="activo" {% if (usuario_editar and usuario_editar.estado=='activo') or (not usuario_editar) %}selected{% endif %}>Activo</option>
+                            <option value="inactivo" {% if usuario_editar and usuario_editar.estado=='inactivo' %}selected{% endif %}>Inactivo</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="user-form-section">
+                <div class="section-head">
+                    <h6>Datos opcionales</h6>
+                    <p>Ayudan a dejar la cuenta lista para pedidos y contacto.</p>
+                </div>
+                <div class="row g-3 g-lg-4 align-items-end">
+                    <div class="col-md-5">
+                        <label class="form-label">Teléfono</label>
+                        <input class="form-control form-control-lg js-phone-input" type="text" name="telefono"
+                            inputmode="numeric" autocomplete="tel" maxlength="10" pattern="[0-9]{10}"
+                            value="{{ usuario_editar.telefono if usuario_editar else '' }}"
+                            placeholder="Solo números, 10 dígitos">
+                    </div>
+                    <div class="col-md-7">
+                        <label class="form-label">Dirección</label>
+                        <input class="form-control form-control-lg" type="text" name="direccion"
+                            value="{{ usuario_editar.direccion if usuario_editar else '' }}"
+                            placeholder="Dirección de entrega o residencia">
+                    </div>
+                    <div class="col-12">
+                        <small class="field-help">La verificación del correo se realiza únicamente desde el enlace enviado al email del usuario.</small>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-actions mt-2">
+                <button type="submit" class="btn btn-primary btn-lg">{% if usuario_editar %}Guardar cambios{% else %}Crear usuario{% endif %}</button>
+                {% if usuario_editar %}
+                <a class="btn btn-outline-secondary btn-lg" href="{{ url_for('admin_usuarios', buscar=(filtros.buscar if filtros else ''), rol=(filtros.rol if filtros else ''), estado=(filtros.estado if filtros else ''), orden=(filtros.orden if filtros else 'reciente'), page=(filtros.page if filtros else 1)) }}">Cancelar edición</a>
+                {% endif %}
+            </div>
+        </form>
+    </div>
+</section>
