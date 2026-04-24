@@ -42,6 +42,12 @@ app.config['MAIL_USERNAME'] = config_email.MAIL_USERNAME
 app.config['MAIL_PASSWORD'] = config_email.MAIL_PASSWORD
 app.config['MAIL_DEFAULT_SENDER'] = config_email.MAIL_DEFAULT_SENDER
 app.config['PROJECT_NAME'] = 'NACHOHER'
+app.config['TRANSFER_QR_IMAGE'] = os.getenv('TRANSFER_QR_IMAGE', 'img/qr/qr.jpeg').strip() or 'img/qr/qr.jpeg'
+app.config['TRANSFER_SUPPORT_EMAIL'] = os.getenv(
+    'TRANSFER_SUPPORT_EMAIL',
+    app.config['MAIL_DEFAULT_SENDER']
+).strip()
+app.config['TRANSFER_SUPPORT_WHATSAPP'] = os.getenv('TRANSFER_SUPPORT_WHATSAPP', '').strip()
 
 # Inicializar Flask-Mail
 mail.init_app(app)
@@ -75,27 +81,34 @@ PRODUCTO_COLUMNS = [
 ]
 PEDIDO_COLUMNS = ['id_pedido', 'id_usuario', 'fecha_pedido', 'estado', 'cliente_telefono', 'cliente_direccion']
 DETALLE_PEDIDO_COLUMNS = ['id_detalle', 'id_pedido', 'id_producto', 'cantidad', 'subtotal', 'talla']
-PAGO_COLUMNS = ['id_pago', 'id_pedido', 'monto', 'metodo_pago', 'fecha_pago', 'estado_pago', 'id_promo', 'codigo_promo', 'tipo_descuento', 'valor_descuento', 'monto_descuento']
+PAGO_COLUMNS = ['id_pago', 'id_pedido', 'monto', 'metodo_pago', 'fecha_pago', 'estado_pago', 'comprobante_url', 'id_promo', 'codigo_promo', 'tipo_descuento', 'valor_descuento', 'monto_descuento']
 PEDIDO_STATUS_FLOW = [
-    ('pendiente', 'Pendiente'),
     ('confirmado', 'Confirmado'),
-    ('en_preparacion', 'En preparación'),
     ('empaquetado', 'Empaquetado'),
     ('enviado', 'Enviado'),
     ('entregado', 'Entregado'),
 ]
 PEDIDO_STATUS_EXTRA = {
+    'pago_en_revision': 'Pago en revision',
     'cancelado': 'Cancelado',
     'pendiente_revision': 'Pendiente de revisión',
     'completado': 'Completado',
 }
 PEDIDO_STATUS_ALIAS = {
+    'pendiente': 'confirmado',
+    'en_preparacion': 'confirmado',
     'pendiente_revision': 'confirmado',
     'completado': 'entregado',
 }
 PEDIDO_STATUS_LABELS = {
     **{clave: etiqueta for clave, etiqueta in PEDIDO_STATUS_FLOW},
     **PEDIDO_STATUS_EXTRA,
+}
+PAGO_STATUS_LABELS = {
+    'pendiente_comprobante': 'Pendiente de comprobante',
+    'en_revision': 'En revision',
+    'aprobado': 'Aprobado',
+    'rechazado': 'Rechazado',
 }
 
 # Column definitions for promociones
@@ -416,6 +429,7 @@ def limpiar_token_recuperacion(usuarios, idx_usuario):
     usuarios.at[idx_usuario, 'reset_token_expiry'] = ''
 
 
+
 def enviar_codigo_registro(email, codigo):
     envio_ok = enviar_codigo_verificacion(
         email,
@@ -430,7 +444,6 @@ def enviar_codigo_registro(email, codigo):
         'Verifica la configuración SMTP del sistema e intenta nuevamente.'
     )
 
-
 def validar_archivo_imagen(archivo):
     extension = extension_imagen(getattr(archivo, 'filename', ''))
     if extension not in ALLOWED_IMAGE_EXTENSIONS:
@@ -442,6 +455,21 @@ def validar_archivo_imagen(archivo):
     if tamano > MAX_IMAGE_SIZE_BYTES:
         return "La imagen excede el tamaño máximo permitido (3MB)."
     return None
+
+
+def guardar_comprobante_transferencia(archivo, id_pedido):
+    error_validacion = validar_archivo_imagen(archivo)
+    if error_validacion:
+        return '', error_validacion
+
+    carpeta_destino = os.path.join('static', 'img', 'comprobantes')
+    os.makedirs(carpeta_destino, exist_ok=True)
+
+    extension = extension_imagen(getattr(archivo, 'filename', '')) or 'jpg'
+    nombre_archivo = f"comprobante_pedido_{int(id_pedido)}_{datetime.now().strftime('%Y%m%d_%H%M%S_%f')}.{extension}"
+    ruta_absoluta = os.path.join(carpeta_destino, nombre_archivo)
+    archivo.save(ruta_absoluta)
+    return f"img/comprobantes/{nombre_archivo}".replace('\\', '/'), ''
 
 
 def ruta_imagen_producto_absoluta(ruta_relativa):
@@ -634,7 +662,7 @@ def cargar_pedidos_df():
     pedidos['id_pedido'] = pd.to_numeric(pedidos['id_pedido'], errors='coerce')
     pedidos['id_usuario'] = pedidos['id_usuario'].fillna('')
     pedidos['fecha_pedido'] = pedidos['fecha_pedido'].fillna('')
-    pedidos['estado'] = pedidos['estado'].fillna('pendiente')
+    pedidos['estado'] = pedidos['estado'].fillna('confirmado')
     pedidos['cliente_telefono'] = pedidos['cliente_telefono'].fillna('').astype(str)
     pedidos['cliente_direccion'] = pedidos['cliente_direccion'].fillna('').astype(str)
     return pedidos[PEDIDO_COLUMNS]
@@ -680,6 +708,7 @@ def cargar_pagos_df():
         'metodo_pago': '',
         'fecha_pago': '',
         'estado_pago': '',
+        'comprobante_url': '',
         'id_promo': '',
         'codigo_promo': '',
         'tipo_descuento': '',
@@ -697,6 +726,7 @@ def cargar_pagos_df():
     pagos['metodo_pago'] = pagos['metodo_pago'].fillna('')
     pagos['fecha_pago'] = pagos['fecha_pago'].fillna('')
     pagos['estado_pago'] = pagos['estado_pago'].fillna('')
+    pagos['comprobante_url'] = pagos['comprobante_url'].fillna('')
     pagos['codigo_promo'] = pagos['codigo_promo'].fillna('')
     pagos['tipo_descuento'] = pagos['tipo_descuento'].fillna('')
     return pagos[PAGO_COLUMNS]
@@ -711,6 +741,7 @@ def guardar_pagos_df(pagos):
         'metodo_pago': '',
         'fecha_pago': '',
         'estado_pago': '',
+        'comprobante_url': '',
         'id_promo': '',
         'codigo_promo': '',
         'tipo_descuento': '',
@@ -1539,9 +1570,9 @@ def home():
             galeria.append(galeria[0])
         producto['galeria_dashboard'] = galeria[:5]
 
-    productos_destacados_ejercito = [p for p in lista_productos if bool(p.get('destacado_dashboard', False)) and p.get('fuerza') == 'Ejercito'][:5]
-    productos_destacados_policia = [p for p in lista_productos if bool(p.get('destacado_dashboard', False)) and p.get('fuerza') == 'Policia'][:5]
-    productos_destacados_armada = [p for p in lista_productos if bool(p.get('destacado_dashboard', False)) and p.get('fuerza') == 'Armada'][:5]
+    productos_destacados_ejercito = [p for p in lista_productos if bool(p.get('destacado_dashboard', False)) and p.get('fuerza') == 'Ejercito']
+    productos_destacados_policia = [p for p in lista_productos if bool(p.get('destacado_dashboard', False)) and p.get('fuerza') == 'Policia']
+    productos_destacados_armada = [p for p in lista_productos if bool(p.get('destacado_dashboard', False)) and p.get('fuerza') == 'Armada']
 
     return render_template(
         'Usuarios/Autenticacion/login.html',
@@ -1552,6 +1583,7 @@ def home():
     )
 
 @app.route('/login', methods=['GET', 'POST'])
+
 def login():
     if request.method == 'GET':
         return render_template('Usuarios/Autenticacion/login_form.html')
@@ -1580,7 +1612,7 @@ def login():
 
     estado = str(usuario.get('estado', 'activo')).strip().lower()
     if estado != 'activo':
-        return "Tu usuario está inactivo. Contacta al administrador."
+        return 'Tu usuario está inactivo. Contacta al administrador.'
 
     rol = usuario['rol']
     id_usuario = usuario['id_usuario']
@@ -1598,12 +1630,11 @@ def login():
     else:
         session.pop('carrito', None)
 
-    registrar_actividad("Inicio de sesión exitoso")
+    registrar_actividad('Inicio de sesión exitoso')
 
     if rol == 'admin':
         return redirect(url_for('admin_dashboard'))
-    else:
-        return redirect(url_for('user_dashboard'))
+    return redirect(url_for('user_dashboard'))
 
 
 @app.route('/forgot-password', methods=['GET', 'POST'])
@@ -1643,11 +1674,11 @@ def forgot_password():
         )
 
         if envio_ok:
-            registrar_actividad(f"Enlace de recuperación enviado a {email}")
+            registrar_actividad(f'Enlace de recuperación enviado a {email}')
         else:
             limpiar_token_recuperacion(usuarios, idx_usuario)
             guardar_usuarios_df(usuarios)
-            print(f"No fue posible enviar el correo de recuperación para: {email}")
+            print(f'No fue posible enviar el correo de recuperación para: {email}')
 
     flash(
         'Si el correo existe en el sistema, te enviamos un enlace para restablecer tu contraseña.',
@@ -1702,9 +1733,10 @@ def reset_password(token):
     guardar_usuarios_df(usuarios)
 
     email_usuario = str(usuario.get('email', '')).strip()
-    registrar_actividad(f"Contraseña restablecida por recuperación para {email_usuario}")
+    registrar_actividad(f'Contraseña restablecida por recuperación para {email_usuario}')
     flash('Contraseña actualizada correctamente. Ya puedes iniciar sesión.', 'success')
     return redirect(url_for('login'))
+
 
 @app.route('/registro', methods=['GET', 'POST'])
 def registro():
@@ -1803,7 +1835,7 @@ def registro_check_email():
             'message': 'Correo electrónico disponible.'
         })
     except Exception as e:
-        print(f"Error validando correo de registro: {str(e)}")
+        print(f'Error validando correo de registro: {str(e)}')
         return jsonify({'success': False, 'exists': False, 'message': 'Error interno validando el correo.'}), 500
 
 
@@ -1849,7 +1881,7 @@ def registro_send_code():
             'message': mensaje_envio
         })
     except Exception as e:
-        print(f"Error al enviar código de registro: {str(e)}")
+        print(f'Error al enviar código de registro: {str(e)}')
         return jsonify({'success': False, 'message': 'Error interno enviando el código.'}), 500
 
 
@@ -1935,7 +1967,7 @@ def registro_verificacion():
             'password_hash': password_guardado,
             'rol': 'normal',
             'estado': 'activo',
-            'fecha_registro': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            'fecha_registro': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
             'email_verified': True,
             'verification_code': '',
             'verification_code_expiry': '',
@@ -1948,7 +1980,7 @@ def registro_verificacion():
         PENDING_REGISTRATIONS.pop(email, None)
         session.pop('registro_pendiente_email', None)
 
-        registrar_actividad(f"Nuevo usuario registrado y verificado: {nombre}")
+        registrar_actividad(f'Nuevo usuario registrado y verificado: {nombre}')
         session['usuario'] = email
         session['id_usuario'] = int(nuevo_id)
         session['rol'] = 'normal'
@@ -2026,7 +2058,6 @@ def admin_dashboard():
             top_productos=top_productos,
             productos_destacables=productos_destacables,
             destacados_count=destacados_count,
-            destacados_max=5,
         )
     return "Acceso denegado"
 
@@ -2063,7 +2094,7 @@ def admin_actualizar_destacados():
                 continue
             if valor_int in ids_disponibles and valor_int not in ids_seleccionados:
                 ids_seleccionados.append(valor_int)
-        return ids_seleccionados[:5]  # Máximo 5 por categoría
+        return ids_seleccionados
 
     ids_ejercito = procesar_ids(ids_ejercito_raw)
     ids_policia = procesar_ids(ids_policia_raw)
@@ -2448,13 +2479,18 @@ def admin_usuarios():
         return "Acceso denegado"
 
     usuarios = cargar_usuarios_df()
+    pedidos = cargar_pedidos_df()
     usuarios['id_usuario'] = pd.to_numeric(usuarios['id_usuario'], errors='coerce')
+    usuarios['telefono'] = usuarios['telefono'].fillna('').astype(str)
+    usuarios['direccion'] = usuarios['direccion'].fillna('').astype(str)
+    usuarios['email_verified'] = usuarios['email_verified'].fillna(False).astype(bool)
 
     buscar = request.args.get('buscar', '').strip()
     rol = request.args.get('rol', '').strip()
     estado = request.args.get('estado', '').strip().lower()
     orden = request.args.get('orden', 'reciente').strip()
     edit_id = request.args.get('edit_id', type=int)
+    pagina_actual = _parse_positive_int(request.args.get('page', 1), default=1)
 
     filtrados = usuarios.copy()
     if buscar:
@@ -2484,19 +2520,49 @@ def admin_usuarios():
             if pd.notna(usuario_editar.get('id_usuario')):
                 usuario_editar['id_usuario'] = int(usuario_editar['id_usuario'])
             usuario_editar['estado'] = str(usuario_editar.get('estado', 'activo')).strip().lower()
+            usuario_editar['telefono'] = str(usuario_editar.get('telefono', '') or '').strip()
+            usuario_editar['direccion'] = str(usuario_editar.get('direccion', '') or '').strip()
+            usuario_editar['email_verified'] = bool(usuario_editar.get('email_verified', False))
+
+    pedidos_por_usuario = {}
+    if not pedidos.empty and 'id_usuario' in pedidos.columns:
+        pedidos_tmp = pedidos.copy()
+        pedidos_tmp['id_usuario'] = pedidos_tmp['id_usuario'].fillna('').astype(str).str.strip().str.lower()
+        for _, usuario_row in usuarios.iterrows():
+            usuario_id = str(int(usuario_row['id_usuario'])) if pd.notna(usuario_row['id_usuario']) else ''
+            usuario_email = normalizar_email(usuario_row.get('email', ''))
+            conteo = pedidos_tmp[
+                pedidos_tmp['id_usuario'].isin({usuario_id.lower(), usuario_email})
+            ].shape[0]
+            pedidos_por_usuario[usuario_email] = int(conteo)
 
     lista_usuarios = filtrados.fillna('').to_dict(orient='records')
     for usuario in lista_usuarios:
         if usuario.get('id_usuario') != '':
             usuario['id_usuario'] = int(usuario['id_usuario'])
         usuario['estado'] = str(usuario.get('estado', 'activo')).strip().lower()
+        usuario['telefono'] = str(usuario.get('telefono', '') or '').strip()
+        usuario['direccion'] = str(usuario.get('direccion', '') or '').strip()
+        usuario['email_verified'] = bool(usuario.get('email_verified', False))
+        usuario['pedidos_total'] = pedidos_por_usuario.get(normalizar_email(usuario.get('email', '')), 0)
 
-    filtros = {'buscar': buscar, 'rol': rol, 'estado': estado, 'orden': orden}
+    usuarios_vista, paginacion_usuarios = _paginar_lista(lista_usuarios, pagina_actual, per_page=10)
+
+    filtros = {'buscar': buscar, 'rol': rol, 'estado': estado, 'orden': orden, 'page': paginacion_usuarios['page']}
+    resumen = {
+        'total': int(len(usuarios)),
+        'admins': int((usuarios['rol'].astype(str).str.lower() == 'admin').sum()),
+        'clientes': int((usuarios['rol'].astype(str).str.lower() == 'normal').sum()),
+        'activos': int((usuarios['estado'].astype(str).str.lower() == 'activo').sum()),
+        'verificados': int(usuarios['email_verified'].sum()),
+    }
     return render_template(
         'Administrador/Gestion usuarios/admin_usuario.html',
-        usuarios=lista_usuarios,
+        usuarios=usuarios_vista,
         usuario_editar=usuario_editar,
-        filtros=filtros
+        filtros=filtros,
+        resumen=resumen,
+        paginacion_usuarios=paginacion_usuarios
     )
 
 
@@ -2505,12 +2571,27 @@ def admin_guardar_usuario():
     if session.get('rol') != 'admin':
         return "Acceso denegado"
 
+    buscar = request.form.get('buscar', '').strip()
+    rol_filtro = request.form.get('rol_filtro', '').strip()
+    estado_filtro = request.form.get('estado_filtro', '').strip().lower()
+    orden = request.form.get('orden', 'reciente').strip()
+    pagina_actual = _parse_positive_int(request.form.get('page', 1), default=1)
     id_usuario_raw = request.form.get('id_usuario', '').strip()
     nombre = request.form.get('nombre', '').strip()
     email = normalizar_email(request.form.get('email', ''))
     password = request.form.get('password', '').strip()
+    telefono = re.sub(r'\D', '', request.form.get('telefono', ''))
+    direccion = re.sub(r'\s+', ' ', request.form.get('direccion', '')).strip()
     rol = request.form.get('rol', 'normal').strip().lower()
     estado = request.form.get('estado', 'activo').strip().lower()
+
+    retorno_kwargs = {
+        'buscar': buscar,
+        'rol': rol_filtro,
+        'estado': estado_filtro,
+        'orden': orden,
+        'page': pagina_actual,
+    }
 
     if rol not in ['admin', 'normal']:
         rol = 'normal'
@@ -2519,7 +2600,15 @@ def admin_guardar_usuario():
 
     if not nombre or not email:
         flash('Nombre y email son obligatorios.', 'danger')
-        return redirect(url_for('admin_usuarios'))
+        return redirect(url_for('admin_usuarios', **retorno_kwargs))
+
+    if not re.fullmatch(r'[^@\s]+@[^@\s]+\.[^@\s]+', email):
+        flash('Debes ingresar un correo electronico valido.', 'danger')
+        return redirect(url_for('admin_usuarios', **retorno_kwargs))
+
+    if telefono and len(telefono) != 10:
+        flash('El telefono debe contener solo numeros y tener exactamente 10 digitos.', 'danger')
+        return redirect(url_for('admin_usuarios', **retorno_kwargs))
 
     usuarios = cargar_usuarios_df()
     usuarios['id_usuario'] = pd.to_numeric(usuarios['id_usuario'], errors='coerce')
@@ -2531,34 +2620,47 @@ def admin_guardar_usuario():
             edit_id = int(float(id_usuario_raw))
         except ValueError:
             flash('ID de usuario inválido.', 'danger')
-            return redirect(url_for('admin_usuarios'))
+            return redirect(url_for('admin_usuarios', **retorno_kwargs))
 
     if edit_id is None and not password:
         flash('La contraseña es obligatoria para crear usuarios.', 'danger')
-        return redirect(url_for('admin_usuarios'))
+        return redirect(url_for('admin_usuarios', **retorno_kwargs))
+
+    if password and not password_cumple_estandares(password):
+        flash(
+            'La contraseña debe tener minimo 8 caracteres, mayuscula, minuscula, numero y caracter especial.',
+            'danger'
+        )
+        return redirect(url_for('admin_usuarios', **retorno_kwargs))
 
     existe_email = usuarios[usuarios['email'].str.lower() == email.lower()]
     if edit_id is not None:
         existe_email = existe_email[existe_email['id_usuario'] != edit_id]
     if not existe_email.empty:
         flash('Ese email ya está registrado por otro usuario.', 'danger')
-        return redirect(url_for('admin_usuarios'))
+        return redirect(url_for('admin_usuarios', **retorno_kwargs))
 
     if edit_id is not None:
         idx = usuarios[usuarios['id_usuario'] == edit_id].index
         if idx.empty:
             flash('Usuario no encontrado para edición.', 'danger')
-            return redirect(url_for('admin_usuarios'))
+            return redirect(url_for('admin_usuarios', **retorno_kwargs))
 
         usuarios.at[idx[0], 'nombre'] = nombre
         usuarios.at[idx[0], 'email'] = email
         usuarios.at[idx[0], 'rol'] = rol
         usuarios.at[idx[0], 'estado'] = estado
+        usuarios.at[idx[0], 'telefono'] = telefono
+        usuarios.at[idx[0], 'direccion'] = direccion
         if password:
             usuarios.at[idx[0], 'password_hash'] = crear_hash_password(password)
 
+        email_verified_actual = bool(usuarios.at[idx[0], 'email_verified']) if 'email_verified' in usuarios.columns else False
+
         guardar_usuarios_df(usuarios[USUARIO_COLUMNS])
-        registrar_actividad(f"Actualizo usuario {email} (ID {edit_id})\n- rol: {rol}\n- estado: {estado}")
+        registrar_actividad(
+            f"Actualizo usuario {email} (ID {edit_id})\n- rol: {rol}\n- estado: {estado}\n- verificado: {email_verified_actual}"
+        )
         flash('Usuario actualizado correctamente.', 'success')
     else:
         ultimo_id = pd.to_numeric(usuarios['id_usuario'], errors='coerce').max()
@@ -2572,15 +2674,57 @@ def admin_guardar_usuario():
             'rol': rol,
             'estado': estado,
             'fecha_registro': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            'telefono': telefono,
+            'direccion': direccion,
+            'email_verified': False,
+            'verification_code': '',
+            'verification_code_expiry': '',
+            'password_change_code': '',
+            'password_change_code_expiry': '',
             'reset_token': '',
             'reset_token_expiry': ''
         }
         usuarios = pd.concat([usuarios, pd.DataFrame([nuevo_usuario])], ignore_index=True)
         guardar_usuarios_df(usuarios[USUARIO_COLUMNS])
-        registrar_actividad(f"Creo usuario {email} (ID {nuevo_id})\n- rol: {rol}\n- estado: {estado}")
+        registrar_actividad(
+            f"Creo usuario {email} (ID {nuevo_id})\n- rol: {rol}\n- estado: {estado}\n- verificado: False"
+        )
         flash('Usuario creado correctamente.', 'success')
 
-    return redirect(url_for('admin_usuarios'))
+    return redirect(url_for('admin_usuarios', **retorno_kwargs))
+
+
+@app.route('/admin/usuarios/estado/<int:id_usuario>', methods=['POST'])
+def admin_toggle_usuario_estado(id_usuario):
+    if session.get('rol') != 'admin':
+        return "Acceso denegado"
+
+    buscar = request.form.get('buscar', '').strip()
+    rol = request.form.get('rol', '').strip()
+    estado_filtro = request.form.get('estado_filtro', '').strip().lower()
+    orden = request.form.get('orden', 'reciente').strip()
+    pagina_actual = _parse_positive_int(request.form.get('page', 1), default=1)
+
+    usuarios = cargar_usuarios_df()
+    usuarios['id_usuario'] = pd.to_numeric(usuarios['id_usuario'], errors='coerce')
+
+    idx = usuarios[usuarios['id_usuario'] == id_usuario].index
+    if idx.empty:
+        flash('Usuario no encontrado.', 'danger')
+        return redirect(url_for('admin_usuarios', buscar=buscar, rol=rol, estado=estado_filtro, orden=orden, page=pagina_actual))
+
+    usuario_email = normalizar_email(usuarios.at[idx[0], 'email'])
+    if usuario_email == normalizar_email(session.get('usuario', '')) and str(usuarios.at[idx[0], 'estado']).strip().lower() == 'activo':
+        flash('No puedes desactivar tu propia cuenta de administrador desde esta vista.', 'warning')
+        return redirect(url_for('admin_usuarios', buscar=buscar, rol=rol, estado=estado_filtro, orden=orden, page=pagina_actual))
+
+    estado_actual = str(usuarios.at[idx[0], 'estado']).strip().lower()
+    nuevo_estado = 'inactivo' if estado_actual == 'activo' else 'activo'
+    usuarios.at[idx[0], 'estado'] = nuevo_estado
+    guardar_usuarios_df(usuarios[USUARIO_COLUMNS])
+    registrar_actividad(f"Cambio de estado para usuario {usuario_email} (ID {id_usuario}) -> {nuevo_estado}")
+    flash(f'Usuario actualizado a estado {nuevo_estado}.', 'success')
+    return redirect(url_for('admin_usuarios', buscar=buscar, rol=rol, estado=estado_filtro, orden=orden, page=pagina_actual))
 
 
 @app.route('/admin/registros')
@@ -2652,40 +2796,7 @@ def admin_registros_export_excel():
 def admin_ajustes():
     if session.get('rol') != 'admin':
         return "Acceso denegado"
-    pedidos = cargar_pedidos_df()
-    pagos = cargar_pagos_df()
-    detalle = cargar_detalle_pedido_df()
-    productos = cargar_productos_df()
-    usuarios = cargar_usuarios_df()
-
-    pedidos, pagos, detalle, productos = _normalizar_dataframes_admin_pedidos(
-        pedidos, pagos, detalle, productos
-    )
-    pedidos_view = _construir_vista_pedidos(pedidos, pagos, detalle, usuarios, productos)
-    pedidos_view = pedidos_view.sort_values(by='id_pedido', ascending=False, na_position='last')
-
-    pagina_actual = _parse_positive_int(request.args.get('ajustes_page', 1), default=1)
-    lista_pedidos = _enriquecer_pedidos_con_tracking(_serializar_pedidos_admin(pedidos_view))
-    pedidos_activos = [pedido for pedido in lista_pedidos if pedido.get('estado_activo')]
-    pedidos_activos_vista, paginacion_ajustes = _paginar_lista(pedidos_activos, pagina_actual, per_page=5)
-
-    resumen_estados = {
-        'activos': len(pedidos_activos),
-        'pendientes': sum(1 for pedido in pedidos_activos if pedido.get('estado_ui') == 'pendiente'),
-        'preparacion': sum(
-            1 for pedido in pedidos_activos
-            if pedido.get('estado_ui') in {'confirmado', 'en_preparacion', 'empaquetado'}
-        ),
-        'enviados': sum(1 for pedido in pedidos_activos if pedido.get('estado_ui') == 'enviado'),
-    }
-
-    return render_template(
-        'Administrador/Ajustes/admin_ajustes_dashboard.html',
-        pedidos_activos=pedidos_activos_vista,
-        resumen_estados=resumen_estados,
-        paginacion_ajustes=paginacion_ajustes,
-        estados_pedido=PEDIDO_STATUS_FLOW[:-1] + [('entregado', 'Entregado'), ('cancelado', 'Cancelado')],
-    )
+    return render_template('Administrador/Ajustes/admin_ajustes_dashboard.html')
 
 
 @app.route('/admin/informes')
@@ -2810,7 +2921,7 @@ def _normalizar_dataframes_admin_pedidos(pedidos, pagos, detalle, productos):
     if 'fecha_pedido' not in pedidos.columns:
         pedidos['fecha_pedido'] = ''
     if 'estado' not in pedidos.columns:
-        pedidos['estado'] = 'pendiente'
+        pedidos['estado'] = 'confirmado'
     if 'cliente_telefono' not in pedidos.columns:
         pedidos['cliente_telefono'] = ''
     if 'cliente_direccion' not in pedidos.columns:
@@ -2923,6 +3034,22 @@ def _construir_productos_por_pedido(detalle, productos_map):
     return productos_por_pedido
 
 
+def _etiqueta_metodo_pago(valor):
+    metodo = str(valor or '').strip().lower()
+    etiquetas = {
+        'tarjeta': 'Tarjeta',
+        'transferencia': 'Transferencia por QR',
+        'efectivo': 'Efectivo',
+        'qr': 'QR',
+    }
+    return etiquetas.get(metodo, metodo.replace('_', ' ').title() if metodo else '')
+
+
+def _etiqueta_estado_pago(valor):
+    estado = str(valor or '').strip().lower()
+    return PAGO_STATUS_LABELS.get(estado, estado.replace('_', ' ').capitalize() if estado else '')
+
+
 def _construir_vista_pedidos(pedidos, pagos, detalle, usuarios, productos):
     totales_pedido = detalle.groupby('id_pedido', as_index=False)['subtotal'].sum()
     totales_pedido = totales_pedido.rename(columns={'subtotal': 'total_productos'})
@@ -2931,12 +3058,17 @@ def _construir_vista_pedidos(pedidos, pagos, detalle, usuarios, productos):
         subset=['id_pedido'],
         keep='first'
     )
-    pagos_ultimos = pagos_ultimos[['id_pedido', 'monto', 'metodo_pago', 'fecha_pago', 'estado_pago']]
+    pagos_ultimos = pagos_ultimos[['id_pedido', 'monto', 'metodo_pago', 'fecha_pago', 'estado_pago', 'comprobante_url']]
 
     pedidos_view = pedidos.merge(totales_pedido, on='id_pedido', how='left')
     pedidos_view = pedidos_view.merge(pagos_ultimos, on='id_pedido', how='left')
     pedidos_view['total_productos'] = pedidos_view['total_productos'].fillna(0)
     pedidos_view['monto'] = pedidos_view['monto'].fillna(0)
+    pedidos_view['metodo_pago'] = pedidos_view['metodo_pago'].fillna('').astype(str).str.strip().str.lower()
+    pedidos_view['estado_pago'] = pedidos_view['estado_pago'].fillna('').astype(str).str.strip().str.lower()
+    pedidos_view['comprobante_url'] = pedidos_view['comprobante_url'].fillna('').astype(str).str.strip()
+    pedidos_view['metodo_pago_label'] = pedidos_view['metodo_pago'].apply(_etiqueta_metodo_pago)
+    pedidos_view['estado_pago_label'] = pedidos_view['estado_pago'].apply(_etiqueta_estado_pago)
 
     usuarios_map = _construir_mapa_usuarios(usuarios)
     productos_map = _construir_mapa_productos(productos)
@@ -2956,6 +3088,7 @@ def _leer_filtros_admin_pedidos(args):
     filtros = {
         'q': str(args.get('q', '')).strip(),
         'estado': str(args.get('estado', 'todos')).strip().lower(),
+        'estado_pago': str(args.get('estado_pago', 'todos')).strip().lower(),
         'fecha_desde': str(args.get('fecha_desde', '')).strip(),
         'fecha_hasta': str(args.get('fecha_hasta', '')).strip(),
         'page': str(args.get('page', '1')).strip(),
@@ -3017,12 +3150,18 @@ def _paginar_lista(items, pagina_actual, per_page=5):
 
 
 def _estado_pedido_ui(estado):
-    estado_normalizado = str(estado or '').strip().lower() or 'pendiente'
+    estado_normalizado = str(estado or '').strip().lower() or 'confirmado'
     return PEDIDO_STATUS_ALIAS.get(estado_normalizado, estado_normalizado)
 
 
 def _etiqueta_estado_pedido(estado):
-    estado_normalizado = str(estado or '').strip().lower() or 'pendiente'
+    estado_normalizado = str(estado or '').strip().lower() or 'confirmado'
+    if estado_normalizado in PEDIDO_STATUS_ALIAS:
+        estado_ui = PEDIDO_STATUS_ALIAS[estado_normalizado]
+        return PEDIDO_STATUS_LABELS.get(
+            estado_ui,
+            estado_ui.replace('_', ' ').capitalize()
+        )
     return PEDIDO_STATUS_LABELS.get(
         estado_normalizado,
         estado_normalizado.replace('_', ' ').capitalize()
@@ -3033,7 +3172,7 @@ def _construir_pasos_estado_pedido(estado):
     estado_ui = _estado_pedido_ui(estado)
     flujo = [clave for clave, _ in PEDIDO_STATUS_FLOW]
 
-    if estado_ui == 'cancelado':
+    if estado_ui in {'cancelado', 'pago_en_revision'}:
         return []
 
     try:
@@ -3061,11 +3200,23 @@ def _enriquecer_pedidos_con_tracking(registros):
     pedidos_enriquecidos = []
     for pedido in registros:
         pedido_item = dict(pedido)
-        estado_original = str(pedido_item.get('estado', '')).strip().lower() or 'pendiente'
+        estado_valor = pedido_item.get('estado', '')
+        estado_pago_valor = pedido_item.get('estado_pago', '')
+        metodo_pago_valor = pedido_item.get('metodo_pago', '')
+        estado_original = '' if pd.isna(estado_valor) else str(estado_valor).strip().lower()
+        estado_pago_original = '' if pd.isna(estado_pago_valor) else str(estado_pago_valor).strip().lower()
+        metodo_pago_original = '' if pd.isna(metodo_pago_valor) else str(metodo_pago_valor).strip().lower()
+        estado_original = estado_original or 'confirmado'
         estado_ui = _estado_pedido_ui(estado_original)
         pedido_item['estado'] = estado_original
         pedido_item['estado_ui'] = estado_ui
         pedido_item['estado_label'] = _etiqueta_estado_pedido(estado_original)
+        pedido_item['metodo_pago'] = metodo_pago_original
+        pedido_item['metodo_pago_label'] = _etiqueta_metodo_pago(metodo_pago_original)
+        pedido_item['estado_pago'] = estado_pago_original
+        pedido_item['estado_pago_ui'] = estado_pago_original
+        pedido_item['estado_pago_label'] = _etiqueta_estado_pago(estado_pago_original)
+        pedido_item['comprobante_url'] = '' if pd.isna(pedido_item.get('comprobante_url', '')) else str(pedido_item.get('comprobante_url', '') or '').strip()
         pedido_item['estado_activo'] = estado_ui not in {'entregado', 'cancelado'}
         pedido_item['tracking_steps'] = _construir_pasos_estado_pedido(estado_original)
         pedidos_enriquecidos.append(pedido_item)
@@ -3074,13 +3225,17 @@ def _enriquecer_pedidos_con_tracking(registros):
 
 def _filtrar_y_paginar_pedidos(pedidos_view, filtros, per_page=10):
     filtros = dict(filtros)
-    estados_validos = {clave for clave, _ in PEDIDO_STATUS_FLOW} | {'cancelado'}
+    estados_validos = {clave for clave, _ in PEDIDO_STATUS_FLOW} | {'cancelado', 'pago_en_revision'}
+    estados_pago_validos = set(PAGO_STATUS_LABELS.keys())
     if filtros.get('estado') not in estados_validos:
         filtros['estado'] = 'todos'
+    if filtros.get('estado_pago') not in estados_pago_validos:
+        filtros['estado_pago'] = 'todos'
 
     vista = pedidos_view.copy()
-    vista['estado'] = vista['estado'].fillna('pendiente').astype(str).str.strip().str.lower()
+    vista['estado'] = vista['estado'].fillna('confirmado').astype(str).str.strip().str.lower()
     vista['estado_ui'] = vista['estado'].apply(_estado_pedido_ui)
+    vista['estado_pago'] = vista['estado_pago'].fillna('').astype(str).str.strip().str.lower()
     vista['fecha_pedido'] = vista['fecha_pedido'].fillna('').astype(str)
     vista['fecha_pedido_dt'] = pd.to_datetime(vista['fecha_pedido'], errors='coerce')
     vista['id_pedido_txt'] = vista['id_pedido'].apply(
@@ -3089,6 +3244,8 @@ def _filtrar_y_paginar_pedidos(pedidos_view, filtros, per_page=10):
 
     if filtros['estado'] != 'todos':
         vista = vista[vista['estado_ui'] == filtros['estado']]
+    if filtros['estado_pago'] != 'todos':
+        vista = vista[vista['estado_pago'] == filtros['estado_pago']]
 
     fecha_desde_dt = pd.to_datetime(filtros.get('fecha_desde', ''), errors='coerce')
     if pd.notna(fecha_desde_dt):
@@ -3135,7 +3292,11 @@ def _filtrar_y_paginar_pedidos(pedidos_view, filtros, per_page=10):
         'botones': _build_pagination_buttons(total_paginas, pagina_actual),
     }
     hay_filtros_activos = bool(
-        filtros.get('q') or filtros.get('fecha_desde') or filtros.get('fecha_hasta') or filtros.get('estado') != 'todos'
+        filtros.get('q')
+        or filtros.get('fecha_desde')
+        or filtros.get('fecha_hasta')
+        or filtros.get('estado') != 'todos'
+        or filtros.get('estado_pago') != 'todos'
     )
     return vista, filtros, paginacion, hay_filtros_activos
 
@@ -3226,7 +3387,10 @@ def _serializar_pedidos_admin(pedidos_view):
     for pedido in lista_pedidos:
         if pedido.get('id_pedido') != '':
             pedido['id_pedido'] = int(pedido['id_pedido'])
-        pedido['estado'] = str(pedido.get('estado', 'pendiente')).strip().lower() or 'pendiente'
+        pedido['estado'] = str(pedido.get('estado', 'confirmado')).strip().lower() or 'confirmado'
+        pedido['estado_pago'] = str(pedido.get('estado_pago', '')).strip().lower()
+        pedido['metodo_pago'] = str(pedido.get('metodo_pago', '')).strip().lower()
+        pedido['comprobante_url'] = str(pedido.get('comprobante_url', '') or '').strip()
     return lista_pedidos
 
 
@@ -3249,6 +3413,8 @@ def _construir_params_redireccion_admin_pedidos(filtros, pago_filtros):
         params['q'] = filtros['q']
     if filtros.get('estado') and filtros['estado'] != 'todos':
         params['estado'] = filtros['estado']
+    if filtros.get('estado_pago') and filtros['estado_pago'] != 'todos':
+        params['estado_pago'] = filtros['estado_pago']
     if filtros.get('fecha_desde'):
         params['fecha_desde'] = filtros['fecha_desde']
     if filtros.get('fecha_hasta'):
@@ -3281,6 +3447,17 @@ def _redirigir_admin_pedidos_con_filtros(filtros, pago_filtros):
     return redirect(url_for('admin_pedidos', **params))
 
 
+def _redirigir_admin_pedidos_por_origen(origen, filtros, pago_filtros, ajustes_page=1, curso_page=1):
+    if origen == 'ajustes':
+        return redirect(url_for('admin_ajustes', ajustes_page=ajustes_page))
+    if origen == 'pedidos':
+        params = _construir_params_redireccion_admin_pedidos(filtros, pago_filtros)
+        if curso_page > 1:
+            params['curso_page'] = curso_page
+        return redirect(url_for('admin_pedidos', **params))
+    return _redirigir_admin_pedidos_con_filtros(filtros, pago_filtros)
+
+
 @app.route('/admin/pedidos')
 def admin_pedidos():
     if session.get('rol') != 'admin':
@@ -3301,25 +3478,33 @@ def admin_pedidos():
     pedidos_view, filtros, paginacion, hay_filtros_activos = _filtrar_y_paginar_pedidos(
         pedidos_view, filtros, per_page=10
     )
-    pagos_view, pago_filtros, paginacion_pagos, metodos_pago_opciones, estados_pago_opciones, hay_filtros_pagos_activos = _filtrar_y_paginar_pagos(
-        pagos, pago_filtros, per_page=10
-    )
+    pagina_curso_actual = _parse_positive_int(request.args.get('curso_page', 1), default=1)
+    lista_pedidos_base = _enriquecer_pedidos_con_tracking(_serializar_pedidos_admin(
+        _construir_vista_pedidos(pedidos, pagos, detalle, usuarios, productos).sort_values(
+            by='id_pedido', ascending=False, na_position='last'
+        )
+    ))
+    pedidos_activos = [pedido for pedido in lista_pedidos_base if pedido.get('estado_activo')]
+    pedidos_activos_vista, paginacion_curso = _paginar_lista(pedidos_activos, pagina_curso_actual, per_page=6)
+    resumen_estados = {
+        'activos': len(pedidos_activos),
+        'confirmados': sum(1 for pedido in pedidos_activos if pedido.get('estado_ui') == 'confirmado'),
+        'empaquetados': sum(1 for pedido in pedidos_activos if pedido.get('estado_ui') == 'empaquetado'),
+        'enviados': sum(1 for pedido in pedidos_activos if pedido.get('estado_ui') == 'enviado'),
+    }
 
     lista_pedidos = _enriquecer_pedidos_con_tracking(_serializar_pedidos_admin(pedidos_view))
-    lista_pagos = _serializar_pagos_admin(pagos_view)
 
     return render_template(
         'Administrador/Gestion pedidos/admin_orders.html',
         pedidos=lista_pedidos,
-        pagos=lista_pagos,
         filtros=filtros,
-        pago_filtros=pago_filtros,
         paginacion=paginacion,
-        paginacion_pagos=paginacion_pagos,
-        metodos_pago_opciones=metodos_pago_opciones,
-        estados_pago_opciones=estados_pago_opciones,
         hay_filtros_activos=hay_filtros_activos,
-        hay_filtros_pagos_activos=hay_filtros_pagos_activos,
+        pedidos_activos=pedidos_activos_vista,
+        paginacion_curso=paginacion_curso,
+        resumen_estados=resumen_estados,
+        estados_pedido=PEDIDO_STATUS_FLOW,
     )
 
 
@@ -3331,6 +3516,7 @@ def admin_pedidos_estado(id_pedido):
     filtros = {
         'q': str(request.form.get('f_q', '')).strip(),
         'estado': str(request.form.get('f_estado', 'todos')).strip().lower(),
+        'estado_pago': str(request.form.get('f_estado_pago', 'todos')).strip().lower(),
         'fecha_desde': str(request.form.get('f_fecha_desde', '')).strip(),
         'fecha_hasta': str(request.form.get('f_fecha_hasta', '')).strip(),
         'page': str(request.form.get('f_page', '1')).strip(),
@@ -3344,32 +3530,27 @@ def admin_pedidos_estado(id_pedido):
         'page': str(request.form.get('f_pago_page', '1')).strip(),
     }
     ajustes_page = _parse_positive_int(request.form.get('ajustes_page', '1'), default=1)
+    curso_page = _parse_positive_int(request.form.get('curso_page', '1'), default=1)
 
     estado_nuevo = request.form.get('estado', '').strip().lower()
     origen = str(request.form.get('origen', '')).strip().lower()
     estados_validos = {clave for clave, _ in PEDIDO_STATUS_FLOW} | {'cancelado'}
     if estado_nuevo not in estados_validos:
         flash('Estado de pedido inválido.', 'danger')
-        if origen == 'ajustes':
-            return redirect(url_for('admin_ajustes', ajustes_page=ajustes_page))
-        return _redirigir_admin_pedidos_con_filtros(filtros, pago_filtros)
+        return _redirigir_admin_pedidos_por_origen(origen, filtros, pago_filtros, ajustes_page, curso_page)
 
     pedidos = cargar_pedidos_df()
     if 'id_pedido' not in pedidos.columns:
         flash('Estructura de pedidos inválida.', 'danger')
-        if origen == 'ajustes':
-            return redirect(url_for('admin_ajustes', ajustes_page=ajustes_page))
-        return _redirigir_admin_pedidos_con_filtros(filtros, pago_filtros)
+        return _redirigir_admin_pedidos_por_origen(origen, filtros, pago_filtros, ajustes_page, curso_page)
     if 'estado' not in pedidos.columns:
-        pedidos['estado'] = 'pendiente'
+        pedidos['estado'] = 'confirmado'
 
     pedidos['id_pedido'] = pd.to_numeric(pedidos['id_pedido'], errors='coerce')
     idx = pedidos[pedidos['id_pedido'] == id_pedido].index
     if idx.empty:
         flash('Pedido no encontrado.', 'warning')
-        if origen == 'ajustes':
-            return redirect(url_for('admin_ajustes', ajustes_page=ajustes_page))
-        return _redirigir_admin_pedidos_con_filtros(filtros, pago_filtros)
+        return _redirigir_admin_pedidos_por_origen(origen, filtros, pago_filtros, ajustes_page, curso_page)
 
     estado_anterior = str(pedidos.at[idx[0], 'estado']).strip().lower()
     pedidos.at[idx[0], 'estado'] = estado_nuevo
@@ -3381,14 +3562,125 @@ def admin_pedidos_estado(id_pedido):
     else:
         flash(f'El pedido #{id_pedido} ya estaba en "{estado_nuevo}".', 'info')
 
-    if origen == 'ajustes':
-        return redirect(url_for('admin_ajustes', ajustes_page=ajustes_page))
-    return _redirigir_admin_pedidos_con_filtros(filtros, pago_filtros)
+    return _redirigir_admin_pedidos_por_origen(origen, filtros, pago_filtros, ajustes_page, curso_page)
+
+
+@app.route('/admin/pedidos/pago/<int:id_pedido>', methods=['POST'])
+def admin_pedidos_pago(id_pedido):
+    if session.get('rol') != 'admin':
+        return "Acceso denegado"
+
+    filtros = {
+        'q': str(request.form.get('f_q', '')).strip(),
+        'estado': str(request.form.get('f_estado', 'todos')).strip().lower(),
+        'estado_pago': str(request.form.get('f_estado_pago', 'todos')).strip().lower(),
+        'fecha_desde': str(request.form.get('f_fecha_desde', '')).strip(),
+        'fecha_hasta': str(request.form.get('f_fecha_hasta', '')).strip(),
+        'page': str(request.form.get('f_page', '1')).strip(),
+    }
+    pago_filtros = {
+        'q': str(request.form.get('f_pago_q', '')).strip(),
+        'metodo': str(request.form.get('f_pago_metodo', 'todos')).strip().lower(),
+        'estado': str(request.form.get('f_pago_estado', 'todos')).strip().lower(),
+        'fecha_desde': str(request.form.get('f_pago_fecha_desde', '')).strip(),
+        'fecha_hasta': str(request.form.get('f_pago_fecha_hasta', '')).strip(),
+        'page': str(request.form.get('f_pago_page', '1')).strip(),
+    }
+    ajustes_page = _parse_positive_int(request.form.get('ajustes_page', '1'), default=1)
+    curso_page = _parse_positive_int(request.form.get('curso_page', '1'), default=1)
+    origen = str(request.form.get('origen', '')).strip().lower()
+
+    accion = str(request.form.get('accion_pago', '')).strip().lower()
+    mapa_acciones = {
+        'revision': 'en_revision',
+        'aprobar': 'aprobado',
+        'rechazar': 'rechazado',
+    }
+    estado_pago_nuevo = mapa_acciones.get(accion, '')
+    if not estado_pago_nuevo:
+        flash('Accion de pago invalida.', 'danger')
+        return _redirigir_admin_pedidos_por_origen(origen, filtros, pago_filtros, ajustes_page, curso_page)
+
+    pagos = cargar_pagos_df()
+    if pagos.empty or 'id_pedido' not in pagos.columns:
+        flash('No se encontro un pago registrado para este pedido.', 'warning')
+        return _redirigir_admin_pedidos_por_origen(origen, filtros, pago_filtros, ajustes_page, curso_page)
+
+    pagos = pagos.copy()
+    pagos['id_pedido_num'] = pd.to_numeric(pagos['id_pedido'], errors='coerce')
+    pagos['id_pago_num'] = pd.to_numeric(pagos['id_pago'], errors='coerce')
+    pagos_ordenados = pagos.sort_values(by='id_pago_num', ascending=False, na_position='last')
+    idx_pago = pagos_ordenados[pagos_ordenados['id_pedido_num'] == id_pedido].index
+    if idx_pago.empty:
+        flash('No se encontro un pago registrado para este pedido.', 'warning')
+        return _redirigir_admin_pedidos_por_origen(origen, filtros, pago_filtros, ajustes_page, curso_page)
+
+    idx_pago = idx_pago[0]
+    estado_pago_anterior = str(pagos.at[idx_pago, 'estado_pago']).strip().lower()
+    metodo_pago = str(pagos.at[idx_pago, 'metodo_pago']).strip().lower()
+    if metodo_pago != 'transferencia':
+        flash('Solo las transferencias requieren validacion manual.', 'warning')
+        return _redirigir_admin_pedidos_por_origen(origen, filtros, pago_filtros, ajustes_page, curso_page)
+
+    pedidos = cargar_pedidos_df()
+    if pedidos.empty or 'id_pedido' not in pedidos.columns:
+        flash('No se encontro el pedido asociado.', 'warning')
+        return _redirigir_admin_pedidos_por_origen(origen, filtros, pago_filtros, ajustes_page, curso_page)
+
+    pedidos = pedidos.copy()
+    pedidos['id_pedido_num'] = pd.to_numeric(pedidos['id_pedido'], errors='coerce')
+    idx_pedido = pedidos[pedidos['id_pedido_num'] == id_pedido].index
+    if idx_pedido.empty:
+        flash('No se encontro el pedido asociado.', 'warning')
+        return _redirigir_admin_pedidos_por_origen(origen, filtros, pago_filtros, ajustes_page, curso_page)
+
+    idx_pedido = idx_pedido[0]
+    estado_pedido_anterior = str(pedidos.at[idx_pedido, 'estado']).strip().lower() or 'confirmado'
+
+    pagos.at[idx_pago, 'estado_pago'] = estado_pago_nuevo
+    if estado_pago_nuevo == 'aprobado':
+        pedidos.at[idx_pedido, 'estado'] = 'confirmado'
+    elif estado_pago_nuevo == 'rechazado':
+        pedidos.at[idx_pedido, 'estado'] = 'cancelado'
+    else:
+        pedidos.at[idx_pedido, 'estado'] = 'pago_en_revision'
+
+    if 'id_pedido_num' in pedidos.columns:
+        pedidos = pedidos.drop(columns=['id_pedido_num'])
+    if 'id_pedido_num' in pagos.columns:
+        pagos = pagos.drop(columns=['id_pedido_num'])
+    if 'id_pago_num' in pagos.columns:
+        pagos = pagos.drop(columns=['id_pago_num'])
+
+    guardar_pagos_df(pagos)
+    guardar_pedidos_df(pedidos)
+
+    if estado_pago_anterior != estado_pago_nuevo or estado_pedido_anterior != str(pedidos.at[idx_pedido, 'estado']).strip().lower():
+        registrar_actividad(
+            f"Actualizo revision de pago para pedido #{id_pedido}: "
+            f"{estado_pago_anterior or 'sin_estado'} -> {estado_pago_nuevo}"
+        )
+        if estado_pago_nuevo == 'aprobado':
+            flash(f'Transferencia del pedido #{id_pedido} aprobada. El pedido quedo confirmado.', 'success')
+        elif estado_pago_nuevo == 'rechazado':
+            flash(f'Transferencia del pedido #{id_pedido} rechazada. El pedido quedo cancelado.', 'warning')
+        else:
+            flash(f'El pago del pedido #{id_pedido} quedo en revision.', 'info')
+    else:
+        flash(f'El pago del pedido #{id_pedido} ya estaba en "{estado_pago_nuevo}".', 'info')
+
+    return _redirigir_admin_pedidos_por_origen(origen, filtros, pago_filtros, ajustes_page, curso_page)
+
 
 def _validar_cliente_pos(cliente_nombre, cliente_correo, cliente_documento, cliente_telefono):
+    cliente_nombre = str(cliente_nombre or '').strip()
+    cliente_correo = normalizar_email(cliente_correo)
+    cliente_documento = str(cliente_documento or '').strip()
+    cliente_telefono = str(cliente_telefono or '').strip()
+
     if not cliente_nombre or not cliente_correo or not cliente_documento or not cliente_telefono:
         return ('Debes completar todos los datos del cliente para registrar la venta.', 'warning')
-    if not re.fullmatch(r'[A-Za-zÁÉÍÓÚáéíóúÑñÜü\s]+', cliente_nombre):
+    if any(not (caracter.isalpha() or caracter.isspace()) for caracter in cliente_nombre):
         return ('El nombre del cliente solo puede contener letras y espacios.', 'warning')
     if not re.fullmatch(r'[^@\s]+@[^@\s]+\.[^@\s]+', cliente_correo):
         return ('Debes ingresar un correo electrónico válido.', 'warning')
@@ -3397,7 +3689,6 @@ def _validar_cliente_pos(cliente_nombre, cliente_correo, cliente_documento, clie
     if not cliente_telefono.isdigit() or len(cliente_telefono) > 10:
         return ('El teléfono solo puede contener números y máximo 10 dígitos.', 'warning')
     return None
-
 
 def _normalizar_metodo_pago_pos(metodo_pago):
     metodo = str(metodo_pago or 'efectivo').strip().lower()
@@ -3603,7 +3894,15 @@ def _crear_pedido_y_detalle(
     return nuevo_id_pedido
 
 
-def _crear_pago_para_pedido(pagos, id_pedido, monto, metodo_pago, resumen_promos, monto_descuento):
+def _crear_pago_para_pedido(
+    pagos,
+    id_pedido,
+    monto,
+    metodo_pago,
+    resumen_promos,
+    monto_descuento,
+    estado_pago='aprobado'
+):
     resumen = resumen_promos or {
         'id_promo': '',
         'codigo_promo': '',
@@ -3618,7 +3917,7 @@ def _crear_pago_para_pedido(pagos, id_pedido, monto, metodo_pago, resumen_promos
         'monto': monto,
         'metodo_pago': metodo_pago,
         'fecha_pago': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-        'estado_pago': 'aprobado',
+        'estado_pago': str(estado_pago or 'aprobado').strip().lower() or 'aprobado',
         'id_promo': resumen.get('id_promo', ''),
         'codigo_promo': resumen.get('codigo_promo', ''),
         'tipo_descuento': resumen.get('tipo_descuento', ''),
@@ -3893,10 +4192,10 @@ def user_dashboard():
             galeria.append(galeria[0])
         producto['galeria_dashboard'] = galeria[:5]
     
-    # Mostrar en los carruseles solo las prendas marcadas como destacadas en panel admin, filtradas por categoría.
-    productos_destacados_ejercito = [p for p in lista_productos if bool(p.get('destacado_dashboard', False)) and p.get('fuerza') == 'Ejercito'][:5]
-    productos_destacados_policia = [p for p in lista_productos if bool(p.get('destacado_dashboard', False)) and p.get('fuerza') == 'Policia'][:5]
-    productos_destacados_armada = [p for p in lista_productos if bool(p.get('destacado_dashboard', False)) and p.get('fuerza') == 'Armada'][:5]
+    # Mostrar en los carruseles todas las prendas marcadas como destacadas en panel admin, filtradas por categoría.
+    productos_destacados_ejercito = [p for p in lista_productos if bool(p.get('destacado_dashboard', False)) and p.get('fuerza') == 'Ejercito']
+    productos_destacados_policia = [p for p in lista_productos if bool(p.get('destacado_dashboard', False)) and p.get('fuerza') == 'Policia']
+    productos_destacados_armada = [p for p in lista_productos if bool(p.get('destacado_dashboard', False)) and p.get('fuerza') == 'Armada']
     
     # Obtener el contador del carrito
     carrito = _obtener_carrito_sesion_usuario()
@@ -4052,14 +4351,18 @@ def cart():
             _sincronizar_carrito_usuario_desde_sesion()
         total = sum(float(item.get('subtotal', 0)) for item in carrito_enriquecido)
         contacto_cliente = _obtener_contacto_checkout_predeterminado()
+        telefono_cliente = str(contacto_cliente.get('telefono', '') or '').strip()
+        direccion_cliente = str(contacto_cliente.get('direccion', '') or '').strip()
+        contacto_cliente_completo = bool(telefono_cliente and direccion_cliente)
         return render_template(
             'Usuarios/Carrito/cart.html',
             carrito=carrito_enriquecido,
             total=total,
             selected_metodo_pago=metodo_pago,
             selected_codigo_promo=codigo_promo,
-            cliente_telefono=contacto_cliente['telefono'],
-            cliente_direccion=contacto_cliente['direccion'],
+            cliente_telefono=telefono_cliente,
+            cliente_direccion=direccion_cliente,
+            contacto_cliente_completo=contacto_cliente_completo,
         )
     return "Acceso denegado"
 
@@ -4112,11 +4415,16 @@ def checkout():
             selected_codigo_promo=codigo_promo,
             cliente_telefono=contacto_cliente['telefono'],
             cliente_direccion=contacto_cliente['direccion'],
+            transfer_support_email=app.config.get('TRANSFER_SUPPORT_EMAIL', ''),
+            transfer_support_whatsapp=app.config.get('TRANSFER_SUPPORT_WHATSAPP', ''),
+            transfer_qr_image=app.config.get('TRANSFER_QR_IMAGE', 'img/qr/qr.jpeg'),
         )
     return "Acceso denegado"
 
 
 def _asegurar_columnas_descuento_pagos(pagos):
+    if 'comprobante_url' not in pagos.columns:
+        pagos['comprobante_url'] = ''
     if 'id_promo' not in pagos.columns:
         pagos['id_promo'] = pd.Series(dtype='float')
     if 'codigo_promo' not in pagos.columns:
@@ -4177,9 +4485,9 @@ def _validar_datos_cliente_checkout(telefono, direccion):
             'warning'
         )
 
-    if len(telefono_limpio) < 7 or len(telefono_limpio) > 10:
+    if len(telefono_limpio) != 10:
         return None, None, (
-            'El telefono debe contener solo numeros y tener entre 7 y 10 digitos.',
+            'El telefono debe contener solo numeros y tener exactamente 10 digitos.',
             'warning'
         )
 
@@ -4253,7 +4561,7 @@ def _registrar_compra_checkout_usuario(
     total_final,
     promo_aplicada,
     descuento_promo,
-    estado_pedido='pendiente',
+    estado_pedido='confirmado',
     cliente_telefono='',
     cliente_direccion='',
 ):
@@ -4275,7 +4583,8 @@ def _registrar_compra_checkout_usuario(
         monto=total_final,
         metodo_pago=metodo_pago,
         resumen_promos=resumen_promos,
-        monto_descuento=float(descuento_promo)
+        monto_descuento=float(descuento_promo),
+        estado_pago='pendiente_comprobante' if str(metodo_pago).strip().lower() == 'transferencia' else 'aprobado'
     )
     return nuevo_id_pedido
 
@@ -4338,12 +4647,18 @@ def checkout_select():
 
     metodo_pago = str(request.form.get('metodo_pago', '') or '').strip().lower()
     codigo_promo = str(request.form.get('codigo_promo', '') or '').strip().upper()
+    cliente_telefono_input = request.form.get('cliente_telefono', '')
+    cliente_direccion_input = request.form.get('cliente_direccion', '')
+    if not str(cliente_telefono_input or '').strip() or not str(cliente_direccion_input or '').strip():
+        contacto_cliente = _obtener_contacto_checkout_predeterminado()
+        cliente_telefono_input = contacto_cliente.get('telefono', '')
+        cliente_direccion_input = contacto_cliente.get('direccion', '')
     cliente_telefono, cliente_direccion, error_cliente = _validar_datos_cliente_checkout(
-        request.form.get('cliente_telefono', ''),
-        request.form.get('cliente_direccion', '')
+        cliente_telefono_input,
+        cliente_direccion_input
     )
-    session['checkout_cliente_telefono'] = str(request.form.get('cliente_telefono', '') or '').strip()
-    session['checkout_cliente_direccion'] = str(request.form.get('cliente_direccion', '') or '').strip()
+    session['checkout_cliente_telefono'] = str(cliente_telefono_input or '').strip()
+    session['checkout_cliente_direccion'] = str(cliente_direccion_input or '').strip()
     metodos_validos = {'tarjeta', 'transferencia'}
     if metodo_pago not in metodos_validos:
         flash('Selecciona un metodo de pago valido.', 'warning')
@@ -4395,6 +4710,7 @@ def pay():
     total = sum(float(item.get('subtotal', 0)) for item in carrito)
     codigo_promo = request.form.get('codigo_promo', '').strip().upper()
     metodo_pago = str(request.form.get('metodo_pago', '') or '').strip().lower()
+    comprobante_transferencia = request.files.get('comprobante_transferencia')
     cliente_telefono_input = request.form.get('cliente_telefono', '')
     cliente_direccion_input = request.form.get('cliente_direccion', '')
     if not str(cliente_telefono_input or '').strip() or not str(cliente_direccion_input or '').strip():
@@ -4439,6 +4755,12 @@ def pay():
         flash(error_stock[0], error_stock[1])
         return redirect(url_for('cart', metodo_pago=metodo_pago, codigo_promo=codigo_promo))
 
+    if metodo_pago == 'transferencia' and comprobante_transferencia and str(getattr(comprobante_transferencia, 'filename', '')).strip():
+        error_comprobante = validar_archivo_imagen(comprobante_transferencia)
+        if error_comprobante:
+            flash(error_comprobante, 'warning')
+            return redirect(url_for('checkout', metodo_pago='transferencia', codigo_promo=codigo_promo))
+
     if metodo_pago == 'tarjeta':
         return _iniciar_pago_stripe_desde_carrito(carrito, codigo_promo, total_final)
     agotados_en_compra = _descontar_stock_checkout(productos, carrito)
@@ -4453,6 +4775,7 @@ def pay():
         total_final=total_final,
         promo_aplicada=promo_aplicada,
         descuento_promo=descuento_promo,
+        estado_pedido='pago_en_revision' if metodo_pago == 'transferencia' else 'confirmado',
         cliente_telefono=cliente_telefono,
         cliente_direccion=cliente_direccion,
     )
@@ -4463,13 +4786,32 @@ def pay():
     if agotados_en_compra:
         registrar_actividad("Stock agotado por pedido: " + ", ".join(agotados_en_compra))
 
+    comprobante_adjunto = False
+    if metodo_pago == 'transferencia' and comprobante_transferencia and str(getattr(comprobante_transferencia, 'filename', '')).strip():
+        comprobante_url, error_guardado = guardar_comprobante_transferencia(comprobante_transferencia, nuevo_id_pedido)
+        if comprobante_url:
+            pagos_actualizados = cargar_pagos_df()
+            pagos_actualizados = _asegurar_columnas_descuento_pagos(pagos_actualizados)
+            pagos_actualizados['id_pedido_num'] = pd.to_numeric(pagos_actualizados['id_pedido'], errors='coerce')
+            pagos_actualizados['id_pago_num'] = pd.to_numeric(pagos_actualizados['id_pago'], errors='coerce')
+            idx_pago = pagos_actualizados[pagos_actualizados['id_pedido_num'] == nuevo_id_pedido].sort_values(
+                by='id_pago_num', ascending=False, na_position='last'
+            ).index
+            if not idx_pago.empty:
+                pagos_actualizados.at[idx_pago[0], 'comprobante_url'] = comprobante_url
+                pagos_actualizados = pagos_actualizados.drop(columns=['id_pedido_num', 'id_pago_num'])
+                guardar_pagos_df(pagos_actualizados)
+                comprobante_adjunto = True
+        elif error_guardado:
+            app.logger.warning("No se pudo guardar comprobante para pedido %s: %s", nuevo_id_pedido, error_guardado)
+
     session['carrito'] = []
     session.modified = True
     _sincronizar_carrito_usuario_desde_sesion()
 
     metodo_pago_nombres = {
         'tarjeta': 'Tarjeta de Credito/Debito',
-        'transferencia': 'Transferencia Bancaria',
+        'transferencia': 'Transferencia por QR',
         'efectivo': 'Efectivo',
         'paypal': 'PayPal'
     }
@@ -4481,7 +4823,11 @@ def pay():
         fecha=datetime.now().strftime("%d/%m/%Y %H:%M"),
         total=total_final,
         promo_codigo=promo_aplicada.get('codigo', '') if promo_aplicada else None,
-        descuento=descuento_promo if promo_aplicada else 0
+        descuento=descuento_promo if promo_aplicada else 0,
+        confirmacion_manual=(metodo_pago == 'transferencia'),
+        transfer_support_email=app.config.get('TRANSFER_SUPPORT_EMAIL', ''),
+        transfer_support_whatsapp=app.config.get('TRANSFER_SUPPORT_WHATSAPP', ''),
+        comprobante_adjunto=comprobante_adjunto,
     )
 
 
@@ -4584,7 +4930,7 @@ def pay_stripe_success():
     detalle_pedido = cargar_detalle_pedido_df()
     pagos = _asegurar_columnas_descuento_pagos(cargar_pagos_df())
 
-    estado_pedido = 'pendiente'
+    estado_pedido = 'confirmado'
     agotados_en_compra = []
     error_stock = _validar_stock_checkout(productos, carrito_checkout)
     if error_stock:
@@ -4635,7 +4981,10 @@ def pay_stripe_success():
         fecha=datetime.now().strftime("%d/%m/%Y %H:%M"),
         total=total_final,
         promo_codigo=codigo_promo or None,
-        descuento=descuento_promo if descuento_promo > 0 else 0
+        descuento=descuento_promo if descuento_promo > 0 else 0,
+        confirmacion_manual=False,
+        transfer_support_email=app.config.get('TRANSFER_SUPPORT_EMAIL', ''),
+        transfer_support_whatsapp=app.config.get('TRANSFER_SUPPORT_WHATSAPP', ''),
     )
 
 
@@ -4660,13 +5009,38 @@ def user_orders():
         pedidos['id_usuario_num'] = pd.to_numeric(pedidos['id_usuario'], errors='coerce')
         pedidos_usuario = pedidos[pedidos['id_usuario_num'] == id_usuario].copy()
     
-    # Obtener montos de pagos
+    def asignar_numero_pedido_usuario(df):
+        if df.empty or 'id_pedido' not in df.columns:
+            return df
+
+        df = df.copy()
+        df['id_pedido_num'] = pd.to_numeric(df['id_pedido'], errors='coerce')
+        orden_base = df.sort_values(by='id_pedido_num', ascending=True, na_position='last').reset_index()
+        orden_base['numero_pedido_usuario'] = range(1, len(orden_base) + 1)
+        mapa_numeros = dict(zip(orden_base['index'], orden_base['numero_pedido_usuario']))
+        df['numero_pedido_usuario'] = df.index.map(mapa_numeros).fillna(0).astype(int)
+        return df
+
+    # Obtener datos del pago mas reciente por pedido
     if not pedidos_usuario.empty:
         pagos = cargar_pagos_df()
-        pedidos_usuario = pd.merge(pedidos_usuario, pagos[['id_pedido', 'monto', 'metodo_pago']], 
-                                   on='id_pedido', how='left')
+        if not pagos.empty:
+            pagos = pagos.copy()
+            pagos['id_pago_num'] = pd.to_numeric(pagos['id_pago'], errors='coerce')
+            pagos = pagos.sort_values(by='id_pago_num', ascending=False, na_position='last').drop_duplicates(
+                subset=['id_pedido'],
+                keep='first'
+            )
+            columnas_pago = [col for col in ['id_pedido', 'monto', 'metodo_pago', 'estado_pago', 'comprobante_url'] if col in pagos.columns]
+            pedidos_usuario = pd.merge(
+                pedidos_usuario,
+                pagos[columnas_pago],
+                on='id_pedido',
+                how='left'
+            )
+        pedidos_usuario = asignar_numero_pedido_usuario(pedidos_usuario)
         pedidos_usuario = pedidos_usuario.sort_values(by='id_pedido', ascending=False, na_position='last')
-    
+
     lista_pedidos = _enriquecer_pedidos_con_tracking(pedidos_usuario.fillna('').to_dict(orient='records'))
     return render_template('Usuarios/Carrito/user_orders.html', pedidos=lista_pedidos)
 
@@ -4688,7 +5062,12 @@ def user_order_details(id_pedido):
     
     if pedido.empty:
         return "Pedido no encontrado o no tienes permiso para verlo"
-    
+
+    pedidos_usuario = pedidos[pedidos['id_usuario_num'] == id_usuario].copy()
+    pedidos_usuario = pedidos_usuario.sort_values(by='id_pedido_num', ascending=True, na_position='last').reset_index(drop=True)
+    pedidos_usuario['numero_pedido_usuario'] = range(1, len(pedidos_usuario) + 1)
+    pedido_numero_usuario = pedidos_usuario.loc[pedidos_usuario['id_pedido_num'] == id_pedido, 'numero_pedido_usuario']
+
     detalle_pedido = cargar_detalle_pedido_df()
     detalles = detalle_pedido[detalle_pedido['id_pedido'] == id_pedido]
     
@@ -4697,7 +5076,24 @@ def user_order_details(id_pedido):
     if 'talla' not in detalles.columns:
         detalles['talla'] = ''
 
-    pedido_info = _enriquecer_pedidos_con_tracking([pedido.iloc[0].to_dict()])[0]
+    pedido_dict = pedido.iloc[0].to_dict()
+    pedido_dict['numero_pedido_usuario'] = int(pedido_numero_usuario.iloc[0]) if not pedido_numero_usuario.empty else ''
+    pagos = cargar_pagos_df()
+    if not pagos.empty:
+        pagos = pagos.copy()
+        pagos['id_pedido_num'] = pd.to_numeric(pagos['id_pedido'], errors='coerce')
+        pagos['id_pago_num'] = pd.to_numeric(pagos['id_pago'], errors='coerce')
+        pago_pedido = pagos[pagos['id_pedido_num'] == id_pedido].sort_values(
+            by='id_pago_num', ascending=False, na_position='last'
+        )
+        if not pago_pedido.empty:
+            pago_info = pago_pedido.iloc[0].to_dict()
+            pedido_dict['monto'] = pago_info.get('monto', '')
+            pedido_dict['metodo_pago'] = pago_info.get('metodo_pago', '')
+            pedido_dict['estado_pago'] = pago_info.get('estado_pago', '')
+            pedido_dict['comprobante_url'] = pago_info.get('comprobante_url', '')
+
+    pedido_info = _enriquecer_pedidos_con_tracking([pedido_dict])[0]
     
     return render_template('Usuarios/Informacion compras pedido/user_order_details.html',
                           pedido=pedido_info,
@@ -4800,6 +5196,7 @@ def update_profile():
     return redirect(url_for('user_profile'))
 
 @app.route('/user/profile/send-password-change-code', methods=['POST'])
+
 def send_password_change_code():
     if session.get('rol') != 'normal':
         return jsonify({'success': False, 'message': 'Acceso denegado'}), 403
@@ -4834,7 +5231,7 @@ def send_password_change_code():
                 'message': 'No fue posible enviar el código al correo. Intenta nuevamente.'
             }), 500
 
-        registrar_actividad(f"Código de cambio de contraseña enviado a {usuario_email}")
+        registrar_actividad(f'Código de cambio de contraseña enviado a {usuario_email}')
         return jsonify({
             'success': True,
             'message': (
@@ -4843,11 +5240,11 @@ def send_password_change_code():
             )
         })
     except Exception as e:
-        print(f"Error enviando código de cambio de contraseña: {str(e)}")
+        print(f'Error enviando código de cambio de contraseña: {str(e)}')
         return jsonify({'success': False, 'message': 'Error interno enviando el código.'}), 500
 
-
 @app.route('/user/profile/verify-password-change-code', methods=['POST'])
+
 def verify_password_change_code():
     if session.get('rol') != 'normal':
         return jsonify({'success': False, 'message': 'Acceso denegado'}), 403
@@ -4898,11 +5295,11 @@ def verify_password_change_code():
             'message': 'Código validado. Ya puedes continuar con el cambio de contraseña.'
         })
     except Exception as e:
-        print(f"Error verificando código de cambio de contraseña: {str(e)}")
+        print(f'Error verificando código de cambio de contraseña: {str(e)}')
         return jsonify({'success': False, 'message': 'Error interno verificando el código.'}), 500
 
-
 @app.route('/user/profile/change-password', methods=['POST'])
+
 def change_password():
     if session.get('rol') != 'normal':
         flash('Acceso denegado', 'danger')
@@ -4973,7 +5370,7 @@ def change_password():
     limpiar_codigo_cambio_password(usuarios, idx)
 
     guardar_usuarios_df(usuarios)
-    registrar_actividad(f"Usuario {usuario_email} cambió su contraseña con código de seguridad")
+    registrar_actividad(f'Usuario {usuario_email} cambió su contraseña con código de seguridad')
     flash('Contraseña cambiada correctamente.', 'success')
     return redirect(url_for('user_profile'))
 
@@ -5022,41 +5419,34 @@ def update_settings():
     
     return redirect(url_for('user_profile'))
 
+
 @app.route('/user/send-verification-code', methods=['POST'])
 def send_verification_code():
-    """Envía un código de verificación al correo del usuario (funciona siempre)."""
+    """Envía un código de verificación al correo del usuario."""
     if session.get('rol') != 'normal':
         return jsonify({'success': False, 'message': 'Acceso denegado'}), 403
-    
+
     try:
-        # Cargar usuarios
         usuarios = cargar_usuarios_df()
         usuario_email = session.get('usuario')
-        
-        # Asegurar que existan las columnas de verificación
+
         if 'email_verified' not in usuarios.columns:
             usuarios['email_verified'] = False
         if 'verification_code' not in usuarios.columns:
             usuarios['verification_code'] = ''
         if 'verification_code_expiry' not in usuarios.columns:
             usuarios['verification_code_expiry'] = ''
-        
-        # Verificar si el usuario existe
+
         usuario_idx = usuarios[usuarios['email'] == usuario_email].index
         if usuario_idx.empty:
             return jsonify({'success': False, 'message': 'Usuario no encontrado'}), 404
-        
-        # Generar código de verificación (sin importar si ya está verificado)
+
         codigo = generar_codigo_verificacion()
         expiry = datetime.now() + timedelta(minutes=REGISTER_CODE_EXP_MINUTES)
-        
-        # Guardar código en la base de datos (forzar como string)
+
         usuarios.loc[usuario_idx, 'verification_code'] = str(codigo)
         usuarios.loc[usuario_idx, 'verification_code_expiry'] = expiry.strftime('%Y-%m-%d %H:%M:%S')
-        
-        # Asegurar que la columna sea tipo string
         usuarios['verification_code'] = usuarios['verification_code'].astype(str).str.replace('.0', '', regex=False).replace('nan', '')
-        
         guardar_usuarios_df(usuarios)
 
         if enviar_codigo_verificacion(
@@ -5065,9 +5455,9 @@ def send_verification_code():
             tipo='autenticacion',
             minutos_expiracion=REGISTER_CODE_EXP_MINUTES
         ):
-            registrar_actividad(f"Código de autenticación enviado a {usuario_email}")
+            registrar_actividad(f'Código de autenticación enviado a {usuario_email}')
             return jsonify({
-                'success': True, 
+                'success': True,
                 'message': 'Código enviado correctamente. Revisa tu correo.'
             })
 
@@ -5081,85 +5471,79 @@ def send_verification_code():
                 'Verifica la configuración SMTP del sistema e intenta nuevamente.'
             )
         }), 500
-            
+
     except Exception as e:
-        print(f"Error al enviar código: {str(e)}")
+        print(f'Error al enviar código: {str(e)}')
         return jsonify({
-            'success': False, 
+            'success': False,
             'message': f'Error: {str(e)}'
         }), 500
 
+
 @app.route('/user/verify-email', methods=['POST'])
 def verify_email():
-    """Verifica el código ingresado por el usuario (funciona siempre)."""
+    """Verifica el código ingresado por el usuario."""
     if session.get('rol') != 'normal':
         return jsonify({'success': False, 'message': 'Acceso denegado'}), 403
-    
+
     try:
-        codigo_ingresado = request.json.get('code', '').strip()
-        
+        payload = request.get_json(silent=True) or {}
+        codigo_ingresado = str(payload.get('code', '') or '').strip()
+
         if not codigo_ingresado:
             return jsonify({'success': False, 'message': 'Debe ingresar un código'}), 400
-        
-        # Cargar usuarios
+
         usuarios = cargar_usuarios_df()
         usuario_email = session.get('usuario')
-        
-        # Asegurar que existan las columnas
+
         if 'email_verified' not in usuarios.columns:
             usuarios['email_verified'] = False
         if 'verification_code' not in usuarios.columns:
             usuarios['verification_code'] = ''
         if 'verification_code_expiry' not in usuarios.columns:
             usuarios['verification_code_expiry'] = ''
-        
+
         usuario_idx = usuarios[usuarios['email'] == usuario_email].index
         if usuario_idx.empty:
             return jsonify({'success': False, 'message': 'Usuario no encontrado'}), 404
-        
+
         usuario = usuarios.loc[usuario_idx[0]]
-        
-        # Verificar si existe un código
+
         if not usuario['verification_code']:
             return jsonify({'success': False, 'message': 'No hay código de verificación. Solicita uno nuevo.'}), 400
-        
-        # Verificar si el código expiró
+
         if timestamp_expirado(usuario.get('verification_code_expiry', '')):
             return jsonify({'success': False, 'message': 'El código ha expirado. Solicita uno nuevo.'}), 400
-        
-        # Verificar el código (limpiar .0 por si acaso)
+
         codigo_guardado = str(usuario['verification_code']).replace('.0', '').strip()
         if codigo_guardado == str(codigo_ingresado):
-            # Código correcto
-            # Marcar como verificado si no lo estaba
             if not usuario['email_verified']:
                 usuarios.loc[usuario_idx, 'email_verified'] = True
                 mensaje_exito = '¡Correo verificado exitosamente!'
-                actividad = f"Usuario {usuario_email} verificó su correo electrónico"
+                actividad = f'Usuario {usuario_email} verificó su correo electrónico'
             else:
                 mensaje_exito = '¡Autenticación exitosa!'
-                actividad = f"Usuario {usuario_email} se autenticó correctamente"
-            
-            # Limpiar código usado
+                actividad = f'Usuario {usuario_email} se autenticó correctamente'
+
             usuarios.loc[usuario_idx, 'verification_code'] = ''
             usuarios.loc[usuario_idx, 'verification_code_expiry'] = ''
             guardar_usuarios_df(usuarios)
-            
+
             registrar_actividad(actividad)
             return jsonify({
-                'success': True, 
+                'success': True,
                 'message': mensaje_exito
             })
-        else:
-            return jsonify({
-                'success': False, 
-                'message': 'Código incorrecto. Verifica e intenta nuevamente.'
-            }), 400
-            
-    except Exception as e:
-        print(f"Error al verificar código: {str(e)}")
+
         return jsonify({
-            'success': False, 
+            'success': False,
+            'message': 'Código incorrecto. Verifica e intenta nuevamente.'
+        }), 400
+
+    except Exception as e:
+        print(f'Error al verificar código: {str(e)}')
+        return jsonify({
+            'success': False,
             'message': 'Error interno del servidor'
         }), 500
 
@@ -5706,3 +6090,4 @@ def sobre_nosotros():
 if __name__ == '__main__':
     app.run(debug=True, use_reloader=True)
     
+

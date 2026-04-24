@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="es">
 
 <head>
@@ -11,101 +11,176 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/usuario/user_orders.css') }}">
 </head>
 
-<body class="page-with-catalog-header">
+<body class="page-with-catalog-header orders-page">
     {% include 'Usuarios/partials/header_offcanvas.html' %}
-
     {% include 'Usuarios/partials/_flash_toasts.html' %}
 
-    <div class="container main-container">
+    <main class="orders-shell">
         {% if pedidos %}
-        <div class="orders-header">
-            <h2><i class="fas fa-history"></i> Historial de Pedidos</h2>
-            <div class="orders-stats">
-                <div class="stat-item">
-                    <i class="fas fa-shopping-bag"></i>
-                    <div class="stat-details">
-                        <span class="stat-value">{{ pedidos|length }}</span>
-                        <span class="stat-label">Total de Pedidos</span>
-                    </div>
+        <section class="orders-hero">
+            <div class="orders-hero__copy">
+                <span class="orders-eyebrow">Centro de pedidos</span>
+                <h1>Haz seguimiento a cada compra</h1>
+                <p>Aquí ves el estado del pago, el avance del pedido y el acceso directo al detalle completo de cada compra.</p>
+                <div class="orders-hero__chips">
+                    <span><i class="fas fa-credit-card"></i> Pago y pedido en un solo lugar</span>
+                    <span><i class="fas fa-truck"></i> Seguimiento claro por etapas</span>
+                    <span><i class="fas fa-receipt"></i> Transferencias bajo revisión manual</span>
                 </div>
             </div>
-        </div>
-
-        <div class="orders-grid">
-            {% for pedido in pedidos %}
-            <div class="order-card">
-                <div class="order-card-header">
-                    <div class="order-id">
-                        <i class="fas fa-hashtag"></i>
-                        <span>Pedido {{ pedido.id_pedido }}</span>
-                    </div>
-                    <div class="order-status status-{{ pedido.estado_ui }}">
-                        <i class="fas fa-circle"></i>
-                        {{ pedido.estado_label }}
-                    </div>
+            <aside class="orders-hero__aside">
+                <div class="hero-stat-card">
+                    <span>Total de pedidos</span>
+                    <strong>{{ pedidos|length }}</strong>
+                    <small>Historial visible en tu cuenta</small>
                 </div>
+                <div class="hero-stat-card hero-stat-card--soft">
+                    <span>Ultimo movimiento</span>
+                    <strong>{{ pedidos[0].estado_label if pedidos else 'Sin pedidos' }}</strong>
+                    <small>{{ pedidos[0].fecha_pedido if pedidos else 'Aun no compras' }}</small>
+                </div>
+            </aside>
+        </section>
 
-                <div class="order-card-body">
-                    <div class="order-info-grid">
-                        <div class="info-item">
-                            <i class="fas fa-calendar-alt"></i>
-                            <div class="info-content">
-                                <span class="info-label">Fecha</span>
-                                <span class="info-value">{{ pedido.fecha_pedido }}</span>
-                            </div>
+        <section class="orders-metrics">
+            <article class="orders-metric-card">
+                <span class="orders-metric-label">Pedidos totales</span>
+                <strong class="orders-metric-value">{{ pedidos|length }}</strong>
+                <small>Todos tus registros en la tienda</small>
+            </article>
+            <article class="orders-metric-card">
+                <span class="orders-metric-label">Transferencias</span>
+                <strong class="orders-metric-value">{{ pedidos|selectattr('metodo_pago', 'equalto', 'transferencia')|list|length }}</strong>
+                <small>Pagos que pasan por revisión manual</small>
+            </article>
+            <article class="orders-metric-card">
+                <span class="orders-metric-label">Entregados</span>
+                <strong class="orders-metric-value">{{ pedidos|selectattr('estado_ui', 'equalto', 'entregado')|list|length }}</strong>
+                <small>Pedidos finalizados correctamente</small>
+            </article>
+            <article class="orders-metric-card">
+                <span class="orders-metric-label">En revisión</span>
+                <strong class="orders-metric-value">{{ pedidos|selectattr('estado_pago_ui', 'equalto', 'en_revision')|list|length }}</strong>
+                <small>Transferencias que estamos validando</small>
+            </article>
+        </section>
+
+        <section class="orders-grid">
+            {% for pedido in pedidos %}
+            <article class="order-card-premium">
+                <header class="order-card-premium__header">
+                    <div>
+                        <span class="order-card-kicker">Pedido {{ pedido.numero_pedido_usuario }}</span>
+                        <h2>{{ pedido.fecha_pedido }}</h2>
+                    </div>
+                    <div class="order-status-bundle">
+                        <span class="status-pill status-pill-{{ pedido.estado_ui }}">{{ pedido.estado_label }}</span>
+                        {% if pedido.estado_pago_label %}
+                        <span class="payment-pill payment-pill-{{ pedido.estado_pago_ui }}">{{ pedido.estado_pago_label }}</span>
+                        {% endif %}
+                    </div>
+                </header>
+
+                <div class="order-card-premium__body">
+                    <div class="order-topline">
+                        <div class="order-topline__amount">
+                            <span>Monto total</span>
+                            <strong>{{ pedido.monto|cop if pedido.monto else 'N/A' }}</strong>
                         </div>
-
-                        <div class="info-item">
-                            <i class="fas fa-money-bill-wave"></i>
-                            <div class="info-content">
-                                <span class="info-label">Monto Total</span>
-                                <span class="info-value price">{{ pedido.monto|cop if pedido.monto else 'N/A' }}</span>
-                            </div>
-                        </div>
-
-                        <div class="info-item">
-                            <i class="fas fa-credit-card"></i>
-                            <div class="info-content">
-                                <span class="info-label">Método de Pago</span>
-                                <span class="info-value">{{ pedido.metodo_pago if pedido.metodo_pago else 'N/A' }}</span>
-                            </div>
+                        <div class="order-topline__method">
+                            <span>Metodo de pago</span>
+                            <strong>{{ pedido.metodo_pago_label if pedido.metodo_pago_label else 'Sin registrar' }}</strong>
                         </div>
                     </div>
+
+                    <section class="order-meta-panel">
+                        <article class="order-meta-row">
+                            <div class="order-meta-row__icon">
+                                <i class="fas fa-calendar-days"></i>
+                            </div>
+                            <div class="order-meta-row__copy">
+                                <span>Fecha</span>
+                                <strong>{{ pedido.fecha_pedido }}</strong>
+                            </div>
+                        </article>
+                        <article class="order-meta-row">
+                            <div class="order-meta-row__icon">
+                                <i class="fas fa-box-archive"></i>
+                            </div>
+                            <div class="order-meta-row__copy">
+                                <span>Estado del pedido</span>
+                                <strong>{{ pedido.estado_label }}</strong>
+                            </div>
+                        </article>
+                        <article class="order-meta-row">
+                            <div class="order-meta-row__icon">
+                                <i class="fas fa-wallet"></i>
+                            </div>
+                            <div class="order-meta-row__copy">
+                                <span>Estado del pago</span>
+                                <strong>{{ pedido.estado_pago_label if pedido.estado_pago_label else 'Sin registrar' }}</strong>
+                            </div>
+                        </article>
+                    </section>
+
+                    {% if pedido.metodo_pago == 'transferencia' and pedido.estado_pago_ui != 'aprobado' %}
+                    <section class="order-review-banner order-review-banner-{{ pedido.estado_pago_ui if pedido.estado_pago_ui else 'pendiente_comprobante' }}">
+                        <div class="order-review-banner__icon">
+                            <i class="fas fa-receipt"></i>
+                        </div>
+                        <div>
+                            <h3>Transferencia en validación</h3>
+                            <p>
+                                {% if pedido.estado_pago_ui == 'rechazado' %}
+                                Tu comprobante fue rechazado. Contáctanos para coordinar cómo completar nuevamente el pago.
+                                {% elif pedido.estado_pago_ui == 'en_revision' %}
+                                Ya recibimos tu soporte y el equipo está revisando manualmente la transferencia.
+                                {% else %}
+                                El pedido ya fue registrado. Solo falta aprobar el comprobante enviado por correo y WhatsApp.
+                                {% endif %}
+                            </p>
+                        </div>
+                    </section>
+                    {% endif %}
 
                     {% if pedido.tracking_steps %}
-                    <div class="tracking-panel">
-                        <span class="tracking-title">Estado de tu pedido</span>
+                    <section class="order-tracking-card">
+                        <div class="order-tracking-card__head">
+                            <span class="orders-eyebrow">Seguimiento</span>
+                            <strong>Estado actual del pedido</strong>
+                        </div>
                         {% with tracking_steps=pedido.tracking_steps %}
                         {% include 'Usuarios/partials/_order_tracking_steps.html' %}
                         {% endwith %}
-                    </div>
+                    </section>
                     {% endif %}
                 </div>
 
-                <div class="order-card-footer">
-                    <a href="{{ url_for('user_order_details', id_pedido=pedido.id_pedido) }}" class="btn-view-details">
+                <footer class="order-card-premium__footer">
+                    <a href="{{ url_for('user_order_details', id_pedido=pedido.id_pedido) }}" class="btn-order-detail">
                         <i class="fas fa-eye"></i>
-                        Ver Detalles
+                        Ver detalle completo
                     </a>
-                </div>
-            </div>
+                </footer>
+            </article>
             {% endfor %}
-        </div>
+        </section>
 
         {% else %}
-        <div class="empty-orders">
-            <div class="empty-orders-icon">
+        <section class="orders-empty-state">
+            <div class="orders-empty-state__icon">
                 <i class="fas fa-box-open"></i>
             </div>
-            <h2>Aún no has realizado ningún pedido</h2>
-            <p>Explora nuestro cat&aacute;logo y realiza tu primera compra.</p>
+            <span class="orders-eyebrow">Aun sin historial</span>
+            <h1>Aun no has realizado ningun pedido</h1>
+            <p>Cuando completes tu primera compra, aquí podrás seguir el estado del pago y el avance del pedido en tiempo real.</p>
             <a href="{{ url_for('user_dashboard') }}" class="btn-start-shopping">
                 <i class="fas fa-store"></i>
-                Comenzar a Comprar
+                Comenzar a comprar
             </a>
-        </div>
+        </section>
         {% endif %}
-    </div>
+    </main>
 
     <script src="{{ url_for('static', filename='js/usuario/catalog_base.js') }}"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>

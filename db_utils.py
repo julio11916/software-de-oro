@@ -131,6 +131,7 @@ def ensure_tables():
         metodo_pago TEXT,
         fecha_pago TIMESTAMPTZ DEFAULT NOW(),
         estado_pago TEXT,
+        comprobante_url TEXT,
         id_promo BIGINT,
         codigo_promo TEXT,
         tipo_descuento TEXT,
@@ -169,6 +170,7 @@ def ensure_tables():
         conn.execute(sa.text("ALTER TABLE pedidos ADD COLUMN IF NOT EXISTS cliente_telefono TEXT"))
         conn.execute(sa.text("ALTER TABLE pedidos ADD COLUMN IF NOT EXISTS cliente_direccion TEXT"))
         conn.execute(sa.text("ALTER TABLE detalle_pedido ADD COLUMN IF NOT EXISTS talla TEXT"))
+        conn.execute(sa.text("ALTER TABLE pagos ADD COLUMN IF NOT EXISTS comprobante_url TEXT"))
         conn.execute(sa.text("ALTER TABLE promociones ADD COLUMN IF NOT EXISTS id_producto BIGINT"))
         conn.execute(sa.text("ALTER TABLE stripe_checkout ADD COLUMN IF NOT EXISTS carrito_json TEXT NOT NULL DEFAULT '[]'"))
 
