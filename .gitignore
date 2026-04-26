@@ -38,3 +38,27 @@ recibo_pos_*/
 # Configuración sensible (credenciales de email)
 config_email.py
 .env
+
+# Scripts temporales (raiz del repo)
+/*-LAPTOP-*.py
+/*-LAPTOP-*.js
+/check*.py
+/fix*.py
+/debug*.js
+/finalize_*.py
+/find_*.py
+/track_*.py
+/extract_*.py
+/replace_*.py
+/verificar_*.py
+/update_*.py
+/grep*.py
+/list_*.py
+/test*.py
+/test*.js
+/acorn*.js
+/braces.txt
+/bracet.txt
+/out*.txt
+/temp_*.html
+/old_*.js
