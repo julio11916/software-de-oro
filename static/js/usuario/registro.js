@@ -40,7 +40,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const validarConfirmacion = () => {
         if (confirmInput.value && confirmInput.value !== passwordInput.value) {
-            confirmInput.setCustomValidity("Las contraseñas no coinciden.");
+            confirmInput.setCustomValidity("Las contrasenas no coinciden.");
             return;
         }
         confirmInput.setCustomValidity("");
@@ -97,7 +97,7 @@ document.addEventListener("DOMContentLoaded", () => {
         setRuleState(ruleSymbol, tieneSimbolo);
 
         passwordInput.setCustomValidity(
-            "La contraseña debe cumplir todas las condiciones."
+            "La contrasena debe cumplir todas las condiciones."
         );
     };
 
@@ -109,7 +109,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         if (!emailRegex.test(email)) {
-            setEmailStatus("Debes ingresar un correo electrónico válido.", "error");
+            setEmailStatus("Debes ingresar un correo electronico valido.", "error");
             return false;
         }
 

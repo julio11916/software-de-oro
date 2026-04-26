@@ -154,8 +154,7 @@ body {
     margin-top: 74px;
     background-image: url("../../img/Pagina/nachoher_fondo_logo.jpg");
     background-size: cover;
-    background-position: 50% 22%;
-    background-repeat: no-repeat;
+    background-position: center center;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -165,7 +164,7 @@ body {
 
 .logo {
     display: block;
-    width: min(76vw, 500px);
+    width: min(92vw, 1000px);
     height: auto;
     margin: 0 auto 24px;
 }
@@ -197,14 +196,8 @@ body {
     margin-bottom: 10px;
 }
 
-@media (max-width: 768px) {
-    .hero {
-        background-position: 50% 30%;
-    }
-}
-
 .hero-subtitle {
-    font-size: clamp(1rem, 4vw, 2rem);
+    font-size: clamp(2rem, 4vw, 1rem);
     color: rgba(255, 255, 255, 0.9);
     font-family: "Brush Script MT", "Segoe Script", cursive;
 }
@@ -322,66 +315,31 @@ body {
 }
 
 .btn-primary {
-    background: transparent;
-    border: 1px solid #000;
+    background: linear-gradient(135deg, var(--btn-start) 0%, var(--btn-mid) 60%, var(--btn-end) 100%);
+    border: 1px solid var(--btn-mid);
     border-radius: 12px;
-    color: #000;
-    box-shadow: none;
-    transition: all 0.25s;
+    color: #fff;
+    box-shadow: 0 6px 14px rgba(50, 99, 163, 0.22);
 }
 
 .btn-primary:hover {
-    background: #d8f3f9;
-    color: #000;
+    filter: brightness(1.05);
+    color: #fff;
 }
 
 .btn,
 button,
 input[type="submit"] {
-    background: transparent;
-    border: 1px solid #000;
-    color: #000;
-    transition: all 0.25s;
-}
-
-.btn-dark,
-.btn-outline-dark {
-    background: transparent !important;
-    border: 1px solid #000 !important;
-    color: #000 !important;
-}
-
-.btn-dark:hover,
-.btn-outline-dark:hover {
-    background: rgba(255, 255, 255, 0.55) !important;
-    color: #000 !important;
-}
-
-/* Hover específico para páginas de autenticación */
-.auth-page .btn,
-.auth-page button,
-.auth-page input[type="submit"],
-.auth-page .btn-dark,
-.auth-page .btn-outline-dark {
-    background: transparent;
-    border: 1px solid #000;
-    color: #000;
-}
-
-.auth-page .btn:hover,
-.auth-page button:hover,
-.auth-page input[type="submit"]:hover,
-.auth-page .btn-dark:hover,
-.auth-page .btn-outline-dark:hover {
-    background: rgba(255, 255, 255, 0.55);
-    color: #000;
+    background: linear-gradient(135deg, var(--btn-start) 0%, var(--btn-mid) 60%, var(--btn-end) 100%);
+    border: 1px solid var(--btn-mid);
+    color: #fff;
 }
 
 .btn:focus,
 button:focus,
 input[type="submit"]:focus {
     outline: none;
-    box-shadow: 0 0 0 0.2rem rgba(216, 243, 249, 0.6);
+    box-shadow: 0 0 0 0.2rem rgba(31, 58, 147, 0.25);
 }
 
 .user-dropdown {
@@ -420,10 +378,6 @@ input[type="submit"]:focus {
 /* Carrusel de destacados */
 .destacados-carousel {
     position: relative;
-    background: linear-gradient(135deg, #f8f7f4 0%, #f1f0eb 100%);
-    border-radius: 24px;
-    padding: 20px 22px 10px;
-    box-shadow: 0 24px 50px rgba(0, 0, 0, 0.08);
 }
 
 .home-carousel {
@@ -431,116 +385,30 @@ input[type="submit"]:focus {
     max-width: 1100px;
 }
 
-.destacados-shell {
-    padding: 24px 22px 18px;
-}
-
 .destacados-carousel .carousel-item {
-    padding: 6px 8px 16px;
+    padding: 8px 14px;
 }
 
-.destacado-layout {
-    min-height: 360px;
-    align-items: stretch;
-}
-
-.destacado-card {
+.destacados-carousel .carousel-item .carousel-image {
+    height: 360px;
+    object-fit: contain;
     background: #f7f7f3;
-    border-radius: 22px;
-    border: 1px solid rgba(20, 20, 20, 0.08);
-    padding: 22px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    height: 100%;
-    min-height: 320px;
-}
-
-.destacado-image {
-    width: 100%;
-    max-height: 360px;
-    object-fit: contain;
-}
-
-.thumb-grid {
-    padding: 6px;
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    grid-auto-rows: 140px;
-    gap: 12px;
-}
-
-.thumb-grid.thumb-grid-4 {
-    grid-template-columns: repeat(2, 1fr);
-    grid-auto-rows: 140px;
-}
-
-.thumb-card {
-    background: #f7f7f3;
-    border-radius: 16px;
-    border: 1px solid rgba(20, 20, 20, 0.08);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 12px;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-    height: 100%;
-}
-
-.thumb-card img {
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
-}
-
-.thumb-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.10);
-}
-
-.thumb-card.alt-angle {
-    background: linear-gradient(135deg, #f8f7f4 0%, #f2f1ed 100%);
-}
-
-.thumb-card.alt-angle img {
-    object-fit: contain;
-}
-
-.destacado-info {
-    text-align: center;
-}
-
-.destacado-title {
-    font-weight: 700;
-    font-size: 1.35rem;
-    margin-bottom: 6px;
-    color: #1f1f1f;
-}
-
-.destacado-price {
-    font-size: 1.05rem;
-    font-weight: 600;
-    color: #2e2e2e;
-    letter-spacing: 0.01em;
+    border-radius: 18px;
+    border: 1px solid rgba(20, 20, 20, 0.12);
+    padding: 18px;
 }
 
 .destacados-carousel .carousel-control-prev,
 .destacados-carousel .carousel-control-next {
     width: 48px;
-    height: 48px;
-    border-radius: 50%;
-    background: #ffffff;
-    box-shadow: 0 10px 26px rgba(0, 0, 0, 0.12);
-    top: 44%;
-    transform: translateY(-50%);
+    filter: invert(1);
 }
 
 .destacados-carousel .carousel-control-prev-icon,
 .destacados-carousel .carousel-control-next-icon {
-    background-color: #1f1f1f;
+    background-color: rgba(0, 0, 0, 0.55);
     border-radius: 50%;
     background-size: 70%;
-    filter: invert(1);
 }
 
 .footer-compact {
@@ -580,112 +448,6 @@ input[type="submit"]:focus {
     opacity: 0.75;
 }
 
-.flash-toast-stack {
-    position: fixed;
-    top: 102px;
-    right: 24px;
-    z-index: 1400;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    width: min(440px, calc(100vw - 28px));
-    pointer-events: none;
-}
-
-.flash-toast {
-    position: relative;
-    display: flex;
-    align-items: flex-start;
-    gap: 1rem;
-    padding: 1.08rem 1.12rem;
-    border-radius: 18px;
-    background: rgba(255, 255, 255, 0.96);
-    border: 1px solid rgba(20, 20, 20, 0.08);
-    box-shadow: 0 18px 42px rgba(20, 20, 20, 0.12);
-    backdrop-filter: blur(10px);
-    animation: flashToastPresence 7s ease forwards;
-}
-
-.flash-toast::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    border-radius: inherit;
-    background: linear-gradient(135deg, rgba(50, 99, 163, 0.08), rgba(23, 148, 210, 0.04));
-    pointer-events: none;
-}
-
-.flash-toast-icon,
-.flash-toast-copy {
-    position: relative;
-    z-index: 1;
-}
-
-.flash-toast-icon {
-    width: 46px;
-    height: 46px;
-    flex: 0 0 46px;
-    border-radius: 14px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.12rem;
-    color: #fff;
-    box-shadow: 0 10px 24px rgba(20, 20, 20, 0.16);
-}
-
-.flash-toast-copy {
-    display: flex;
-    flex-direction: column;
-    gap: 0.15rem;
-}
-
-.flash-toast-label {
-    color: #1a1a1a;
-    font-size: 1.1rem;
-    font-weight: 800;
-    line-height: 1.2;
-}
-
-.flash-toast-text {
-    color: #5f6872;
-    font-size: 1.04rem;
-    line-height: 1.35;
-}
-
-.flash-toast-success .flash-toast-icon {
-    background: linear-gradient(135deg, #188e5a, #2fb77c);
-}
-
-.flash-toast-danger .flash-toast-icon {
-    background: linear-gradient(135deg, #8e2f4e, #cf406b);
-}
-
-.flash-toast-warning .flash-toast-icon {
-    background: linear-gradient(135deg, #997127, #c39a3d);
-}
-
-.flash-toast-info .flash-toast-icon {
-    background: linear-gradient(135deg, #244f86, #1794d2);
-}
-
-@keyframes flashToastPresence {
-    0% {
-        opacity: 0;
-        transform: translate3d(0, -12px, 0) scale(0.98);
-    }
-    8%,
-    78% {
-        opacity: 1;
-        transform: translate3d(0, 0, 0) scale(1);
-    }
-    100% {
-        opacity: 0;
-        transform: translate3d(0, -10px, 0) scale(0.98);
-        visibility: hidden;
-    }
-}
-
 @media (max-width: 991px) {
     .store-header-inner {
         height: 66px;
@@ -722,26 +484,7 @@ input[type="submit"]:focus {
         margin: -16px auto 32px;
     }
 
-    .destacado-layout {
-        min-height: 0;
-    }
-
-    .destacado-card {
-        padding: 16px;
-    }
-
-    .destacado-image {
-        max-height: 240px;
-    }
-
-    .thumb-card {
-        height: 120px;
-    }
-
-    .flash-toast-stack {
-        top: 88px;
-        right: 16px;
-        left: 16px;
-        width: auto;
+    .destacados-carousel .carousel-item .carousel-image {
+        height: 240px;
     }
 }

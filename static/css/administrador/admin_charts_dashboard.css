@@ -58,15 +58,7 @@
 .chart-head {
     padding: 14px 18px;
     border-bottom: 1px solid #e7eef9;
-    background: linear-gradient(90deg, #0a2962, #1882a9);
-}
-
-.chart-subtitle {
-    display: block;
-    margin-top: 4px;
-    color: rgba(255, 255, 255, 0.84);
-    font-size: 0.8rem;
-    font-weight: 500;
+    background: linear-gradient(90deg, #0a2962, #1882a9));
 }
 
 .chart-body {
@@ -76,14 +68,6 @@
 .chart-body canvas {
     width: 100% !important;
     min-height: 320px;
-}
-
-#chartProductos {
-    min-height: 420px;
-}
-
-#chartMetodos {
-    max-width: 100%;
 }
 
 @media (max-width: 1199px) {

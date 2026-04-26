@@ -7,9 +7,9 @@
     --leaf: #a8f35e;
     --sage: #c9cab4;
     --stone: #f3f2ed;
-    --btn-start: #c8a96a;
-    --btn-mid: #b8933f;
-    --btn-end: #b8933f;
+    --btn-start: hsl(226, 43%, 38%);
+    --btn-mid: #3263a3;
+    --btn-end: #1794d2;
 }
 
 * {
@@ -400,24 +400,22 @@ input[type="submit"]:focus {
 }
 
 .btn-costs {
-    background: transparent;
-    border: 1px solid #000;
-    color: #000;
+    background: linear-gradient(135deg, var(--btn-start) 0%, var(--btn-mid) 60%, var(--btn-end) 100%);
+    border: 1px solid var(--btn-mid);
+    color: #fff;
     font-weight: 600;
     padding: 10px 22px;
     border-radius: 12px;
-    box-shadow: none;
+    box-shadow: 0 10px 18px rgba(23, 148, 210, 0.25);
     text-decoration: none;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.2s ease;
 }
 
 .btn-costs:hover {
-    background: #d8f3f9; /* pastel cian acorde a esquema de Usuarios */
-    color: #000;
-    box-shadow: 0 8px 14px rgba(216, 243, 249, 0.35);
+    filter: brightness(1.05);
+    color: #fff;
 }
 
 @media (max-width: 991px) {

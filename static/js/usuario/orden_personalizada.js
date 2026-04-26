@@ -38,12 +38,12 @@ try {
         camiseta: "Camiseta",
         buso: "Buso",
         gorra: "Gorra",
-        paoleta: "Pañoleta",
+        paoleta: "Paoleta",
         panoleta: "Pañoleta",
         "pañoleta": "Pañoleta",
         "buso-manga-larga": "Buso manga larga",
-        "buso_tactico": "Buso Táctico",
-        "buso tactico": "Buso Táctico",
+        "buso_tactico": "Buso Tctico",
+        "buso tactico": "Buso Tctico",
         presillas: "Presillas",
         rh: "Rh",
     };
@@ -76,20 +76,20 @@ try {
 
     function getProductIcon() {
         const iconMap = {
-            camiseta: "👕",
-            buso: "👔",
-            gorra: "🧢",
-            paoleta: "🧣",
-            panoleta: "🧣",
-            "pañoleta": "🧣",
-            "buso-manga-larga": "👚",
-            "buso_tactico": "🪖",
-            "buso tactico": "🪖",
-            presillas: "📌",
-            rh: "🩸",
+            camiseta: "??",
+            buso: "??",
+            gorra: "??",
+            paoleta: "??",
+            panoleta: "??",
+            "pañoleta": "??",
+            "buso-manga-larga": "??",
+            "buso_tactico": "??",
+            "buso tactico": "??",
+            presillas: "??",
+            rh: "??",
         };
         
-        return iconMap[state.producto] || "👕";
+        return iconMap[state.producto] || "??";
     }
 
     function getProductImage() {
@@ -531,7 +531,7 @@ try {
     function updateSummary() {
         const producto = productLabels[state.producto] || formatLabel(state.producto);
         const identidad = formatLabel(state.identidad);
-        const tecnica = state.tecnica === "bordado" ? "Bordado" : "Impresión";
+        const tecnica = state.tecnica === "bordado" ? "Bordado" : "Impresion";
         const color = formatLabel(state.color);
         const estampado = state.estampado ? formatLabel(state.estampado) : "Pendiente";
         const talla = state.talla || "Pendiente";
@@ -2043,11 +2043,7 @@ try {
         document.querySelectorAll("[data-producto]").forEach((button) => {
             button.addEventListener("click", () => {
                 const previoProducto = state.producto;
-                let productoSeleccionado = button.dataset.producto;
-                if (["panoleta", "paoleta", "paÃ±oleta"].includes((productoSeleccionado || "").toLowerCase())) {
-                    productoSeleccionado = "pañoleta";
-                }
-                state.producto = productoSeleccionado;
+                state.producto = button.dataset.producto;
                 setActiveClass(
                     document.querySelectorAll("[data-producto]"),
                     (element) => element === button,
@@ -2279,51 +2275,51 @@ try {
             updateSummary();
             
             // Organize and format the summary data nicely
-            let summaryText = "âœ… Â¡PersonalizaciÃ³n Completada!\\n\\n";
+            let summaryText = "✅ ¡Personalización completada!\\n\\n";
             
             summaryText += "--- DATOS DEL CLIENTE ---\\n";
-            summaryText += "â€¢ Nombre: " + (state.nombre || "No especificado") + "\\n";
-            summaryText += "â€¢ Correo: " + (state.correo || "No especificado") + "\\n";
-            summaryText += "â€¢ TelÃ©fono: " + (state.telefono || "No especificado") + "\\n";
-            summaryText += "â€¢ DirecciÃ³n: " + (state.direccion || "No especificada") + "\\n";
+            summaryText += "• Nombre: " + (state.nombre || "No especificado") + "\\n";
+            summaryText += "• Correo: " + (state.correo || "No especificado") + "\\n";
+            summaryText += "• Teléfono: " + (state.telefono || "No especificado") + "\\n";
+            summaryText += "• Dirección: " + (state.direccion || "No especificada") + "\\n";
             
-            summaryText += "\\n--- INFORMACIÃ“N INSTITUCIONAL ---\\n";
-            summaryText += "â€¢ Identidad/Fuerza: " + formatLabel(state.identidad) + "\\n";
+            summaryText += "\\n--- INFORMACIÓN INSTITUCIONAL ---\\n";
+            summaryText += "• Identidad/Fuerza: " + formatLabel(state.identidad) + "\\n";
             if (state.rango) {
-                summaryText += "â€¢ Rango: " + state.rango + "\\n";
+                summaryText += "• Rango: " + state.rango + "\\n";
             }
             if (state.anoContingencia) {
-                summaryText += "â€¢ AÃ±o Contingencia: " + state.anoContingencia + "\\n";
+                summaryText += "• Año de contingencia: " + state.anoContingencia + "\\n";
             }
             
             summaryText += "\\n--- DETALLES DEL PRODUCTO ---\\n";
-            summaryText += "â€¢ Producto: " + (productLabels[state.producto] || formatLabel(state.producto)) + "\\n";
+            summaryText += "• Producto: " + (productLabels[state.producto] || formatLabel(state.producto)) + "\\n";
             if (state.color) {
-                summaryText += "â€¢ Color: " + formatLabel(state.color) + "\\n";
+                summaryText += "• Color: " + formatLabel(state.color) + "\\n";
             }
             if (state.talla) {
-                summaryText += "â€¢ Talla: " + state.talla + "\\n";
+                summaryText += "• Talla: " + state.talla + "\\n";
             }
             if (state.tecnica) {
-                summaryText += "â€¢ TÃ©cnica: " + (state.tecnica === "bordado" ? "Bordado" : "ImpresiÃ³n") + "\\n";
+                summaryText += "• Técnica: " + (state.tecnica === "bordado" ? "Bordado" : "Impresión") + "\\n";
             }
             if (state.estampado) {
-                summaryText += "â€¢ Estampado: " + formatLabel(state.estampado) + "\\n";
+                summaryText += "• Estampado: " + formatLabel(state.estampado) + "\\n";
             }
             
             alert(summaryText);
         }
 
-        // Botn Atrs en el panel derecho
+        // Botón Atrás en el panel derecho
         document.getElementById("btn-atras-panel")?.addEventListener("click", () => {
             if (state.pasoActual > 1) {
                 changeStep(state.pasoActual - 1);
             } else {
-                alert("?? Ya ests en el primer paso");
+                alert("⚠️ Ya estás en el primer paso");
             }
         });
 
-        // Botn Agregar al Carrito
+        // Botón Agregar al Carrito
         document.getElementById("btn-agregar-carrito")?.addEventListener("click", () => {
             if (validarPaso(4)) {
                 const producto = productLabels[state.producto] || formatLabel(state.producto);
@@ -2333,9 +2329,9 @@ try {
                 const estampado = state.estampado ? formatLabel(state.estampado) : "Ninguno";
                 const talla = state.talla || "Sin talla";
                 
-                alert(`? Producto agregado al carrito:\n\nNombre: ${state.nombre}\nRango: ${state.rango}\nDireccin: ${state.direccion}\nCorreo: ${state.correo}\nTelfono: ${state.telefono}\nAo contingencia: ${state.anoContingencia}\n\n${producto}\nIdentidad: ${identidad}\nTcnica: ${tecnica}\nColor: ${color}\nEstampado: ${estampado}\nTalla: ${talla}\nPrecio: ${priceMap[state.producto] || "$ 45.000"}`);
+                alert(`✅ Producto agregado al carrito:\n\nNombre: ${state.nombre}\nRango: ${state.rango}\nDirección: ${state.direccion}\nCorreo: ${state.correo}\nTeléfono: ${state.telefono}\nAño de contingencia: ${state.anoContingencia}\n\n${producto}\nIdentidad: ${identidad}\nTécnica: ${tecnica}\nColor: ${color}\nEstampado: ${estampado}\nTalla: ${talla}\nPrecio: ${priceMap[state.producto] || "$ 45.000"}`);
             } else {
-                alert("?? Por favor completa todos los campos antes de agregar al carrito");
+                alert("⚠️ Por favor completa todos los campos antes de agregar al carrito");
             }
         });
 

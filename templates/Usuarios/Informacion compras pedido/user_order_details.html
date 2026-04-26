@@ -1,193 +1,65 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Detalle del pedido</title>
+    <title>Detalles del Pedido #{{ pedido.id_pedido }}</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/usuario/catalog_base.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/usuario/user_order_details.css') }}">
 </head>
 
-<body class="page-with-catalog-header order-detail-page">
+<body class="page-with-catalog-header">
     {% include 'Usuarios/partials/header_offcanvas.html' %}
-    {% include 'Usuarios/partials/_flash_toasts.html' %}
 
-    <main class="order-detail-shell">
-        <section class="order-detail-hero">
-            <div class="order-detail-hero__copy">
-                <h1>Pedido {{ pedido.numero_pedido_usuario }}</h1>
-                <p>Revisa el estado del pago, el avance del pedido y el detalle completo de cada producto desde una sola vista.</p>
-                <div class="order-detail-hero__chips">
-                    <span><i class="fas fa-box-open"></i> Estado del pedido: {{ pedido.estado_label }}</span>
-                    {% if pedido.estado_pago_label %}
-                    <span><i class="fas fa-wallet"></i> Pago: {{ pedido.estado_pago_label }}</span>
-                    {% endif %}
-                    <span><i class="fas fa-calendar-days"></i> {{ pedido.fecha_pedido }}</span>
-                </div>
-            </div>
-            <aside class="order-detail-hero__summary">
-                <span class="detail-summary-label">Monto total</span>
-                <strong>{{ pedido.monto|cop if pedido.monto else (detalles|sum(attribute='subtotal'))|cop }}</strong>
-                <small>{{ pedido.metodo_pago_label if pedido.metodo_pago_label else 'Sin metodo registrado' }}</small>
-                <a href="{{ url_for('user_orders') }}" class="btn-detail-back">
-                    <i class="fas fa-arrow-left"></i> Volver a mis pedidos
-                </a>
-            </aside>
-        </section>
+    <div class="container my-4">
+        <h1>Detalles de tu Pedido #{{ pedido.id_pedido }}</h1>
 
-        <section class="order-detail-overview">
-            <article class="detail-card detail-card--wide">
-                <div class="detail-card__head">
-                    <div>
-                        <span class="detail-eyebrow">Resumen</span>
-                        <h2>Informacion del pedido</h2>
-                    </div>
-                    <div class="detail-badges">
-                        <span class="detail-status detail-status-{{ pedido.estado_ui }}">{{ pedido.estado_label }}</span>
-                        {% if pedido.estado_pago_label %}
-                        <span class="detail-payment detail-payment-{{ pedido.estado_pago_ui }}">{{ pedido.estado_pago_label }}</span>
-                        {% endif %}
-                    </div>
-                </div>
+        <a href="{{ url_for('user_orders') }}" class="btn btn-secondary mb-3">
+            <i class="fas fa-arrow-left"></i> Volver a Mis Pedidos
+        </a>
 
-                <div class="detail-info-grid">
-                    <article class="detail-info-card">
-                        <i class="fas fa-hashtag"></i>
-                        <div>
-                            <span>Numero de pedido</span>
-                            <strong>Pedido {{ pedido.numero_pedido_usuario }}</strong>
-                        </div>
-                    </article>
-                    <article class="detail-info-card">
-                        <i class="fas fa-calendar-alt"></i>
-                        <div>
-                            <span>Fecha de compra</span>
-                            <strong>{{ pedido.fecha_pedido }}</strong>
-                        </div>
-                    </article>
-                    <article class="detail-info-card">
-                        <i class="fas fa-credit-card"></i>
-                        <div>
-                            <span>Metodo de pago</span>
-                            <strong>{{ pedido.metodo_pago_label if pedido.metodo_pago_label else 'Sin registrar' }}</strong>
-                        </div>
-                    </article>
-                    {% if pedido.estado_pago_label %}
-                    <article class="detail-info-card">
-                        <i class="fas fa-circle-check"></i>
-                        <div>
-                            <span>Estado del pago</span>
-                            <strong>{{ pedido.estado_pago_label }}</strong>
-                        </div>
-                    </article>
-                    {% endif %}
-                </div>
+        <div class="info-pedido">
+            <h2>Informaci&oacute;n del Pedido</h2>
+            <p><strong>N&uacute;mero de Pedido:</strong> #{{ pedido.id_pedido }}</p>
+            <p><strong>Fecha de Compra:</strong> {{ pedido.fecha_pedido }}</p>
+            <p><strong>Estado:</strong>
+                <span class="estado-{{ pedido.estado }}">
+                    {{ pedido.estado }}
+                </span>
+            </p>
+        </div>
 
-                {% if pedido.tracking_steps %}
-                <section class="detail-tracking-card">
-                    <div class="detail-tracking-card__head">
-                        <span class="detail-eyebrow">Seguimiento</span>
-                        <strong>Asi va tu pedido</strong>
-                    </div>
-                    {% with tracking_steps=pedido.tracking_steps %}
-                    {% include 'Usuarios/partials/_order_tracking_steps.html' %}
-                    {% endwith %}
-                </section>
-                {% endif %}
-            </article>
-
-            <article class="detail-card">
-                <div class="detail-card__head">
-                    <div>
-                        <span class="detail-eyebrow">Soporte</span>
-                        <h2>Pago y comprobante</h2>
-                    </div>
-                </div>
-
-                {% if pedido.comprobante_url %}
-                <a href="{{ url_for('static', filename=pedido.comprobante_url) }}" target="_blank" rel="noopener noreferrer" class="detail-proof-link">
-                    <i class="fas fa-image"></i>
-                    Ver comprobante adjunto
-                </a>
-                {% else %}
-                <div class="detail-proof-empty">
-                    <i class="fas fa-file-circle-xmark"></i>
-                    <span>No hay comprobante adjunto en la web</span>
-                </div>
-                {% endif %}
-
-                {% if pedido.metodo_pago == 'transferencia' and pedido.estado_pago_ui != 'aprobado' %}
-                <section class="detail-review-banner detail-review-banner-{{ pedido.estado_pago_ui if pedido.estado_pago_ui else 'pendiente_comprobante' }}">
-                    <div class="detail-review-banner__icon">
-                        <i class="fas fa-receipt"></i>
-                    </div>
-                    <div>
-                        <h3>Revision de transferencia</h3>
-                        <p>
-                            {% if pedido.estado_pago_ui == 'rechazado' %}
-                            El comprobante fue rechazado. Revisa las indicaciones del equipo y vuelve a comunicarte para completar la compra.
-                            {% elif pedido.estado_pago_ui == 'en_revision' %}
-                            Ya recibimos tu soporte y estamos revisando manualmente la transferencia.
-                            {% else %}
-                            El pedido ya fue registrado y estamos pendientes de validar el comprobante enviado por correo y WhatsApp.
-                            {% endif %}
-                        </p>
-                    </div>
-                </section>
-                {% endif %}
-            </article>
-        </section>
-
-        <section class="detail-card detail-products-card">
-            <div class="detail-card__head">
-                <div>
-                    <span class="detail-eyebrow">Contenido del pedido</span>
-                    <h2>Productos</h2>
-                </div>
-            </div>
-
-            {% if detalles %}
-            <div class="detail-products-table-wrap">
-                <table class="detail-products-table">
-                    <thead>
-                        <tr>
-                            <th>Producto</th>
-                            <th>Talla</th>
-                            <th>Precio unitario</th>
-                            <th>Cantidad</th>
-                            <th>Subtotal</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for detalle in detalles %}
-                        <tr>
-                            <td>{{ detalle.nombre }}</td>
-                            <td>{{ detalle.talla if detalle.talla else 'N/A' }}</td>
-                            <td>{{ detalle.precio|cop }}</td>
-                            <td>{{ detalle.cantidad }}</td>
-                            <td>{{ detalle.subtotal|cop }}</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                    <tfoot>
-                        <tr>
-                            <td colspan="4">TOTAL</td>
-                            <td>{{ (detalles|sum(attribute='subtotal'))|cop }}</td>
-                        </tr>
-                    </tfoot>
-                </table>
-            </div>
-            {% else %}
-            <div class="detail-empty-products">
-                <i class="fas fa-box-open"></i>
-                <p>No hay informacion disponible sobre los productos de este pedido.</p>
-            </div>
-            {% endif %}
-        </section>
-    </main>
+        <h2>Productos</h2>
+        {% if detalles %}
+        <table>
+            <tr>
+                <th>Producto</th>
+                <th>Talla</th>
+                <th>Precio Unitario</th>
+                <th>Cantidad</th>
+                <th>Subtotal</th>
+            </tr>
+            {% for detalle in detalles %}
+            <tr>
+                <td>{{ detalle.nombre }}</td>
+                <td>{{ detalle.talla if detalle.talla else 'N/A' }}</td>
+                <td>{{ detalle.precio|cop }}</td>
+                <td>{{ detalle.cantidad }}</td>
+                <td>{{ detalle.subtotal|cop }}</td>
+            </tr>
+            {% endfor %}
+            <tr>
+                <td colspan="4" style="text-align: right; font-size: 16px;"><strong>TOTAL:</strong></td>
+                <td class="total">{{ (detalles|sum(attribute='subtotal'))|cop }}</td>
+            </tr>
+        </table>
+        {% else %}
+        <p>No hay informaci&oacute;n disponible sobre los productos de este pedido.</p>
+        {% endif %}
+    </div>
 
     <script src="{{ url_for('static', filename='js/usuario/catalog_base.js') }}"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>

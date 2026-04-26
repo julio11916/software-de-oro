@@ -76,36 +76,36 @@ body {
 }
 
 .btn-add-cart {
-    background: transparent;
-    color: #000;
-    border: 1px solid #000;
+    background-color: var(--secondary-color);
+    color: #fff;
+    border: none;
     padding: 0.55rem 3.8rem; /* pill look: slimmer height, longer width */
     font-size: 1rem;
     font-weight: 700;
     border-radius: 999px;
-    transition: all 0.25s;
+    transition: all 0.3s;
     letter-spacing: 0.02em;
 }
 
 .btn-add-cart:hover {
-    background: #d8f3f9;
+    background-color: #124ca9;
     transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(216, 243, 249, 0.35);
+    box-shadow: 0 5px 15px rgba(31, 58, 147, 0.25);
 }
 
 .btn-back {
-    background: transparent;
-    color: #000;
-    border: 1px solid #000;
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
     padding: 0.8rem 2rem;
     font-size: 1rem;
     border-radius: 50px;
-    transition: all 0.25s;
+    transition: all 0.3s;
 }
 
 .btn-back:hover {
-    background: #d8f3f9;
-    color: #000;
+    background-color: #34495e;
+    color: white;
 }
 
 .thumbnail-container {
