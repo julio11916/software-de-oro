@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mi Carrito - Nachoher</title>
+    <title>Mi Carrito-Nachoher</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/usuario/catalog_base.css') }}">
@@ -13,86 +13,77 @@
 
 <body class="page-with-catalog-header">
     {% include 'Usuarios/partials/header_offcanvas.html' %}
-    {% include 'Usuarios/partials/_flash_toasts.html' %}
 
-    <main class="cart-shell">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    <div class="container mt-3">
+        {% for category, message in messages %}
+        <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+            <i class="fas fa-check-circle"></i> {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    {% endwith %}
+
+    <div class="container my-4">
         {% if carrito %}
-        <section class="cart-hero">
-            <div class="cart-hero__copy">
-                <span class="cart-eyebrow">Checkout</span>
-                <h1>Tu carrito está listo para continuar</h1>
-                <p>Revisa tus prendas, confirma tus datos de entrega y elige cómo quieres completar el pago.</p>
-                <div class="cart-hero__chips">
-                    <span><i class="fas fa-box-open"></i> {{ carrito|length }} producto(s) en el pedido</span>
-                    <span><i class="fas fa-truck"></i> Envío gratis incluido</span>
-                    <span><i class="fas fa-shield-check"></i> Pago seguro y seguimiento claro</span>
-                </div>
-            </div>
-            <aside class="cart-hero__aside">
-                <div class="cart-hero-stat">
-                    <span>Total a pagar</span>
-                    <strong>{{ total|cop }}</strong>
-                    <small>Impuestos incluidos en el valor final</small>
-                </div>
-                <div class="cart-hero-stat cart-hero-stat--soft">
-                    <span>Métodos disponibles</span>
-                    <strong>2</strong>
-                    <small>Tarjeta o transferencia por QR</small>
-                </div>
-            </aside>
-        </section>
-
-        <section class="cart-layout">
-            <div class="cart-main-column">
-                <section class="cart-section cart-section--products">
-                    <div class="section-header section-header--compact">
-                        <div>
-                            <span class="cart-section-kicker">Productos seleccionados</span>
-                            <h2><i class="fas fa-shopping-basket"></i> Revisa cada prenda antes de pagar</h2>
-                        </div>
+        <div class="row g-4">
+            <div class="col-lg-8">
+                <div class="cart-section">
+                    <div class="section-header">
+                        <h2><i class="fas fa-shopping-basket"></i> Productos en tu carrito</h2>
                         <span class="items-count">{{ carrito|length }} producto(s)</span>
                     </div>
 
                     <div class="cart-items">
                         {% for item in carrito %}
-                        <article class="cart-item cart-item--compact">
+                        <div class="cart-item">
                             <div class="item-info">
                                 <div class="item-image">
-                                    {% if item.imagen_url %}
-                                    <img src="{{ url_for('static', filename=item.imagen_url) }}" alt="{{ item.nombre }}" loading="lazy">
-                                    {% else %}
                                     <i class="fas fa-box-open"></i>
-                                    {% endif %}
                                 </div>
                                 <div class="item-details">
                                     <h5 class="item-name">{{ item.nombre }}</h5>
-                                    <div class="item-meta-inline">
-                                        {% if item.talla %}
-                                        <span><i class="fas fa-ruler-combined"></i> Talla {{ item.talla }}</span>
-                                        {% endif %}
-                                    </div>
+                                    {% if item.tipo == 'personalizado' and item.detalles %}
+                                    <p class="item-description">
+                                        <strong>Personalizado:</strong> {{ item.detalles.producto|capitalize }} |
+                                        Color: {{ item.detalles.color|capitalize }} |
+                                        Talla: {{ item.detalles.talla }} |
+                                        Estampado: {{ item.detalles.estampado|capitalize }} |
+                                        Técnica: {{ item.detalles.tecnica|capitalize }}
+                                    </p>
+                                    {% else %}
+                                    <p class="item-description">{{ item.descripcion|default('Producto de alta calidad',
+                                        true) }}</p>
+                                    {% if item.talla %}
+                                    <p class="item-description"><strong>Talla:</strong> {{ item.talla }}</p>
+                                    {% endif %}
+                                    {% endif %}
+                                    <p class="item-price">
+                                        <i class="fas fa-tag"></i>
+                                        Precio unitario: <span class="price-value">{{ item.precio|cop }}</span>
+                                    </p>
                                 </div>
                             </div>
-
-                            <div class="item-side-summary">
-                                <div class="item-side-pill">
-                                    <span>Cantidad</span>
-                                    <strong>{{ item.cantidad }}</strong>
-                                </div>
-                                <div class="item-side-pill item-side-pill--price">
-                                    <span>Subtotal</span>
-                                    <strong>{{ item.subtotal|cop }}</strong>
-                                </div>
-                                <div class="item-actions">
-                                    <form method="POST" action="{{ url_for('remove_from_cart', index=loop.index0) }}">
-                                        <button type="submit" class="btn-remove" title="Eliminar producto">
-                                            <i class="fas fa-trash-alt"></i>
-                                            <span class="btn-text">Eliminar</span>
-                                        </button>
-                                    </form>
-                                </div>
+                            <div class="item-quantity">
+                                <span class="quantity-label"><i class="fas fa-boxes"></i> Cantidad:</span>
+                                <span class="quantity-value">{{ item.cantidad }}</span>
                             </div>
-                        </article>
+                            <div class="item-subtotal">
+                                <span class="subtotal-label"><i class="fas fa-dollar-sign"></i> Subtotal:</span>
+                                <span class="subtotal-value">{{ item.subtotal|cop }}</span>
+                            </div>
+                            <div class="item-actions">
+                                <form method="POST" action="{{ url_for('remove_from_cart', index=loop.index0) }}">
+                                    <button type="submit" class="btn-remove" title="Eliminar producto">
+                                        <i class="fas fa-trash-alt"></i>
+                                        <span class="btn-text">Eliminar</span>
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
                         {% endfor %}
                     </div>
 
@@ -101,168 +92,74 @@
                             <i class="fas fa-arrow-left"></i> Continuar comprando
                         </a>
                         <div class="cart-info">
-                            <i class="fas fa-circle-info"></i>
-                            <span>Tu pedido se mantiene listo mientras confirmas el método de pago.</span>
+                            <i class="fas fa-info-circle"></i>
+                            <span>Los precios incluyen impuestos</span>
                         </div>
                     </div>
-                </section>
+                </div>
             </div>
 
-            <aside class="cart-sidebar">
-                <section class="order-summary order-summary--premium">
-                    <div class="summary-title-wrap">
-                        <span class="cart-section-kicker">Resumen</span>
-                        <h3 class="summary-title">
-                            <i class="fas fa-file-invoice-dollar"></i> Pedido listo para pagar
-                        </h3>
-                    </div>
-
-                    <div class="summary-highlight">
-                        <span>Total final</span>
-                        <strong class="total-amount">{{ total|cop }}</strong>
-                        <small>Incluye impuestos y envío sin costo adicional</small>
-                    </div>
+            <div class="col-lg-4">
+                <div class="order-summary">
+                    <h3 class="summary-title">
+                        <i class="fas fa-file-invoice-dollar"></i> Resumen del pedido
+                    </h3>
 
                     <div class="summary-details">
+                        {% if carrito %}
+                        <div class="summary-row" style="align-items: flex-start;">
+                            <span><i class="fas fa-list"></i> Detalle:</span>
+                            <span>
+                                {% for item in carrito %}
+                                <div>{{ item.nombre }}{% if item.talla %} ({{ item.talla }}){% endif %} x{{
+                                    item.cantidad }}</div>
+                                {% endfor %}
+                            </span>
+                        </div>
+                        {% endif %}
                         <div class="summary-row">
-                            <span><i class="fas fa-shopping-bag"></i> Productos</span>
-                            <span>{{ carrito|length }}</span>
+                            <span><i class="fas fa-shopping-bag"></i> Productos ({{ carrito|length }}):</span>
+                            <span>{{ total|cop }}</span>
                         </div>
                         <div class="summary-row">
-                            <span><i class="fas fa-truck"></i> Envío</span>
-                            <span class="text-success"><i class="fas fa-check-circle"></i> Gratis</span>
+                            <span><i class="fas fa-truck"></i> Envio:</span>
+                            <span class="text-success">
+                                <i class="fas fa-check-circle"></i> Gratis
+                            </span>
                         </div>
                         <div class="summary-row">
-                            <span><i class="fas fa-percent"></i> Impuestos</span>
+                            <span><i class="fas fa-percent"></i> Impuestos:</span>
                             <span>Incluidos</span>
                         </div>
-                    </div>
-
-                    <div class="summary-items-inline">
-                        <span class="summary-items-inline__title">Incluye</span>
-                        <div class="summary-items-inline__list">
-                            {% for item in carrito %}
-                            <span>{{ item.nombre }}{% if item.talla %} · {{ item.talla }}{% endif %} x{{ item.cantidad }}</span>
-                            {% endfor %}
+                        <div class="summary-divider"></div>
+                        <div class="summary-row total-row">
+                            <span>Total a pagar:</span>
+                            <span class="total-amount">{{ total|cop }}</span>
                         </div>
                     </div>
 
-                    <form method="POST" action="{{ url_for('checkout_select') }}" class="payment-form" novalidate>
-                        <input type="hidden" name="cliente_telefono" value="{{ cliente_telefono or '' }}">
-                        <input type="hidden" name="cliente_direccion" value="{{ cliente_direccion or '' }}">
+                    <a href="{{ url_for('checkout') }}" class="btn-continuar-pago">
+                        <i class="fas fa-arrow-right"></i> Continua con tu pago
+                    </a>
+                </div>
+            </div>
+        </div>
 
-                        {% if contacto_cliente_completo %}
-                        <section class="checkout-profile-card checkout-profile-card--ready">
-                            <div class="checkout-profile-card__icon">
-                                <i class="fas fa-circle-check"></i>
-                            </div>
-                            <div class="checkout-profile-card__body">
-                                <span class="checkout-profile-card__eyebrow">Perfil listo para comprar</span>
-                                <h4>Datos de entrega confirmados</h4>
-                                <div class="checkout-profile-card__data">
-                                    <span><i class="fas fa-phone"></i> {{ cliente_telefono }}</span>
-                                    <span><i class="fas fa-location-dot"></i> {{ cliente_direccion }}</span>
-                                </div>
-                            </div>
-                            <a href="{{ url_for('user_profile') }}" class="checkout-profile-card__action">Actualizar</a>
-                        </section>
-                        {% else %}
-                        <section class="checkout-profile-card checkout-profile-card--pending">
-                            <div class="checkout-profile-card__icon">
-                                <i class="fas fa-circle-info"></i>
-                            </div>
-                            <div class="checkout-profile-card__body">
-                                <span class="checkout-profile-card__eyebrow">Acci&oacute;n obligatoria</span>
-                                <h4>Completa tu perfil antes de continuar</h4>
-                                <p>Para confirmar el pedido necesitamos tu tel&eacute;fono y tu direcci&oacute;n de entrega. Completa esos datos desde tu cuenta y luego regresa al carrito.</p>
-                            </div>
-                            <a href="{{ url_for('user_profile', focus='contacto') }}" class="checkout-profile-card__action checkout-profile-card__action--primary">
-                                Ir a mi perfil
-                            </a>
-                        </section>
-                        {% endif %}
-
-                        <div class="form-group form-group--promo">
-                            <label class="form-label" for="codigo_promo_cart">
-                                <i class="fas fa-ticket-alt"></i> C&oacute;digo promocional (opcional)
-                            </label>
-                            <input
-                                id="codigo_promo_cart"
-                                type="text"
-                                name="codigo_promo"
-                                class="form-control"
-                                placeholder="Ej: ORO10"
-                                maxlength="30"
-                                value="{{ selected_codigo_promo or '' }}">
-                        </div>
-
-                        <section class="payment-method-selector" aria-labelledby="payment-method-title">
-                            <div class="payment-method-selector__head">
-                                <h4 id="payment-method-title"><i class="fas fa-wallet"></i> Elige tu m&eacute;todo de pago</h4>
-                                <p>Usa tarjeta para confirmaci&oacute;n inmediata o transferencia por QR si prefieres validar el pago manualmente.</p>
-                            </div>
-
-                            <div class="payment-method-grid">
-                                <label class="payment-method-card {% if selected_metodo_pago == 'tarjeta' %}is-selected{% endif %}">
-                                    <input type="radio" name="metodo_pago" value="tarjeta" {% if selected_metodo_pago == 'tarjeta' %}checked{% endif %} required>
-                                    <span class="payment-method-card__icon"><i class="fas fa-credit-card"></i></span>
-                                    <span class="payment-method-card__title">Tarjeta</span>
-                                    <span class="payment-method-card__desc">Pago inmediato y seguro con Stripe.</span>
-                                    <span class="payment-method-card__meta">Confirmaci&oacute;n autom&aacute;tica del pago.</span>
-                                </label>
-
-                                <label class="payment-method-card {% if selected_metodo_pago == 'transferencia' %}is-selected{% endif %}">
-                                    <input type="radio" name="metodo_pago" value="transferencia" {% if selected_metodo_pago == 'transferencia' %}checked{% endif %} required>
-                                    <span class="payment-method-card__icon"><i class="fas fa-qrcode"></i></span>
-                                    <span class="payment-method-card__title">Transferencia por QR</span>
-                                    <span class="payment-method-card__desc">Escaneas el QR y haces el pago manualmente.</span>
-                                    <span class="payment-method-card__meta">Requiere env&iacute;o y validaci&oacute;n del comprobante.</span>
-                                </label>
-                            </div>
-                        </section>
-
-                        <button
-                            type="submit"
-                            class="btn-continuar-pago js-cart-submit"
-                            {% if not contacto_cliente_completo %}disabled{% endif %}
-                            data-profile-incomplete="{{ 'true' if not contacto_cliente_completo else 'false' }}"
-                            data-default-label="Continuar seg&uacute;n el m&eacute;todo elegido"
-                            data-tarjeta-label="Continuar con tarjeta"
-                            data-transferencia-label="Continuar con transferencia por QR">
-                            <i class="fas fa-arrow-right"></i>
-                            <span class="js-cart-submit-label">
-                                {% if contacto_cliente_completo %}
-                                Continuar seg&uacute;n el m&eacute;todo elegido
-                                {% else %}
-                                Completa tu perfil para continuar
-                                {% endif %}
-                            </span>
-                        </button>
-                        {% if not contacto_cliente_completo %}
-                        <p class="checkout-profile-note">
-                            Te llevaremos a <strong>Mi perfil</strong> para registrar la informaci&oacute;n obligatoria antes del pago.
-                        </p>
-                        {% endif %}
-                    </form>
-                </section>
-            </aside>
-        </section>
         {% else %}
         <div class="empty-cart">
             <div class="empty-cart-icon">
                 <i class="fas fa-shopping-cart"></i>
             </div>
-            <h2>Tu carrito est&aacute; vac&iacute;o</h2>
-            <p>Explora nuestro cat&aacute;logo y encuentra productos incre&iacute;bles.</p>
+            <h2>Tu carrito está vacío</h2>
+            <p>Explora nuestro catálogo y encuentra productos increíbles.</p>
             <a href="{{ url_for('user_dashboard') }}" class="btn-shop-now">
                 <i class="fas fa-store"></i> Ir a la tienda
             </a>
         </div>
         {% endif %}
-    </main>
+    </div>
 
     <script src="{{ url_for('static', filename='js/usuario/catalog_base.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/usuario/cart.js') }}"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 

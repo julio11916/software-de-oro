@@ -2,7 +2,6 @@ let CURRENCY_CODE;
 let catalog;
 let filteredCatalog = [];
 let cart = [];
-let tallasCatalog = [];
 
 let catalogGrid;
 let catalogEmpty;
@@ -24,17 +23,6 @@ let imagePreviewTarget;
 let imagePreviewTitle;
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const NAME_REGEX = /^[A-Za-zÁÉÍÓÚáéíóúÑñÜü\s]+$/;
-const INTENDENCIAS_SIN_TALLA = new Set([
-    'pañoleta', 'pañoletas',
-    'panoleta', 'panoletas',
-    'gorra', 'gorras',
-    'colcha', 'colchas',
-    'tendido', 'tendidos',
-    'chuspa para ropa sucia', 'chuspas para ropa sucia',
-    'funda para almohadas', 'fundas para almohadas',
-    'accesorio', 'accesorios',
-    'presilla', 'presillas'
-]);
 
 function money(value) {
     const amount = Number(value || 0).toLocaleString('es-CO', {
@@ -55,18 +43,6 @@ function escapeHtml(value) {
 
 function staticImagePath(relativePath) {
     return `/static/${String(relativePath || '').replace(/^\/+/, '')}`;
-}
-
-function normalizeText(value) {
-    return String(value || '').trim().toLowerCase().replace(/\s+/g, ' ');
-}
-
-function requiresSize(product) {
-    if (typeof product?.requiere_talla === 'boolean') {
-        return product.requiere_talla;
-    }
-    const intendencia = normalizeText(product?.intendencia);
-    return !INTENDENCIAS_SIN_TALLA.has(intendencia);
 }
 
 function applyFilters() {
@@ -104,7 +80,6 @@ function renderCatalog() {
         const basePrice = Number(product.precio_original ?? product.precio ?? 0);
         const salePrice = Number(product.precio_venta ?? product.precio_con_descuento ?? product.precio ?? 0);
         const hasPromo = Boolean(product.promo_activa) && salePrice < basePrice;
-        const productRequiresSize = requiresSize(product);
         const disabled = stock <= 0 ? 'disabled' : '';
         const imageMarkup = product.imagen_url
             ? `<img
@@ -122,20 +97,6 @@ function renderCatalog() {
                 <p class="catalog-promo-name mb-0">${escapeHtml(product.promo_nombre || 'Descuento activo')}</p>
             `
             : `<p class="catalog-price mb-1">${money(salePrice)}</p>`;
-        const tallasOptions = tallasCatalog.map((talla) => {
-            const tallaTxt = String(talla || '').trim().toUpperCase();
-            return `<option value="${escapeHtml(tallaTxt)}">${escapeHtml(tallaTxt)}</option>`;
-        }).join('');
-        const sizeFieldMarkup = productRequiresSize
-            ? `
-                <select id="size-${Number(product.id_producto)}" class="form-select form-select-sm" ${disabled}>
-                    ${tallasOptions}
-                </select>
-              `
-            : `
-                <input type="hidden" id="size-${Number(product.id_producto)}" value="">
-                <div class="form-control form-control-sm text-center text-muted">Sin talla</div>
-              `;
 
         return `
             <article class="catalog-card">
@@ -155,7 +116,6 @@ function renderCatalog() {
                             value="1"
                             ${disabled}
                         >
-                        ${sizeFieldMarkup}
                         <button
                             type="button"
                             class="btn btn-primary btn-sm btn-add-pos js-add-to-cart"
@@ -187,13 +147,7 @@ function renderSummary() {
 
     totalItems.textContent = String(itemsCount);
     totalAmount.textContent = money(total);
-    itemsJson.value = JSON.stringify(
-        cart.map(({ id_producto, cantidad, talla }) => ({
-            id_producto,
-            cantidad,
-            talla: String(talla || '').toUpperCase().trim()
-        }))
-    );
+    itemsJson.value = JSON.stringify(cart.map(({ id_producto, cantidad }) => ({ id_producto, cantidad })));
     cartEmpty.textContent = itemsCount > 0
         ? `${itemsCount} producto(s) seleccionados.`
         : 'Aún no has agregado productos.';
@@ -216,26 +170,24 @@ function renderSelectedPreview() {
             ? `<img src="${escapeHtml(staticImagePath(item.imagen_url))}" alt="${escapeHtml(item.nombre)}" class="selected-thumb">`
             : '<div class="selected-thumb selected-thumb-placeholder">IMG</div>';
         const subtotal = money(Number(item.cantidad || 0) * Number(item.precio || 0));
-        const tallaLabel = String(item.talla || '').trim() || 'Sin talla';
         return `
             <div class="selected-item">
                 <div class="selected-main">
                     ${imageMarkup}
                     <div class="selected-meta">
                         <div class="selected-name">${escapeHtml(item.nombre)}</div>
-                        <div class="selected-detail">Talla: ${escapeHtml(tallaLabel)} | Cant: ${Number(item.cantidad || 0)} | ${subtotal}</div>
+                        <div class="selected-detail">Cant: ${Number(item.cantidad || 0)} | ${subtotal}</div>
                     </div>
                 </div>
                 <button type="button" class="btn btn-sm btn-outline-danger js-remove-selected"
-                    data-product-id="${Number(item.id_producto)}"
-                    data-talla="${escapeHtml(item.talla || '')}">Quitar</button>
+                    data-product-id="${Number(item.id_producto)}">Quitar</button>
             </div>
         `;
     }).join('');
 
     selectedPreview.querySelectorAll('.js-remove-selected').forEach((button) => {
         button.addEventListener('click', () => {
-            removeFromCart(Number(button.dataset.productId), String(button.dataset.talla || ''));
+            removeFromCart(Number(button.dataset.productId));
         });
     });
 }
@@ -248,41 +200,15 @@ function addToCart(idProducto) {
 
     const qtyInput = document.getElementById(`qty-${idProducto}`);
     const qty = Number(qtyInput ? qtyInput.value : 1);
-    const sizeInput = document.getElementById(`size-${idProducto}`);
-    const productRequiresSize = requiresSize(product);
-    let talla = String(sizeInput ? sizeInput.value : '').trim().toUpperCase();
     const stock = Number(product.stock || 0);
     if (!qty || qty < 1 || stock <= 0) {
         return;
     }
-    if (productRequiresSize) {
-        if (!tallasCatalog.includes(talla)) {
-            alert('Selecciona una talla valida.');
-            return;
-        }
-    } else {
-        talla = '';
-    }
     const salePrice = Number(product.precio_venta ?? product.precio_con_descuento ?? product.precio ?? 0);
-    const totalActualMismoProducto = cart.reduce((acc, item) => {
-        if (Number(item.id_producto) !== Number(idProducto)) {
-            return acc;
-        }
-        return acc + Number(item.cantidad || 0);
-    }, 0);
-    const disponibleParaAgregar = stock - totalActualMismoProducto;
-    if (disponibleParaAgregar <= 0) {
-        alert('No hay mas stock disponible para este producto.');
-        return;
-    }
-    const qtyAAgregar = Math.min(qty, disponibleParaAgregar);
 
-    const existing = cart.find((item) => (
-        Number(item.id_producto) === Number(idProducto) &&
-        String(item.talla || '').trim().toUpperCase() === talla
-    ));
+    const existing = cart.find((item) => Number(item.id_producto) === Number(idProducto));
     if (existing) {
-        existing.cantidad = Number(existing.cantidad) + qtyAAgregar;
+        existing.cantidad = Math.min(Number(existing.cantidad) + qty, stock);
     } else {
         cart.push({
             id_producto: Number(product.id_producto),
@@ -290,20 +216,15 @@ function addToCart(idProducto) {
             imagen_url: String(product.imagen_url || ''),
             precio: salePrice,
             stock,
-            cantidad: qtyAAgregar,
-            talla
+            cantidad: Math.min(qty, stock)
         });
     }
 
     renderSummary();
 }
 
-function removeFromCart(idProducto, talla) {
-    const tallaNorm = String(talla || '').trim().toUpperCase();
-    cart = cart.filter((item) => !(
-        Number(item.id_producto) === Number(idProducto) &&
-        String(item.talla || '').trim().toUpperCase() === tallaNorm
-    ));
+function removeFromCart(idProducto) {
+    cart = cart.filter((item) => Number(item.id_producto) !== Number(idProducto));
     renderSummary();
 }
 
@@ -395,16 +316,10 @@ function sanitizeNameInput(input) {
     }
 }
 
-function initPOS(currencyCode, productos, tallas) {
+function initPOS(currencyCode, productos) {
     CURRENCY_CODE = currencyCode;
     catalog = Array.isArray(productos) ? productos : [];
     filteredCatalog = [...catalog];
-    tallasCatalog = Array.isArray(tallas)
-        ? tallas.map((t) => String(t || '').trim().toUpperCase()).filter(Boolean)
-        : [];
-    if (!tallasCatalog.length) {
-        tallasCatalog = ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL'];
-    }
 
     catalogGrid = document.getElementById('catalogGrid');
     catalogEmpty = document.getElementById('catalogEmpty');
@@ -451,6 +366,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const currencyCode = JSON.parse(posData.dataset.currencyCode || '"COP"');
     const productos = JSON.parse(posData.dataset.productos || '[]');
-    const tallas = JSON.parse(posData.dataset.tallas || '[]');
-    initPOS(currencyCode, productos, tallas);
+    initPOS(currencyCode, productos);
 });
+

@@ -104,8 +104,6 @@
 
 .catalog-body {
     padding: 12px 14px 14px;
-    display: flex;
-    flex-direction: column;
 }
 
 .catalog-name {
@@ -141,24 +139,13 @@
     color: #2f8b57;
     font-size: 0.86rem;
     font-weight: 600;
-    margin-bottom: 8px;
+    margin-bottom: 12px;
 }
 
 .catalog-actions {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-columns: 92px 1fr;
     gap: 8px;
-    margin-top: auto;
-}
-
-.catalog-actions .form-control,
-.catalog-actions .form-select {
-    min-width: 0;
-}
-
-.catalog-actions .btn-add-pos {
-    grid-column: 1 / -1;
-    width: 100%;
 }
 
 .btn-add-pos {

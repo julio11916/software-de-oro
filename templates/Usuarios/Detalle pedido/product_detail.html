@@ -18,7 +18,19 @@
 
     {% include 'Usuarios/partials/header_offcanvas.html' %}
 
-    {% include 'Usuarios/partials/_flash_toasts.html' %}
+    <!-- Mensajes Flash -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    <div class="cart-alerts">
+        {% for category, message in messages %}
+        <div class="alert alert-{{ category }} alert-dismissible fade show cart-alert" role="alert">
+            <i class="fas fa-check-circle"></i> {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    {% endwith %}
 
     <!-- Detalle del Producto -->
     <div class="container">
@@ -93,17 +105,16 @@
                                 <label class="form-label" style="font-size: 1.1rem; font-weight: bold;">
                                     <i class="fas fa-ruler-combined"></i> Talla:
                                 </label>
-                                {% if producto.requiere_talla %}
                                 <select name="talla" class="form-select form-select-lg" style="max-width: 240px;" required {% if producto.stock|int <= 0 %}disabled{% endif %}>
                                     <option value="" selected>Selecciona una talla</option>
-                                    {% for talla in tallas_opciones %}
-                                    <option value="{{ talla }}">{{ talla }}</option>
-                                    {% endfor %}
+                                    <option value="XS">XS</option>
+                                    <option value="S">S</option>
+                                    <option value="M">M</option>
+                                    <option value="L">L</option>
+                                    <option value="XL">XL</option>
+                                    <option value="XXL">XXL</option>
+                                    <option value="XXXL">XXXL</option>
                                 </select>
-                                {% else %}
-                                <input type="hidden" name="talla" value="">
-                                <input type="text" class="form-control form-control-lg" style="max-width: 240px;" value="No requiere talla" readonly>
-                                {% endif %}
                             </div>
                             <div class="d-flex gap-3">
                                 <button type="submit" class="btn btn-add-cart" {% if producto.stock|int <= 0 %}disabled{% endif %}>

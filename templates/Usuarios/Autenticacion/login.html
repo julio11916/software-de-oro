@@ -14,7 +14,7 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/usuario/user_dashboard.css') }}">
 </head>
 
-<body class="auth-page">
+<body>
     <header class="store-header">
         <div class="container-fluid px-3 px-lg-4">
             <div class="store-header-inner">
@@ -106,19 +106,64 @@
         </div>
     </section>
 
-
     <main class="main-content" id="catalogo">
-        {% with carousel_id='ejercitoCarousel', titulo='Prendas destacadas - Ejército', productos=productos_destacados_ejercito, empty_message='Aún no hay prendas destacadas disponibles para Ejército.', is_public_featured=true %}
-        {% include 'Usuarios/partials/_featured_category_carousel.html' %}
-        {% endwith %}
+        <div class="container catalog-shell">
+            <h2 class="section-title">Destacados</h2>
 
-        {% with carousel_id='policiaCarousel', titulo='Prendas destacadas - Policía', productos=productos_destacados_policia, empty_message='Aún no hay prendas destacadas disponibles para Policía.', is_public_featured=true %}
-        {% include 'Usuarios/partials/_featured_category_carousel.html' %}
-        {% endwith %}
+            <div id="destacadosCarousel" class="carousel slide destacados-carousel" data-bs-ride="carousel" data-bs-interval="4500">
+                <div class="carousel-inner">
+                    {% for grupo in productos|batch(4, None) %}
+                    <div class="carousel-item {% if loop.first %}active{% endif %}">
+                        <div class="row g-4 justify-content-center">
+                            {% for producto in grupo if producto %}
+                            <div class="col-lg-3 col-md-4 col-sm-6 producto-item" data-nombre="{{ producto.nombre|lower }}"
+                                data-precio="{{ producto.precio }}">
+                                <div class="card producto-card h-100">
+                                    <a href="{{ url_for('login') }}">
+                                        {% if producto.imagen_url %}
+                                        <img src="{{ url_for('static', filename=producto.imagen_url) }}" class="card-img-top"
+                                            alt="{{ producto.nombre }}">
+                                        {% else %}
+                                        <img src="{{ url_for('static', filename='img/Pagina/logo.jpeg') }}" class="card-img-top"
+                                            alt="Imagen por defecto">
+                                        {% endif %}
+                                    </a>
 
-        {% with carousel_id='armadaCarousel', titulo='Prendas destacadas - Armada', productos=productos_destacados_armada, empty_message='Aún no hay prendas destacadas disponibles para Armada.', is_public_featured=true %}
-        {% include 'Usuarios/partials/_featured_category_carousel.html' %}
-        {% endwith %}
+                                    <div class="card-body">
+                                        <h5 class="card-title">{{ producto.nombre }}</h5>
+
+                                        {% if producto.promo_activa %}
+                                        <div class="promo-badge mb-2">
+                                            <span class="promo-tag">{{ producto.promo_etiqueta }}</span>
+                                            <small>{{ producto.promo_nombre }}</small>
+                                        </div>
+                                        <p class="price mb-1">{{ producto.precio_con_descuento|cop }}</p>
+                                        <p class="price-original">{{ producto.precio_original|cop }}</p>
+                                        {% else %}
+                                        <p class="price">{{ producto.precio|cop }}</p>
+                                        {% endif %}
+                                        {% if producto.stock|int <= 0 %}
+                                        <p class="text-danger fw-bold mb-2 text-center">Agotado</p>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <button class="carousel-control-prev" type="button" data-bs-target="#destacadosCarousel" data-bs-slide="prev">
+                    <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                    <span class="visually-hidden">Anterior</span>
+                </button>
+                <button class="carousel-control-next" type="button" data-bs-target="#destacadosCarousel" data-bs-slide="next">
+                    <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                    <span class="visually-hidden">Siguiente</span>
+                </button>
+            </div>
+        </div>
     </main>
 
     <footer class="footer-compact">
@@ -155,3 +200,4 @@
 </body>
 
 </html>
+
