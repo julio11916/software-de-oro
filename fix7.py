@@ -1,5 +1,0 @@
-t = open('static/js/usuario/orden_personalizada.js', 'r', encoding='utf-8').read()
-new_txt = t.replace('            } else {\n                if (rangoOverlayImg) rangoOverlayImg.style.display = "none";    \n            }\n        }\n\n        // Escudos en pañoletas', '            } else {\n                if (rangoOverlayImg) rangoOverlayImg.style.display = "none";    \n            }\n\n        // Escudos en pañoletas')
-new_txt = new_txt.replace('            } else {\n                if (rangoOverlayImg) rangoOverlayImg.style.display = "none";\n            }\n        }\n\n        // Escudos en pañoletas', '            } else {\n                if (rangoOverlayImg) rangoOverlayImg.style.display = "none";\n            }\n\n        // Escudos en pañoletas')
-open('static/js/usuario/orden_personalizada.js', 'w', encoding='utf-8').write(new_txt)
-print("done")

@@ -1,6 +1,0 @@
-import sys
-with open('static/js/usuario/orden_personalizada.js', 'r', encoding='utf-8') as f:
-    text = f.read()
-
-idx = text.find('function changeStep(step)')
-print(text[idx:idx+1500])
