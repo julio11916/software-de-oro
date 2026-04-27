@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict AGVgH5a3DZhlaeMNS38ebLCfeTrAbrF6d9IKJmelrZ1S0SlSSNXzW5we8Kp1ekR
+\restrict ap4BvOUVDuY49qGNNwD1iOQMWkjbeLNlLlncPkmAAXKMtdcG2mFgqBRVT351Mb6
 
 -- Dumped from database version 18.3
 -- Dumped by pg_dump version 18.3
@@ -19,17 +19,31 @@ SET xmloption = content;
 SET client_min_messages = warning;
 SET row_security = off;
 
+ALTER TABLE IF EXISTS ONLY public.stripe_checkout DROP CONSTRAINT IF EXISTS stripe_checkout_pkey;
+ALTER TABLE IF EXISTS ONLY public.categoria_producto DROP CONSTRAINT IF EXISTS categoria_producto_pkey;
+ALTER TABLE IF EXISTS ONLY public.carrito_usuario DROP CONSTRAINT IF EXISTS carrito_usuario_pkey;
+ALTER TABLE IF EXISTS public.categoria_producto ALTER COLUMN id_categoria DROP DEFAULT;
+DROP TABLE IF EXISTS public.usuarios;
+DROP TABLE IF EXISTS public.stripe_checkout;
+DROP TABLE IF EXISTS public.registros;
+DROP TABLE IF EXISTS public.promociones;
+DROP TABLE IF EXISTS public.producto;
+DROP TABLE IF EXISTS public.pedidos;
+DROP TABLE IF EXISTS public.pagos;
+DROP TABLE IF EXISTS public.detalle_pedido;
+DROP SEQUENCE IF EXISTS public.categoria_producto_id_categoria_seq;
+DROP TABLE IF EXISTS public.categoria_producto;
+DROP TABLE IF EXISTS public.carrito_usuario;
+-- *not* dropping schema, since initdb creates it
 --
--- Name: public; Type: SCHEMA; Schema: -; Owner: postgres
+-- Name: public; Type: SCHEMA; Schema: -; Owner: -
 --
 
 -- *not* creating schema, since initdb creates it
 
 
-ALTER SCHEMA public OWNER TO postgres;
-
 --
--- Name: SCHEMA public; Type: COMMENT; Schema: -; Owner: postgres
+-- Name: SCHEMA public; Type: COMMENT; Schema: -; Owner: -
 --
 
 COMMENT ON SCHEMA public IS '';
@@ -40,7 +54,7 @@ SET default_tablespace = '';
 SET default_table_access_method = heap;
 
 --
--- Name: carrito_usuario; Type: TABLE; Schema: public; Owner: postgres
+-- Name: carrito_usuario; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.carrito_usuario (
@@ -50,10 +64,8 @@ CREATE TABLE public.carrito_usuario (
 );
 
 
-ALTER TABLE public.carrito_usuario OWNER TO postgres;
-
 --
--- Name: categoria_producto; Type: TABLE; Schema: public; Owner: postgres
+-- Name: categoria_producto; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.categoria_producto (
@@ -63,10 +75,8 @@ CREATE TABLE public.categoria_producto (
 );
 
 
-ALTER TABLE public.categoria_producto OWNER TO postgres;
-
 --
--- Name: categoria_producto_id_categoria_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+-- Name: categoria_producto_id_categoria_seq; Type: SEQUENCE; Schema: public; Owner: -
 --
 
 CREATE SEQUENCE public.categoria_producto_id_categoria_seq
@@ -77,17 +87,15 @@ CREATE SEQUENCE public.categoria_producto_id_categoria_seq
     CACHE 1;
 
 
-ALTER SEQUENCE public.categoria_producto_id_categoria_seq OWNER TO postgres;
-
 --
--- Name: categoria_producto_id_categoria_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+-- Name: categoria_producto_id_categoria_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
 --
 
 ALTER SEQUENCE public.categoria_producto_id_categoria_seq OWNED BY public.categoria_producto.id_categoria;
 
 
 --
--- Name: detalle_pedido; Type: TABLE; Schema: public; Owner: postgres
+-- Name: detalle_pedido; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.detalle_pedido (
@@ -100,10 +108,8 @@ CREATE TABLE public.detalle_pedido (
 );
 
 
-ALTER TABLE public.detalle_pedido OWNER TO postgres;
-
 --
--- Name: pagos; Type: TABLE; Schema: public; Owner: postgres
+-- Name: pagos; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.pagos (
@@ -122,10 +128,8 @@ CREATE TABLE public.pagos (
 );
 
 
-ALTER TABLE public.pagos OWNER TO postgres;
-
 --
--- Name: pedidos; Type: TABLE; Schema: public; Owner: postgres
+-- Name: pedidos; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.pedidos (
@@ -138,10 +142,8 @@ CREATE TABLE public.pedidos (
 );
 
 
-ALTER TABLE public.pedidos OWNER TO postgres;
-
 --
--- Name: producto; Type: TABLE; Schema: public; Owner: postgres
+-- Name: producto; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.producto (
@@ -159,10 +161,8 @@ CREATE TABLE public.producto (
 );
 
 
-ALTER TABLE public.producto OWNER TO postgres;
-
 --
--- Name: promociones; Type: TABLE; Schema: public; Owner: postgres
+-- Name: promociones; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.promociones (
@@ -179,10 +179,8 @@ CREATE TABLE public.promociones (
 );
 
 
-ALTER TABLE public.promociones OWNER TO postgres;
-
 --
--- Name: registros; Type: TABLE; Schema: public; Owner: postgres
+-- Name: registros; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.registros (
@@ -193,10 +191,8 @@ CREATE TABLE public.registros (
 );
 
 
-ALTER TABLE public.registros OWNER TO postgres;
-
 --
--- Name: stripe_checkout; Type: TABLE; Schema: public; Owner: postgres
+-- Name: stripe_checkout; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.stripe_checkout (
@@ -213,10 +209,8 @@ CREATE TABLE public.stripe_checkout (
 );
 
 
-ALTER TABLE public.stripe_checkout OWNER TO postgres;
-
 --
--- Name: usuarios; Type: TABLE; Schema: public; Owner: postgres
+-- Name: usuarios; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.usuarios (
@@ -239,17 +233,15 @@ CREATE TABLE public.usuarios (
 );
 
 
-ALTER TABLE public.usuarios OWNER TO postgres;
-
 --
--- Name: categoria_producto id_categoria; Type: DEFAULT; Schema: public; Owner: postgres
+-- Name: categoria_producto id_categoria; Type: DEFAULT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.categoria_producto ALTER COLUMN id_categoria SET DEFAULT nextval('public.categoria_producto_id_categoria_seq'::regclass);
 
 
 --
--- Data for Name: carrito_usuario; Type: TABLE DATA; Schema: public; Owner: postgres
+-- Data for Name: carrito_usuario; Type: TABLE DATA; Schema: public; Owner: -
 --
 
 COPY public.carrito_usuario (email, carrito_json, updated_at) FROM stdin;
@@ -264,7 +256,7 @@ julio11916@gmail.com	[{"cantidad": 1, "descripcion": "Camiseta manga larga cómo
 
 
 --
--- Data for Name: categoria_producto; Type: TABLE DATA; Schema: public; Owner: postgres
+-- Data for Name: categoria_producto; Type: TABLE DATA; Schema: public; Owner: -
 --
 
 COPY public.categoria_producto (id_categoria, nombre_categoria, descripcion) FROM stdin;
@@ -316,7 +308,7 @@ COPY public.categoria_producto (id_categoria, nombre_categoria, descripcion) FRO
 
 
 --
--- Data for Name: detalle_pedido; Type: TABLE DATA; Schema: public; Owner: postgres
+-- Data for Name: detalle_pedido; Type: TABLE DATA; Schema: public; Owner: -
 --
 
 COPY public.detalle_pedido (id_detalle, id_pedido, id_producto, cantidad, subtotal, talla) FROM stdin;
@@ -387,7 +379,7 @@ COPY public.detalle_pedido (id_detalle, id_pedido, id_producto, cantidad, subtot
 
 
 --
--- Data for Name: pagos; Type: TABLE DATA; Schema: public; Owner: postgres
+-- Data for Name: pagos; Type: TABLE DATA; Schema: public; Owner: -
 --
 
 COPY public.pagos (id_pago, id_pedido, monto, metodo_pago, fecha_pago, estado_pago, id_promo, codigo_promo, tipo_descuento, valor_descuento, monto_descuento, comprobante_url) FROM stdin;
@@ -395,7 +387,7 @@ COPY public.pagos (id_pago, id_pedido, monto, metodo_pago, fecha_pago, estado_pa
 41	41	50000	transferencia	2026-04-08 14:46:15	aprobado				0	0	
 52	54	160000	tarjeta	2026-04-16 18:50:57	aprobado				0	0	
 53	55	50000	transferencia	2026-04-16 20:30:58	aprobado				0	0	
-54	56	50000	transferencia	2026-04-22 16:38:40	en_revision				0	0	
+54	56	50000	transferencia	2026-04-22 16:38:40	aprobado				0	0	
 42	44	100000	transferencia	2026-04-08 17:11:59	aprobado				0	0	
 43	45	80000	qr	2026-04-08 18:06:49	aprobado				0	0	
 5	5	120	tarjeta	2026-03-04 19:42:40	aprobado	\N			0	0	
@@ -445,11 +437,11 @@ COPY public.pagos (id_pago, id_pedido, monto, metodo_pago, fecha_pago, estado_pa
 
 
 --
--- Data for Name: pedidos; Type: TABLE DATA; Schema: public; Owner: postgres
+-- Data for Name: pedidos; Type: TABLE DATA; Schema: public; Owner: -
 --
 
 COPY public.pedidos (id_pedido, id_usuario, fecha_pedido, estado, cliente_telefono, cliente_direccion) FROM stdin;
-56	2	2026-04-22 16:38:40	pago_en_revision	3204567896	kjhgliuguykftrc
+56	2	2026-04-22 16:38:40	confirmado	3204567896	kjhgliuguykftrc
 49	2	2026-04-09 00:44:04	pendiente		
 50	2	2026-04-16 16:30:03	enviado		
 51	nico@gmail.com	2026-04-16 17:42:38	completado		
@@ -505,7 +497,7 @@ COPY public.pedidos (id_pedido, id_usuario, fecha_pedido, estado, cliente_telefo
 
 
 --
--- Data for Name: producto; Type: TABLE DATA; Schema: public; Owner: postgres
+-- Data for Name: producto; Type: TABLE DATA; Schema: public; Owner: -
 --
 
 COPY public.producto (id_producto, nombre, descripcion, precio, stock, id_categoria, fuerza, intendencia, imagen_url, eliminado, destacado_dashboard) FROM stdin;
@@ -533,7 +525,7 @@ COPY public.producto (id_producto, nombre, descripcion, precio, stock, id_catego
 
 
 --
--- Data for Name: promociones; Type: TABLE DATA; Schema: public; Owner: postgres
+-- Data for Name: promociones; Type: TABLE DATA; Schema: public; Owner: -
 --
 
 COPY public.promociones (id_promo, nombre, descripcion, tipo_descuento, valor_descuento, id_producto, codigo, fecha_inicio, fecha_fin, activo) FROM stdin;
@@ -543,10 +535,12 @@ COPY public.promociones (id_promo, nombre, descripcion, tipo_descuento, valor_de
 
 
 --
--- Data for Name: registros; Type: TABLE DATA; Schema: public; Owner: postgres
+-- Data for Name: registros; Type: TABLE DATA; Schema: public; Owner: -
 --
 
 COPY public.registros (id_registro, id_usuario, accion, fecha_accion) FROM stdin;
+121	nico@gmail.com	Promocion creada: Promo Guerrera\n- producto ID: 13\n- descuento: COP 140.000,00\n- codigo: N/A	2026-03-25 13:22:32
+216	julio11916@gmail.com	Creo pedido #39 con 4 producto(s) por COP 250.000,00	2026-04-08 14:36:43
 28	nico@gmail.com	Inicio de sesión exitoso	2026-03-14 16:08:55
 29	julio@gmail.com	Inicio de sesión exitoso	2026-03-16 12:43:10
 30	julio@gmail.com	Inicio de sesión exitoso	2026-03-16 17:24:26
@@ -554,6 +548,7 @@ COPY public.registros (id_registro, id_usuario, accion, fecha_accion) FROM stdin
 36	nico@gmail.com	Inicio de sesion exitoso	2026-03-17 16:50:35
 37	julio@gmail.com	Inicio de sesion exitoso	2026-03-17 16:55:01
 38	nico@gmail.com	Inicio de sesion exitoso	2026-03-17 17:03:36
+47	nico@gmail.com	Elimino producto: Armando Estaban Quito (ID 2)	2026-03-18 13:23:43
 92	nico@gmail.com	Actualizo producto 'Camiseta unisex sin estampado color negro' (ID 9)\n- precio: COP 50,00 -> COP 50.000,00	2026-03-24 14:43:31
 94	nico@gmail.com	Actualizo producto 'Camiseta unisex manga larga sin estampado color negro' (ID 11)\n- precio: COP 80,00 -> COP 80.000,00	2026-03-24 14:43:53
 254	nico@gmail.com	Actualizo estado de pedido #53: enviado -> entregado	2026-04-16 18:46:44
@@ -579,7 +574,7 @@ COPY public.registros (id_registro, id_usuario, accion, fecha_accion) FROM stdin
 118	nico@gmail.com	Promocion activada: Promo Camiseta unisex con camuflado	2026-03-25 13:12:46
 119	julio@gmail.com	Inicio de sesion exitoso	2026-03-25 13:16:14
 120	nico@gmail.com	Inicio de sesion exitoso	2026-03-25 13:20:35
-121	nico@gmail.com	Promocion creada: Promo Guerrera\n- producto ID: 13\n- descuento: COP 140.000,00\n- codigo: N/A	2026-03-25 13:22:32
+217	julio11916@gmail.com	Creo pedido #40 con 1 producto(s) por COP 50.000,00	2026-04-08 14:45:29
 122	nico@gmail.com	POS registro venta #15 por COP 10.000,00 (1 producto(s))\n- total bruto: COP 10.000,00\n- descuento aplicado: COP 0,00\n- cliente: cata\n- correo: ratalina@gmail.com\n- documento: 092893264\n- teléfono: 3204567896	2026-03-25 15:12:42
 123	nico@gmail.com	Inicio de sesión exitoso	2026-03-25 15:46:09
 124	nico@gmail.com	POS registro venta #16 por COP 10.000,00 (1 producto(s))\n- total bruto: COP 10.000,00\n- descuento aplicado: COP 0,00\n- cliente: cata\n- correo: ratalina@gmail.com\n- documento: 34795368972\n- teléfono: 3204567896	2026-03-25 15:46:55
@@ -634,8 +629,6 @@ COPY public.registros (id_registro, id_usuario, accion, fecha_accion) FROM stdin
 213	julio11916@gmail.com	Codigo de cambio de contrasena enviado a julio11916@gmail.com	2026-04-08 14:07:07
 214	julio11916@gmail.com	Usuario julio11916@gmail.com cambio su contrasena con codigo de seguridad	2026-04-08 14:07:49
 215	julio11916@gmail.com	Codigo de cambio de contrasena enviado a julio11916@gmail.com	2026-04-08 14:31:18
-216	julio11916@gmail.com	Creo pedido #39 con 4 producto(s) por COP 250.000,00	2026-04-08 14:36:43
-217	julio11916@gmail.com	Creo pedido #40 con 1 producto(s) por COP 50.000,00	2026-04-08 14:45:29
 218	julio11916@gmail.com	Creo pedido #41 con 1 producto(s) por COP 50.000,00	2026-04-08 14:46:15
 219	nico@gmail.com	Inicio de sesiÃƒÂ³n exitoso	2026-04-08 15:59:53
 220	nico@gmail.com	Inicio de sesiÃƒÂ³n exitoso	2026-04-08 16:08:57
@@ -662,7 +655,6 @@ COPY public.registros (id_registro, id_usuario, accion, fecha_accion) FROM stdin
 44	julio@gmail.com	Inicio de sesion exitoso	2026-03-18 13:22:05
 45	nico@gmail.com	Inicio de sesion exitoso	2026-03-18 13:22:49
 46	nico@gmail.com	Elimino producto: Camiseta mallada (ID 1)	2026-03-18 13:23:37
-47	nico@gmail.com	Elimino producto: Armando Estaban Quito (ID 2)	2026-03-18 13:23:43
 48	nico@gmail.com	Creo producto 'Camiseta unisex sin estampado color blanco' (ID 5)\n- precio: COP 50,00\n- stock: 10\n- fuerza: Ejercito\n- intendencia: Busos	2026-03-18 13:29:21
 49	nico@gmail.com	Creo producto 'Camiseta manga larga color verde' (ID 6)\n- precio: COP 50,00\n- stock: 10\n- fuerza: Ejercito\n- intendencia: Busos	2026-03-18 13:31:28
 148	nico@gmail.com	Actualizo producto 'Pantalón' (ID 18)\n- stock: 9 -> 10	2026-03-25 18:08:47
@@ -836,11 +828,18 @@ COPY public.registros (id_registro, id_usuario, accion, fecha_accion) FROM stdin
 287	nico@gmail.com	Administrador actualizó prendas destacadas por categoría:\n- Ejército: 5 (6, 5, 4, 11, 3)\n- Policía: 7 (10, 9, 12, 17, 18, 19, 20)\n- Armada: 0 (ninguna)\n- Total destacadas: 12	2026-04-24 13:29:16
 288	julio11916@gmail.com	Inicio de sesión exitoso	2026-04-24 13:45:28
 289	nico@gmail.com	Administrador actualizó prendas destacadas por categoría:\n- Ejército: 7 (6, 5, 4, 11, 3, 8, 7)\n- Policía: 7 (10, 9, 12, 17, 18, 19, 20)\n- Armada: 0 (ninguna)\n- Total destacadas: 14	2026-04-24 14:17:44
+290	julio@gmail.com	Inicio de sesión exitoso	2026-04-26 13:07:44
+291	nico@gmail.com	Inicio de sesión exitoso	2026-04-26 13:09:01
+292	admin@test.local	Administrador actualizo prendas destacadas por categoria:\n- Ejercito: 0 (ninguna)\n- Policia: 0 (ninguna)\n- Armada: 0 (ninguna)\n- Total destacadas: 0	2026-04-26 13:18:25
+293	nico@gmail.com	Administrador actualizó prendas destacadas por categoría:\n- Ejército: 0 (ninguna)\n- Policía: 7 (10, 9, 12, 17, 18, 19, 20)\n- Armada: 0 (ninguna)\n- Total destacadas: 7	2026-04-26 14:12:42
+294	nico@gmail.com	Administrador actualizó prendas destacadas por categoría:\n- Ejército: 7 (6, 5, 4, 11, 3, 8, 7)\n- Policía: 7 (10, 9, 12, 17, 18, 19, 20)\n- Armada: 0 (ninguna)\n- Total destacadas: 14	2026-04-26 14:12:52
+295	nico@gmail.com	Actualizo revision de pago para pedido #56: en_revision -> aprobado	2026-04-26 14:13:13
+296	julio@gmail.com	Inicio de sesión exitoso	2026-04-26 14:13:48
 \.
 
 
 --
--- Data for Name: stripe_checkout; Type: TABLE DATA; Schema: public; Owner: postgres
+-- Data for Name: stripe_checkout; Type: TABLE DATA; Schema: public; Owner: -
 --
 
 COPY public.stripe_checkout (session_id, usuario_email, codigo_promo, cart_hash, total_esperado, estado, id_pedido, created_at, updated_at, carrito_json) FROM stdin;
@@ -859,7 +858,7 @@ cs_test_a1viXGwU38ndZ6IYIfF4qEe0SKtwLfsTjCIYK7nHGm483owgG0hWeJf0TI	julio@gmail.c
 
 
 --
--- Data for Name: usuarios; Type: TABLE DATA; Schema: public; Owner: postgres
+-- Data for Name: usuarios; Type: TABLE DATA; Schema: public; Owner: -
 --
 
 COPY public.usuarios (id_usuario, nombre, email, password_hash, rol, estado, fecha_registro, email_verified, verification_code, verification_code_expiry, reset_token, reset_token_expiry, password_change_code, password_change_code_expiry, telefono, direccion) FROM stdin;
@@ -880,14 +879,14 @@ COPY public.usuarios (id_usuario, nombre, email, password_hash, rol, estado, fec
 
 
 --
--- Name: categoria_producto_id_categoria_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+-- Name: categoria_producto_id_categoria_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
 SELECT pg_catalog.setval('public.categoria_producto_id_categoria_seq', 44, true);
 
 
 --
--- Name: carrito_usuario carrito_usuario_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: carrito_usuario carrito_usuario_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.carrito_usuario
@@ -895,7 +894,7 @@ ALTER TABLE ONLY public.carrito_usuario
 
 
 --
--- Name: categoria_producto categoria_producto_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: categoria_producto categoria_producto_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.categoria_producto
@@ -903,7 +902,7 @@ ALTER TABLE ONLY public.categoria_producto
 
 
 --
--- Name: stripe_checkout stripe_checkout_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: stripe_checkout stripe_checkout_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.stripe_checkout
@@ -911,15 +910,8 @@ ALTER TABLE ONLY public.stripe_checkout
 
 
 --
--- Name: SCHEMA public; Type: ACL; Schema: -; Owner: postgres
---
-
-REVOKE USAGE ON SCHEMA public FROM PUBLIC;
-
-
---
 -- PostgreSQL database dump complete
 --
 
-\unrestrict AGVgH5a3DZhlaeMNS38ebLCfeTrAbrF6d9IKJmelrZ1S0SlSSNXzW5we8Kp1ekR
+\unrestrict ap4BvOUVDuY49qGNNwD1iOQMWkjbeLNlLlncPkmAAXKMtdcG2mFgqBRVT351Mb6
 

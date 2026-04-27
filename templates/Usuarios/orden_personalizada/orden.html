@@ -1,288 +1,484 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Orden personalizada - NachoHers</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <title>Ordenes Personalizadas - nachohers</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/usuario/catalog_base.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Anton&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/usuario/orden_personalizada.css') }}">
 </head>
-<body class="orden-page page-with-catalog-header">
-    {% include 'Usuarios/partials/header_offcanvas.html' %}
 
-    <main class="orden-layout">
-        <section class="orden-hero">
-            <p class="orden-kicker">Personalizaci&oacute;n guiada</p>
-            <h1>Dise&ntilde;a tu prenda paso a paso</h1>
-            <p class="orden-lead">
-                Configura tipo de producto, color, estampado y talla desde una sola vista.
+<body>
+    <!-- BARRA SUPERIOR DE NAVEGACIÓN -->
+    <div class="barra-superior">
+        <div class="barra-superior-izquierda">
+            <button class="btn-hamburguesa" id="btn-menu">
+
+            </button>
+            <span class="logo-barra"><i class="fas fa-tshirt"></i> Ordenes Personalizadas</span>
+        </div>
+        <button class="btn-salir" id="btn-salir">
+            <i class="fas fa-sign-out-alt"></i> Salir
+        </button>
+    </div>
+    <div class="contenedor-principal">
+
+        <!-- BOTONES DE ACCIÓN SUPERIOR -->
+        <div
+            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; gap: 1rem;">
+        </div>
+
+        <!-- HEADER -->
+        <div class="header" style="margin-bottom: 2rem; text-align: center;">
+            <h1 style="font-size: 2.5rem; font-weight: bold; margin-bottom: 0.5rem; color: #333;">
+                <p class="subtitulo" style="margin-bottom: 1rem;"><i class="fas fa-info-circle"></i> PERSONALIZACION
+                    GUIADA</p>
+                <i class="fas fa-tshirt"></i> Diseña tu prenda paso a paso
+            </h1>
+            <p style="font-size: 1rem; color: #666; line-height: 1.6; max-width: 600px; margin: 0 auto;">
+                Configura tipo de producto, color, estampado y talla desde una sola vista
             </p>
-        </section>
+        </div>
 
-        <section class="orden-gender-switch" aria-label="Tipo de colecci&oacute;n">
-            <button class="orden-chip orden-chip--active" data-genero="unisex" type="button">Unisex</button>
-        </section>
+        <!-- BOTONES GÉNERO -->
+        <div class="botones-genero">
+            <button class="btn-genero activo" data-genero="hombre">unisex</button>
+        </div>
 
-        <section class="orden-steps" aria-label="Progreso de personalizaci&oacute;n">
-            <div class="orden-step">
-                <div class="orden-step__number orden-step__number--active" id="paso1-header">1</div>
-                <span class="orden-step__label orden-step__label--active">Producto</span>
+        <!-- INDICADORES DE PASOS -->
+        <div class="indicadores-pasos">
+            <div class="paso-indicador">
+                <div class="numero-paso-header activo" id="paso1-header">1</div>
+                <div class="nombre-paso-header activo">Datos Personales e Identidad</div>
             </div>
-            <div class="orden-step">
-                <div class="orden-step__number" id="paso2-header">2</div>
-                <span class="orden-step__label">Color</span>
+            <div class="paso-indicador">
+                <div class="numero-paso-header" id="paso2-header">2</div>
+                <div class="nombre-paso-header">Producto</div>
             </div>
-            <div class="orden-step">
-                <div class="orden-step__number" id="paso3-header">3</div>
-                <span class="orden-step__label">Estampado</span>
+            <div class="paso-indicador">
+                <div class="numero-paso-header" id="paso3-header">3</div>
+                <div class="nombre-paso-header">Color</div>
             </div>
-            <div class="orden-step">
-                <div class="orden-step__number" id="paso4-header">4</div>
-                <span class="orden-step__label">Talla</span>
-            </div>
-        </section>
-
-        <section class="orden-content">
-            <div class="orden-panel orden-panel--builder">
-                <div id="paso1" class="orden-stage">
-                    <div class="orden-section-title">
-                        <span class="orden-section-title__number">1</span>
-                        <div>
-                            <h2>Selecciona el tipo de producto</h2>
-                            <p>Elige la base sobre la que vamos a personalizar la orden.</p>
-                        </div>
-                    </div>
-
-                    <div class="orden-product-grid">
-                        <button class="orden-product-card orden-product-card--selected" data-producto="camiseta" type="button">
-                            <i class="fas fa-shirt"></i>
-                            <span>Camiseta</span>
-                        </button>
-                        <button class="orden-product-card" data-producto="buso" type="button">
-                            <i class="fas fa-person-booth"></i>
-                            <span>Buso</span>
-                        </button>
-                        <button class="orden-product-card" data-producto="gorra" type="button">
-                            <i class="fas fa-hat-cowboy"></i>
-                            <span>Gorra</span>
-                        </button>
-                        <button class="orden-product-card" data-producto="panoleta" type="button">
-                            <i class="fas fa-ribbon"></i>
-                            <span>Pa&ntilde;oleta</span>
-                        </button>
-                        <button class="orden-product-card" data-producto="buso-manga-larga" type="button">
-                            <i class="fas fa-person-dress"></i>
-                            <span>Buso manga larga</span>
-                        </button>
-                    </div>
-
-                    <div class="orden-subsection">
-                        <label class="orden-field-label">T&eacute;cnica</label>
-                        <div class="orden-option-grid orden-option-grid--two">
-                            <button class="orden-option-button orden-option-button--active" data-tecnica="impresion" type="button">Impresi&oacute;n</button>
-                            <button class="orden-option-button" data-tecnica="bordado" type="button">Bordado</button>
-                        </div>
-                    </div>
-
-                    <div class="orden-actions">
-                        <button class="orden-nav-button" type="button" disabled>Atr&aacute;s</button>
-                        <button class="orden-nav-button orden-nav-button--primary" data-siguiente="2" type="button">Siguiente</button>
-                    </div>
-                </div>
-
-                <div id="paso2" class="orden-stage orden-stage--hidden">
-                    <div class="orden-section-title">
-                        <span class="orden-section-title__number">2</span>
-                        <div>
-                            <h2>Elige el color</h2>
-                            <p>Selecciona el acabado base de la prenda.</p>
-                        </div>
-                    </div>
-
-                    <div class="orden-color-grid">
-                        <button class="orden-color-card orden-color-card--selected" data-color="blanco" type="button">
-                            <span class="orden-color-card__swatch orden-color-card__swatch--white"></span>
-                            <span>Blanco</span>
-                        </button>
-                        <button class="orden-color-card" data-color="negro" type="button">
-                            <span class="orden-color-card__swatch orden-color-card__swatch--black"></span>
-                            <span>Negro</span>
-                        </button>
-                        <button class="orden-color-card" data-color="verde-oscuro" type="button">
-                            <span class="orden-color-card__swatch orden-color-card__swatch--green"></span>
-                            <span>Verde oscuro</span>
-                        </button>
-                        <button class="orden-color-card" data-color="beige" type="button">
-                            <span class="orden-color-card__swatch orden-color-card__swatch--beige"></span>
-                            <span>Beige</span>
-                        </button>
-                    </div>
-
-                    <div class="orden-actions">
-                        <button class="orden-nav-button" data-anterior="1" type="button">Atr&aacute;s</button>
-                        <button class="orden-nav-button orden-nav-button--primary" data-siguiente="3" type="button">Siguiente</button>
-                    </div>
-                </div>
-
-                <div id="paso3" class="orden-stage orden-stage--hidden">
-                    <div class="orden-section-title">
-                        <span class="orden-section-title__number">3</span>
-                        <div>
-                            <h2>Elige el estampado</h2>
-                            <p>Define la intervenci&oacute;n visual principal de la prenda.</p>
-                        </div>
-                    </div>
-
-                    <div class="orden-color-grid">
-                        <button class="orden-color-card" data-estampado="escudos" type="button">
-                            <span class="orden-pattern orden-pattern--shield"></span>
-                            <span>Escudos</span>
-                        </button>
-                        <button class="orden-color-card" data-estampado="nombres" type="button">
-                            <span class="orden-pattern orden-pattern--name"></span>
-                            <span>Nombres</span>
-                        </button>
-                        <button class="orden-color-card" data-estampado="distintivos" type="button">
-                            <span class="orden-pattern orden-pattern--badge"></span>
-                            <span>Distintivos</span>
-                        </button>
-                        <button class="orden-color-card" data-estampado="parches" type="button">
-                            <span class="orden-pattern orden-pattern--patch"></span>
-                            <span>Parches</span>
-                        </button>
-                        <button class="orden-color-card" data-estampado="ninguno" type="button">
-                            <span class="orden-pattern orden-pattern--none"></span>
-                            <span>Sin estampado</span>
-                        </button>
-                    </div>
-
-                    <div class="orden-actions">
-                        <button class="orden-nav-button" data-anterior="2" type="button">Atr&aacute;s</button>
-                        <button class="orden-nav-button orden-nav-button--primary" data-siguiente="4" type="button">Siguiente</button>
-                    </div>
-                </div>
-
-                <div id="paso4" class="orden-stage orden-stage--hidden">
-                    <div class="orden-section-title">
-                        <span class="orden-section-title__number">4</span>
-                        <div>
-                            <h2>Elige la talla</h2>
-                            <p>Selecciona la talla final de la prenda personalizada.</p>
-                        </div>
-                    </div>
-
-                    <label class="orden-field-label">Talla</label>
-                    <div class="orden-option-grid">
-                        <button class="orden-option-button" data-talla="XS" type="button">XS</button>
-                        <button class="orden-option-button" data-talla="S" type="button">S</button>
-                        <button class="orden-option-button" data-talla="M" type="button">M</button>
-                        <button class="orden-option-button" data-talla="L" type="button">L</button>
-                        <button class="orden-option-button" data-talla="XL" type="button">XL</button>
-                        <button class="orden-option-button" data-talla="2XL" type="button">2XL</button>
-                        <button class="orden-option-button" data-talla="3XL" type="button">3XL</button>
-                        <button class="orden-option-button" data-talla="4XL" type="button">4XL</button>
-                    </div>
-
-                    <div class="orden-actions">
-                        <button class="orden-nav-button" data-anterior="3" type="button">Atr&aacute;s</button>
-                        <button class="orden-nav-button orden-nav-button--primary" id="btn-finalizar" type="button">Finalizar</button>
-                    </div>
-                </div>
-            </div>
-
-            <aside class="orden-panel orden-panel--preview">
-                <div class="orden-preview-header">
-                    <h2>Vista previa</h2>
-                    <p>Usa esta columna para revisar la configuración actual.</p>
-                </div>
-
-                <div class="orden-tabs" aria-label="&Aacute;reas de personalizaci&oacute;n">
-                    <button class="orden-tab orden-tab--active" data-area="pecho-izquierdo" type="button">Pecho izquierdo</button>
-                    <button class="orden-tab" data-area="centro-pecho" type="button">Centro pecho</button>
-                    <button class="orden-tab" data-area="centro-ampliado" type="button">Centro ampliado</button>
-                    <button class="orden-tab" data-area="manga-izquierda" type="button">Manga izquierda</button>
-                    <button class="orden-tab" data-area="manga-derecha" type="button">Manga derecha</button>
-                    <button class="orden-tab" data-area="impresion-trasera" type="button">Impresi&oacute;n trasera</button>
-                    <button class="orden-tab" data-area="impresion-delantera" type="button">Impresi&oacute;n delantera</button>
-                </div>
-
-                <div class="orden-preview-canvas" id="area-preview">
-                    <div class="orden-preview-canvas__content">
-                        <i class="fas fa-shirt"></i>
-                        <p>Selecciona una configuraci&oacute;n para visualizar tu prenda.</p>
-                    </div>
-                </div>
-
-                <div class="orden-summary">
-                    <div class="orden-summary__row">
-                        <span>Producto</span>
-                        <strong id="info-producto">Camiseta</strong>
-                    </div>
-                    <div class="orden-summary__row">
-                        <span>Descripción general</span>
-                        <strong id="info-informacion">Camiseta | Impresi&oacute;n | Paso 1/4</strong>
-                    </div>
-                    <div class="orden-summary__row">
-                        <span>Color</span>
-                        <strong id="info-color">Blanco</strong>
-                    </div>
-                    <div class="orden-summary__row">
-                        <span>Estampado</span>
-                        <strong id="info-estampado">Pendiente</strong>
-                    </div>
-                    <div class="orden-summary__row">
-                        <span>Talla</span>
-                        <strong id="info-talla">Pendiente</strong>
-                    </div>
-                    <div class="orden-summary__row">
-                        <span>Precio</span>
-                        <strong id="info-precio">$ 45.000</strong>
-                    </div>
-                </div>
-
-                <button class="orden-cart-button" id="btn-agregar-carrito" type="button">
-                    <i class="fas fa-cart-plus"></i>
-                    <span>Agregar al carrito</span>
-                </button>
-            </aside>
-        </section>
-    </main>
-
-    <footer class="footer-compact">
-        <div class="container">
-            <div class="footer-content">
-                <div class="footer-brand">
-                    <i class="fas fa-crown"></i> <strong>Nachoher</strong>
-                </div>
-                <div class="footer-item">
-                    <i class="fas fa-map-marker-alt"></i> Urbanizaci&oacute;n Pablo Sexto
-                </div>
-                <div class="footer-item">
-                    <i class="fas fa-phone"></i> +57 3229393211
-                </div>
-                <div class="footer-item">
-                    <i class="fas fa-clock"></i> Lun-Vie 8:00-19:30 / Sab 8:00-14:00
-                </div>
-                <div class="footer-social">
-                    <a href="https://www.facebook.com/profile.php?id=61573294253539" target="_blank" rel="noopener noreferrer" aria-label="Facebook"><i class="fab fa-facebook"></i></a>
-                    <a href="https://www.instagram.com/nachoher_/" target="_blank" rel="noopener noreferrer" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
-                    <a href="#" aria-label="WhatsApp"><i class="fab fa-whatsapp"></i></a>
-                </div>
-            </div>
-            <div class="footer-bottom">
-                &copy; 2026 - Todos los derechos reservados
+            <div class="paso-indicador">
+                <div class="numero-paso-header" id="paso4-header">4</div>
+                <div class="nombre-paso-header">Estampado</div>
             </div>
         </div>
+        <!-- CONTENEDOR PRINCIPAL -->
+        <div class="contenedor-flexbox">
+            <!-- PANEL IZQUIERDO -->
+            <div class="panel-izquierdo"><!-- PASO 1: DATOS PERSONALES E IDENTIDAD -->
+                <div id="paso1" class="paso-contenido">
+                    <div class="titulo-seccion">
+                        <span class="numero-seccion">1</span>
+                        <span>Datos Personales y entidad</span>
+                    </div>
+
+                    <!-- Contenedor de dos paneles -->
+                    <div style="display: flex; gap: 2rem; margin-bottom: 2rem;">
+
+                        <!-- PANEL IZQUIERDO: DATOS PERSONALES -->
+                        <div
+                            style="flex: 1; background: white; padding: 1.5rem; border-radius: 8px; border: 1px solid #e0e0e0;">
+                            <h4 style="font-size: 1rem; font-weight: 600; margin-bottom: 1rem; color: #333;">Datos
+                                Personales</h4>
+                            <form id="formulario-datos-personales"
+                                style="display: flex; flex-direction: column; gap: 1rem;" onsubmit="return false">
+                                <div>
+                                    <label for="input-nombre" class="label-opcion">Nombre y Apellido</label>
+                                    <input type="text" id="input-nombre" placeholder="Ej: John Doe" class="form-control"
+                                        required pattern="[A-Za-z\u00C0-\u024F\s]+" title="Solo letras"
+                                        title="Solo letras" title="Solo letras" title="Solo letras" title="Solo letras"
+                                        title="Solo letras" title="Solo se permiten letras y espacios.">
+                                </div>
+
+                                <div>
+                                    <label for="input-rango" class="label-opcion">Rango</label>
+                                    <input type="text" id="input-rango" placeholder="Ej: Sargento" class="form-control"
+                                        required pattern="[A-Za-z\u00C0-\u024F\s]+" title="Solo letras"
+                                        title="Solo letras" title="Solo letras" title="Solo letras" title="Solo letras"
+                                        title="Solo letras" title="Solo se permiten letras y espacios.">
+                                </div>
+
+                                <div>
+                                    <label for="input-direccion" class="label-opcion">Dirección</label>
+                                    <input type="text" id="input-direccion" placeholder="Ej: Calle 5 #123"
+                                        class="form-control" required>
+                                </div>
+
+                                <div>
+                                    <label for="input-correo" class="label-opcion">Correo Electrónico</label>
+                                    <input type="email" id="input-correo" placeholder="Ej: correo@example.com"
+                                        class="form-control" required
+                                        pattern="[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
+                                        title="Debe ser un correo electrónico válido.">
+                                </div>
+
+                                <div>
+                                    <label for="input-telefono" class="label-opcion">Teléfono</label>
+                                    <input type="tel" id="input-telefono" placeholder="Ej: 3001234567"
+                                        class="form-control" required pattern="[0-9]+"
+                                        title="Solo se permiten números.">
+                                </div>
+
+                                <div id="container-contingencia">
+                                    <label class="label-opcion">Mes y año de contingencia</label>
+                                    <div style="display: flex; gap: 10px;">
+                                        <select id="input-mes-contingencia" class="form-control">
+                                            <option value="" disabled selected>Mes</option>
+                                            <option value="01">01</option>
+                                            <option value="02">02</option>
+                                            <option value="03">03</option>
+                                            <option value="04">04</option>
+                                            <option value="05">05</option>
+                                            <option value="06">06</option>
+                                            <option value="07">07</option>
+                                            <option value="08">08</option>
+                                            <option value="09">09</option>
+                                            <option value="10">10</option>
+                                            <option value="11">11</option>
+                                            <option value="12">12</option>
+                                        </select>
+                                        <input type="number" id="input-ano-contingencia" placeholder="Año (ej. 2024)"
+                                            class="form-control" min="1900" max="2100">
+                                    </div>
+                                </div>
+
+                                <div id="container-talla">
+                                    <label for="input-talla" class="label-opcion">Talla</label>
+                                    <select id="input-talla" class="form-control">
+                                        <option value="" disabled selected>Seleccione una talla</option>
+                                        <option value="XS">XS</option>
+                                        <option value="S">S</option>
+                                        <option value="M">M</option>
+                                        <option value="L">L</option>
+                                        <option value="XL">XL</option>
+                                        <option value="2XL">2XL</option>
+                                        <option value="3XL">3XL</option>
+                                    </select>
+                                </div>
+                            </form>
+                        </div>
+
+                        <!-- PANEL DERECHO: ENTIDAD Y TÉCNICA -->
+                        <div
+                            style="flex: 1; background: white; padding: 1.5rem; border-radius: 8px; border: 1px solid #e0e0e0;">
+                            <h4 style="font-size: 1rem; font-weight: 600; margin-bottom: 1rem; color: #333;">Entidad
+                            </h4>
+
+                            <div class="grid-opciones"
+                                style="grid-template-columns: 1fr; gap: 0.75rem; margin-bottom: 2rem;">
+                                <button type="button" class="btn-opcion" data-opcion="policia">Policía <span
+                                        class="text-danger"></span></button>
+
+                                <button type="button" class="btn-opcion" data-opcion="armada">Armada <span
+                                        class="text-danger"></span></button>
+
+                                <button type="button" class="btn-opcion" data-opcion="ejercito">Ejército <span
+                                        class="text-danger"></span></button>
+                                <button type="button" class="btn-opcion" data-opcion="gaula">Gaula <span
+                                        class="text-danger"></span></button>
+                            </div>
+
+                            <span class="label-opcion" style="display: block; margin-bottom: 0.75rem;">Técnica <span
+                                    class="text-danger"></span></span>
+                            <div class="grid-opciones"
+                                style="grid-template-columns: 1fr; gap: 0.75rem; margin-bottom: 2rem;">
+                                <button type="button" class="btn-opcion" data-tecnica="bordado">Bordado</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="botones-navegacion">
+                        <button type="button" class="btn-navegacion" id="btn-siguiente-paso1">Siguiente →</button>
+                    </div>
+                </div>
+
+                <!-- PASO 2: TIPO DE PRODUCTO -->
+                <div id="paso2" class="paso-contenido seccion-hidden">
+                    <div class="titulo-seccion">
+                        <span class="numero-seccion">2</span>
+                        <span>Selecciona el Tipo de Producto</span>
+                    </div>
+                    <div class="grid-productos">
+                        <div class="tarjeta-producto" data-producto="guerrera">
+                            <div class="icono-producto">🧥</div>
+                            <div class="nombre-producto">guerrera</div>
+                        </div>
+                        <div class="tarjeta-producto" data-producto="buso_tactico">
+                            <div class="icono-producto">🦺</div>
+                            <div class="nombre-producto">Buso táctico</div>
+                        </div>
+                        <div class="tarjeta-producto" data-producto="buso">
+                            <div class="icono-producto">👕</div>
+                            <div class="nombre-producto">Buso</div>
+                        </div>
+                        <div class="tarjeta-producto" data-producto="gorra">
+                            <div class="icono-producto">🧢</div>
+                            <div class="nombre-producto">Gorra</div>
+                        </div>
+                        <div class="tarjeta-producto" data-producto="pañoleta">
+                            <div class="icono-producto">🧣</div>
+                            <div class="nombre-producto">Pañoleta</div>
+                        </div>
+                        <div class="tarjeta-producto" data-producto="buso-manga-larga">
+                            <div class="icono-producto">🥼</div>
+                            <div class="nombre-producto">Buso manga larga</div>
+                        </div>
+                        <div class="tarjeta-producto" data-producto="presillas">
+                            <div class="icono-producto">🔰</div>
+                            <div class="nombre-producto">presillas</div>
+                        </div>
+                        <div class="tarjeta-producto" data-producto="Rh">
+                            <div class="icono-producto">🩸</div>
+                            <div class="nombre-producto">Rh</div>
+                        </div>
+                        <div class="tarjeta-producto" data-producto="gafete del nombre o apellido">
+                            <div class="icono-producto">🪪</div>
+                            <div class="nombre-producto">gafete del nombre o apellido</div>
+                        </div>
+                    </div>
+
+                    <div class="botones-navegacion">
+                        <button class="btn-navegacion" id="btn-atras-paso2">← Atrás</button>
+                        <button class="btn-navegacion" id="btn-siguiente-paso2">Siguiente → </button>
+                    </div>
+                </div>
+
+                <!-- PASO 3: COLOR -->
+                <div id="paso3" class="paso-contenido seccion-hidden">
+                    <div class="titulo-seccion">
+                        <span class="numero-seccion">3</span>
+                        <span>Elige tu Color</span>
+                    </div>
+                    <div class="grid-colores">
+                        <div class="tarjeta-color" data-color="blanco">
+                            <div class="muestra-color" style="background-color: #ffffff; border: 1px solid #999;">
+                            </div>
+                            <div class="nombre-color">Blanco</div>
+                        </div>
+                        <div class="tarjeta-color" data-color="negro">
+                            <div class="muestra-color" style="background-color: #000000;"></div>
+                            <div class="nombre-color">Negro</div>
+                        </div>
+                        <div class="tarjeta-color" data-color="verde-claro">
+                            <div class="muestra-color" style="background-color: #2D5016;"></div>
+                            <div class="nombre-color">Verde</div>
+                        </div>
+                        <div class="tarjeta-color" data-color="beiches">
+                            <div class="muestra-color" style="background-color: #D3C0A3;"></div>
+                            <div class="nombre-color">Beiches</div>
+                        </div>
+                        <div class="tarjeta-color" data-color="dorado">
+                            <div class="muestra-color" style="background-color: #e6f141;"></div>
+                            <div class="nombre-color">Dorado</div>
+                        </div>
+                        <div class="tarjeta-color" data-color="cafe">
+                            <div class="muestra-color" style="background-color: #424215;"></div>
+                            <div class="nombre-color">cafe</div>
+                        </div>
+                        <div class="tarjeta-color" data-color="azul-noche">
+                            <div class="muestra-color" style="background-color: #192857;"></div>
+                            <div class="nombre-color">azul noche</div>
+                        </div>
+                        <div class="tarjeta-color" data-color="platiado">
+                            <div class="muestra-color" style="background-color: #C0C0C0;"></div>
+                            <div class="nombre-color">Plateado</div>
+                        </div>
+                    </div>
+
+                    <!-- Contenedor para variaciones (RH, Gafete) dependientes del color -->
+                    <div id="variaciones-color-container" style="display: none; margin-top: 20px;">
+                        <!-- Aquí se inyectarán las barras desplegables de RH y Gafete desde JS -->
+                    </div>
+
+                    <div class="botones-navegacion">
+                        <button class="btn-navegacion" id="btn-atras-paso3">← Atrás</button>
+                        <button type="button" class="btn-navegacion" id="btn-siguiente-paso3">Siguiente / Finalizar
+                            → </button>
+                    </div>
+                </div>
+                <!-- PASO 4: estampado -->
+                <div id="paso4" class="paso-contenido seccion-hidden">
+                    <div class="titulo-seccion">
+                        <span class="numero-seccion">4</span>
+                        <span id="titulo-paso4">Elige tu estampado</span>
+                    </div>
+
+                    <!-- BARRA DE PESTAÑAS PARA ÁREAS -->
+                    <div class="barra-pestanas">
+                        <button class="pestana-item activa" data-area="impresion-delantera">impresion
+                            delantera</button>
+                    </div>
+                    <div class="grid-colores">
+                        <div class="tarjeta-color" data-estampado="escudos">
+                            <div class="muestra-color"
+                                style="background: repeating-linear-gradient(45deg, #333 0, #333 10px, white 10px, white 20px);">
+                            </div>
+                            <div class="nombre-color">Escudos</div>
+                        </div>
+
+                        <!-- Dropdown de Escudos para Pañoletas (Oculto por defecto) -->
+                        <div id="dropdown-escudos-container"
+                            style="display: none; width: 100%; margin-top: 15px; grid-column: 1 / -1;">
+                            <label for="select-escudo" class="label-opcion">Selecciona tu escudo</label>
+                            <select id="select-escudo" class="form-control">
+                                <option value="">(Seleccionar)</option>
+                                <option value="Estilo 1">Estilo 1</option>
+                                <option value="Estilo -1">Estilo -1</option>
+                                <option value="Estilo 2">Estilo 2</option>
+                                <option value="Estilo ,2">Estilo ,2</option>
+                                <option id="opt-escudo-ejercito-3" value="Estilo 3" style="display: none;">Estilo 3
+                                </option>
+                                <option id="opt-escudo-ejercito-3b" value="Estilo ,3" style="display: none;">Estilo ,3
+                                </option>
+                            </select>
+                        </div>
+
+                        <div class="tarjeta-color" data-estampado="distintivos">
+                            <div class="muestra-color"
+                                style="background: radial-gradient(circle, #333 30%, white 30%); background-size: 8px 8px;">
+                            </div>
+                            <div class="nombre-color">Distintivos</div>
+                        </div>
+
+                        <!-- Dropdown de Distintivos (Oculto por defecto) -->
+                        <div id="dropdown-distintivos-container"
+                            style="display: none; width: 100%; margin-top: 15px; grid-column: 1 / -1;">
+                            <label for="select-distintivo" class="label-opcion">Selecciona tu distintivo</label>
+                            <select id="select-distintivo" class="form-control">
+                                <option value="">(Seleccionar)</option>
+                                <option value="General">General</option>
+                                <option value="Mayor General">Mayor General</option>
+                                <option value="Brigadier General">Brigadier General</option>
+                                <option value="Coronel">Coronel</option>
+                                <option value="Teniente Coronel">Teniente Coronel</option>
+                                <option value="Mayor">Mayor</option>
+                                <option value="Capitan">Capitán</option>
+                                <option value="Teniente">Teniente</option>
+                                <option value="Subteniente">Subteniente</option>
+                                <option value="Comisario">Comisario</option>
+                                <option value="Subcomisario">Subcomisario</option>
+                                <option value="Intendente Jefe">Intendente Jefe</option>
+                                <option value="Intendente">Intendente</option>
+                                <option value="Subintendente">Subintendente</option>
+                                <option value="Patrullero">Patrullero</option>
+                            </select>
+                        </div>
+                        <div class="tarjeta-color" data-estampado="parches">
+                            <div class="muestra-color"
+                                style="background: repeating-linear-gradient(135deg, #333 0, #333 8px, white 8px, white 16px);">
+                            </div>
+                            <div class="nombre-color">Parches</div>
+                        </div>
+                        <div class="tarjeta-color" data-estampado="ninguno">
+                            <div class="muestra-color" style="background-color: #f0f0f0;"></div>
+                            <div class="nombre-color">Sin Estampado</div>
+                        </div>
+                    </div>
+                    <div class="botones-navegacion">
+                        <button class="btn-navegacion" id="btn-atras-paso4">← Atrás</button>
+                        <button type="button" class="btn-navegacion" id="btn-siguiente-paso4">✓ Finalizar</button>
+                    </div>
+                </div>
+            </div>
+            <!-- PANEL DERECHO - VISTA PREVIA -->
+            <div class="panel-derecho" id="panel-vista-previa" style="display: none;">
+                <div class="vista-previa-titulo">Vista Previa de Tu Producto</div>
+
+                <div class="controles-vista-previa"
+                    style="display: none; justify-content: center; gap: 10px; margin-bottom: 20px;">
+                    <button type="button" id="btn-vista-delantera" class="btn btn-secundario active"
+                        style="padding: 10px 24px; border-radius: 5px; cursor: pointer; border: 1px solid #ccc; background-color: #ffd700; color: #000; font-weight: bold; min-width: 110px;">Adelante</button>
+                    <button type="button" id="btn-vista-trasera" class="btn btn-secundario"
+                        style="padding: 10px 24px; border-radius: 5px; cursor: pointer; border: 1px solid #ccc; background-color: #f0f0f0; min-width: 110px; color: #333;">Atrás</button>
+                </div>
+
+                <!-- ÁREA DE VISUALIZACIÓN DEL PRODUCTO -->
+                <div class="area-preview" id="area-preview">
+                    <div style="text-align: center;">
+                        <i class="fas fa-palette" style="font-size: 3rem; margin-bottom: 1rem;"></i>
+                        <p>Selecciona un producto para comenzar</p>
+                    </div>
+                </div>
+
+                <!-- INFORMACIÓN DEL PRODUCTO SELECCIONADO -->
+                <div class="info-producto">
+                    <div class="info-item">
+                        <span class="info-label">Descripción general:</span>
+                        <span class="info-valor" id="preview-descripcion">-</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Identidad:</span>
+                        <span class="info-valor" id="preview-identidad">-</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Técnica:</span>
+                        <span class="info-valor" id="preview-tecnica">-</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Producto:</span>
+                        <span class="info-valor" id="preview-producto">-</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Color:</span>
+                        <span class="info-valor" id="preview-color">-</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Estampado:</span>
+                        <span class="info-valor" id="preview-estampado">-</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Talla:</span>
+                        <span class="info-valor" id="preview-talla">-</span>
+                    </div>
+                    <div class="info-item precio">
+                        <span class="info-label">Precio:</span>
+                        <span class="info-valor" id="preview-precio">$ 0</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- FOOTER -->
+    <footer class="footer-empresa">
+        <div class="footer-contenido">
+            <div class="footer-seccion">
+                <h3 class="footer-titulo"><i class="fas fa-crown"></i> Nachoher</h3>
+            </div>
+            <div class="footer-seccion">
+                <p class="footer-item">
+                    <i class="fas fa-map-marker-alt"></i>
+                    Urbanizacion Pablo Sexto
+                </p>
+            </div>
+            <div class="footer-seccion">
+                <p class="footer-item">
+                    <i class="fas fa-phone"></i>
+                    +57 313 2434017
+                </p>
+            </div>
+            <div class="footer-seccion">
+                <p class="footer-item">
+                    <i class="fas fa-clock"></i>
+                    Lun-Vie 8:00-19:30 / Sab 8:00-14:00
+                </p>
+            </div>
+            <div class="footer-seccion footer-redes">
+                <a href="#" class="footer-red" title="Facebook"><i class="fab fa-facebook-f"></i></a>
+                <a href="#" class="footer-red" title="Instagram"><i class="fab fa-instagram"></i></a>
+                <a href="#" class="footer-red" title="WhatsApp"><i class="fab fa-whatsapp"></i></a>
+            </div>
+        </div>
+        <div class="footer-copyright">
+            © 2026 - Todos los derechos reservados
+        </div>
     </footer>
-
-    <script src="{{ url_for('static', filename='js/usuario/catalog_base.js') }}"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="{{ url_for('static', filename='js/usuario/orden_personalizada.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/usuario/orden_personalizada.js') }}?v=639118770367342687"></script>
 </body>
-</html>
 
+</html>
