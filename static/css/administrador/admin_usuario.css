@@ -442,3 +442,11 @@
         flex-wrap: wrap;
     }
 }
+.main-content {
+    background-color: #f4f7fb;
+}
+
+.content-area {
+    min-height: calc(100vh - 88px);
+    background-color: #f4f7fb;
+}
