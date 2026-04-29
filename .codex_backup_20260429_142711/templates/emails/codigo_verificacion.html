@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Código de verificación</title>
+</head>
+<body style="margin:0;padding:0;background:#f6f8fc;font-family:Arial,sans-serif;color:#1f2d3d;">
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#f6f8fc;padding:24px 12px;">
+        <tr>
+            <td align="center">
+                <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:600px;background:#ffffff;border-radius:12px;overflow:hidden;border:1px solid #e7ebf3;">
+                    <tr>
+                        <td style="background:#0b2f69;color:#ffffff;padding:20px 24px;">
+                            <h1 style="margin:0;font-size:22px;line-height:1.2;">{{ proyecto }}</h1>
+                            <p style="margin:6px 0 0 0;font-size:14px;opacity:.92;">
+                                {% if es_registro %}
+                                    Verificación de cuenta
+                                {% else %}
+                                    Verificación de acceso
+                                {% endif %}
+                            </p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding:24px;">
+                            <p style="margin:0 0 14px 0;font-size:15px;line-height:1.6;">
+                                Hola,
+                            </p>
+                            <p style="margin:0 0 14px 0;font-size:15px;line-height:1.6;">
+                                {% if es_registro %}
+                                    Recibimos una solicitud para crear una cuenta con esta dirección de correo electrónico.
+                                {% else %}
+                                    Recibimos una solicitud de inicio de sesión con esta dirección de correo electrónico.
+                                {% endif %}
+                            </p>
+                            <p style="margin:0 0 14px 0;font-size:15px;line-height:1.6;">
+                                Para continuar, ingresa el siguiente código de verificación en la aplicación o sitio web:
+                            </p>
+                            <div style="display:inline-block;padding:12px 18px;background:#eef3ff;border:1px solid #c8d6ff;border-radius:10px;font-size:30px;letter-spacing:8px;font-weight:700;color:#0b2f69;">
+                                {{ codigo }}
+                            </div>
+                            <p style="margin:16px 0 0 0;font-size:14px;color:#425466;line-height:1.6;">
+                                Este código expirará en {{ minutos_expiracion }} minutos.
+                            </p>
+                            <p style="margin:10px 0 0 0;font-size:14px;color:#425466;line-height:1.6;">
+                                Si no solicitaste esta acción, puedes ignorar este mensaje de forma segura.
+                            </p>
+                            <p style="margin:18px 0 0 0;font-size:14px;color:#425466;line-height:1.6;">
+                                Gracias,<br>
+                                El equipo de {{ proyecto }}
+                            </p>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>

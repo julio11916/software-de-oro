@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nachoher</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/usuario/catalog_base.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/usuario/user_dashboard.css') }}">
+</head>
+
+<body>
+    <header class="store-header">
+        <div class="container-fluid px-3 px-lg-4">
+            <div class="store-header-inner">
+                <button class="icon-btn-dark" type="button" data-bs-toggle="offcanvas" data-bs-target="#menuCanvas"
+                    aria-controls="menuCanvas">
+                    <i class="fas fa-bars"></i>
+                </button>
+
+                <a class="brand-logo" href="{{ url_for('user_dashboard') }}">
+                    <img src="{{ url_for('static', filename='img/pagina/logo_header.png') }}" alt="Logo Nachoher">
+                </a>
+
+                <div class="header-actions">
+                    <a href="{{ url_for('cart') }}" class="icon-btn-dark">
+                        <i class="fas fa-bag-shopping"></i>
+                    </a>
+
+                    <div class="user-dropdown">
+                        <button class="icon-btn-dark" type="button" onclick="toggleUserMenu()">
+                            <i class="far fa-user"></i>
+                        </button>
+                        <div class="dropdown-menu-custom" id="userDropdown">
+                            <a href="{{ url_for('user_profile') }}">
+                                <i class="fas fa-user-circle me-2"></i> Mi Perfil
+                            </a>
+                            <a href="{{ url_for('user_orders') }}">
+                                <i class="fas fa-box me-2"></i> Mis Pedidos
+                            </a>
+                            <a href="{{ url_for('logout') }}">
+                                <i class="fas fa-sign-out-alt me-2"></i> Cerrar sesión
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="offcanvas offcanvas-start menu-canvas" tabindex="-1" id="menuCanvas" aria-labelledby="menuCanvasLabel">
+        <div class="offcanvas-header">
+            <button type="button" class="btn-close-custom" data-bs-dismiss="offcanvas" aria-label="Close">
+                <i class="fas fa-xmark"></i>
+            </button>
+            <img src="{{ url_for('static', filename='img/pagina/logo_header.png') }}" class="offcanvas-logo" alt="Logo">
+            <span></span>
+        </div>
+        <div class="offcanvas-body">
+            <nav class="offcanvas-nav">
+                <a class="offcanvas-link active" href="{{ url_for('user_dashboard') }}">
+                    <i class="fas fa-house"></i>
+                    <span>Home</span>
+                </a>
+                <a class="offcanvas-link active">
+                    <i class="fas fa-shirt"></i>
+                    <span>Catálogo</span>
+                </a>
+                <a class="offcanvas-link menu-normal" href="{{ url_for('armada') }}">  Armada</a>
+                <a class="offcanvas-link menu-normal" href="{{ url_for('ejercito') }}">  Ejército</a>
+                <a class="offcanvas-link menu-normal" href="{{ url_for('gaula') }}">  Gaula</a>
+                <a class="offcanvas-link menu-normal" href="{{ url_for('policia') }}">  Policía</a>
+                <a class="offcanvas-link active" href="{{ url_for('accesorios') }}">
+                    <i class="fa-solid fa-glasses" style="color: rgb(29, 42, 51);"></i>
+                    <span>Accesorios</span>
+                </a>
+            </nav>
+
+            <div class="offcanvas-divider"></div>
+
+            <nav class="offcanvas-nav">
+                <a class="offcanvas-link active" href="{{ url_for('orden_personalizada') }}">
+                    <i class="fas fa-clipboard-list"></i>
+                    <span>Orden personalizada</span>
+                </a>
+                <a class="offcanvas-link active" href="{{ url_for('sobre_nosotros') }}">
+                    <i class="fas fa-user-gear"></i>
+                    <span>Sobre nosotros</span>
+                </a>
+            </nav>
+        </div>
+    </div>
+
+    <section class="hero">
+        <div class="hero-overlay"></div>
+        <div class="hero-content text-center">
+            <p class="hero-kicker">BIENVENIDOS A</p>
+            <a href="{{ url_for('user_dashboard') }}">
+                <img src="{{ url_for('static', filename='img/pagina/logo_transparente_2.png') }}" alt="Logo del proyecto"
+                class="logo">
+            </a>
+            <p class="hero-subtitle">Catálogo premium de prendas y accesorios</p>
+            <a href="#catalogo" class="hero-cta">Ver prendas destacadas</a>
+        </div>
+    </section>
+
+    {% include 'Usuarios/partials/_flash_toasts.html' %}
+
+    <main class="main-content" id="catalogo">
+        {% with carousel_id='ejercitoCarousel', titulo='Prendas destacadas - Ejército', productos=productos_destacados_ejercito, empty_message='Aún no hay prendas destacadas disponibles para Ejército.', is_public_featured=false %}
+        {% include 'Usuarios/partials/_featured_category_carousel.html' %}
+        {% endwith %}
+
+        {% with carousel_id='policiaCarousel', titulo='Prendas destacadas - Policía', productos=productos_destacados_policia, empty_message='Aún no hay prendas destacadas disponibles para Policía.', is_public_featured=false %}
+        {% include 'Usuarios/partials/_featured_category_carousel.html' %}
+        {% endwith %}
+
+        {% with carousel_id='armadaCarousel', titulo='Prendas destacadas - Armada', productos=productos_destacados_armada, empty_message='Aún no hay prendas destacadas disponibles para Armada.', is_public_featured=false %}
+        {% include 'Usuarios/partials/_featured_category_carousel.html' %}
+        {% endwith %}
+    </main>
+
+    <footer class="footer-compact">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-brand">
+                    <i class="fas fa-crown"></i> <strong>Nachoher</strong>
+                </div>
+                <div class="footer-item">
+                    <i class="fas fa-map-marker-alt"></i> Urbanización Pablo Sexto
+                </div>
+                <div class="footer-item">
+                    <i class="fas fa-phone"></i> +57 3229393211
+                </div>
+                <div class="footer-item">
+                    <i class="fas fa-clock"></i> Lun-Vie 8:00-19:30 / Sab 8:00-14:00
+                </div>
+                <div class="footer-social">
+                    <a href="https://www.facebook.com/profile.php?id=61573294253539" target="_blank" rel="noopener noreferrer" aria-label="Facebook"><i class="fab fa-facebook"></i></a>
+                    <a href="https://www.instagram.com/nachoher_/" target="_blank" rel="noopener noreferrer" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+                    <a href="#" aria-label="WhatsApp"><i class="fab fa-whatsapp"></i></a>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                &copy; 2026 - Todos los derechos reservados
+            </div>
+        </div>
+    </footer>
+
+    <script src="{{ url_for('static', filename='js/usuario/catalog_base.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/usuario/user_dashboard.js') }}"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+
+</html>

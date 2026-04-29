@@ -1,0 +1,41 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.log
+
+# Virtual environments
+venv/
+.venv/
+env/
+ENV/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Temp files
+.tmp/
+.tmp_runtime/
+.tmp_env/
+.tmp_py/
+.virtualenv_appdata/
+
+# Excel / generated files
+*.xlsx
+*.xls
+recibo_pos_*/
+
+# Sensitive config
+.env
+
+# DB local (if used)
+*.sqlite3
+instance/

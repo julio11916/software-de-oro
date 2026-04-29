@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sobre Nosotros - Nachoher</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600&family=Outfit:wght@500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/usuario/catalog_base.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/usuario/user_dashboard.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/usuario/sobre_nosotros.css') }}">
+</head>
+
+<body>
+    <header class="store-header">
+        <div class="container-fluid px-3 px-lg-4">
+            <div class="store-header-inner">
+                <button class="icon-btn-dark" type="button" data-bs-toggle="offcanvas" data-bs-target="#menuCanvas"
+                    aria-controls="menuCanvas">
+                    <i class="fas fa-bars"></i>
+                </button>
+
+{% if session.get('rol') == 'normal' %}
+                <a class="brand-logo" href="{{ url_for('user_dashboard') }}">
+{% else %}
+                <a class="brand-logo" href="{{ url_for('home') }}">
+{% endif %}
+                    <img src="{{ url_for('static', filename='img/pagina/logo_header.png') }}" alt="Logo Nachoher">
+                </a>
+
+                <div class="header-actions">
+                    <div class="user-dropdown">
+                        <button class="icon-btn-dark" type="button" onclick="toggleUserMenu()">
+                            <i class="far fa-user"></i>
+                        </button>
+                        <div class="dropdown-menu-custom" id="userDropdown">
+                            {% if session.get('rol') == 'normal' %}
+                            <a href="{{ url_for('user_profile') }}">
+                                <i class="fas fa-user-circle me-2"></i> Mi Perfil
+                            </a>
+                            <a href="{{ url_for('user_dashboard') }}">
+                                <i class="fas fa-arrow-left me-2"></i> Volver
+                            </a>
+                            {% else %}
+                            <a href="{{ url_for('login') }}">
+                                <i class="fas fa-sign-in-alt me-2"></i>Iniciar sesi&oacute;n
+                            </a>
+                            <a href="{{ url_for('registro') }}">
+                                <i class="fas fa-user-plus me-2"></i>Crear cuenta
+                            </a>
+                            <a href="{{ url_for('home') }}">
+                                <i class="fas fa-arrow-left me-2"></i> Volver
+                            </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="offcanvas offcanvas-start menu-canvas" tabindex="-1" id="menuCanvas" aria-labelledby="menuCanvasLabel">
+        <div class="offcanvas-header">
+            <button type="button" class="btn-close-custom" data-bs-dismiss="offcanvas" aria-label="Close">
+                <i class="fas fa-xmark"></i>
+            </button>
+            <img src="{{ url_for('static', filename='img/pagina/logo_header.png') }}" class="offcanvas-logo" alt="Logo">
+            <span></span>
+        </div>
+        <div class="offcanvas-body">
+            <nav class="offcanvas-nav">
+                {% if session.get('rol') == 'normal' %}
+                <a class="offcanvas-link active" href="{{ url_for('user_dashboard') }}">
+                {% else %}
+                <a class="offcanvas-link active" href="{{ url_for('home') }}">
+                {% endif %}
+                    <i class="fas fa-house"></i>
+                    <span>Home</span>
+                </a>
+                <a class="offcanvas-link active">
+                    <i class="fas fa-shirt"></i>
+                    <span>Cat&aacute;logo</span>
+                </a>
+                <a class="offcanvas-link menu-normal" href="{{ url_for('armada') }}">  Armada</a>
+                <a class="offcanvas-link menu-normal" href="{{ url_for('ejercito') }}">  Ej&eacute;rcito</a>
+                <a class="offcanvas-link menu-normal" href="{{ url_for('gaula') }}">  Gaula</a>
+                <a class="offcanvas-link menu-normal" href="{{ url_for('policia') }}">  Polic&iacute;a</a>
+                <a class="offcanvas-link active" href="{{ url_for('accesorios') }}">
+                    <i class="fa-solid fa-glasses" style="color: rgb(29, 42, 51);"></i>
+                    <span>Accesorios</span>
+                </a>
+            </nav>
+
+            <div class="offcanvas-divider"></div>
+
+            <nav class="offcanvas-nav">
+                {% if session.get('rol') == 'normal' %}
+                <a class="offcanvas-link active" href="{{ url_for('orden_personalizada') }}">
+                {% else %}
+                <a class="offcanvas-link active" href="{{ url_for('login') }}">
+                {% endif %}
+                    <i class="fas fa-clipboard-list"></i>
+                    <span>Orden personalizada</span>
+                </a>
+                <a class="offcanvas-link active" href="{{ url_for('sobre_nosotros') }}">
+                    <i class="fas fa-user-gear"></i>
+                    <span>Sobre nosotros</span>
+                </a>
+            </nav>
+        </div>
+    </div>
+
+    {% include 'Usuarios/partials/_flash_toasts.html' %}
+
+    <section class="about-hero">
+        <div class="about-overlay"></div>
+        <div class="container about-content">
+            <div class="logo-container">
+                <img src="{{ url_for('static', filename='img/pagina/logo_transparente_2.png') }}" class="logo-principal"
+                    alt="Logo Nachoher">
+            </div>
+
+            <div class="sobre-nosotros-container">
+                <div class="section-header">
+                    <h1><i class="fas fa-users"></i> Sobre Nosotros</h1>
+                    <p>Conoce nuestra empresa, nuestros valores y objetivos</p>
+                </div>
+
+                <div class="info-card">
+                    <div class="info-card-header">
+                        <div class="info-card-icon">
+                            <i class="fas fa-bullseye"></i>
+                        </div>
+                        <h2 class="info-card-title">Misi&oacute;n</h2>
+                    </div>
+                    <div class="info-card-content">
+                        <p>Producir y ofrecer prendas de alta calidad mediante procesos de dise&ntilde;o, estampado, corte,
+                            confecci&oacute;n y acabado, orientados especialmente a las necesidades de las fuerzas p&uacute;blicas,
+                            garantizando eficiencia, cumplimiento y satisfacci&oacute;n del cliente mediante el uso de herramientas
+                            tecnol&oacute;gicas que faciliten la gesti&oacute;n de pedidos y la organizaci&oacute;n de la empresa.</p>
+                    </div>
+                </div>
+
+                <div class="info-card">
+                    <div class="info-card-header">
+                        <div class="info-card-icon">
+                            <i class="fas fa-eye"></i>
+                        </div>
+                        <h2 class="info-card-title">Visi&oacute;n</h2>
+                    </div>
+                    <div class="info-card-content">
+                        <p>Ser una empresa reconocida a nivel regional y nacional en la producci&oacute;n y personalizaci&oacute;n de
+                            prendas para las fuerzas p&uacute;blicas, destac&aacute;ndose por la calidad de sus productos, la innovaci&oacute;n en
+                            sus procesos y el uso de soluciones tecnol&oacute;gicas que optimicen la gesti&oacute;n de pedidos y el servicio
+                            al cliente.</p>
+                    </div>
+                </div>
+
+                <div class="info-card">
+                    <div class="info-card-header">
+                        <div class="info-card-icon">
+                            <i class="fas fa-tasks"></i>
+                        </div>
+                        <h2 class="info-card-title">Objetivos</h2>
+                    </div>
+                    <div class="info-card-content">
+                        <ul class="objetivos-list">
+                            <li>Vestir nuestros h&eacute;roes de Colombia.</li>
+                            <li>Mostrar nuestras prendas y confecci&oacute;n de ellas, destacando su buena calidad y comodidad para un buen desempe&ntilde;o.</li>
+                            <li>Poder emplear m&aacute;s personal y darnos a conocer en la ciudad y fuera de ella.</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="info-card">
+                    <div class="info-card-header">
+                        <div class="info-card-icon">
+                            <i class="fas fa-handshake"></i>
+                        </div>
+                        <h2 class="info-card-title">Valores</h2>
+                    </div>
+                    <div class="info-card-content">
+                        <ul class="objetivos-list">
+                            <li><strong>Responsabilidad:</strong> Cumplir con los pedidos y compromisos adquiridos con los clientes.</li>
+                            <li><strong>Calidad:</strong> Garantizar que cada prenda cumpla con altos est&aacute;ndares de fabricaci&oacute;n.</li>
+                            <li><strong>Compromiso:</strong> Trabajar con dedicaci&oacute;n para satisfacer las necesidades del cliente.</li>
+                            <li><strong>Innovaci&oacute;n:</strong> Incorporar herramientas tecnol&oacute;gicas para mejorar los procesos.</li>
+                            <li><strong>Trabajo en equipo:</strong> Colaborar entre los integrantes para lograr mejores resultados.</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="info-card">
+                    <div class="info-card-header">
+                        <div class="info-card-icon">
+                            <i class="fas fa-briefcase"></i>
+                        </div>
+                        <h2 class="info-card-title">Portafolio de servicios</h2>
+                    </div>
+                    <div class="info-card-content">
+                        <ul class="objetivos-list">
+                            <li><strong>Dise&ntilde;o de prendas:</strong> Servicio de dise&ntilde;o y desarrollo de prendas seg&uacute;n las necesidades del cliente, incluyendo selecci&oacute;n de telas, estilos, colores y personalizaci&oacute;n.</li>
+                            <li><strong>Estampado y personalizaci&oacute;n:</strong> Aplicaci&oacute;n de estampados, logos, nombres o insignias en las prendas mediante t&eacute;cnicas especializadas para garantizar durabilidad y calidad.</li>
+                            <li><strong>Corte de telas:</strong> Proceso de corte preciso de las telas seg&uacute;n los moldes establecidos para asegurar uniformidad y eficiencia en la producci&oacute;n.</li>
+                            <li><strong>Confecci&oacute;n de prendas:</strong> Elaboraci&oacute;n y ensamblaje de las prendas con altos est&aacute;ndares de calidad, cuidando detalles de costura, resistencia y acabado.</li>
+                            <li><strong>Producci&oacute;n por pedidos:</strong> Fabricaci&oacute;n de prendas seg&uacute;n pedidos espec&iacute;ficos de clientes o instituciones, ajust&aacute;ndose a cantidades, tallas y dise&ntilde;os requeridos.</li>
+                            <li><strong>Gesti&oacute;n de pedidos mediante plataforma web:</strong> Sistema digital que permite visualizar productos, realizar pedidos, seleccionar tallas y hacer seguimiento al estado del pedido.</li>
+                            <li><strong>Cat&aacute;logo digital de productos:</strong> Visualizaci&oacute;n de las diferentes prendas disponibles, con informaci&oacute;n sobre tallas, modelos, colores y precios.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer class="footer-compact">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-brand">
+                    <i class="fas fa-crown"></i> <strong>Nachoher</strong>
+                </div>
+                <div class="footer-item">
+                    <i class="fas fa-map-marker-alt"></i> Urbanizaci&oacute;n Pablo Sexto
+                </div>
+                <div class="footer-item">
+                    <i class="fas fa-phone"></i> +57 3229393211
+                </div>
+                <div class="footer-item">
+                    <i class="fas fa-clock"></i> Lun-Vie 8:00-19:30 / Sab 8:00-14:00
+                </div>
+                <div class="footer-social">
+                    <a href="https://www.facebook.com/profile.php?id=61573294253539" target="_blank" rel="noopener noreferrer" aria-label="Facebook"><i class="fab fa-facebook"></i></a>
+                    <a href="https://www.instagram.com/nachoher_/" target="_blank" rel="noopener noreferrer" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+                    <a href="#" aria-label="WhatsApp"><i class="fab fa-whatsapp"></i></a>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                &copy; 2026 - Todos los derechos reservados
+            </div>
+        </div>
+    </footer>
+
+    <script src="{{ url_for('static', filename='js/usuario/catalog_base.js') }}"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+
+</html>
+

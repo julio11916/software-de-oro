@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ producto.nombre }} - Ropa Militar</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600&family=Outfit:wght@500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/usuario/catalog_base.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/usuario/product_detail.css') }}">
+</head>
+
+<body class="page-with-catalog-header">
+
+    {% include 'Usuarios/partials/header_offcanvas.html' %}
+
+    {% include 'Usuarios/partials/_flash_toasts.html' %}
+
+    <!-- Detalle del Producto -->
+    <div class="container">
+        <div class="product-detail-container">
+            <div class="row">
+                <!-- Galer&iacute;a de Im&aacute;genes -->
+                <div class="col-md-6">
+                    {% set imagenes_producto = producto.imagenes if producto.imagenes is defined and producto.imagenes else ([] if not producto.imagen_url else [producto.imagen_url]) %}
+                    {% if not imagenes_producto %}
+                    {% set imagenes_producto = ['img/pagina/logo.jpeg'] %}
+                    {% endif %}
+                    <div id="productCarousel" class="carousel slide" data-bs-ride="false">
+                        <div class="carousel-inner">
+                            {% for imagen in imagenes_producto %}
+                            <div class="carousel-item {% if loop.first %}active{% endif %}">
+                                <img src="{{ url_for('static', filename=imagen) }}" class="d-block w-100"
+                                    alt="{{ producto.nombre }} - Vista {{ loop.index }}">
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% if imagenes_producto|length > 1 %}
+                        <button class="carousel-control-prev" type="button" data-bs-target="#productCarousel"
+                            data-bs-slide="prev">
+                            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                            <span class="visually-hidden">Anterior</span>
+                        </button>
+                        <button class="carousel-control-next" type="button" data-bs-target="#productCarousel"
+                            data-bs-slide="next">
+                            <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                            <span class="visually-hidden">Siguiente</span>
+                        </button>
+                        {% endif %}
+                    </div>
+
+                    <!-- Miniaturas -->
+                    <div class="thumbnail-container">
+                        {% for imagen in imagenes_producto %}
+                        <img src="{{ url_for('static', filename=imagen) }}" class="thumbnail {% if loop.first %}active{% endif %}"
+                            data-slide-index="{{ loop.index0 }}" alt="Vista {{ loop.index }}">
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <!-- Informaci&oacute;n del Producto -->
+                <div class="col-md-6">
+                    <div class="product-info">
+                        <h1 class="product-title">{{ producto.nombre }}</h1>
+                        <p class="product-price">{{ producto.precio|cop }}</p>
+                        <p class="product-description">{{ producto.descripcion }}</p>
+                        <p class="stock-info">
+                            <i class="fas fa-box"></i>
+                            <strong>Stock disponible:</strong> {{ producto.stock }} unidades
+                        </p>
+                        {% if producto.stock|int <= 0 %}
+                        <p class="text-danger fw-bold">Producto agotado</p>
+                        {% endif %}
+
+                        <!-- Formulario de agregar al carrito -->
+                        {% if session.get('rol') == 'normal' %}
+                        <form method="POST" action="{{ url_for('add_to_cart', id_producto=producto.id_producto) }}">
+                        {% else %}
+                        <form method="GET" action="{{ url_for('login') }}">
+                        {% endif %}
+                            <div class="mb-4">
+                                <label class="form-label" style="font-size: 1.1rem; font-weight: bold;">
+                                    <i class="fas fa-shopping-basket"></i> Cantidad:
+                                </label>
+                                <input type="number" name="cantidad" class="form-control form-control-lg" value="1"
+                                    min="1" max="{{ producto.stock|int }}" style="max-width: 150px;" {% if producto.stock|int <= 0 %}disabled{% endif %}>
+                            </div>
+                            <div class="mb-4">
+                                <label class="form-label" style="font-size: 1.1rem; font-weight: bold;">
+                                    <i class="fas fa-ruler-combined"></i> Talla:
+                                </label>
+                                {% if producto.requiere_talla %}
+                                <select name="talla" class="form-select form-select-lg" style="max-width: 240px;" required {% if producto.stock|int <= 0 %}disabled{% endif %}>
+                                    <option value="" selected>Selecciona una talla</option>
+                                    {% for talla in tallas_opciones %}
+                                    <option value="{{ talla }}">{{ talla }}</option>
+                                    {% endfor %}
+                                </select>
+                                {% else %}
+                                <input type="hidden" name="talla" value="">
+                                <input type="text" class="form-control form-control-lg" style="max-width: 240px;" value="No requiere talla" readonly>
+                                {% endif %}
+                            </div>
+                            <div class="d-flex gap-3">
+                                <button type="submit" class="btn btn-add-cart" {% if producto.stock|int <= 0 %}disabled{% endif %}>
+                                    <i class="fas fa-cart-plus"></i> Agregar al Carrito
+                                </button>
+                                {% set origen = request.args.get('from') %}
+                                {% if origen == 'armada' %}
+                                <a href="{{ url_for('armada') }}" class="btn btn-back">
+                                {% elif origen == 'policia' %}
+                                <a href="{{ url_for('policia') }}" class="btn btn-back">
+                                {% elif origen == 'gaula' %}
+                                <a href="{{ url_for('gaula') }}" class="btn btn-back">
+                                {% elif origen == 'ejercito' %}
+                                <a href="{{ url_for('ejercito') }}" class="btn btn-back">
+                                {% elif origen == 'accesorios' %}
+                                <a href="{{ url_for('accesorios') }}" class="btn btn-back">
+                                {% else %}
+                                <a href="{{ url_for('user_dashboard') }}" class="btn btn-back">
+                                {% endif %}
+                                    <i class="fas fa-arrow-left"></i> Volver al Cat&aacute;logo
+                                </a>
+                            </div>
+                        </form>
+
+                        <!-- Caracter&iacute;sticas adicionales -->
+                        <div class="mt-4 pt-4 border-top">
+                            <h5 style="color: var(--primary-color); font-weight: bold;">
+                                <i class="fas fa-check-circle"></i> Caracter&iacute;sticas
+                            </h5>
+                            <ul class="list-unstyled mt-3" style="font-size: 1rem;">
+                                <li class="mb-2"><i class="fas fa-shield-alt text-success"></i> Material de alta calidad
+                                </li>
+                                <li class="mb-2"><i class="fas fa-truck text-primary"></i> Env&iacute;o gratuito en compras
+                                    superiores a COP 50.000</li>
+                                <li class="mb-2"><i class="fas fa-undo text-warning"></i> 30 d&iacute;as de garant&iacute;a de
+                                    devoluci&oacute;n</li>
+                                <li class="mb-2"><i class="fas fa-award text-info"></i> Certificado de autenticidad</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/usuario/product_detail.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/usuario/catalog_base.js') }}"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    
+</body>
+
+</html>
+

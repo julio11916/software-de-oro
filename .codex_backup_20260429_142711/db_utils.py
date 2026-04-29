@@ -53,18 +53,14 @@ if DATABASE_URL.startswith("postgresql://"):
     DATABASE_URL = DATABASE_URL.replace("postgresql://", "postgresql+psycopg://", 1)
 
 
-print("DATABASE_URL REAL:", DATABASE_URL)
+print("🔥 DATABASE_URL REAL:", DATABASE_URL)
 
 
 # 🔴 Crear engine (UNA SOLA VEZ)
-connect_args = {}
-if "localhost" not in DATABASE_URL and "127.0.0.1" not in DATABASE_URL:
-    connect_args["sslmode"] = "require"
-
 engine = sa.create_engine(
     DATABASE_URL,
     future=True,
-    connect_args=connect_args
+    connect_args={"sslmode": "require"}
 )
 
 

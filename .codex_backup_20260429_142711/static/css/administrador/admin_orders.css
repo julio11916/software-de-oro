@@ -1,0 +1,196 @@
+﻿.orders-content {
+    background:
+        radial-gradient(circle at 100% 0%, rgba(24, 130, 169, 0.12), transparent 38%),
+        radial-gradient(circle at 0% 100%, rgba(10, 41, 98, 0.08), transparent 42%),
+        #f4f7fb;
+}
+
+.orders-panel {
+    background: #fff;
+    border-radius: 14px;
+    box-shadow: 0 8px 24px rgba(19, 53, 106, 0.08);
+    overflow: hidden;
+    border: 1px solid #e6edf8;
+}
+
+.panel-head {
+    background: linear-gradient(90deg, #0a2962, #1882a9);
+    color: #fff;
+    padding: 14px 18px;
+}
+
+.panel-body {
+    padding: 16px 18px;
+}
+
+.orders-filters {
+    background: #f7fafd;
+    border: 1px solid #e0eaf7;
+    border-radius: 10px;
+    padding: 12px;
+}
+
+.orders-filters .form-label {
+    color: #0a2962;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.orders-pagination {
+    margin-top: 12px;
+    padding-top: 10px;
+    border-top: 1px solid #e6edf8;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.pagination-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.page-arrow {
+    min-width: 34px;
+    padding-left: 10px;
+    padding-right: 10px;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.page-numbers {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.page-number {
+    min-width: 30px;
+    height: 30px;
+    border-radius: 999px;
+    border: 1px solid #d2e1fb;
+    color: #0a2962;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+    background: #ffffff;
+    padding: 0 8px;
+}
+
+.page-number:hover {
+    background: #eaf2ff;
+    border-color: #98b7ef;
+    color: #0a2962;
+}
+
+.page-number.active {
+    background: #0a2962;
+    border-color: #0a2962;
+    color: #ffffff;
+    font-weight: 700;
+}
+
+.page-ellipsis {
+    color: #6b7280;
+    font-size: 0.9rem;
+    padding: 0 3px;
+}
+
+.orders-table thead th {
+    background-color: #eff5ff;
+    color: #0a2962;
+    border-bottom: 1px solid #dce7fb;
+    font-weight: 600;
+}
+
+.orders-table td,
+.orders-table th {
+    vertical-align: middle;
+}
+
+.top-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.status-badge {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    text-transform: capitalize;
+}
+
+.status-pendiente {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.status-confirmado,
+.status-en_preparacion {
+    background: #e5f2ff;
+    color: #0e5cba;
+}
+
+.status-empaquetado,
+.status-enviado {
+    background: #dff7fb;
+    color: #0f7f8d;
+}
+
+.status-entregado {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.status-cancelado {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.status-pago_en_revision {
+    background: #fff4d9;
+    color: #8d6106;
+}
+
+.status-pago-pendiente_comprobante,
+.status-pago-en_revision {
+    background: #eef8ff;
+    color: #176b8a;
+}
+
+.status-pago-aprobado {
+    background: #e8f7ec;
+    color: #1f7a44;
+}
+
+.status-pago-rechazado {
+    background: #fdebec;
+    color: #b42318;
+}
+
+.table-proof-link {
+    color: #0e5cba;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.table-proof-link:hover {
+    text-decoration: underline;
+}
+.main-content {
+    background-color: #f4f7fb;
+}
+
+.content-area {
+    min-height: calc(100vh - 88px);
+    background-color: #f4f7fb;
+}

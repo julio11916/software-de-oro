@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Transferencia por QR - Nachoher</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/usuario/catalog_base.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/usuario/checkout.css') }}">
+</head>
+
+<body class="page-with-catalog-header">
+    {% include 'Usuarios/partials/header_offcanvas.html' %}
+    {% include 'Usuarios/partials/_flash_toasts.html' %}
+
+    <div class="transfer-checkout-shell my-4">
+        <section class="transfer-hero-card">
+            <div class="transfer-hero-copy">
+                <p class="transfer-kicker">Transferencia por QR</p>
+                <h1>Escanea el QR y env&iacute;a tu comprobante</h1>
+                <p class="transfer-lead">Tu pago se valida manualmente. Cuando confirmemos el comprobante, el pedido entrar&aacute; al flujo normal de preparaci&oacute;n y env&iacute;o.</p>
+                <div class="transfer-hero-highlights">
+                    <span><i class="fas fa-qrcode"></i> Pago exacto por QR</span>
+                    <span><i class="fas fa-envelope-open-text"></i> Validaci&oacute;n por correo</span>
+                    <span><i class="fab fa-whatsapp"></i> Confirmaci&oacute;n por WhatsApp</span>
+                </div>
+            </div>
+            <div class="transfer-hero-side">
+                <div class="transfer-total-chip">
+                    <span>Total exacto</span>
+                    <strong>{{ total|cop }}</strong>
+                </div>
+                <div class="transfer-status-chip">
+                    <i class="fas fa-hourglass-half"></i>
+                    <div>
+                        <span>Estado inicial</span>
+                        <strong>Pago en revisi&oacute;n</strong>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <div class="transfer-layout">
+            <section class="transfer-card transfer-card-summary">
+                <h2><i class="fas fa-receipt"></i> Resumen de tu compra</h2>
+
+                <div class="transfer-summary-list">
+                    {% for item in carrito %}
+                    <article class="transfer-summary-item">
+                        <div>
+                            <strong>{{ item.nombre }}</strong>
+                            <p>
+                                {% if item.talla %}Talla {{ item.talla }} &middot; {% endif %}
+                                Cantidad {{ item.cantidad }}
+                            </p>
+                        </div>
+                        <span>{{ item.subtotal|cop }}</span>
+                    </article>
+                    {% endfor %}
+                </div>
+
+                <div class="transfer-data-box">
+                    <h3><i class="fas fa-user-check"></i> Datos que usaremos en el pedido</h3>
+                    <div class="transfer-data-grid">
+                        <div>
+                            <span class="transfer-data-label">Tel&eacute;fono</span>
+                            <strong>{{ cliente_telefono }}</strong>
+                        </div>
+                        <div>
+                            <span class="transfer-data-label">Direcci&oacute;n</span>
+                            <strong>{{ cliente_direccion }}</strong>
+                        </div>
+                    </div>
+                    <p class="transfer-small-note">Si necesitas corregir alguno, vuelve al carrito antes de registrar la transferencia.</p>
+                </div>
+
+                {% if selected_codigo_promo %}
+                <div class="transfer-promo-box">
+                    <span class="transfer-promo-label">C&oacute;digo aplicado</span>
+                    <strong>{{ selected_codigo_promo }}</strong>
+                </div>
+                {% endif %}
+
+                <div class="transfer-proof-flow">
+                    <article class="transfer-proof-step">
+                        <span class="transfer-proof-index">1</span>
+                        <div>
+                            <strong>Realiza la transferencia exacta</strong>
+                            <p>No cambies el valor ni hagas pagos parciales.</p>
+                        </div>
+                    </article>
+                    <article class="transfer-proof-step">
+                        <span class="transfer-proof-index">2</span>
+                        <div>
+                            <strong>Env&iacute;a el comprobante por ambos canales</strong>
+                            <p>Correo y WhatsApp son parte del proceso de validaci&oacute;n manual.</p>
+                        </div>
+                    </article>
+                    <article class="transfer-proof-step">
+                        <span class="transfer-proof-index">3</span>
+                        <div>
+                            <strong>Registra aqu&iacute; que ya pagaste</strong>
+                            <p>Con eso el pedido queda visible para revisi&oacute;n en administraci&oacute;n.</p>
+                        </div>
+                    </article>
+                </div>
+
+                <div class="transfer-checklist">
+                    <h3><i class="fas fa-list-check"></i> Lo que debes hacer</h3>
+                    <ol>
+                        <li>Escanea el QR y realiza la transferencia por el valor exacto.</li>
+                        <li>Toma una captura legible del comprobante.</li>
+                        <li>Env&iacute;a la evidencia al correo y al WhatsApp que te mostramos en esta p&aacute;gina.</li>
+                        <li>Luego pulsa el bot&oacute;n <strong>Ya realic&eacute; la transferencia</strong>.</li>
+                    </ol>
+                </div>
+            </section>
+
+            <section class="transfer-card transfer-card-qr">
+                <h2><i class="fas fa-qrcode"></i> Paga con este QR</h2>
+
+                <div class="transfer-qr-frame">
+                    <img src="{{ url_for('static', filename=transfer_qr_image) }}" alt="QR para pago por transferencia" loading="lazy">
+                </div>
+
+                <div class="transfer-reference-box">
+                    <div>
+                        <span class="transfer-contact-label">Referencia sugerida</span>
+                        <strong>{{ cliente_telefono if cliente_telefono else usuario.email if usuario is defined else 'Tu correo o telefono' }}</strong>
+                    </div>
+                    <p>Usa un dato reconocible para que podamos ubicar m&aacute;s r&aacute;pido tu comprobante al revisarlo.</p>
+                </div>
+
+                <div class="transfer-total-panel">
+                    <span>Monto que debes transferir</span>
+                    <strong>{{ total|cop }}</strong>
+                </div>
+
+                <div class="transfer-contact-box">
+                    <h3><i class="fas fa-paper-plane"></i> Env&iacute;a tu comprobante</h3>
+                    <div class="transfer-contact-item">
+                        <span class="transfer-contact-label">Correo electr&oacute;nico</span>
+                        <strong>{{ transfer_support_email }}</strong>
+                    </div>
+                    <div class="transfer-contact-item">
+                        <span class="transfer-contact-label">WhatsApp</span>
+                        {% if transfer_support_whatsapp %}
+                        <strong>{{ transfer_support_whatsapp }}</strong>
+                        {% else %}
+                        <strong>Pendiente de configurar</strong>
+                        {% endif %}
+                    </div>
+                    <p class="transfer-contact-help">Necesitamos ambos env&iacute;os para validar el comprobante desde administraci&oacute;n.</p>
+                </div>
+
+                <div class="transfer-upload-box">
+                    <h3><i class="fas fa-image"></i> Adjunta tu comprobante aqui</h3>
+                    <p class="transfer-contact-help">Este archivo no reemplaza el envio por correo y WhatsApp, pero nos ayuda a revisarlo mas rapido desde administracion.</p>
+                </div>
+
+                <form method="POST" action="{{ url_for('pay') }}" class="transfer-submit-form" enctype="multipart/form-data">
+                    <input type="hidden" name="codigo_promo" value="{{ selected_codigo_promo or '' }}">
+                    <input type="hidden" name="metodo_pago" value="transferencia">
+                    <input type="hidden" name="cliente_telefono" value="{{ cliente_telefono }}">
+                    <input type="hidden" name="cliente_direccion" value="{{ cliente_direccion }}">
+                    <div class="transfer-upload-field">
+                        <label for="comprobante_transferencia" class="form-label">Captura del comprobante (opcional recomendado)</label>
+                        <input id="comprobante_transferencia" name="comprobante_transferencia" type="file" class="form-control" accept=".jpg,.jpeg,.png,.gif,.webp,image/*">
+                    </div>
+                    <button type="submit" class="btn-transfer-confirm">
+                        <i class="fas fa-check-circle"></i> Ya realic&eacute; la transferencia
+                    </button>
+                </form>
+
+                <div class="transfer-disclaimer">
+                    <i class="fas fa-clock"></i>
+                    <p>Tu pedido quedar&aacute; registrado en revisi&oacute;n hasta que el comprobante sea aprobado manualmente.</p>
+                </div>
+            </section>
+        </div>
+
+        <div class="transfer-footer-actions">
+            <a href="{{ url_for('cart', metodo_pago='transferencia', codigo_promo=selected_codigo_promo or '') }}" class="btn-back-transfer">
+                <i class="fas fa-arrow-left"></i> Volver al carrito
+            </a>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/usuario/catalog_base.js') }}"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+
+</html>
