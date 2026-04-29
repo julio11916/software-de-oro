@@ -331,8 +331,8 @@ function setupCodigoInput() {
 
 document.addEventListener("DOMContentLoaded", function () {
     const addressForm = document.querySelector("#modalDirecciones form");
-    const addressInput = document.getElementById("direccion");
-    const addressAlert = document.getElementById("direccionAlert");
+    const addressInput = document.querySelector("#modalDirecciones #direccion");
+    const addressAlert = document.querySelector("#modalDirecciones #direccionAlert");
 
     if (addressForm && addressInput && addressAlert) {
         addressForm.addEventListener("submit", (event) => {
@@ -427,6 +427,24 @@ document.addEventListener("DOMContentLoaded", function () {
             });
             setPasswordChangeStep("request");
         });
+    }
+
+    const focusTarget = new URLSearchParams(window.location.search).get("focus");
+    if (typeof bootstrap !== "undefined" && focusTarget) {
+        let modalElement = null;
+
+        if (focusTarget === "contacto") {
+            modalElement = document.getElementById("modalInformacion");
+        } else if (focusTarget === "delivery") {
+            modalElement = document.getElementById("modalDirecciones");
+        }
+
+        if (modalElement) {
+            setTimeout(() => {
+                const modalInstance = bootstrap.Modal.getOrCreateInstance(modalElement);
+                modalInstance.show();
+            }, 250);
+        }
     }
 
     setupCodigoInput();

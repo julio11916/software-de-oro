@@ -44,13 +44,13 @@
                     <a class="nav-link" href="{{ url_for('admin_pos') }}">Sistema POS</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('admin_pedidos') }}">Pagos de pedidos</a>
+                    <a class="nav-link" href="{{ url_for('admin_pedidos') }}">Pagos y pedidos</a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" href="{{ url_for('admin_charts') }}">Ventas y Gráficas</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('admin_ajustes') }}">Pedidos en curso</a>
+                    <a class="nav-link" href="{{ url_for('admin_ajustes') }}">Prendas personalizadas</a>
                 </li>
             </ul>
 
@@ -146,7 +146,7 @@
                     <div class="dash-card card-ingresos card-destacados">
                         <div class="gradient-section-title d-flex justify-content-between align-items-center">
                             <h5 class="mb-0">Prendas destacadas</h5>
-                            <span class="badge bg-light text-dark">{{ destacados_count|default(0) }}/{{ destacados_max|default(5) }}</span>
+                            <span class="badge bg-light text-dark">{{ destacados_count|default(0) }} seleccionadas</span>
                         </div>
                         <div class="dash-body">
                             <p class="text-muted mb-3">
@@ -168,7 +168,7 @@
                                 <div class="tab-content" id="destacadosTabContent">
                                     {% for fuerza in ['Ejercito', 'Policia', 'Armada'] %}
                                     <div class="tab-pane fade {% if loop.first %}show active{% endif %}" id="{{ fuerza.lower() }}" role="tabpanel" aria-labelledby="{{ fuerza.lower() }}-tab">
-                                        <div class="featured-list mt-3" data-max="5">
+                                        <div class="featured-list mt-3">
                                             {% set productos_fuerza = productos_destacables | selectattr('fuerza', 'equalto', fuerza) | list %}
                                             {% if productos_fuerza %}
                                                 {% for p in productos_fuerza %}
@@ -189,7 +189,7 @@
                                                 <p class="mb-0 text-muted">No hay productos activos para {{ fuerza }}.</p>
                                             {% endif %}
                                         </div>
-                                        <small class="text-muted d-block mt-2">M&aacute;ximo 5 prendas destacadas por categor&iacute;a.</small>
+                                        <small class="text-muted d-block mt-2">Marca solo las prendas que quieras mostrar en esta categor&iacute;a.</small>
                                     </div>
                                     {% endfor %}
                                 </div>

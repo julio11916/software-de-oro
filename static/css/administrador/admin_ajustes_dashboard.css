@@ -166,7 +166,7 @@
 
 .tracking-steps {
     display: grid;
-    grid-template-columns: repeat(6, minmax(0, 1fr));
+    grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 10px;
     margin-bottom: 18px;
 }
@@ -345,11 +345,11 @@
 
 @media (max-width: 992px) {
     .tracking-steps {
-        grid-template-columns: repeat(3, minmax(0, 1fr));
+        grid-template-columns: repeat(2, minmax(0, 1fr));
         row-gap: 18px;
     }
 
-    .tracking-step:nth-child(3n)::after {
+    .tracking-step:nth-child(2n)::after {
         display: none;
     }
 }
@@ -388,4 +388,111 @@
     .page-numbers {
         justify-content: center;
     }
+}
+
+.stage-badge-pago_en_revision {
+    background: #fff4d9;
+    color: #8d6106;
+}
+
+.stage-payment-review {
+    padding: 14px 16px;
+    border-radius: 16px;
+    border: 1px solid #dce7fb;
+    background: #f8fbff;
+    margin-bottom: 18px;
+}
+
+.stage-payment-review-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 8px;
+}
+
+.stage-payment-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    padding: 8px 12px;
+    font-size: 0.78rem;
+    font-weight: 700;
+}
+
+.stage-payment-badge-pendiente_comprobante,
+.stage-payment-badge-en_revision {
+    background: #e6f7ff;
+    color: #176b8a;
+}
+
+.stage-payment-badge-aprobado {
+    background: #e8f7ec;
+    color: #1f7a44;
+}
+
+.stage-payment-badge-rechazado {
+    background: #fdebec;
+    color: #b42318;
+}
+
+.stage-payment-note,
+.stage-review-placeholder p {
+    margin: 0;
+    color: #5e738b;
+    line-height: 1.5;
+}
+
+.stage-proof-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 12px;
+    color: #0e5cba;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.stage-proof-link:hover {
+    text-decoration: underline;
+}
+
+.stage-payment-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 14px;
+}
+
+.stage-payment-actions form {
+    margin: 0;
+}
+
+.stage-payment-actions .btn {
+    min-width: 180px;
+    border-radius: 12px;
+    font-weight: 700;
+}
+
+.stage-review-placeholder {
+    padding: 14px 16px;
+    border-radius: 16px;
+    border: 1px dashed #c6d7ef;
+    background: #f9fbff;
+    margin-bottom: 18px;
+}
+
+.stage-review-placeholder strong {
+    display: block;
+    margin-bottom: 6px;
+    color: #143d76;
+}
+.main-content {
+    background-color: #f4f7fb;
+}
+
+.content-area {
+    min-height: calc(100vh - 88px);
+    background-color: #f4f7fb;
 }

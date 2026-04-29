@@ -54,10 +54,17 @@ body.auth-page {
     list-style: none;
     padding-left: 0;
     font-size: 0.9rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem 0.7rem;
+    align-items: center;
 }
 
 .password-rules li {
-    margin-bottom: 0.25rem;
+    margin-bottom: 0;
+    line-height: 1.15;
+    padding: 0.15rem 0;
+    white-space: nowrap;
 }
 
 .password-rule-hidden {
@@ -87,6 +94,14 @@ body.auth-page {
 @media (max-width: 768px) {
     body.auth-page {
         background-position: 50% 30%;
+    }
+
+    .password-rules {
+        gap: 0.35rem 0.65rem;
+    }
+
+    .password-rules li {
+        font-size: 0.84rem;
     }
 }
 

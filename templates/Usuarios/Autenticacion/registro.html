@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
@@ -42,12 +42,8 @@
                     pattern="(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}"
                     title="Mínimo 8 caracteres, con mayúscula, minúscula, número y carácter especial."
                 >
-                <ul class="password-rules mt-2 mb-0">
-                    <li id="rule-length" class="text-danger">Mínimo 8 caracteres</li>
-                    <li id="rule-uppercase" class="text-danger">Letras mayúsculas</li>
-                    <li id="rule-lowercase" class="text-danger">Letras minúsculas</li>
-                    <li id="rule-number" class="text-danger">Números</li>
-                    <li id="rule-symbol" class="text-danger">Símbolos</li>
+                <ul class="password-rules mt-2 mb-0" aria-live="polite">
+                    <li id="rule-length" class="text-danger">Mínimo 8 caracteres, Mayúscula, Minúscula, Número y Símbolo</li>
                 </ul>
             </div>
             <div class="mb-3">
@@ -63,12 +59,6 @@
                 Este código será válido por {{ registro_code_minutes }} minutos.
             </p>
 
-            <div class="mb-3 form-check">
-                <input type="checkbox" class="form-check-input" id="terms" required>
-                <label class="form-check-label" for="terms">
-                    He leído y aceptado los términos del servicio y políticas de privacidad
-                </label>
-            </div>
             <div class="d-grid gap-2 d-md-flex">
                 <button type="submit" class="btn btn-dark flex-fill" id="btnRegistrar">Registrarme</button>
                 <a href="{{ url_for('home') }}" class="btn btn-dark flex-fill">Cancelar</a>

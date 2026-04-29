@@ -16,14 +16,25 @@
                 {% with messages = get_flashed_messages(with_categories=true) %}
                     {% if messages %}
                         {% for category, message in messages %}
+                            {% set message_limpio = message
+                                | replace('ÃƒÂ±', 'ñ')
+                                | replace('Ã±', 'ñ')
+                                | replace('Ã¡', 'á')
+                                | replace('Ã©', 'é')
+                                | replace('Ã­', 'í')
+                                | replace('Ã³', 'ó')
+                                | replace('Ãº', 'ú')
+                                | replace('Â¿', '¿')
+                                | replace('Â¡', '¡')
+                            %}
                             {% if category == 'email_error' %}
                                 {% set ns.email_error = true %}
-                                {% set _ = ns.alert_messages.append(message) %}
+                                {% set _ = ns.alert_messages.append(message_limpio) %}
                             {% elif category == 'password_error' %}
                                 {% set ns.password_error = true %}
-                                {% set _ = ns.alert_messages.append(message) %}
+                                {% set _ = ns.alert_messages.append(message_limpio) %}
                             {% else %}
-                                {% set _ = ns.alert_messages.append(message) %}
+                                {% set _ = ns.alert_messages.append(message_limpio) %}
                             {% endif %}
                         {% endfor %}
                     {% endif %}
@@ -31,7 +42,7 @@
 
                 <div class="mb-3">
                     <label for="email" class="form-label">Correo electrónico</label>
-                    <input type="email" class="form-control auth-input {% if ns.email_error %}is-invalid{% endif %}" name="email" id="email" required>
+                    <input type="email" class="form-control auth-input {% if ns.email_error %}is-invalid{% endif %}" name="email" id="email" value="{{ request.form.get('email', '') }}" required>
                     <div id="emailAlert" class="inline-alert d-none" role="alert"></div>
                 </div>
                 <div class="mb-2">

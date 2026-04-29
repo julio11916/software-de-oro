@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pedido Confirmado - Ropa Militar</title>
+    <title>{% if confirmacion_manual %}Transferencia registrada{% else %}Pedido confirmado{% endif %} - Nachoher</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/usuario/catalog_base.css') }}">
@@ -14,95 +14,87 @@
 <body class="page-with-catalog-header">
     {% include 'Usuarios/partials/header_offcanvas.html' %}
 
-    <div class="order-toast" role="status" aria-live="polite">
+    <div class="order-toast {% if confirmacion_manual %}order-toast-review{% endif %}" role="status" aria-live="polite">
         <div class="order-toast-icon">
-            <i class="fas fa-check"></i>
+            <i class="fas {% if confirmacion_manual %}fa-receipt{% else %}fa-check{% endif %}"></i>
         </div>
         <div class="order-toast-copy">
-            <span class="order-toast-label">Pedido confirmado</span>
-            <span class="order-toast-text">Tu pedido ya fue confirmado correctamente.</span>
+            <span class="order-toast-label">{% if confirmacion_manual %}Transferencia registrada{% else %}Pedido confirmado{% endif %}</span>
+            <span class="order-toast-text">{% if confirmacion_manual %}Ahora validaremos tu comprobante manualmente.{% else %}Tu pedido ya fue confirmado correctamente.{% endif %}</span>
         </div>
     </div>
 
     <div class="confirmation-container my-4">
-        <div class="confirmation-card">
-            <div class="success-icon">
-                <i class="fas fa-check-circle"></i>
+        <div class="confirmation-card {% if confirmacion_manual %}confirmation-card-review{% endif %}">
+            <div class="success-icon {% if confirmacion_manual %}success-icon-review{% endif %}">
+                <i class="fas {% if confirmacion_manual %}fa-hourglass-half{% else %}fa-check-circle{% endif %}"></i>
             </div>
 
-            <h2 class="confirmation-title">&iexcl;Pedido creado exitosamente!</h2>
+            <h2 class="confirmation-title">{% if confirmacion_manual %}&iexcl;Transferencia registrada!{% else %}&iexcl;Pedido creado exitosamente!{% endif %}</h2>
 
             <p class="confirmation-message">
-                Tu pedido ha sido procesado correctamente y el pago ha sido registrado.
-                Recibir&aacute;s una confirmaci&oacute;n por correo electr&oacute;nico en breve.
+                {% if confirmacion_manual %}
+                Registramos tu solicitud de pago por QR. El pedido qued&oacute; en revisi&oacute;n y ser&aacute; aprobado cuando el equipo confirme el comprobante enviado.
+                {% else %}
+                Tu pedido ha sido procesado correctamente y el pago ha sido registrado. Recibir&aacute;s una confirmaci&oacute;n por correo electr&oacute;nico en breve.
+                {% endif %}
             </p>
 
             <div class="order-details">
                 <h3 class="order-details-title">
                     <i class="fas fa-file-invoice"></i>
-                    Detalles del Pedido
+                    Detalles del pedido
                 </h3>
 
                 <div class="detail-row">
-                    <span class="detail-label">
-                        <i class="fas fa-hashtag"></i>
-                        N&uacute;mero de Pedido:
-                    </span>
+                    <span class="detail-label"><i class="fas fa-hashtag"></i> N&uacute;mero de pedido:</span>
                     <span class="detail-value">#{{ pedido_id }}</span>
                 </div>
 
                 <div class="detail-row">
-                    <span class="detail-label">
-                        <i class="fas fa-credit-card"></i>
-                        M&eacute;todo de Pago:
-                    </span>
+                    <span class="detail-label"><i class="fas fa-credit-card"></i> M&eacute;todo de pago:</span>
                     <span class="detail-value">{{ metodo_pago }}</span>
                 </div>
 
                 <div class="detail-row">
-                    <span class="detail-label">
-                        <i class="fas fa-calendar-alt"></i>
-                        Fecha:
-                    </span>
+                    <span class="detail-label"><i class="fas fa-calendar-alt"></i> Fecha:</span>
                     <span class="detail-value">{{ fecha }}</span>
                 </div>
 
                 {% if promo_codigo %}
                 <div class="detail-row">
-                    <span class="detail-label">
-                        <i class="fas fa-tag"></i>
-                        Promoci&oacute;n aplicada:
-                    </span>
-                    <span class="detail-value">
-                        <span class="promo-badge">{{ promo_codigo }}</span>
-                        -{{ descuento|cop }}
-                    </span>
+                    <span class="detail-label"><i class="fas fa-tag"></i> Promoci&oacute;n aplicada:</span>
+                    <span class="detail-value"><span class="promo-badge">{{ promo_codigo }}</span> -{{ descuento|cop }}</span>
                 </div>
                 {% endif %}
 
                 <div class="detail-row">
-                    <span class="detail-label">
-                        <i class="fas fa-dollar-sign"></i>
-                        Total pagado:
-                    </span>
+                    <span class="detail-label"><i class="fas fa-dollar-sign"></i> Total registrado:</span>
                     <span class="detail-value success">{{ total|cop }}</span>
                 </div>
             </div>
 
-            <div class="additional-info">
+            <div class="additional-info {% if confirmacion_manual %}additional-info-review{% endif %}">
+                {% if confirmacion_manual %}
+                <p><i class="fas fa-envelope"></i> <strong>Correo:</strong> Env&iacute;a el comprobante a {{ transfer_support_email }}.</p>
+                <p><i class="fab fa-whatsapp"></i> <strong>WhatsApp:</strong> {{ transfer_support_whatsapp if transfer_support_whatsapp else 'Pendiente de configurar' }}.</p>
+                <p><i class="fas fa-image"></i> <strong>Adjunto web:</strong> {{ 'Comprobante cargado correctamente.' if comprobante_adjunto else 'No se adjunto archivo desde la pagina.' }}</p>
+                <p><i class="fas fa-user-shield"></i> <strong>Validaci&oacute;n:</strong> El administrador revisar&aacute; el soporte antes de aprobar el pedido.</p>
+                {% else %}
                 <p><i class="fas fa-truck"></i> <strong>Env&iacute;o:</strong> Tu pedido ser&aacute; enviado en las pr&oacute;ximas 24-48 horas.</p>
-                <p><i class="fas fa-box"></i> <strong>Seguimiento:</strong> Podr&aacute;s rastrear tu pedido desde "Mis Pedidos".</p>
+                <p><i class="fas fa-box"></i> <strong>Seguimiento:</strong> Podr&aacute;s rastrear tu pedido desde "Mis pedidos".</p>
                 <p><i class="fas fa-phone"></i> <strong>Soporte:</strong> Si tienes dudas, cont&aacute;ctanos en cualquier momento.</p>
+                {% endif %}
             </div>
 
             <div class="action-buttons">
                 <a href="{{ url_for('user_orders') }}" class="btn-primary-action">
                     <i class="fas fa-box"></i>
-                    Ver Mis Pedidos
+                    Ver mis pedidos
                 </a>
                 <a href="{{ url_for('user_dashboard') }}" class="btn-secondary-action">
                     <i class="fas fa-store"></i>
-                    Seguir Comprando
+                    Seguir comprando
                 </a>
             </div>
         </div>

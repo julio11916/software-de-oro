@@ -41,7 +41,7 @@
                                 <i class="fas fa-box me-2"></i> Mis Pedidos
                             </a>
                             <a href="{{ url_for('logout') }}">
-                                <i class="fas fa-sign-out-alt me-2"></i> Cerrar sesi&oacute;n
+                                <i class="fas fa-sign-out-alt me-2"></i> Cerrar sesión
                             </a>
                         </div>
                     </div>
@@ -66,12 +66,12 @@
                 </a>
                 <a class="offcanvas-link active">
                     <i class="fas fa-shirt"></i>
-                    <span>Cat&aacute;logo</span>
+                    <span>Catálogo</span>
                 </a>
                 <a class="offcanvas-link menu-normal" href="{{ url_for('armada') }}">  Armada</a>
-                <a class="offcanvas-link menu-normal" href="{{ url_for('ejercito') }}">  Ej&eacute;rcito</a>
+                <a class="offcanvas-link menu-normal" href="{{ url_for('ejercito') }}">  Ejército</a>
                 <a class="offcanvas-link menu-normal" href="{{ url_for('gaula') }}">  Gaula</a>
-                <a class="offcanvas-link menu-normal" href="{{ url_for('policia') }}">  Polic&iacute;a</a>
+                <a class="offcanvas-link menu-normal" href="{{ url_for('policia') }}">  Policía</a>
                 <a class="offcanvas-link active" href="{{ url_for('accesorios') }}">
                     <i class="fa-solid fa-glasses" style="color: rgb(29, 42, 51);"></i>
                     <span>Accesorios</span>
@@ -101,7 +101,7 @@
                 <img src="{{ url_for('static', filename='img/pagina/logo_transparente_2.png') }}" alt="Logo del proyecto"
                 class="logo">
             </a>
-            <p class="hero-subtitle">Cat&aacute;logo premium de prendas y accesorios</p>
+            <p class="hero-subtitle">Catálogo premium de prendas y accesorios</p>
             <a href="#catalogo" class="hero-cta">Ver prendas destacadas</a>
         </div>
     </section>
@@ -109,87 +109,17 @@
     {% include 'Usuarios/partials/_flash_toasts.html' %}
 
     <main class="main-content" id="catalogo">
-        <!-- Carrusel Ejército -->
-        <div class="container catalog-shell destacados-shell">
-            <h2 class="section-title">Prendas destacadas - Ejército</h2>
-            {% if productos_destacados_ejercito %}
-            <div id="ejercitoCarousel" class="carousel slide destacados-carousel" data-bs-ride="carousel" data-bs-interval="10000">
-                <div class="carousel-inner">
-                    {% for chunk in productos_destacados_ejercito | batch(5) %}
-                    <div class="carousel-item {% if loop.first %}active{% endif %}">
-                        <div class="productos-grid">
-                            {% for destacado in chunk %}
-                            <div class="producto-card-destacado">
-                                <a href="{{ url_for('product_detail', id_producto=destacado.id_producto) }}">
-                                    <img src="{{ url_for('static', filename=destacado.imagen_url) }}" class="producto-image-destacado" alt="{{ destacado.nombre }}">
-                                </a>
-                                <div class="producto-info-destacado">
-                                    <h5 class="producto-title-destacado">{{ destacado.nombre }}</h5>
-                                    <p class="producto-price-destacado">{{ destacado.precio|cop }}</p>
-                                </div>
-                            </div>
-                            {% endfor %}
-                        </div>
-                    </div>
-                    {% endfor %}
-                </div>
-                <button class="carousel-control-prev rounded-circle shadow-sm" type="button" data-bs-target="#ejercitoCarousel" data-bs-slide="prev">
-                    <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-                    <span class="visually-hidden">Anterior</span>
-                </button>
-                <button class="carousel-control-next rounded-circle shadow-sm" type="button" data-bs-target="#ejercitoCarousel" data-bs-slide="next">
-                    <span class="carousel-control-next-icon" aria-hidden="true"></span>
-                    <span class="visually-hidden">Siguiente</span>
-                </button>
-            </div>
-            {% else %}
-            <div class="alert alert-info text-center mt-3 mb-0">
-                Aún no hay prendas destacadas disponibles para Ejército.
-            </div>
-            {% endif %}
-        </div>
+        {% with carousel_id='ejercitoCarousel', titulo='Prendas destacadas - Ejército', productos=productos_destacados_ejercito, empty_message='Aún no hay prendas destacadas disponibles para Ejército.', is_public_featured=false %}
+        {% include 'Usuarios/partials/_featured_category_carousel.html' %}
+        {% endwith %}
 
-        <!-- Carrusel Policía (tipo Netflix) -->
-        <div class="container catalog-shell destacados-shell">
-            <h2 class="section-title">Prendas destacadas - Policía</h2>
-            {% if productos_destacados_policia %}
-            <div class="netflix-carousel-container">
-                <div class="netflix-carousel" id="policiaCarousel">
-                    {% for destacado in productos_destacados_policia %}
-                    <div class="netflix-item">
-                        <a href="{{ url_for('product_detail', id_producto=destacado.id_producto) }}">
-                            <img src="{{ url_for('static', filename=destacado.imagen_url) }}" alt="{{ destacado.nombre }}">
-                        </a>
-                        <div class="netflix-info">
-                            <h5>{{ destacado.nombre }}</h5>
-                            <p>{{ destacado.precio|cop }}</p>
-                        </div>
-                    </div>
-                    {% endfor %}
-                </div>
-                <button class="netflix-prev" id="policiaPrev">&lt;</button>
-                <button class="netflix-next" id="policiaNext">&gt;</button>
-            </div>
-            {% else %}
-            <div class="alert alert-info text-center mt-3 mb-0">
-                Aún no hay prendas destacadas disponibles para Policía.
-            </div>
-            {% endif %}
-        </div>
+        {% with carousel_id='policiaCarousel', titulo='Prendas destacadas - Policía', productos=productos_destacados_policia, empty_message='Aún no hay prendas destacadas disponibles para Policía.', is_public_featured=false %}
+        {% include 'Usuarios/partials/_featured_category_carousel.html' %}
+        {% endwith %}
 
-        <!-- Banner Armada -->
-        <div class="container catalog-shell destacados-shell">
-            <h2 class="section-title">Prendas destacadas - Armada</h2>
-            {% if productos_destacados_armada %}
-            <div class="armada-banner">
-                <p>Contenido de armada aquí</p>
-            </div>
-            {% else %}
-            <div class="alert alert-info text-center mt-3 mb-0">
-                Aún no hay prendas destacadas disponibles para Armada.
-            </div>
-            {% endif %}
-        </div>
+        {% with carousel_id='armadaCarousel', titulo='Prendas destacadas - Armada', productos=productos_destacados_armada, empty_message='Aún no hay prendas destacadas disponibles para Armada.', is_public_featured=false %}
+        {% include 'Usuarios/partials/_featured_category_carousel.html' %}
+        {% endwith %}
     </main>
 
     <footer class="footer-compact">
@@ -199,7 +129,7 @@
                     <i class="fas fa-crown"></i> <strong>Nachoher</strong>
                 </div>
                 <div class="footer-item">
-                    <i class="fas fa-map-marker-alt"></i> Urbanizaci&oacute;n Pablo Sexto
+                    <i class="fas fa-map-marker-alt"></i> Urbanización Pablo Sexto
                 </div>
                 <div class="footer-item">
                     <i class="fas fa-phone"></i> +57 3229393211
@@ -225,4 +155,3 @@
 </body>
 
 </html>
-

@@ -39,19 +39,19 @@
                     <a class="nav-link" href="{{ url_for('admin_pos') }}">Sistema POS</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('admin_pedidos') }}">Pagos de pedidos</a>
+                    <a class="nav-link" href="{{ url_for('admin_pedidos') }}">Pagos y pedidos</a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" href="{{ url_for('admin_charts') }}">Ventas y Gráficas</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('admin_ajustes') }}">Pedidos en curso</a>
+                    <a class="nav-link" href="{{ url_for('admin_ajustes') }}">Prendas personalizadas</a>
                 </li>
             </ul>
 
             <div class="sidebar-bottom mt-auto">
                 <a href="{{ url_for('home') }}" class="btn btn-success w-100 mb-2 js-back-home" data-fallback-url="{{ url_for('home') }}">Volver</a>
-                <a href="{{ url_for('logout') }}" class="btn btn-danger w-100">Cerrar sesi&oacute;n</a>
+                <a href="{{ url_for('logout') }}" class="btn btn-danger w-100">Cerrar sesión</a>
             </div>
         </div>
 
@@ -59,14 +59,14 @@
             <div class="topbar d-flex justify-content-between align-items-center">
                 <div>
                     <h4 class="mb-0">Gestión de Productos</h4>
-                    <small>Crear, editar y administrar cat&aacute;logo</small>
+                    <small>Crear, editar y administrar catálogo</small>
                 </div>
                 <div id="fechaHora"></div>
             </div>
 
             <div class="content-area product-content">
                 {% include 'Administrador/partials/_flash_toasts.html' %}
-                
+
                 <section class="product-panel mb-4">
                     <div class="panel-header gradient-section-title">
                         <h5 class="mb-0">Agregar nuevo producto</h5>
@@ -109,7 +109,7 @@
                                     </select>
                                 </div>
                                 <div class="col-md-6">
-                                    <label class="form-label">Imagenes del producto</label>
+                                    <label class="form-label">Imágenes del producto</label>
                                     <input type="file" name="imagenes" class="form-control" accept=".jpg,.jpeg,.png,.gif,.webp" multiple>
                                 </div>
                                 <div class="col-12">
@@ -125,7 +125,7 @@
 
                 <section class="product-panel">
                     <div class="panel-header gradient-section-title d-flex justify-content-between align-items-center">
-                        <h5 class="mb-0">Cat&aacute;logo actual</h5>
+                        <h5 class="mb-0">Catálogo actual</h5>
                         <div class="catalog-header-actions">
                             <a href="{{ url_for('admin_papelera') }}" class="btn btn-sm btn-paper-bin">
                                 Papelera <span class="paper-count">{{ total_eliminados or 0 }}</span>
@@ -214,9 +214,24 @@
                             <div class="force-track-wrap">
                                 <div class="force-track" id="force-track-{{ loop.index0 }}">
                                     {% for producto in productos_fuerza %}
+                                    {% set imagenes_producto = producto.imagenes if producto.imagenes is defined else [] %}
+                                    {% set producto_data = {
+                                        'id': producto.id_producto,
+                                        'nombre': producto.nombre,
+                                        'descripcion': producto.descripcion,
+                                        'precio': producto.precio,
+                                        'stock': producto.stock,
+                                        'fuerza': producto.fuerza,
+                                        'intendencia': producto.intendencia,
+                                        'imagenes': imagenes_producto,
+                                        'editUrl': url_for('editar_producto', id_producto=producto.id_producto),
+                                        'replaceImagesUrl': url_for('subir_imagen', id_producto=producto.id_producto),
+                                        'addImagesUrl': url_for('agregar_imagenes_producto', id_producto=producto.id_producto),
+                                        'removeImageUrl': url_for('eliminar_imagen_producto', id_producto=producto.id_producto),
+                                        'deleteUrl': url_for('eliminar_producto', id_producto=producto.id_producto)
+                                    } %}
                                     <div class="force-product-item">
                                         <article class="product-card h-100">
-                                            {% set imagenes_producto = producto.imagenes if producto.imagenes is defined else [] %}
                                             <div class="product-image-wrap {% if imagenes_producto|length <= 1 %}is-single{% endif %}">
                                                 {% if imagenes_producto %}
                                                 <button type="button" class="image-nav image-nav-left" data-action="prev" aria-label="Imagen anterior">&#10094;</button>
@@ -238,84 +253,45 @@
                                             </div>
 
                                             <div class="product-body">
-                                                <form method="POST" action="{{ url_for('editar_producto', id_producto=producto.id_producto) }}" id="form-editar-{{ producto.id_producto }}">
-                                                    <div class="mb-2">
-                                                        <label class="form-label">Nombre</label>
-                                                        <input type="text" name="nombre" class="form-control form-control-sm" value="{{ producto.nombre }}" required>
+                                                <div class="product-card-header">
+                                                    <div>
+                                                        <p class="product-card-id mb-1">ID {{ producto.id_producto }}</p>
+                                                        <h6 class="product-title mb-0">{{ producto.nombre }}</h6>
                                                     </div>
-                                                    <div class="mb-2">
-                                                        <label class="form-label">Descripción</label>
-                                                        <input type="text" name="descripcion" class="form-control form-control-sm" value="{{ producto.descripcion }}" required>
-                                                    </div>
-                                                    <div class="row g-2 mb-3">
-                                                        <div class="col-6">
-                                                            <label class="form-label">Precio</label>
-                                                            <input type="number" name="precio" class="form-control form-control-sm" value="{{ producto.precio }}" min="0" step="0.01" required>
-                                                        </div>
-                                                        <div class="col-6">
-                                                            <label class="form-label">Stock</label>
-                                                            <input type="number" name="stock" class="form-control form-control-sm" value="{{ producto.stock }}" min="0" required>
-                                                        </div>
-                                                    </div>
-                                                    <div class="row g-2 mb-3">
-                                                        <div class="col-6">
-                                                            <label class="form-label">Fuerza</label>
-                                                            <select name="fuerza" class="form-select form-select-sm" required>
-                                                                {% for fuerza_item in fuerzas %}
-                                                                <option value="{{ fuerza_item }}" {% if producto.fuerza == fuerza_item %}selected{% endif %}>{{ fuerza_item }}</option>
-                                                                {% endfor %}
-                                                            </select>
-                                                        </div>
-                                                        <div class="col-6">
-                                                            <label class="form-label">Intendencia</label>
-                                                            <select name="intendencia" class="form-select form-select-sm" required>
-                                                                {% for item in intendencias %}
-                                                                <option value="{{ item }}" {% if producto.intendencia == item %}selected{% endif %}>{{ item }}</option>
-                                                                {% endfor %}
-                                                            </select>
-                                                        </div>
-                                                    </div>
-                                                </form>
+                                                    <span class="product-image-total">{{ imagenes_producto|length }}/{{ max_images_per_product }} imágenes</span>
+                                                </div>
 
-                                                <form method="POST" action="{{ url_for('subir_imagen', id_producto=producto.id_producto) }}" enctype="multipart/form-data" class="mt-2">
-                                                    <div class="input-group input-group-sm">
-                                                        <input type="file" name="imagenes" class="form-control" accept=".jpg,.jpeg,.png,.gif,.webp" multiple required>
-                                                        <button type="submit" class="btn btn-outline-secondary">Reemplazar galeria</button>
+                                                <p class="product-description mb-0">{{ producto.descripcion }}</p>
+
+                                                <div class="product-badges">
+                                                    <span class="product-badge">{{ producto.fuerza }}</span>
+                                                    <span class="product-badge product-badge-muted">{{ producto.intendencia }}</span>
+                                                </div>
+
+                                                <div class="product-stat-grid">
+                                                    <div class="product-stat">
+                                                        <span>Precio</span>
+                                                        <strong>{{ producto.precio|cop }}</strong>
                                                     </div>
-                                                </form>
-
-                                                {% if imagenes_producto|length < max_images_per_product %}
-                                                <form method="POST" action="{{ url_for('agregar_imagenes_producto', id_producto=producto.id_producto) }}" enctype="multipart/form-data" class="mt-2">
-                                                    <div class="input-group input-group-sm">
-                                                        <input type="file" name="imagenes_agregar" class="form-control" accept=".jpg,.jpeg,.png,.gif,.webp" multiple required>
-                                                        <button type="submit" class="btn btn-outline-info">Agregar imagenes</button>
+                                                    <div class="product-stat">
+                                                        <span>Stock</span>
+                                                        <strong>{{ producto.stock }}</strong>
                                                     </div>
-                                                    <small class="text-muted d-block">Imagenes: {{ imagenes_producto|length }}/{{ max_images_per_product }}</small>
-                                                    <small class="text-muted">Puedes agregar hasta {{ max_images_per_product - (imagenes_producto|length) }} mas.</small>
-                                                </form>
-                                                {% else %}
-                                                <small class="text-muted d-block mt-2">Imagenes: {{ imagenes_producto|length }}/{{ max_images_per_product }}</small>
-                                                {% endif %}
-
-                                                {% if imagenes_producto %}
-                                                <form method="POST" action="{{ url_for('eliminar_imagen_producto', id_producto=producto.id_producto) }}" class="mt-2">
-                                                    <div class="input-group input-group-sm">
-                                                        <select name="imagen_a_eliminar" class="form-select" required>
-                                                            <option value="">Selecciona imagen a quitar</option>
-                                                            {% for imagen in imagenes_producto %}
-                                                            <option value="{{ imagen }}">Imagen {{ loop.index }}</option>
-                                                            {% endfor %}
-                                                        </select>
-                                                        <button type="submit" class="btn btn-outline-warning" onclick="return confirm('¿Quitar esta imagen del producto?')">Quitar</button>
+                                                    <div class="product-stat">
+                                                        <span>Galería</span>
+                                                        <strong>{{ imagenes_producto|length }}</strong>
                                                     </div>
-                                                </form>
-                                                {% endif %}
+                                                </div>
 
-                                                <button type="submit" form="form-editar-{{ producto.id_producto }}" class="btn btn-outline-primary w-100 mt-2">Guardar cambios</button>
-
-                                                <form method="POST" action="{{ url_for('eliminar_producto', id_producto=producto.id_producto) }}" class="mt-2">
-                                                    <button type="submit" class="btn btn-outline-danger w-100" onclick="return confirm('¿Eliminar este producto?')">Eliminar</button>
-                                                </form>
+                                                <div class="product-card-actions">
+                                                    <button
+                                                        type="button"
+                                                        class="btn btn-primary w-100 js-open-product-modal"
+                                                        data-product='{{ producto_data|tojson }}'
+                                                    >
+                                                        Editar producto
+                                                    </button>
+                                                </div>
                                             </div>
                                         </article>
                                     </div>
@@ -338,7 +314,7 @@
                         <div class="empty-state">
                             {% if has_filters %}
                             <h6 class="mb-1">Sin resultados para los filtros actuales</h6>
-                            <p class="mb-0 text-muted">Prueba con otro termino o limpia el filtro.</p>
+                            <p class="mb-0 text-muted">Prueba con otro término o limpia el filtro.</p>
                             {% else %}
                             <h6 class="mb-1">No hay productos activos</h6>
                             <p class="mb-0 text-muted">Crea tu primer producto con el formulario superior.</p>
@@ -347,6 +323,147 @@
                         {% endif %}
                     </div>
                 </section>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="productEditModal" tabindex="-1" aria-labelledby="productEditModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable product-edit-modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <div class="modal-title-group">
+                        <p class="modal-eyebrow mb-1">Edición de catálogo</p>
+                        <h5 class="modal-title" id="productEditModalLabel">Editar producto</h5>
+                        <small class="modal-product-id js-modal-product-id"></small>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+
+                <div
+                    class="modal-body"
+                    data-static-prefix="{{ url_for('static', filename='') }}"
+                    data-max-images="{{ max_images_per_product }}"
+                >
+                    <div class="row g-4">
+                        <div class="col-lg-5">
+                            <form method="POST" id="modalProductEditForm" class="modal-section-card modal-section-card-fill">
+                                <div class="modal-section-heading">
+                                    <h6 class="mb-1">Información principal</h6>
+                                    <p class="mb-0">Actualiza los datos visibles del producto sin saturar la tarjeta principal.</p>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="modalProductName" class="form-label">Nombre</label>
+                                    <input type="text" id="modalProductName" name="nombre" class="form-control" required>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="modalProductDescription" class="form-label">Descripción</label>
+                                    <textarea id="modalProductDescription" name="descripcion" class="form-control modal-textarea" rows="4" required></textarea>
+                                </div>
+
+                                <div class="row g-3 mb-3">
+                                    <div class="col-sm-6">
+                                        <label for="modalProductPrice" class="form-label">Precio</label>
+                                        <input type="number" id="modalProductPrice" name="precio" class="form-control" min="0" step="0.01" required>
+                                    </div>
+                                    <div class="col-sm-6">
+                                        <label for="modalProductStock" class="form-label">Stock</label>
+                                        <input type="number" id="modalProductStock" name="stock" class="form-control" min="0" required>
+                                    </div>
+                                </div>
+
+                                <div class="row g-3">
+                                    <div class="col-sm-6">
+                                        <label for="modalProductForce" class="form-label">Fuerza</label>
+                                        <select id="modalProductForce" name="fuerza" class="form-select" required>
+                                            {% for fuerza_item in fuerzas %}
+                                            <option value="{{ fuerza_item }}">{{ fuerza_item }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                    <div class="col-sm-6">
+                                        <label for="modalProductIntendencia" class="form-label">Intendencia</label>
+                                        <select id="modalProductIntendencia" name="intendencia" class="form-select" required>
+                                            {% for item in intendencias %}
+                                            <option value="{{ item }}">{{ item }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+
+                        <div class="col-lg-7">
+                            <div class="modal-section-card">
+                                <div class="modal-section-heading modal-section-heading-split">
+                                    <div>
+                                        <h6 class="mb-1">Imágenes del producto</h6>
+                                        <p class="mb-0">Administra la galería actual, reemplaza archivos o agrega nuevas fotos.</p>
+                                    </div>
+                                    <span class="modal-gallery-count js-modal-gallery-count"></span>
+                                </div>
+
+                                <div class="modal-image-layout">
+                                    <div class="modal-preview-stage">
+                                        <div class="modal-product-preview">
+                                            <img src="" alt="Vista previa del producto" class="js-modal-preview-image d-none">
+                                            <div class="modal-preview-placeholder js-modal-preview-empty">Este producto no tiene imágenes cargadas.</div>
+                                        </div>
+                                        <div class="modal-thumbnail-grid js-modal-thumbnail-grid"></div>
+                                    </div>
+
+                                    <div class="modal-image-tools">
+                                        <form method="POST" id="modalReplaceImagesForm" enctype="multipart/form-data" class="modal-tool-card">
+                                            <h6>Reemplazar galería</h6>
+                                            <p class="mb-2">Cambia todas las imágenes actuales por una nueva selección.</p>
+                                            <input
+                                                type="file"
+                                                name="imagenes"
+                                                class="form-control"
+                                                accept=".jpg,.jpeg,.png,.gif,.webp"
+                                                multiple
+                                                required
+                                            >
+                                            <button type="submit" class="btn btn-outline-secondary w-100 mt-3">Reemplazar galería</button>
+                                        </form>
+
+                                        <form method="POST" id="modalAddImagesForm" enctype="multipart/form-data" class="modal-tool-card">
+                                            <h6>Agregar imágenes</h6>
+                                            <p class="mb-2 js-modal-add-help">Puedes agregar más imágenes a esta galería.</p>
+                                            <input
+                                                type="file"
+                                                name="imagenes_agregar"
+                                                class="form-control js-modal-add-input"
+                                                accept=".jpg,.jpeg,.png,.gif,.webp"
+                                                multiple
+                                                required
+                                            >
+                                            <button type="submit" class="btn btn-outline-info w-100 mt-3 js-modal-add-button">Agregar imágenes</button>
+                                        </form>
+
+                                        <form method="POST" id="modalRemoveImageForm" class="modal-tool-card">
+                                            <h6>Quitar una imagen</h6>
+                                            <p class="mb-2">Selecciona la imagen que deseas retirar de la galería.</p>
+                                            <select name="imagen_a_eliminar" class="form-select js-modal-remove-select" required>
+                                                <option value="">Selecciona imagen a quitar</option>
+                                            </select>
+                                            <button type="submit" class="btn btn-outline-warning w-100 mt-3 js-modal-remove-button" onclick="return confirm('¿Quitar esta imagen del producto?')">Quitar imagen</button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light modal-cancel-btn" data-bs-dismiss="modal">Cancelar</button>
+                    <form method="POST" id="modalProductDeleteForm" class="m-0">
+                        <button type="submit" class="btn btn-outline-danger" onclick="return confirm('¿Eliminar este producto?')">Eliminar</button>
+                    </form>
+                    <button type="submit" form="modalProductEditForm" class="btn btn-primary modal-save-btn">Guardar cambios</button>
+                </div>
             </div>
         </div>
     </div>

@@ -6,21 +6,21 @@
     <div class="flash-toast flash-toast-{{ tone }}" role="status">
         <div class="flash-toast-icon">
             {% if tone == 'success' %}
-            <i class="fas fa-check"></i>
+            <span aria-hidden="true">✓</span>
             {% elif tone == 'danger' %}
-            <i class="fas fa-xmark"></i>
+            <span aria-hidden="true">✕</span>
             {% elif tone == 'warning' %}
-            <i class="fas fa-exclamation"></i>
+            <span aria-hidden="true">✕</span>
             {% else %}
-            <i class="fas fa-info"></i>
+            <span aria-hidden="true">✓</span>
             {% endif %}
         </div>
         <div class="flash-toast-copy">
             <span class="flash-toast-label">
-                {% if tone == 'success' %}Actualización completada
-                {% elif tone == 'danger' %}Revisa esta acción
-                {% elif tone == 'warning' %}Atención
-                {% else %}Información
+                {% if tone == 'success' %}Actualizacion completada
+                {% elif tone == 'danger' %}Revisa esta accion
+                {% elif tone == 'warning' %}Atencion
+                {% else %}Actualizacion registrada
                 {% endif %}
             </span>
             <span class="flash-toast-text">{{ mensaje }}</span>

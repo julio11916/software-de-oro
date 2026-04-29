@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>Pedidos en curso</title>
+    <title>Prendas personalizadas</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -38,27 +38,27 @@
                     <a class="nav-link" href="{{ url_for('admin_pos') }}">Sistema POS</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('admin_pedidos') }}">Pagos de pedidos</a>
+                    <a class="nav-link" href="{{ url_for('admin_pedidos') }}">Pagos y pedidos</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('admin_charts') }}">Ventas y Gráficas</a>
+                    <a class="nav-link" href="{{ url_for('admin_charts') }}">Ventas y Graficas</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link active" href="{{ url_for('admin_ajustes') }}">Pedidos en curso</a>
+                    <a class="nav-link active" href="{{ url_for('admin_ajustes') }}">Prendas personalizadas</a>
                 </li>
             </ul>
 
             <div class="sidebar-bottom mt-auto">
                 <button class="btn btn-success w-100 mb-2" id="backBtn">Volver</button>
-                <a href="{{ url_for('logout') }}" class="btn btn-danger w-100">Cerrar sesi&oacute;n</a>
+                <a href="{{ url_for('logout') }}" class="btn btn-danger w-100">Cerrar sesion</a>
             </div>
         </div>
 
         <div class="main-content w-100">
             <div class="topbar d-flex justify-content-between align-items-center">
                 <div>
-                    <h4 class="mb-0">Pedidos en curso</h4>
-                    <small>Supervisa el avance de cada pedido y actualiza su estado desde un solo lugar</small>
+                    <h4 class="mb-0">Prendas personalizadas</h4>
+                    <small>Espacio reservado para gestionar solicitudes especiales y piezas hechas a medida</small>
                 </div>
                 <div id="fechaHora"></div>
             </div>
@@ -66,123 +66,11 @@
             <div class="content-area">
                 {% include 'Administrador/partials/_flash_toasts.html' %}
 
-                <section class="summary-strip">
-                    <article class="summary-card">
-                        <span class="summary-label">Pedidos activos</span>
-                        <strong class="summary-value">{{ resumen_estados.activos }}</strong>
-                    </article>
-                    <article class="summary-card">
-                        <span class="summary-label">Pendientes</span>
-                        <strong class="summary-value">{{ resumen_estados.pendientes }}</strong>
-                    </article>
-                    <article class="summary-card">
-                        <span class="summary-label">En preparación</span>
-                        <strong class="summary-value">{{ resumen_estados.preparacion }}</strong>
-                    </article>
-                    <article class="summary-card">
-                        <span class="summary-label">Enviados</span>
-                        <strong class="summary-value">{{ resumen_estados.enviados }}</strong>
-                    </article>
-                </section>
-
-                {% if pedidos_activos %}
-                <section class="orders-stage-board">
-                    <div class="orders-stage-grid">
-                    {% for pedido in pedidos_activos %}
-                    <article class="stage-card">
-                        <div class="stage-card-head">
-                            <div>
-                                <p class="stage-kicker">Pedido #{{ pedido.id_pedido }}</p>
-                                <h5>{{ pedido.usuario_nombre }}</h5>
-                            </div>
-                            <span class="stage-badge stage-badge-{{ pedido.estado_ui }}">{{ pedido.estado_label }}</span>
-                        </div>
-
-                        <div class="stage-meta">
-                            <span><strong>Fecha:</strong> {{ pedido.fecha_pedido }}</span>
-                            <span><strong>Total:</strong> {{ pedido.monto|cop if pedido.monto else pedido.total_productos|cop }}</span>
-                            <span><strong>Pago:</strong> {{ pedido.metodo_pago if pedido.metodo_pago else 'Sin registrar' }}</span>
-                        </div>
-
-                        <div class="stage-products">
-                            <strong>Productos</strong>
-                            <p>{{ pedido.productos_pedido }}</p>
-                        </div>
-
-                        <div class="stage-customer">
-                            <strong>Datos del cliente</strong>
-                            <div class="stage-customer-grid">
-                                <span><strong>Telefono:</strong> {{ pedido.cliente_telefono if pedido.cliente_telefono else 'Sin registrar' }}</span>
-                                <span><strong>Direccion:</strong> {{ pedido.cliente_direccion if pedido.cliente_direccion else 'Sin registrar' }}</span>
-                            </div>
-                        </div>
-
-                        {% with tracking_steps=pedido.tracking_steps %}
-                        {% include 'Administrador/partials/_order_tracking_steps.html' %}
-                        {% endwith %}
-
-                        <form method="POST" action="{{ url_for('admin_pedidos_estado', id_pedido=pedido.id_pedido) }}" class="stage-form">
-                            <input type="hidden" name="origen" value="ajustes">
-                            <input type="hidden" name="ajustes_page" value="{{ paginacion_ajustes.page if paginacion_ajustes else 1 }}">
-                            <div class="stage-form-row">
-                                <select name="estado" class="form-select">
-                                    {% for valor, etiqueta in estados_pedido %}
-                                    <option value="{{ valor }}" {% if pedido.estado_ui == valor %}selected{% endif %}>{{ etiqueta }}</option>
-                                    {% endfor %}
-                                </select>
-                                <button type="submit" class="btn btn-primary">Actualizar</button>
-                            </div>
-                        </form>
-                    </article>
-                    {% endfor %}
-                    </div>
-                </section>
-                {% if paginacion_ajustes and paginacion_ajustes.total > 0 %}
-                <div class="orders-pagination orders-pagination-stage">
-                    <small class="text-muted">Mostrando {{ paginacion_ajustes.desde }} - {{ paginacion_ajustes.hasta }} de {{ paginacion_ajustes.total }} pedidos</small>
-                    {% if paginacion_ajustes.total_paginas > 1 %}
-                    <div class="pagination-controls">
-                        {% set prev_page = paginacion_ajustes.page - 1 %}
-                        {% set next_page = paginacion_ajustes.page + 1 %}
-
-                        {% if paginacion_ajustes.page > 1 %}
-                        <a class="btn btn-sm btn-outline-primary page-arrow"
-                            href="{{ url_for('admin_ajustes', ajustes_page=prev_page) }}"
-                            title="Página anterior" aria-label="Página anterior">&larr;</a>
-                        {% else %}
-                        <span class="btn btn-sm btn-outline-secondary page-arrow disabled" title="Página anterior">&larr;</span>
-                        {% endif %}
-
-                        <nav class="page-numbers" aria-label="Paginación de pedidos en curso">
-                            {% for b in paginacion_ajustes.botones %}
-                            {% if b == '...' %}
-                            <span class="page-ellipsis">...</span>
-                            {% elif b == paginacion_ajustes.page %}
-                            <span class="page-number active">{{ b }}</span>
-                            {% else %}
-                            <a class="page-number" href="{{ url_for('admin_ajustes', ajustes_page=b) }}">{{ b }}</a>
-                            {% endif %}
-                            {% endfor %}
-                        </nav>
-
-                        {% if paginacion_ajustes.page < paginacion_ajustes.total_paginas %}
-                        <a class="btn btn-sm btn-outline-primary page-arrow"
-                            href="{{ url_for('admin_ajustes', ajustes_page=next_page) }}"
-                            title="Página siguiente" aria-label="Página siguiente">&rarr;</a>
-                        {% else %}
-                        <span class="btn btn-sm btn-outline-secondary page-arrow disabled" title="Página siguiente">&rarr;</span>
-                        {% endif %}
-                    </div>
-                    {% endif %}
-                </div>
-                {% endif %}
-                {% else %}
                 <section class="empty-stage-board">
-                    <div class="empty-icon">✓</div>
-                    <h5>No hay pedidos en curso</h5>
-                    <p>Cuando entren nuevos pedidos activos los verás aquí organizados por avance.</p>
+                    <div class="empty-icon">PP</div>
+                    <h5>Modulo en preparacion</h5>
+                    <p>Esta pestaña ya quedo separada del seguimiento de pedidos normales. En el siguiente paso construiremos aqui el flujo de prendas personalizadas.</p>
                 </section>
-                {% endif %}
             </div>
         </div>
     </div>
