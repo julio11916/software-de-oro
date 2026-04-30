@@ -5,16 +5,26 @@
 }
 
 body {
-    background: #f5f5f5;
-
+    background: #f4f4f2;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
+.orden-personalizada-page {
+    color: #141414;
+    background:
+        radial-gradient(circle at top left, rgba(184, 147, 63, 0.08), transparent 28rem),
+        linear-gradient(180deg, #f8f8f5 0%, #f1f2ef 100%);
+}
+
 .contenedor-principal {
-    background: white;
-    padding: 2rem;
-    margin-top: 70px;
+    width: min(1180px, calc(100% - 32px));
+    background: rgba(255, 255, 255, 0.92);
+    padding: clamp(1rem, 2.4vw, 2rem);
+    margin: 0 auto;
     min-height: 100vh;
+    border: 1px solid rgba(20, 20, 20, 0.08);
+    border-radius: 22px;
+    box-shadow: 0 22px 56px rgba(20, 20, 20, 0.08);
 }
 
 .header {
@@ -573,6 +583,11 @@ body {
         flex-direction: column;
     }
 
+    .panel-izquierdo,
+    .panel-derecho {
+        min-width: 0;
+    }
+
     .grid-productos {
         grid-template-columns: repeat(3, 1fr);
     }
@@ -584,6 +599,32 @@ body {
 }
 
 @media (max-width: 768px) {
+    .contenedor-principal {
+        width: min(100% - 20px, 100%);
+        padding: 1rem;
+        border-radius: 16px;
+    }
+
+    .header h1 {
+        font-size: clamp(1.7rem, 8vw, 2.1rem) !important;
+    }
+
+    .paso-contenido > div[style*="display: flex"] {
+        flex-direction: column;
+        gap: 1rem !important;
+    }
+
+    .indicadores-pasos {
+        overflow-x: auto;
+        justify-content: flex-start;
+        gap: 1rem;
+        padding-bottom: 1rem;
+    }
+
+    .paso-indicador {
+        min-width: 128px;
+    }
+
     .grid-productos {
         grid-template-columns: repeat(2, 1fr);
     }
@@ -1132,81 +1173,6 @@ body {
     }
 }
 
-/* FOOTER STYLES */
-.footer-empresa {
-    background: #1a1a1a;
-    color: white;
-    padding: 1.5rem 2rem;
-    margin: 3rem 0 0 0;
-    width: 100%;
-    box-sizing: border-box;
-}
-
-.footer-contenido {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 2rem;
-    flex-wrap: nowrap;
-    max-width: 100%;
-    margin: 0 auto 1rem;
-}
-
-.footer-seccion {
-    display: flex;
-    align-items: center;
-    text-align: center;
-    white-space: nowrap;
-}
-
-.footer-titulo {
-    font-size: 1rem;
-    font-weight: 700;
-    margin: 0;
-    color: #1ba882;
-}
-
-.footer-item {
-    font-size: 0.85rem;
-    margin: 0;
-    display: flex;
-    align-items: center;
-    gap: 0.4rem;
-    color: #e0e0e0;
-}
-
-.footer-redes {
-    display: flex;
-    gap: 0.8rem;
-}
-
-.footer-red {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 30px;
-    height: 30px;
-    background: #1ba882;
-    color: white;
-    border-radius: 50%;
-    text-decoration: none;
-    transition: all 0.3s;
-    font-size: 0.85rem;
-}
-
-.footer-red:hover {
-    background: #158266;
-    transform: scale(1.1);
-}
-
-.footer-copyright {
-    text-align: center;
-    font-size: 0.75rem;
-    color: #999;
-    padding-top: 1rem;
-    border-top: 1px solid #333;
-}
-
 /* Estilos para botones de vista delantera/trasera */
 .botones-vista-prenda {
     display: flex;
@@ -1235,20 +1201,6 @@ body {
     background: #17a2b8;
     color: white;
     box-shadow: 0 2px 8px rgba(23, 162, 184, 0.3);
-}
-
-@media (max-width: 768px) {
-    .footer-contenido {
-        gap: 1.5rem;
-    }
-    
-    .footer-titulo {
-        font-size: 1rem;
-    }
-    
-    .footer-item {
-        font-size: 0.8rem;
-    }
 }
 
 /* MOSTRAR BARRA DE PESTAÑAS Y PREVIEW EN TODAS LAS PARTES */

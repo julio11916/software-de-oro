@@ -228,13 +228,13 @@ function enviarCodigoVerificacion() {
 
             showMessage(data.message, "error");
             btn.disabled = false;
-            btn.innerHTML = '<i class="fas fa-paper-plane me-2"></i>Enviar Código';
+            btn.innerHTML = '<i class="fas fa-paper-plane me-2"></i>Enviar código';
         })
         .catch((error) => {
             console.error("Error:", error);
             showMessage("Error al enviar el código. Intenta nuevamente.", "error");
             btn.disabled = false;
-            btn.innerHTML = '<i class="fas fa-paper-plane me-2"></i>Enviar Código';
+            btn.innerHTML = '<i class="fas fa-paper-plane me-2"></i>Enviar código';
         });
 }
 
@@ -389,7 +389,7 @@ document.addEventListener("DOMContentLoaded", function () {
             if (container) container.innerHTML = "";
             if (btnEnviar) {
                 btnEnviar.disabled = false;
-                btnEnviar.innerHTML = '<i class="fas fa-paper-plane me-2"></i>Enviar Código';
+                btnEnviar.innerHTML = '<i class="fas fa-paper-plane me-2"></i>Enviar código';
             }
         });
 

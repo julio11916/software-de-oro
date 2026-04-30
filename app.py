@@ -13,6 +13,8 @@ from email_service import (
     generar_codigo_verificacion,
     enviar_codigo_verificacion,
     enviar_recuperacion_password,
+    enviar_actualizacion_pedido,
+    enviar_notificacion_transferencia_admin,
 )
 from stripe_service import (
     stripe_estado_configuracion,
@@ -41,7 +43,7 @@ app.config['MAIL_USE_TLS'] = config_email.MAIL_USE_TLS
 app.config['MAIL_USERNAME'] = config_email.MAIL_USERNAME
 app.config['MAIL_PASSWORD'] = config_email.MAIL_PASSWORD
 app.config['MAIL_DEFAULT_SENDER'] = config_email.MAIL_DEFAULT_SENDER
-app.config['PROJECT_NAME'] = 'NACHOHER'
+app.config['PROJECT_NAME'] = 'NACHOHERS'
 app.config['TRANSFER_QR_IMAGE'] = os.getenv('TRANSFER_QR_IMAGE', 'img/qr/qr.jpeg').strip() or 'img/qr/qr.jpeg'
 app.config['TRANSFER_SUPPORT_EMAIL'] = os.getenv(
     'TRANSFER_SUPPORT_EMAIL',
@@ -3458,6 +3460,118 @@ def _redirigir_admin_pedidos_por_origen(origen, filtros, pago_filtros, ajustes_p
     return _redirigir_admin_pedidos_con_filtros(filtros, pago_filtros)
 
 
+def _obtener_contacto_notificacion_pedido(id_usuario):
+    usuarios = cargar_usuarios_df()
+    if usuarios.empty or 'email' not in usuarios.columns:
+        return {}
+
+    usuarios = usuarios.copy()
+    usuarios['email'] = usuarios['email'].fillna('').astype(str).str.strip()
+    usuarios['nombre'] = usuarios['nombre'].fillna('').astype(str).str.strip() if 'nombre' in usuarios.columns else ''
+
+    id_num = pd.to_numeric(id_usuario, errors='coerce')
+    if pd.notna(id_num) and 'id_usuario' in usuarios.columns:
+        usuarios['id_usuario_num'] = pd.to_numeric(usuarios['id_usuario'], errors='coerce')
+        coincidencias = usuarios[usuarios['id_usuario_num'] == int(id_num)]
+        if not coincidencias.empty:
+            usuario = coincidencias.iloc[0]
+            return {
+                'email': normalizar_email(usuario.get('email', '')),
+                'nombre': str(usuario.get('nombre', '')).strip(),
+            }
+
+    email_posible = normalizar_email(id_usuario)
+    if email_posible:
+        coincidencias = usuarios[usuarios['email'].str.lower() == email_posible]
+        if not coincidencias.empty:
+            usuario = coincidencias.iloc[0]
+            return {
+                'email': normalizar_email(usuario.get('email', '')),
+                'nombre': str(usuario.get('nombre', '')).strip(),
+            }
+    return {}
+
+
+def _notificar_actualizacion_pedido_cliente(
+    id_pedido,
+    id_usuario,
+    estado_pedido='',
+    estado_pago='',
+    tipo_actualizacion='pedido',
+):
+    contacto = _obtener_contacto_notificacion_pedido(id_usuario)
+    email = normalizar_email(contacto.get('email', ''))
+    if not email_es_valido(email):
+        return 'sin_email'
+
+    ok = enviar_actualizacion_pedido(
+        email=email,
+        id_pedido=id_pedido,
+        nombre=contacto.get('nombre', ''),
+        estado_pedido=estado_pedido,
+        estado_pedido_label=_etiqueta_estado_pedido(estado_pedido),
+        estado_pago=estado_pago,
+        estado_pago_label=_etiqueta_estado_pago(estado_pago),
+        tipo_actualizacion=tipo_actualizacion,
+        url_pedidos=url_for('user_orders', _external=True),
+    )
+    return 'enviado' if ok else 'fallo'
+
+
+def _flash_resultado_notificacion_pedido(resultado, id_pedido):
+    if resultado == 'enviado':
+        flash(f'Se notifico al cliente por correo sobre el pedido #{id_pedido}.', 'success')
+    elif resultado == 'fallo':
+        flash(f'El pedido #{id_pedido} fue actualizado, pero no se pudo enviar el correo al cliente.', 'warning')
+    elif resultado == 'sin_email':
+        flash(f'El pedido #{id_pedido} fue actualizado, pero no se encontro un correo valido para notificar al cliente.', 'warning')
+
+
+def _notificar_transferencia_admin(
+    id_pedido,
+    carrito,
+    total_final,
+    cliente_telefono,
+    cliente_direccion,
+    comprobante_url,
+    promo_aplicada=None,
+    descuento_promo=0,
+):
+    destinatario = normalizar_email(app.config.get('TRANSFER_SUPPORT_EMAIL', '')) or normalizar_email(app.config.get('MAIL_DEFAULT_SENDER', ''))
+    if not email_es_valido(destinatario):
+        return False
+
+    comprobante_path = Path(app.root_path) / 'static' / str(comprobante_url or '').replace('/', os.sep)
+    productos = []
+    items_carrito = carrito if isinstance(carrito, list) else []
+    for item in items_carrito:
+        productos.append({
+            'nombre': str(item.get('nombre', '') or 'Producto').strip(),
+            'talla': str(item.get('talla', '') or '').strip(),
+            'cantidad': int(pd.to_numeric(item.get('cantidad', 0), errors='coerce') or 0),
+            'subtotal': formatear_cop(item.get('subtotal', 0)),
+        })
+
+    cliente = {
+        'nombre': str(session.get('nombre', '') or '').strip(),
+        'email': normalizar_email(session.get('usuario', '')),
+        'telefono': str(cliente_telefono or '').strip(),
+        'direccion': str(cliente_direccion or '').strip(),
+    }
+
+    return enviar_notificacion_transferencia_admin(
+        destinatario=destinatario,
+        id_pedido=id_pedido,
+        cliente=cliente,
+        productos=productos,
+        total=formatear_cop(total_final),
+        comprobante_path=str(comprobante_path),
+        fecha=datetime.now().strftime("%d/%m/%Y %H:%M"),
+        promo_codigo=promo_aplicada.get('codigo', '') if promo_aplicada else '',
+        descuento=formatear_cop(descuento_promo) if promo_aplicada else '',
+    )
+
+
 @app.route('/admin/pedidos')
 def admin_pedidos():
     if session.get('rol') != 'admin':
@@ -3553,12 +3667,20 @@ def admin_pedidos_estado(id_pedido):
         return _redirigir_admin_pedidos_por_origen(origen, filtros, pago_filtros, ajustes_page, curso_page)
 
     estado_anterior = str(pedidos.at[idx[0], 'estado']).strip().lower()
+    id_usuario_pedido = pedidos.at[idx[0], 'id_usuario'] if 'id_usuario' in pedidos.columns else ''
     pedidos.at[idx[0], 'estado'] = estado_nuevo
     guardar_pedidos_df(pedidos)
 
     if estado_anterior != estado_nuevo:
         registrar_actividad(f"Actualizo estado de pedido #{id_pedido}: {estado_anterior} -> {estado_nuevo}")
         flash(f'Pedido #{id_pedido} actualizado a "{estado_nuevo}".', 'success')
+        resultado_notificacion = _notificar_actualizacion_pedido_cliente(
+            id_pedido=id_pedido,
+            id_usuario=id_usuario_pedido,
+            estado_pedido=estado_nuevo,
+            tipo_actualizacion='pedido',
+        )
+        _flash_resultado_notificacion_pedido(resultado_notificacion, id_pedido)
     else:
         flash(f'El pedido #{id_pedido} ya estaba en "{estado_nuevo}".', 'info')
 
@@ -3618,8 +3740,12 @@ def admin_pedidos_pago(id_pedido):
     idx_pago = idx_pago[0]
     estado_pago_anterior = str(pagos.at[idx_pago, 'estado_pago']).strip().lower()
     metodo_pago = str(pagos.at[idx_pago, 'metodo_pago']).strip().lower()
+    comprobante_url = str(pagos.at[idx_pago, 'comprobante_url']).strip() if 'comprobante_url' in pagos.columns else ''
     if metodo_pago != 'transferencia':
         flash('Solo las transferencias requieren validacion manual.', 'warning')
+        return _redirigir_admin_pedidos_por_origen(origen, filtros, pago_filtros, ajustes_page, curso_page)
+    if estado_pago_nuevo == 'aprobado' and not comprobante_url:
+        flash('No puedes aprobar la transferencia sin un comprobante adjunto en la web.', 'warning')
         return _redirigir_admin_pedidos_por_origen(origen, filtros, pago_filtros, ajustes_page, curso_page)
 
     pedidos = cargar_pedidos_df()
@@ -3636,6 +3762,7 @@ def admin_pedidos_pago(id_pedido):
 
     idx_pedido = idx_pedido[0]
     estado_pedido_anterior = str(pedidos.at[idx_pedido, 'estado']).strip().lower() or 'confirmado'
+    id_usuario_pedido = pedidos.at[idx_pedido, 'id_usuario'] if 'id_usuario' in pedidos.columns else ''
 
     pagos.at[idx_pago, 'estado_pago'] = estado_pago_nuevo
     if estado_pago_nuevo == 'aprobado':
@@ -3644,6 +3771,7 @@ def admin_pedidos_pago(id_pedido):
         pedidos.at[idx_pedido, 'estado'] = 'cancelado'
     else:
         pedidos.at[idx_pedido, 'estado'] = 'pago_en_revision'
+    estado_pedido_nuevo = str(pedidos.at[idx_pedido, 'estado']).strip().lower()
 
     if 'id_pedido_num' in pedidos.columns:
         pedidos = pedidos.drop(columns=['id_pedido_num'])
@@ -3655,7 +3783,7 @@ def admin_pedidos_pago(id_pedido):
     guardar_pagos_df(pagos)
     guardar_pedidos_df(pedidos)
 
-    if estado_pago_anterior != estado_pago_nuevo or estado_pedido_anterior != str(pedidos.at[idx_pedido, 'estado']).strip().lower():
+    if estado_pago_anterior != estado_pago_nuevo or estado_pedido_anterior != estado_pedido_nuevo:
         registrar_actividad(
             f"Actualizo revision de pago para pedido #{id_pedido}: "
             f"{estado_pago_anterior or 'sin_estado'} -> {estado_pago_nuevo}"
@@ -3666,6 +3794,14 @@ def admin_pedidos_pago(id_pedido):
             flash(f'Transferencia del pedido #{id_pedido} rechazada. El pedido quedo cancelado.', 'warning')
         else:
             flash(f'El pago del pedido #{id_pedido} quedo en revision.', 'info')
+        resultado_notificacion = _notificar_actualizacion_pedido_cliente(
+            id_pedido=id_pedido,
+            id_usuario=id_usuario_pedido,
+            estado_pedido=estado_pedido_nuevo,
+            estado_pago=estado_pago_nuevo,
+            tipo_actualizacion='pago',
+        )
+        _flash_resultado_notificacion_pedido(resultado_notificacion, id_pedido)
     else:
         flash(f'El pago del pedido #{id_pedido} ya estaba en "{estado_pago_nuevo}".', 'info')
 
@@ -4605,7 +4741,7 @@ def _iniciar_pago_stripe_desde_carrito(carrito, codigo_promo, total_final):
             success_url=url_for('pay_stripe_success', _external=True),
             cancel_url=url_for('pay_stripe_cancel', _external=True),
             customer_email=session.get('usuario', ''),
-            descripcion=f"Compra NACHOHER ({len(carrito)} item(s))",
+            descripcion=f"Compra NACHOHERS ({len(carrito)} item(s))",
             metadata={
                 "usuario": session.get('usuario', ''),
                 "codigo_promo": codigo_promo,
@@ -4755,7 +4891,11 @@ def pay():
         flash(error_stock[0], error_stock[1])
         return redirect(url_for('cart', metodo_pago=metodo_pago, codigo_promo=codigo_promo))
 
-    if metodo_pago == 'transferencia' and comprobante_transferencia and str(getattr(comprobante_transferencia, 'filename', '')).strip():
+    if metodo_pago == 'transferencia':
+        if not comprobante_transferencia or not str(getattr(comprobante_transferencia, 'filename', '')).strip():
+            flash('Debes adjuntar una captura legible del comprobante para registrar la transferencia.', 'warning')
+            return redirect(url_for('checkout', metodo_pago='transferencia', codigo_promo=codigo_promo))
+
         error_comprobante = validar_archivo_imagen(comprobante_transferencia)
         if error_comprobante:
             flash(error_comprobante, 'warning')
@@ -4787,7 +4927,7 @@ def pay():
         registrar_actividad("Stock agotado por pedido: " + ", ".join(agotados_en_compra))
 
     comprobante_adjunto = False
-    if metodo_pago == 'transferencia' and comprobante_transferencia and str(getattr(comprobante_transferencia, 'filename', '')).strip():
+    if metodo_pago == 'transferencia':
         comprobante_url, error_guardado = guardar_comprobante_transferencia(comprobante_transferencia, nuevo_id_pedido)
         if comprobante_url:
             pagos_actualizados = cargar_pagos_df()
@@ -4802,8 +4942,26 @@ def pay():
                 pagos_actualizados = pagos_actualizados.drop(columns=['id_pedido_num', 'id_pago_num'])
                 guardar_pagos_df(pagos_actualizados)
                 comprobante_adjunto = True
+                notificacion_admin_ok = _notificar_transferencia_admin(
+                    id_pedido=nuevo_id_pedido,
+                    carrito=carrito,
+                    total_final=total_final,
+                    cliente_telefono=cliente_telefono,
+                    cliente_direccion=cliente_direccion,
+                    comprobante_url=comprobante_url,
+                    promo_aplicada=promo_aplicada,
+                    descuento_promo=descuento_promo,
+                )
+                if notificacion_admin_ok:
+                    registrar_actividad(f"Notificacion de transferencia enviada al administrador para pedido #{nuevo_id_pedido}")
+                else:
+                    app.logger.warning("No se pudo enviar notificacion de transferencia para pedido %s", nuevo_id_pedido)
         elif error_guardado:
             app.logger.warning("No se pudo guardar comprobante para pedido %s: %s", nuevo_id_pedido, error_guardado)
+            flash(
+                'El pedido fue registrado, pero no se pudo guardar el comprobante. Contacta al administrador para completar la revision.',
+                'warning'
+            )
 
     session['carrito'] = []
     session.modified = True
@@ -4996,11 +5154,7 @@ def pay_stripe_cancel():
     return redirect(url_for('cart', metodo_pago='tarjeta'))
 
 
-@app.route('/user/orders')
-def user_orders():
-    if session.get('rol') != 'normal':
-        return "Acceso denegado"
-    
+def _obtener_pedidos_usuario_actual():
     pedidos = cargar_pedidos_df()
     id_usuario = pd.to_numeric(session.get('id_usuario'), errors='coerce')
     pedidos_usuario = pd.DataFrame(columns=PEDIDO_COLUMNS)
@@ -5040,8 +5194,17 @@ def user_orders():
             )
         pedidos_usuario = asignar_numero_pedido_usuario(pedidos_usuario)
         pedidos_usuario = pedidos_usuario.sort_values(by='id_pedido', ascending=False, na_position='last')
+        pedidos_usuario['id_pedido'] = pd.to_numeric(pedidos_usuario['id_pedido'], errors='coerce').fillna(0).astype(int)
 
-    lista_pedidos = _enriquecer_pedidos_con_tracking(pedidos_usuario.fillna('').to_dict(orient='records'))
+    return _enriquecer_pedidos_con_tracking(pedidos_usuario.fillna('').to_dict(orient='records'))
+
+
+@app.route('/user/orders')
+def user_orders():
+    if session.get('rol') != 'normal':
+        return "Acceso denegado"
+
+    lista_pedidos = _obtener_pedidos_usuario_actual()
     return render_template('Usuarios/Carrito/user_orders.html', pedidos=lista_pedidos)
 
 @app.route('/user/orders/details/<int:id_pedido>')
@@ -5139,24 +5302,24 @@ def user_profile():
             usuario_dict[key] = default_value
     
     # Obtener estadísticas del usuario
-    pedidos_total = 0
-    gasto_total = 0.0
-    
-    pedidos = cargar_pedidos_df()
-    if not pedidos.empty:
-        id_usuario = session.get('id_usuario', usuario_email)
-        pedidos_usuario = pedidos[pedidos['id_usuario'] == id_usuario]
-        pedidos_total = len(pedidos_usuario)
-        
-        if not pedidos_usuario.empty:
-            pagos = cargar_pagos_df()
-            pagos_usuario = pagos[pagos['id_pedido'].isin(pedidos_usuario['id_pedido'])]
-            gasto_total = pagos_usuario['monto'].sum() if not pagos_usuario.empty else 0.0
+    pedidos_usuario = _obtener_pedidos_usuario_actual()
+    pedidos_total = len(pedidos_usuario)
+    montos_usuario = pd.to_numeric(
+        pd.Series([pedido.get('monto', 0) for pedido in pedidos_usuario]),
+        errors='coerce'
+    ).fillna(0)
+    gasto_total = float(montos_usuario.sum()) if not montos_usuario.empty else 0.0
+    pedidos_recientes = pedidos_usuario[:3]
+    ultimo_pedido = pedidos_recientes[0] if pedidos_recientes else None
+    pedidos_activos = sum(1 for pedido in pedidos_usuario if pedido.get('estado_activo'))
     
     return render_template('Usuarios/Ajustes/user_profile.html', 
                           usuario=usuario_dict,
                           pedidos_total=pedidos_total,
                           gasto_total=gasto_total,
+                          pedidos_recientes=pedidos_recientes,
+                          ultimo_pedido=ultimo_pedido,
+                          pedidos_activos=pedidos_activos,
                           PASSWORD_CHANGE_CODE_EXP_MINUTES=PASSWORD_CHANGE_CODE_EXP_MINUTES)
 
 @app.route('/user/profile/update', methods=['POST'])
