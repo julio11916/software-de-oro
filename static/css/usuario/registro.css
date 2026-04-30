@@ -2,13 +2,59 @@ body.auth-page {
     min-height: 100vh;
     margin: 0;
     display: flex;
+    flex-direction: column;
     align-items: center;
-    justify-content: center;
+    justify-content: space-between;
+    gap: 24px;
+    padding-top: 32px;
     background-image: url("../../img/Pagina/nachoher_fondo_logo.jpg");
     background-size: cover;
     background-position: 50% 22%;
     background-repeat: no-repeat;
     background-attachment: fixed;
+}
+
+.footer-compact {
+    width: 100%;
+    background: rgba(18, 18, 18, 0.94);
+    color: #fff;
+    padding: 1.6rem 0 0.9rem;
+    margin-top: auto;
+}
+
+.footer-content {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+}
+
+.footer-brand {
+    font-size: 1.1rem;
+}
+
+.footer-item {
+    font-size: 0.92rem;
+    opacity: 0.9;
+}
+
+.footer-social a {
+    color: #fff;
+    margin-left: 12px;
+    font-size: 1.1rem;
+    text-decoration: none;
+}
+
+.footer-social a:hover {
+    color: #b8933f;
+}
+
+.footer-bottom {
+    text-align: center;
+    margin-top: 1rem;
+    font-size: 0.84rem;
+    opacity: 0.75;
 }
 
 .auth-card {
@@ -94,6 +140,22 @@ body.auth-page {
 @media (max-width: 768px) {
     body.auth-page {
         background-position: 50% 30%;
+        padding-top: 20px;
+    }
+
+    .footer-content {
+        justify-content: center;
+        text-align: center;
+    }
+
+    .footer-item,
+    .footer-brand,
+    .footer-social {
+        width: 100%;
+    }
+
+    .footer-social a {
+        margin: 0 8px;
     }
 
     .password-rules {

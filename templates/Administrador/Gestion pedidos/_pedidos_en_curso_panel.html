@@ -51,14 +51,14 @@
                         </div>
                         {% if pedido.metodo_pago == 'transferencia' and pedido.estado_pago_ui != 'aprobado' %}
                         <p class="stage-payment-note">
-                            Este pedido no entra al flujo normal hasta validar el comprobante enviado por el cliente.
+                            Este pedido no entra al flujo normal hasta validar el comprobante adjunto por el cliente.
                         </p>
                         {% if pedido.comprobante_url %}
                         <a href="{{ url_for('static', filename=pedido.comprobante_url) }}" target="_blank" rel="noopener noreferrer" class="stage-proof-link">
                             <i class="fas fa-image"></i> Ver comprobante adjunto
                         </a>
                         {% else %}
-                        <p class="stage-payment-note">No hay comprobante adjunto en la web. Valida con el correo y el WhatsApp enviados por el cliente.</p>
+                        <p class="stage-payment-note">No hay comprobante adjunto en la web. Solicita al cliente cargar el soporte antes de aprobar la transferencia.</p>
                         {% endif %}
                         <div class="stage-payment-actions">
                             <form method="POST" action="{{ url_for('admin_pedidos_pago', id_pedido=pedido.id_pedido) }}">
@@ -83,7 +83,7 @@
                                 <input type="hidden" name="f_fecha_hasta" value="{{ filtros.fecha_hasta if filtros else '' }}">
                                 <input type="hidden" name="f_page" value="{{ paginacion.page if paginacion else 1 }}">
                                 <input type="hidden" name="accion_pago" value="aprobar">
-                                <button type="submit" class="btn btn-success">Aprobar comprobante</button>
+                                <button type="submit" class="btn btn-success" {% if not pedido.comprobante_url %}disabled title="Primero debe existir un comprobante adjunto"{% endif %}>Aprobar comprobante</button>
                             </form>
                             <form method="POST" action="{{ url_for('admin_pedidos_pago', id_pedido=pedido.id_pedido) }}">
                                 <input type="hidden" name="origen" value="pedidos">

@@ -8,7 +8,7 @@ try {
         correo: "",
         telefono: "",
         anoContingencia: "",
-        // Configuración de la prenda
+        // Configuracin de la prenda
         genero: "unisex",
         identidad: "",
         producto: "",
@@ -38,12 +38,12 @@ try {
         camiseta: "Camiseta",
         buso: "Buso",
         gorra: "Gorra",
-        paoleta: "Pañoleta",
+        paoleta: "Paoleta",
         panoleta: "Pañoleta",
         "pañoleta": "Pañoleta",
         "buso-manga-larga": "Buso manga larga",
-        "buso_tactico": "Buso Táctico",
-        "buso tactico": "Buso Táctico",
+        "buso_tactico": "Buso Tctico",
+        "buso tactico": "Buso Tctico",
         presillas: "Presillas",
         rh: "Rh",
     };
@@ -139,7 +139,7 @@ try {
             }
         }
 
-        // BUSO TÁCTICO
+        // BUSO TCTICO
         if (productName === "buso_tactico" || productName === "buso tactico") {
             if (identidad === "ejercito") {
                 return isBack 
@@ -315,7 +315,7 @@ try {
             if (identidad === "armada") return `/static/img/prendas/armada/buso-manga-larga/buso_manga_larga_${clr}.png`;
         }
 
-        // BUSO TÁCTICO
+        // BUSO TCTICO
         if (productName === "buso_tactico" || productName === "buso tactico" || productName === "buso-tactico") {
             if (identidad === "ejercito") return `/static/img/prendas/ejercito/buso_tactico/camisa_${colorName}.png`;
             if (identidad === "policia") return `/static/img/prendas/Policia/buso_tactico/tactico${colorName === 'azul-noche' ? '-poli' : ''}.png`;
@@ -547,15 +547,15 @@ try {
             modeloTxt = ` | Rango: ${state.modeloPresilla}`;
         }
         
-        const isEspecial = ["rh", "presillas", "gafete", "gafete del nombre o apellido", "pañoleta", "paoleta", "panoleta", "gorra"].includes((state.producto || "").toLowerCase());
+        const isEspecial = ["rh", "presillas", "gafete", "gafete del nombre o apellido", "pañoleta", "paoleta", "panoleta", "paÃ±oleta", "gorra"].includes((state.producto || "").toLowerCase());
         
         let descripcionCompleta = `${identidad}`;
         
-        // El buso manga larga y el buso no llevan la técnica (por ser sublimados por defecto)
+        // El buso manga larga y el buso no llevan la tÃ©cnica (por ser sublimados por defecto)
         const esMangaBusoOnly = ["buso", "buso-manga-larga", "buso_manga_larga", "buso manga larga"].includes((state.producto || "").toLowerCase());
         const esCualquierBuso = ["buso", "buso-manga-larga", "buso_manga_larga", "buso manga larga", "buso_tactico", "buso tactico", "buso-tactico"].includes((state.producto || "").toLowerCase());
         
-        // La técnica (bordado/impresión) la llevan todos EXCEPTO los busos manga larga y el buso (y en gorras sí)
+        // La tecnica (bordado/impresion) la llevan todos EXCEPTO los busos manga larga y el buso (y en gorras sÃ­)
         if (!esMangaBusoOnly) {
             descripcionCompleta += ` | ${tecnica}`;
         }
@@ -628,7 +628,7 @@ try {
             tallaInfoPreview.textContent = isEspecial ? "No aplica" : (state.talla || "Pendiente");
             const filaTalla = tallaInfoPreview.parentElement;
             if (filaTalla && filaTalla.classList.contains('info-item')) {
-                // Ocultar si es especial, O si la talla no ha sido seleccionada aún (talla es vacía o null)
+                // Ocultar si es especial, O si la talla no ha sido seleccionada aÃºn (talla es vacÃ­a o null)
                 filaTalla.style.display = (isEspecial || !state.talla) ? 'none' : 'flex';
             }
         }
@@ -675,7 +675,7 @@ try {
         // Si no hay imagen definida (por estar en paso < 3 o no tener color), usar la imagen base/molde
         if (!imagen) {
             // Para pañoletas, si estamos en paso 3 y no hay color, no mostrar nada
-            if (["pañoleta", "panoleta", "paoleta"].includes(p) && state.pasoActual >= 3 && !state.color) {
+            if (["pañoleta", "paÃ±oleta", "panoleta", "paoleta"].includes(p) && state.pasoActual >= 3 && !state.color) {
                 imagen = ""; // Sin imagen
             } else {
                 // En pasos 1 y 2, o si es otro producto, mostrar siempre el boceto/molde
@@ -686,7 +686,7 @@ try {
         if (imagen) {
 
         // Siempre crear o actualizar el preview-container
-        // Aumentar un poco el tamaño si es un accesorio pequeño como Gafetes, RH o Presillas
+        // Aumentar un poco el tamaÃ±o si es un accesorio pequeÃ±o como Gafetes, RH o Presillas
         let scaleStyle = "";
             const isGafete = state.producto === "gafete del nombre o apellido" || state.producto === "gafete";
             const isGorra = state.producto === "gorra";
@@ -873,7 +873,7 @@ try {
                 }
                 
 
-                // Ajuste proporcional de tamaños para que sean equitativos y encajen y centrados
+                // Ajuste proporcional de tamaÃ±os para que sean equitativos y encajen y centrados
                 divRango.style.fontWeight = "800";
                 divRango.style.color = textColor;
                 divRango.style.textShadow = shadowVal;
@@ -893,7 +893,7 @@ try {
                 const rangoFinal = state.rango ? state.rango.charAt(0).toUpperCase() + state.rango.slice(1).toLowerCase() : 'Rango'; 
                 let nombreFinalRaw = state.nombre ? state.nombre.toUpperCase().trim() : 'NOMBRE';
                 
-                // Lógica de Ejército: Solo Apellido
+                // LÃ³gica de EjÃ©rcito: Solo Apellido
                 const identId = state.identidad ? state.identidad.toLowerCase().trim() : '';
                 if (identId === 'ejercito' && nombreFinalRaw !== 'NOMBRE') {
                     let partes = nombreFinalRaw.split(/\s+/);
@@ -922,7 +922,7 @@ try {
                 let maxCharsNombre = identId === 'ejercito' ? 8 : 10;
                 
                 if (identId === 'ejercito') {
-                    // Hacer el parche del gafete un poco más grande y bajarlo ligeramente si el contenedor lo permite
+                    // Hacer el parche del gafete un poco mÃ¡s grande y bajarlo ligeramente si el contenedor lo permite
                     imgEl.style.transform = "scale(1.6)";
                     overlayEl.style.transform = "translate(-50%, -50%) scale(1.6)";
                 } else {
@@ -937,7 +937,7 @@ try {
                     divNombre.style.fontSize = baseNombreSize + "px";
                 }
                 
-                // Escalar el rango para que sea equitativo y más pequeño y centrado
+                // Escalar el rango para que sea equitativo y mas pequeÃ±o y centrado
                 let baseRangoSize = identId === 'ejercito' ? 5 : 14;
                 let maxCharsRango = identId === 'ejercito' ? 18 : 12;
                 if (rangoFinal.length > maxCharsRango) {
@@ -954,7 +954,7 @@ try {
                 if (rhOverlayEl) rhOverlayEl.style.display = "none";
             }
 
-            // Lógica del OVERLAY para RANGOS en Busos y Gorras:
+            // LÃ³gica del OVERLAY para RANGOS en Busos y Gorras:
             const esMuestraDistintivo = (esCualquierBuso || isGorra) && state.estampado && state.estampado.startsWith("distintivos - ") && state.vistaPrenda !== "trasera";
             if (esMuestraDistintivo) {
                 // Limpiar el String "distintivos - Coronel" -> "Coronel"
@@ -967,7 +967,7 @@ try {
                     rangoFormat = rangoFormat.replace(/\s*\/\s*/g, " "); // espacios mantenidos
                     
                     if (isGorra) {
-                        // Para las gorras, las imágenes de rangos no son overlays pequeños, son LA GORRA COMPLETA con el rango.
+                        // Para las gorras, las imÃ¡genes de rangos no son overlays pequeÃ±os, son LA GORRA COMPLETA con el rango.
                         // Entonces, reemplazamos la imagen principal de la prenda y ocultamos el overlay.
                         if (identId === "policia" && !rangoFormat.includes("azul") && !rangoFormat.includes("verde")) {
                             if (state.color === "azul-noche" || state.color === "negro" || !state.color) {
@@ -976,7 +976,7 @@ try {
                                 rangoFormat += " verde";
                             }
                         } else if (identId === "gaula") {
-                            // En Gaula la carpeta es "gorras" en vez de "gorra". Además, hay espacios raros en algunos archivos.
+                            // En Gaula la carpeta es "gorras" en vez de "gorra". AdemÃ¡s, hay espacios raros en algunos archivos.
                             let baseName = rangoFormat.trim();
                             if (state.color === "verde-claro") {
                                 // Maps for green distinctives
@@ -1109,17 +1109,17 @@ try {
             }
 
 
-        // Escudos en pañoletas
-        const isPanoleta = ['pañoleta', 'panoleta', 'paoleta'].includes((state.producto || '').toLowerCase());
+        // Escudos en paÃ±oletas
+        const isPanoleta = ['pañoleta', 'paÃ±oleta', 'panoleta', 'paoleta'].includes((state.producto || '').toLowerCase());
         if (isPanoleta && state.estampado && state.estampado.toLowerCase().startsWith('escudos') && state.vistaPrenda !== 'trasera') {
-            // El dropdown solo da options Escudo 1 / Escudo 2. Ajustarlos según sea la lógica si tienen archivos distintos
-            // De lo contrario mantenemos la lógica actual pero mostramos la imagen base a color si no hay selección
+            // El dropdown solo da options Escudo 1 / Escudo 2. Ajustarlos segÃºn sea la lÃ³gica si tienen archivos  distintos
+            // De lo contrario mantenemos la lÃ³gica actual pero mostramos la imÃ¡gen base a color si no hay selecciÃ³n
 
             const identId = state.identidad ? state.identidad.toLowerCase().trim() : 'policia';
             let escImgSrc = '';
             let c = (state.color || 'verde-claro').replace('-claro', '').replace('-noche', '');
 
-            // Agregar la lógica para diferentes escudos aquí si tienes diferentes archivos,
+            // Agregar la lÃ³gica para diferentes escudos aquÃ­ si tienes diferentes archivos,
             // por ejemplo para "Escudo 2" usar un archivo diferente.
             // Para mantenerlo sencillo, se usa la imagen de color si escogieron el escudo
 
@@ -1366,7 +1366,7 @@ try {
                     break;
             }
         } catch(error) {
-            console.error("Error en validación de paso:", error);
+            console.error("Error en validacin de paso:", error);
         }
     }
 
@@ -1403,7 +1403,7 @@ try {
         let defaultActiveArea = null;
         
         // Prendas especiales que SOLO tienen impresion-delantera
-        const prendasEspeciales = ["presillas", "rh", "paoleta", "pañoleta", "panoleta", "gorra", "contingencia", "gafete del nombre o apellido"];
+        const prendasEspeciales = ["presillas", "rh", "paoleta", "pañoleta", "paÃ±oleta", "panoleta", "gorra", "contingencia", "gafete del nombre o apellido"];
         const productoActualName = (state.producto || "").toLowerCase();
         const esProductoEspecial = prendasEspeciales.some(p => p.toLowerCase() === productoActualName);
 
@@ -1474,14 +1474,14 @@ try {
                     // Para gorras, escudos y parches no aplican
                     if (tipo === "escudos" || tipo === "parches") mostrar = false;
                 } else if (identidad === "policia") {
-                    if (producto === "pañoleta" || producto === "panoleta" || producto === "paoleta" || producto === "pa\u00f1oleta") {
+                    if (producto === "pañoleta" || producto === "panoleta" || producto === "paoleta" || producto === "paÃ±oleta" || producto === "pa\u00f1oleta") {
                         if (tipo !== "escudos") mostrar = false; // "las pañolestas solo tienen escudos nada mas"
                     } else if (producto === "guerrera") {
                         if (tipo !== "distintivos" && tipo !== "escudos" && tipo !== "parches") mostrar = false;
                     } else if (producto === "buso-tactico" || producto === "buso_tactico" || producto === "buso tactico") {
                         if (tipo !== "parches" && tipo !== "escudos") mostrar = false;
                     }
-                } else if (producto === "panoleta" || producto === "paoleta" || producto === "pañoleta") {
+                } else if (producto === "paÃ±oleta" || producto === "panoleta" || producto === "paoleta" || producto === "pañoleta") {
                     // Para pañoletas, parches y distintivos no aplican (otras fuerzas)
                     if (tipo === "distintivos" || tipo === "parches") mostrar = false;
                 }
@@ -1550,7 +1550,7 @@ try {
             }
         });
         
-        // Manejar opciones específicas de distintivos según identidad y producto
+        // Manejar opciones especificas de distintivos segÃºn identidad y producto
         const selectDistintivo = document.getElementById("select-distintivo");
         if (selectDistintivo) {
             const producto = state.producto ? state.producto.toLowerCase().trim() : "";
@@ -1819,11 +1819,11 @@ try {
         let valid = true;
         let mensajeAlerta = "";
 
-        // Validar nombre: solo letras y espacios (incluye acentos y eñes)
+        // Validar nombre: solo letras y espacios (incluye acentos y eÃ±es)
         const nombreValido = inputNombre && /^[A-Za-z\u00C0-\u017F\s]+$/.test(inputNombre.value.trim());
         if (!nombreValido) { valid = false; mensajeAlerta += "- Nombre y Apellido (solo letras).\n"; }
 
-        // Validar rango: solo letras y espacios (incluye acentos y eñes)
+        // Validar rango: solo letras y espacios (incluye acentos y eÃ±es)
         const rangoValido = inputRango && /^[A-Za-z\u00C0-\u017F\s]+$/.test(inputRango.value.trim());
         if (!rangoValido) { valid = false; mensajeAlerta += "- Rango (solo letras).\n"; }
 
@@ -1839,14 +1839,14 @@ try {
         const telValido = inputTelefono && /^[0-9]+$/.test(inputTelefono.value.trim());
         if (!telValido) { valid = false; mensajeAlerta += "- Telfono (solo nmeros).\n"; }
 
-// Validar mes y año de contingencia y talla siempre
+// Validar Mes y AÃ±o de Contingencia y Talla siempre
         const mesValido2 = inputMesContingencia && inputMesContingencia.value.trim().length > 0;
         const anoValido2 = inputAnoContingencia && inputAnoContingencia.value.trim().length > 0;
         if (!mesValido2) { valid = false; mensajeAlerta += "- Mes de contingencia.\n"; }
-        if (!anoValido2) { valid = false; mensajeAlerta += "- Año de contingencia.\n"; }
+        if (!anoValido2) { valid = false; mensajeAlerta += "- AÃ±o de contingencia.\n"; }
         
         const tallaValida2 = inputTalla && inputTalla.value.trim().length > 0;
-        if (!tallaValida2 && !state.talla) { valid = false; mensajeAlerta += "- Selección de talla.\n"; }
+        if (!tallaValida2 && !state.talla) { valid = false; mensajeAlerta += "- SelecciÃ³n de talla.\n"; }
 
         // Validar Entidad (Identidad) seleccionada
         if (!state.identidad) { valid = false; mensajeAlerta += "- Seleccionar una Entidad (Ej: Polica, Ejrcito).\n"; }
@@ -1855,7 +1855,7 @@ try {
         if (!state.tecnica) { valid = false; mensajeAlerta += "- Seleccionar una Tcnica (Ej: Bordado).\n"; }
 
         // Validar Talla
-        // (ya relanzada, pero la validación general de campos no obligará a tallas ni mes de contingencia a menos que sean prendas completas y así lo quieras)
+        // (ya relanzada, pero la validaciÃ³n general de campos no obligarÃ¡ a tallas ni mes de contingencia a menos que sean prendras completas y asÃ­ lo quieras)
         
         if (btnSiguiente) {
             btnSiguiente.style.opacity = valid ? "1" : "0.5";
@@ -2013,9 +2013,9 @@ try {
                 const inputTalla = document.getElementById("input-talla");
                 if (!state.talla && inputTalla && inputTalla.value) state.talla = inputTalla.value;
                 
-                // Forzar la validación aquí
+                // Forzar la validaciÃ³n aquÃ­
                 if (!state.identidad || !state.tecnica) {
-                    alert("Asegúrate de seleccionar una entidad y técnica.");
+                    alert("AsegÃºrate de seleccionar una Entidad y TÃ©cnica.");
                     return;
                 }
                 
@@ -2108,7 +2108,7 @@ try {
                 }
 
                 // If currently on pañoleta and escudos are shown, update options
-                if (['pañoleta', 'panoleta', 'paoleta'].includes((state.producto || '').toLowerCase()) && state.estampado.startsWith("escudos")) {
+                if (['pañoleta', 'paÃ±oleta', 'panoleta', 'paoleta'].includes((state.producto || '').toLowerCase()) && state.estampado.startsWith("escudos")) {
                     const selectEscudo = document.getElementById("select-escudo");
                     if (selectEscudo) {
                         const opt1 = Array.from(selectEscudo.options).find(o => o.value === "Estilo 1");
@@ -2150,7 +2150,7 @@ try {
                             updateSummary();
                         } else if (state.identidad === "armada") {
                             // En armada ocultamos los sub-estilos ya que el escImgSrc 
-                            // lo armamos según el color únicamente (verde o negro)
+                            // lo armamos segÃºn el color unicamente (verde o negro)
                             if (dropdownEscudosContainer) dropdownEscudosContainer.style.display = "none";
                             state.estampado = "escudos";
                             updateSummary();
@@ -2361,12 +2361,19 @@ try {
     }
 
     function bindTopbar() {
+        document.getElementById("btn-orden-volver")?.addEventListener("click", () => {
+            window.history.back();
+        });
+
         document.getElementById("btn-salir")?.addEventListener("click", () => {
             window.history.back();
         });
 
         document.getElementById("btn-menu")?.addEventListener("click", () => {
-            alert("Menú en construcción.");
+            const menuCanvas = document.getElementById("menuCanvas");
+            if (menuCanvas && window.bootstrap?.Offcanvas) {
+                window.bootstrap.Offcanvas.getOrCreateInstance(menuCanvas).show();
+            }
         });
 
         document.querySelectorAll("[data-area]").forEach((button) => {
@@ -2392,9 +2399,9 @@ try {
                 if (tipoEstampado === "distintivos") {
                     if (dropdownContainer) dropdownContainer.style.display = "block";
                     if (dropdownEscudosContainer) dropdownEscudosContainer.style.display = "none";
-                    // Guardar solo "distintivos" por ahora, se actualizará si elige una opción del select
+                    // Guardar solo "distintivos" por ahora, se actualizarÃ¡ si elige una opciÃ³n del select
                     state.estampado = "distintivos";
-                } else if (tipoEstampado === "escudos" && ['pañoleta', 'panoleta', 'paoleta'].includes((state.producto || '').toLowerCase())) {
+                } else if (tipoEstampado === "escudos" && ['pañoleta', 'paÃ±oleta', 'panoleta', 'paoleta'].includes((state.producto || '').toLowerCase())) {
                     if (dropdownEscudosContainer) dropdownEscudosContainer.style.display = "block";
                     if (dropdownContainer) dropdownContainer.style.display = "none";
                     const selectEscudo = document.getElementById("select-escudo");
@@ -2415,7 +2422,7 @@ try {
                             if (optC3) optC3.style.display = "none";
                             
                             // Si es armada, ocultamos todo el contenedor dropdown para no dejar escoger estilo
-                            // y así obligar un solo diseño que mapeamos automático
+                            // y asÃ­ obligar un solo diseÃ±o que mapeamos automÃ¡tico
                             if (state.identidad === "armada") {
                                 if (dropdownEscudosContainer) dropdownEscudosContainer.style.display = "none";
                                 state.estampado = "escudos";
