@@ -16,28 +16,27 @@
     {% include 'Usuarios/partials/header_offcanvas.html' %}
     {% include 'Usuarios/partials/_flash_toasts.html' %}
 
-    <div class="contenedor-principal">
+    <main class="contenedor-principal">
 
-        <!-- BOTONES DE ACCIÓN SUPERIOR -->
-        <div
-            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; gap: 1rem;">
-        </div>
-
-        <!-- HEADER -->
-        <div class="header" style="margin-bottom: 2rem; text-align: center;">
-            <h1 style="font-size: 2.5rem; font-weight: bold; margin-bottom: 0.5rem; color: #333;">
-                <p class="subtitulo" style="margin-bottom: 1rem;"><i class="fas fa-info-circle"></i> PERSONALIZACION
-                    GUIADA</p>
-                <i class="fas fa-tshirt"></i> Diseña tu prenda paso a paso
-            </h1>
-            <p style="font-size: 1rem; color: #666; line-height: 1.6; max-width: 600px; margin: 0 auto;">
-                Configura tipo de producto, color, estampado y talla desde una sola vista
-            </p>
-        </div>
+        <section class="header orden-custom-hero">
+            <div class="orden-custom-hero__copy">
+                <span class="subtitulo orden-custom-hero__eyebrow">
+                    <i class="fas fa-wand-magic-sparkles"></i> Personalización guiada
+                </span>
+                <h1><i class="fas fa-shirt"></i> Diseña tu prenda paso a paso</h1>
+                <p>Configura tus datos, entidad, producto, color y acabados en un flujo claro antes de confirmar tu solicitud.</p>
+            </div>
+            <div class="orden-custom-hero__badge">
+                <span>4 pasos</span>
+                <strong>Proceso guiado</strong>
+            </div>
+        </section>
 
         <!-- BOTONES GÉNERO -->
         <div class="botones-genero">
-            <button class="btn-genero activo" data-genero="hombre">unisex</button>
+            <button class="btn-genero activo" data-genero="hombre">
+                <i class="fas fa-user-group"></i> Unisex
+            </button>
         </div>
 
         <!-- INDICADORES DE PASOS -->
@@ -66,33 +65,27 @@
                 <div id="paso1" class="paso-contenido">
                     <div class="titulo-seccion">
                         <span class="numero-seccion">1</span>
-                        <span>Datos Personales y entidad</span>
+                        <span>Datos personales y entidad</span>
                     </div>
 
-                    <!-- Contenedor de dos paneles -->
-                    <div style="display: flex; gap: 2rem; margin-bottom: 2rem;">
+                    <div class="datos-identidad-grid">
 
-                        <!-- PANEL IZQUIERDO: DATOS PERSONALES -->
-                        <div
-                            style="flex: 1; background: white; padding: 1.5rem; border-radius: 8px; border: 1px solid #e0e0e0;">
-                            <h4 style="font-size: 1rem; font-weight: 600; margin-bottom: 1rem; color: #333;">Datos
-                                Personales</h4>
+                        <div class="orden-form-card">
+                            <h4><i class="fas fa-id-card"></i> Datos personales</h4>
                             <form id="formulario-datos-personales"
-                                style="display: flex; flex-direction: column; gap: 1rem;" onsubmit="return false">
+                                class="orden-form-stack" onsubmit="return false">
                                 <div>
                                     <label for="input-nombre" class="label-opcion">Nombre y Apellido</label>
                                     <input type="text" id="input-nombre" placeholder="Ej: John Doe" class="form-control"
                                         required pattern="[A-Za-z\u00C0-\u024F\s]+" title="Solo letras"
-                                        title="Solo letras" title="Solo letras" title="Solo letras" title="Solo letras"
-                                        title="Solo letras" title="Solo se permiten letras y espacios.">
+                                        title="Solo se permiten letras y espacios.">
                                 </div>
 
                                 <div>
                                     <label for="input-rango" class="label-opcion">Rango</label>
                                     <input type="text" id="input-rango" placeholder="Ej: Sargento" class="form-control"
                                         required pattern="[A-Za-z\u00C0-\u024F\s]+" title="Solo letras"
-                                        title="Solo letras" title="Solo letras" title="Solo letras" title="Solo letras"
-                                        title="Solo letras" title="Solo se permiten letras y espacios.">
+                                        title="Solo se permiten letras y espacios.">
                                 </div>
 
                                 <div>
@@ -102,41 +95,26 @@
                                 </div>
 
                                 <div>
-                                    <label for="input-correo" class="label-opcion">Correo Electrónico</label>
+                                    <label for="input-correo" class="label-opcion">Correo electrónico</label>
                                     <input type="email" id="input-correo" placeholder="Ej: correo@example.com"
                                         class="form-control" required
                                         pattern="[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
-                                        title="Debe ser un correo electrónico válido.">
+                                        autocomplete="email" title="Debe ser un correo electrónico válido.">
                                 </div>
 
                                 <div>
                                     <label for="input-telefono" class="label-opcion">Teléfono</label>
                                     <input type="tel" id="input-telefono" placeholder="Ej: 3001234567"
-                                        class="form-control" required pattern="[0-9]+"
-                                        title="Solo se permiten números.">
+                                        class="form-control" required inputmode="numeric" maxlength="10"
+                                        pattern="[0-9]{10}" autocomplete="tel-national"
+                                        title="El teléfono debe tener exactamente 10 dígitos numéricos.">
                                 </div>
 
                                 <div id="container-contingencia">
-                                    <label class="label-opcion">Mes y año de contingencia</label>
-                                    <div style="display: flex; gap: 10px;">
-                                        <select id="input-mes-contingencia" class="form-control">
-                                            <option value="" disabled selected>Mes</option>
-                                            <option value="01">01</option>
-                                            <option value="02">02</option>
-                                            <option value="03">03</option>
-                                            <option value="04">04</option>
-                                            <option value="05">05</option>
-                                            <option value="06">06</option>
-                                            <option value="07">07</option>
-                                            <option value="08">08</option>
-                                            <option value="09">09</option>
-                                            <option value="10">10</option>
-                                            <option value="11">11</option>
-                                            <option value="12">12</option>
-                                        </select>
-                                        <input type="number" id="input-ano-contingencia" placeholder="Año (ej. 2024)"
-                                            class="form-control" min="1900" max="2100">
-                                    </div>
+                                    <label for="input-fecha-contingencia" class="label-opcion">Fecha de contingencia</label>
+                                    <input type="date" id="input-fecha-contingencia" class="form-control"
+                                        min="1940-01-01" max="2026-04-30" required>
+                                    <small class="orden-field-help">Selecciona una fecha entre 1940 y el año actual.</small>
                                 </div>
 
                                 <div id="container-talla">
@@ -149,20 +127,17 @@
                                         <option value="L">L</option>
                                         <option value="XL">XL</option>
                                         <option value="2XL">2XL</option>
-                                        <option value="3XL">3XL</option>
                                     </select>
                                 </div>
+
                             </form>
                         </div>
 
-                        <!-- PANEL DERECHO: ENTIDAD Y TÉCNICA -->
-                        <div
-                            style="flex: 1; background: white; padding: 1.5rem; border-radius: 8px; border: 1px solid #e0e0e0;">
-                            <h4 style="font-size: 1rem; font-weight: 600; margin-bottom: 1rem; color: #333;">Entidad
-                            </h4>
+                        <div class="orden-form-card">
+                            <h4><i class="fas fa-shield-halved"></i> Entidad</h4>
 
                             <div class="grid-opciones"
-                                style="grid-template-columns: 1fr; gap: 0.75rem; margin-bottom: 2rem;">
+                                data-layout="vertical">
                                 <button type="button" class="btn-opcion" data-opcion="policia">Policía <span
                                         class="text-danger"></span></button>
 
@@ -175,17 +150,17 @@
                                         class="text-danger"></span></button>
                             </div>
 
-                            <span class="label-opcion" style="display: block; margin-bottom: 0.75rem;">Técnica <span
+                            <span class="label-opcion">Técnica <span
                                     class="text-danger"></span></span>
                             <div class="grid-opciones"
-                                style="grid-template-columns: 1fr; gap: 0.75rem; margin-bottom: 2rem;">
+                                data-layout="vertical">
                                 <button type="button" class="btn-opcion" data-tecnica="bordado">Bordado</button>
                             </div>
                         </div>
                     </div>
 
                     <div class="botones-navegacion">
-                        <button type="button" class="btn-navegacion" id="btn-siguiente-paso1">Siguiente →</button>
+                        <button type="button" class="btn-navegacion" id="btn-siguiente-paso1">Siguiente <i class="fas fa-arrow-right"></i></button>
                     </div>
                 </div>
 
@@ -197,46 +172,46 @@
                     </div>
                     <div class="grid-productos">
                         <div class="tarjeta-producto" data-producto="guerrera">
-                            <div class="icono-producto">🧥</div>
-                            <div class="nombre-producto">guerrera</div>
+                            <div class="icono-producto"><i class="fas fa-shirt"></i></div>
+                            <div class="nombre-producto">Guerrera</div>
                         </div>
                         <div class="tarjeta-producto" data-producto="buso_tactico">
-                            <div class="icono-producto">🦺</div>
+                            <div class="icono-producto"><i class="fas fa-vest"></i></div>
                             <div class="nombre-producto">Buso táctico</div>
                         </div>
                         <div class="tarjeta-producto" data-producto="buso">
-                            <div class="icono-producto">👕</div>
+                            <div class="icono-producto"><i class="fas fa-shirt"></i></div>
                             <div class="nombre-producto">Buso</div>
                         </div>
                         <div class="tarjeta-producto" data-producto="gorra">
-                            <div class="icono-producto">🧢</div>
+                            <div class="icono-producto"><i class="fas fa-hat-cowboy"></i></div>
                             <div class="nombre-producto">Gorra</div>
                         </div>
                         <div class="tarjeta-producto" data-producto="pañoleta">
-                            <div class="icono-producto">🧣</div>
+                            <div class="icono-producto"><i class="fas fa-bandage"></i></div>
                             <div class="nombre-producto">Pañoleta</div>
                         </div>
                         <div class="tarjeta-producto" data-producto="buso-manga-larga">
-                            <div class="icono-producto">🥼</div>
+                            <div class="icono-producto"><i class="fas fa-user-tie"></i></div>
                             <div class="nombre-producto">Buso manga larga</div>
                         </div>
                         <div class="tarjeta-producto" data-producto="presillas">
-                            <div class="icono-producto">🔰</div>
-                            <div class="nombre-producto">presillas</div>
+                            <div class="icono-producto"><i class="fas fa-certificate"></i></div>
+                            <div class="nombre-producto">Presillas</div>
                         </div>
                         <div class="tarjeta-producto" data-producto="Rh">
-                            <div class="icono-producto">🩸</div>
+                            <div class="icono-producto"><i class="fas fa-droplet"></i></div>
                             <div class="nombre-producto">Rh</div>
                         </div>
                         <div class="tarjeta-producto" data-producto="gafete del nombre o apellido">
-                            <div class="icono-producto">🪪</div>
-                            <div class="nombre-producto">gafete del nombre o apellido</div>
+                            <div class="icono-producto"><i class="fas fa-id-badge"></i></div>
+                            <div class="nombre-producto">Gafete de nombre o apellido</div>
                         </div>
                     </div>
 
                     <div class="botones-navegacion">
-                        <button class="btn-navegacion" id="btn-atras-paso2">← Atrás</button>
-                        <button class="btn-navegacion" id="btn-siguiente-paso2">Siguiente → </button>
+                        <button class="btn-navegacion btn-navegacion--secondary" id="btn-atras-paso2"><i class="fas fa-arrow-left"></i> Atrás</button>
+                        <button class="btn-navegacion" id="btn-siguiente-paso2">Siguiente <i class="fas fa-arrow-right"></i></button>
                     </div>
                 </div>
 
@@ -288,9 +263,9 @@
                     </div>
 
                     <div class="botones-navegacion">
-                        <button class="btn-navegacion" id="btn-atras-paso3">← Atrás</button>
+                        <button class="btn-navegacion btn-navegacion--secondary" id="btn-atras-paso3"><i class="fas fa-arrow-left"></i> Atrás</button>
                         <button type="button" class="btn-navegacion" id="btn-siguiente-paso3">Siguiente / Finalizar
-                            → </button>
+                            <i class="fas fa-arrow-right"></i></button>
                     </div>
                 </div>
                 <!-- PASO 4: estampado -->
@@ -302,7 +277,7 @@
 
                     <!-- BARRA DE PESTAÑAS PARA ÁREAS -->
                     <div class="barra-pestanas">
-                        <button class="pestana-item activa" data-area="impresion-delantera">impresion
+                        <button class="pestana-item activa" data-area="impresion-delantera">Impresión
                             delantera</button>
                     </div>
                     <div class="grid-colores">
@@ -372,28 +347,31 @@
                         </div>
                     </div>
                     <div class="botones-navegacion">
-                        <button class="btn-navegacion" id="btn-atras-paso4">← Atrás</button>
-                        <button type="button" class="btn-navegacion" id="btn-siguiente-paso4">✓ Finalizar</button>
+                        <button class="btn-navegacion btn-navegacion--secondary" id="btn-atras-paso4"><i class="fas fa-arrow-left"></i> Atrás</button>
+                        <button type="button" class="btn-navegacion" id="btn-siguiente-paso4"><i class="fas fa-check"></i> Finalizar</button>
                     </div>
                 </div>
             </div>
             <!-- PANEL DERECHO - VISTA PREVIA -->
             <div class="panel-derecho" id="panel-vista-previa" style="display: none;">
-                <div class="vista-previa-titulo">Vista Previa de Tu Producto</div>
+                <div class="vista-previa-titulo">
+                    <span>Vista previa</span>
+                    <strong>Tu producto</strong>
+                </div>
 
                 <div class="controles-vista-previa"
-                    style="display: none; justify-content: center; gap: 10px; margin-bottom: 20px;">
+                    style="display: none;">
                     <button type="button" id="btn-vista-delantera" class="btn btn-secundario active"
-                        style="padding: 10px 24px; border-radius: 5px; cursor: pointer; border: 1px solid #ccc; background-color: #ffd700; color: #000; font-weight: bold; min-width: 110px;">Adelante</button>
+                        >Adelante</button>
                     <button type="button" id="btn-vista-trasera" class="btn btn-secundario"
-                        style="padding: 10px 24px; border-radius: 5px; cursor: pointer; border: 1px solid #ccc; background-color: #f0f0f0; min-width: 110px; color: #333;">Atrás</button>
+                        >Atrás</button>
                 </div>
 
                 <!-- ÁREA DE VISUALIZACIÓN DEL PRODUCTO -->
                 <div class="area-preview" id="area-preview">
                     <div style="text-align: center;">
                         <i class="fas fa-palette" style="font-size: 3rem; margin-bottom: 1rem;"></i>
-                        <p>Selecciona un producto para comenzar</p>
+                        <p>Selecciona un producto para ver la vista previa</p>
                     </div>
                 </div>
 
@@ -427,17 +405,38 @@
                         <span class="info-label">Talla:</span>
                         <span class="info-valor" id="preview-talla">-</span>
                     </div>
+                    <div class="info-item">
+                        <span class="info-label">Cantidad:</span>
+                        <span class="info-valor" id="preview-cantidad">1</span>
+                    </div>
                     <div class="info-item precio">
                         <span class="info-label">Precio:</span>
                         <span class="info-valor" id="preview-precio">$ 0</span>
                     </div>
                 </div>
+
+                <div class="orden-quantity-field orden-final-quantity seccion-hidden" id="cantidad-final-container">
+                    <span class="label-opcion">Cantidad de prendas</span>
+                    <div class="quantity-stepper" role="group" aria-label="Cantidad de prendas personalizadas">
+                        <button type="button" class="quantity-stepper__btn" id="btn-cantidad-menos" aria-label="Disminuir cantidad">
+                            <i class="fas fa-minus"></i>
+                        </button>
+                        <input type="number" id="input-cantidad-prendas" class="form-control"
+                            min="1" max="99" step="1" value="1" inputmode="numeric" required>
+                        <button type="button" class="quantity-stepper__btn" id="btn-cantidad-mas" aria-label="Aumentar cantidad">
+                            <i class="fas fa-plus"></i>
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
-    </div>
+    </main>
     {% include 'Usuarios/partials/footer.html' %}
     <script src="{{ url_for('static', filename='js/usuario/catalog_base.js') }}"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        window.PRECIOS_ORDEN_PERSONALIZADA = {{ precios_personalizados|tojson }};
+    </script>
     <script src="{{ url_for('static', filename='js/usuario/orden_personalizada.js') }}?v=639118770367342687"></script>
 </body>
 

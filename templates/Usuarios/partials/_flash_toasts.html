@@ -6,21 +6,21 @@
     <div class="flash-toast flash-toast-{{ tone }}" role="status">
         <div class="flash-toast-icon">
             {% if tone == 'success' %}
-            <span aria-hidden="true">✓</span>
+            <span aria-hidden="true">&#10003;</span>
             {% elif tone == 'danger' %}
-            <span aria-hidden="true">✕</span>
+            <span aria-hidden="true">&#10005;</span>
             {% elif tone == 'warning' %}
-            <span aria-hidden="true">✕</span>
+            <span aria-hidden="true">&#10005;</span>
             {% else %}
-            <span aria-hidden="true">✓</span>
+            <span aria-hidden="true">&#10003;</span>
             {% endif %}
         </div>
         <div class="flash-toast-copy">
             <span class="flash-toast-label">
                 {% if tone == 'success' %}Proceso completado
                 {% elif tone == 'danger' %}Revisa este dato
-                {% elif tone == 'warning' %}Atencion
-                {% else %}Actualizacion registrada
+                {% elif tone == 'warning' %}Atención
+                {% else %}Actualización registrada
                 {% endif %}
             </span>
             <span class="flash-toast-text">{{ message }}</span>

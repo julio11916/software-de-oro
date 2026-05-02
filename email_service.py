@@ -239,3 +239,44 @@ def enviar_notificacion_transferencia_admin(
     except Exception as e:
         print(f"Error al enviar notificacion de transferencia al administrador: {str(e)}")
         return False
+
+
+def enviar_notificacion_pago_personalizado_admin(
+    destinatario,
+    id_pedido,
+    cliente,
+    productos,
+    total,
+    metodo_pago='',
+    fecha='',
+    promo_codigo='',
+    descuento='',
+):
+    """Notifica al administrador cuando se confirma un pago con prendas personalizadas."""
+    try:
+        proyecto = str(current_app.config.get('PROJECT_NAME', 'NACHOHERS')).strip() or 'NACHOHERS'
+        email_destino = str(destinatario or '').strip()
+        if not email_destino:
+            return False
+
+        msg = Message(
+            subject=f"Pago confirmado de prenda personalizada #{id_pedido} - {proyecto}",
+            recipients=[email_destino],
+        )
+        msg.html = render_template(
+            'emails/nuevo_pago_prenda_personalizada_admin.html',
+            proyecto=proyecto,
+            id_pedido=id_pedido,
+            cliente=cliente or {},
+            productos=productos or [],
+            total=total,
+            metodo_pago=str(metodo_pago or '').strip() or 'No especificado',
+            fecha=fecha,
+            promo_codigo=promo_codigo,
+            descuento=descuento,
+        )
+        mail.send(msg)
+        return True
+    except Exception as e:
+        print(f"Error al enviar notificacion de pago personalizado al administrador: {str(e)}")
+        return False

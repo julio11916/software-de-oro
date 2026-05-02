@@ -203,39 +203,38 @@
                 {% endif %}
             </article>
 
-            <article class="profile-panel profile-panel--security">
-                <div class="panel-head">
-                    <div>
-                        <span class="eyebrow">Seguridad</span>
-                        <h2>Acceso protegido</h2>
-                    </div>
-                    <button class="btn btn-outline-dark btn-sm" data-bs-toggle="modal" data-bs-target="#modalSeguridad">Gestionar</button>
-                </div>
-                <div class="security-stack">
-                    <span><i class="fas fa-shield-halved"></i> Cambio de contraseña con código al correo</span>
-                    <span><i class="fas fa-envelope-circle-check"></i> Verificación de correo para acciones sensibles</span>
-                    <span><i class="fas fa-user-lock"></i> Sesión protegida por cuenta de usuario</span>
-                </div>
-            </article>
+            <article class="profile-panel profile-panel--account-settings">
+                <div class="account-settings-grid">
+                    <section class="account-settings-section">
+                        <div class="panel-head">
+                            <div>
+                                <span class="eyebrow">Seguridad</span>
+                                <h2>Acceso protegido</h2>
+                            </div>
+                            <button class="btn btn-outline-dark btn-sm" data-bs-toggle="modal" data-bs-target="#modalSeguridad">Gestionar</button>
+                        </div>
+                        <div class="security-stack">
+                            <span><i class="fas fa-shield-halved"></i> Cambio de contraseña con código al correo</span>
+                            <span><i class="fas fa-envelope-circle-check"></i> Verificación de correo para acciones sensibles</span>
+                            <span><i class="fas fa-user-lock"></i> Sesión protegida por cuenta de usuario</span>
+                        </div>
+                    </section>
 
-            <article class="profile-panel profile-panel--preferences">
-                <div class="panel-head">
-                    <div>
-                        <span class="eyebrow">Preferencias</span>
-                        <h2>Privacidad y comunicación</h2>
-                    </div>
-                </div>
-                <div class="preference-grid">
-                    <button type="button" data-bs-toggle="modal" data-bs-target="#modalPrivacidad">
-                        <i class="fas fa-shield-alt"></i>
-                        <span>Privacidad</span>
-                        <strong>{{ 'Perfil público' if usuario.perfil_publico else 'Perfil privado' }}</strong>
-                    </button>
-                    <button type="button" data-bs-toggle="modal" data-bs-target="#modalComunicaciones">
-                        <i class="fas fa-bell"></i>
-                        <span>Notificaciones</span>
-                        <strong>{{ 'Activas' if usuario.notif_email or usuario.notif_pedidos or usuario.notif_promociones else 'Pausadas' }}</strong>
-                    </button>
+                    <section class="account-settings-section">
+                        <div class="panel-head">
+                            <div>
+                                <span class="eyebrow">Comunicación</span>
+                                <h2>Notificaciones</h2>
+                            </div>
+                        </div>
+                        <div class="preference-grid">
+                            <button type="button" data-bs-toggle="modal" data-bs-target="#modalComunicaciones">
+                                <i class="fas fa-bell"></i>
+                                <span>Preferencias de avisos</span>
+                                <strong>{{ 'Activas' if usuario.notif_email or usuario.notif_pedidos or usuario.notif_promociones else 'Pausadas' }}</strong>
+                            </button>
+                        </div>
+                    </section>
                 </div>
             </article>
         </section>
@@ -449,51 +448,6 @@
         </div>
     </div>
 
-    <div class="modal fade" id="modalPrivacidad" tabindex="-1">
-        <div class="modal-dialog modal-lg modal-dialog-centered">
-            <div class="modal-content profile-modal">
-                <div class="modal-header">
-                    <h5 class="modal-title"><i class="fas fa-shield-alt me-2"></i>Privacidad</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <form method="POST" action="{{ url_for('update_settings') }}">
-                        <div class="modal-intro">
-                            <span class="eyebrow">Privacidad</span>
-                            <h6>Control de visibilidad</h6>
-                            <p>Define qué información de tu cuenta puede mostrarse fuera de tus procesos privados.</p>
-                        </div>
-                        <div class="settings-list">
-                            <label class="setting-row" for="perfil_publico">
-                                <i class="fas fa-user-shield"></i>
-                                <span>
-                                    <strong>Perfil público</strong>
-                                    <small>Permite mostrar información básica de tu perfil.</small>
-                                </span>
-                                <input class="form-check-input" type="checkbox" id="perfil_publico" name="perfil_publico" {% if usuario.perfil_publico %}checked{% endif %}>
-                            </label>
-                            <label class="setting-row" for="mostrar_historial">
-                                <i class="fas fa-clock-rotate-left"></i>
-                                <span>
-                                    <strong>Historial visible</strong>
-                                    <small>Permite compartir actividad de compras cuando aplique.</small>
-                                </span>
-                                <input class="form-check-input" type="checkbox" id="mostrar_historial" name="mostrar_historial" {% if usuario.mostrar_historial %}checked{% endif %}>
-                            </label>
-                        </div>
-                        <input type="hidden" name="notif_email" value="{% if usuario.notif_email %}on{% endif %}">
-                        <input type="hidden" name="notif_pedidos" value="{% if usuario.notif_pedidos %}on{% endif %}">
-                        <input type="hidden" name="notif_promociones" value="{% if usuario.notif_promociones %}on{% endif %}">
-                        <div class="modal-actions">
-                            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
-                            <button type="submit" class="btn btn-dark">Guardar preferencias</button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <div class="modal fade" id="modalComunicaciones" tabindex="-1">
         <div class="modal-dialog modal-lg modal-dialog-centered">
             <div class="modal-content profile-modal">
@@ -534,8 +488,6 @@
                                 <input class="form-check-input" type="checkbox" id="notif_promociones" name="notif_promociones" {% if usuario.notif_promociones %}checked{% endif %}>
                             </label>
                         </div>
-                        <input type="hidden" name="perfil_publico" value="{% if usuario.perfil_publico %}on{% endif %}">
-                        <input type="hidden" name="mostrar_historial" value="{% if usuario.mostrar_historial %}on{% endif %}">
                         <div class="modal-actions">
                             <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
                             <button type="submit" class="btn btn-dark">Guardar preferencias</button>

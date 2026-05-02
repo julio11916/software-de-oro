@@ -403,7 +403,7 @@ function initPOS(currencyCode, productos, tallas) {
         ? tallas.map((t) => String(t || '').trim().toUpperCase()).filter(Boolean)
         : [];
     if (!tallasCatalog.length) {
-        tallasCatalog = ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL'];
+        tallasCatalog = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
     }
 
     catalogGrid = document.getElementById('catalogGrid');
