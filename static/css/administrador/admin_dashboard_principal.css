@@ -465,6 +465,35 @@ body {
     gap: 0.15rem;
 }
 
+.flash-toast-close {
+    position: relative;
+    z-index: 1;
+    margin-left: auto;
+    border: 0;
+    width: 32px;
+    height: 32px;
+    border-radius: 10px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #1f3f67;
+    font-size: 1.25rem;
+    line-height: 1;
+    background: rgba(18, 61, 118, 0.08);
+    transition: background-color 0.2s ease, color 0.2s ease, transform 0.2s ease;
+}
+
+.flash-toast-close:hover {
+    color: #102f54;
+    background: rgba(18, 61, 118, 0.16);
+    transform: translateY(-1px);
+}
+
+.flash-toast-close:focus-visible {
+    outline: 2px solid rgba(23, 148, 210, 0.45);
+    outline-offset: 2px;
+}
+
 .flash-toast-label {
     color: #123d76;
     font-size: 1.1rem;
@@ -514,6 +543,26 @@ body {
 .dashboard-layout {
     align-items: flex-start;
     min-height: 100vh;
+}
+
+.flash-toast-stack-manual .flash-toast {
+    animation: flashToastManualPresence 0.28s ease both;
+    pointer-events: auto;
+}
+
+.flash-toast-stack-manual .flash-toast-copy {
+    padding-right: 0.45rem;
+}
+
+@keyframes flashToastManualPresence {
+    0% {
+        opacity: 0;
+        transform: translate3d(0, -12px, 0) scale(0.98);
+    }
+    100% {
+        opacity: 1;
+        transform: translate3d(0, 0, 0) scale(1);
+    }
 }
 
 .dashboard-layout .sidebar {

@@ -15,6 +15,7 @@ from email_service import (
     enviar_recuperacion_password,
     enviar_actualizacion_pedido,
     enviar_notificacion_transferencia_admin,
+    enviar_notificacion_pago_personalizado_admin,
 )
 from stripe_service import (
     stripe_estado_configuracion,
@@ -32,11 +33,11 @@ app.secret_key = os.getenv("SECRET_KEY", "").strip()
 if not app.secret_key:
     app.secret_key = os.urandom(32)
     print(
-        "ADVERTENCIA: SECRET_KEY no está configurada en el entorno. "
-        "Usando una clave temporal para esta ejecución."
+        "ADVERTENCIA: SECRET_KEY no estÃ¡ configurada en el entorno. "
+        "Usando una clave temporal para esta ejecuciÃ³n."
     )
 
-# Configuración de Flask-Mail para Gmail
+# ConfiguraciÃ³n de Flask-Mail para Gmail
 app.config['MAIL_SERVER'] = config_email.MAIL_SERVER
 app.config['MAIL_PORT'] = config_email.MAIL_PORT
 app.config['MAIL_USE_TLS'] = config_email.MAIL_USE_TLS
@@ -84,6 +85,34 @@ PRODUCTO_COLUMNS = [
 PEDIDO_COLUMNS = ['id_pedido', 'id_usuario', 'fecha_pedido', 'estado', 'cliente_telefono', 'cliente_direccion']
 DETALLE_PEDIDO_COLUMNS = ['id_detalle', 'id_pedido', 'id_producto', 'cantidad', 'subtotal', 'talla']
 PAGO_COLUMNS = ['id_pago', 'id_pedido', 'monto', 'metodo_pago', 'fecha_pago', 'estado_pago', 'comprobante_url', 'id_promo', 'codigo_promo', 'tipo_descuento', 'valor_descuento', 'monto_descuento']
+ORDEN_PERSONALIZADA_COLUMNS = [
+    'id_orden_personalizada', 'usuario_email', 'cliente_nombre', 'cliente_correo',
+    'cliente_telefono', 'cliente_direccion', 'rango', 'fecha_contingencia',
+    'identidad', 'producto', 'tecnica', 'color', 'estampado', 'talla',
+    'modelo_rh', 'modelo_presilla', 'cantidad', 'imagen_url', 'precio',
+    'estado', 'datos_json', 'fecha_creacion'
+]
+ORDEN_PERSONALIZADA_PRECIO_COLUMNS = ['producto', 'nombre', 'precio']
+ORDEN_PERSONALIZADA_PRECIOS_DEFAULT = [
+    {'producto': 'guerrera', 'nombre': 'Guerrera', 'precio': 160000},
+    {'producto': 'buso_tactico', 'nombre': 'Buso tactico', 'precio': 95000},
+    {'producto': 'buso', 'nombre': 'Buso', 'precio': 78000},
+    {'producto': 'gorra', 'nombre': 'Gorra', 'precio': 35000},
+    {'producto': 'paÃ±oleta', 'nombre': 'PaÃ±oleta', 'precio': 28000},
+    {'producto': 'buso-manga-larga', 'nombre': 'Buso manga larga', 'precio': 85000},
+    {'producto': 'presillas', 'nombre': 'Presillas', 'precio': 15000},
+    {'producto': 'rh', 'nombre': 'RH', 'precio': 12000},
+    {'producto': 'gafete del nombre o apellido', 'nombre': 'Gafete de nombre o apellido', 'precio': 12000},
+]
+ORDEN_PERSONALIZADA_PRODUCTO_ALIAS = {
+    'buso tactico': 'buso_tactico',
+    'buso-tactico': 'buso_tactico',
+    'buso manga larga': 'buso-manga-larga',
+    'buso_manga_larga': 'buso-manga-larga',
+    'paoleta': 'paÃ±oleta',
+    'panoleta': 'paÃ±oleta',
+    'paÃƒÂ±oleta': 'paÃ±oleta',
+}
 PEDIDO_STATUS_FLOW = [
     ('confirmado', 'Confirmado'),
     ('empaquetado', 'Empaquetado'),
@@ -91,10 +120,18 @@ PEDIDO_STATUS_FLOW = [
     ('entregado', 'Entregado'),
 ]
 PEDIDO_STATUS_EXTRA = {
-    'pago_en_revision': 'Pago en revision',
+    'pago_en_revision': 'Pago en revisión',
     'cancelado': 'Cancelado',
-    'pendiente_revision': 'Pendiente de revisión',
+    'pendiente_revision': 'Pendiente de revisiÃ³n',
     'completado': 'Completado',
+}
+ORDEN_PERSONALIZADA_ESTADOS_PAGO = {
+    'pendiente_pago': 'Pendiente de pago',
+    'pendiente': 'Pendiente',
+    'en_revision': 'En revisiÃ³n',
+    'cotizada': 'Cotizada',
+    'completada': 'Completada',
+    'cancelada': 'Cancelada',
 }
 PEDIDO_STATUS_ALIAS = {
     'pendiente': 'confirmado',
@@ -108,7 +145,7 @@ PEDIDO_STATUS_LABELS = {
 }
 PAGO_STATUS_LABELS = {
     'pendiente_comprobante': 'Pendiente de comprobante',
-    'en_revision': 'En revision',
+    'en_revision': 'En revisión',
     'aprobado': 'Aprobado',
     'rechazado': 'Rechazado',
 }
@@ -125,13 +162,13 @@ PROMO_COLUMNS = [
 
 FUERZAS_OPCIONES = ["Policia", "Ejercito", "Armada", "Gaula"]
 INTENDENCIAS_OPCIONES = [
-    "Busos", "Camibusos", "Gorras", "Pañoletas", "Sudaderas",
+    "Busos", "Camibusos", "Gorras", "PaÃ±oletas", "Sudaderas",
     "Pantalonetas", "Colchas", "Tendidos", "Chuspas para ropa sucia",
     "Fundas para almohadas", "Camuflados", "Accesorios", "Presillas"
 ]
-TALLAS_OPCIONES = ["XS", "S", "M", "L", "XL", "XXL", "XXXL"]
+TALLAS_OPCIONES = ["XS", "S", "M", "L", "XL", "XXL"]
 INTENDENCIAS_SIN_TALLA = {
-    "pañoleta", "pañoletas",
+    "paÃ±oleta", "paÃ±oletas",
     "panoleta", "panoletas",
     "gorra", "gorras",
     "colcha", "colchas",
@@ -276,11 +313,191 @@ def guardar_promociones_df(promos):
     replace_table_df('promociones', promos[PROMO_COLUMNS])
 
 
+def normalizar_producto_personalizado(valor):
+    return re.sub(r"\s+", " ", str(valor or "").strip().lower())
+
+
+def producto_personalizado_canonico(valor):
+    producto = normalizar_producto_personalizado(valor)
+    return ORDEN_PERSONALIZADA_PRODUCTO_ALIAS.get(producto, producto)
+
+
+def asegurar_tablas_orden_personalizada():
+    ddl = """
+    CREATE TABLE IF NOT EXISTS orden_personalizada (
+        id_orden_personalizada BIGSERIAL PRIMARY KEY,
+        usuario_email TEXT,
+        cliente_nombre TEXT,
+        cliente_correo TEXT,
+        cliente_telefono TEXT,
+        cliente_direccion TEXT,
+        rango TEXT,
+        fecha_contingencia TEXT,
+        identidad TEXT,
+        producto TEXT,
+        tecnica TEXT,
+        color TEXT,
+        estampado TEXT,
+        talla TEXT,
+        modelo_rh TEXT,
+        modelo_presilla TEXT,
+        cantidad INTEGER NOT NULL DEFAULT 1,
+        imagen_url TEXT,
+        precio NUMERIC(12,2) NOT NULL DEFAULT 0,
+        estado TEXT NOT NULL DEFAULT 'pendiente',
+        datos_json TEXT NOT NULL DEFAULT '{}',
+        fecha_creacion TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+    CREATE TABLE IF NOT EXISTS orden_personalizada_precio (
+        producto TEXT PRIMARY KEY,
+        nombre TEXT NOT NULL,
+        precio NUMERIC(12,2) NOT NULL DEFAULT 0
+    );
+    """
+    with engine.begin() as conn:
+        conn.execute(sa.text(ddl))
+        for col in ORDEN_PERSONALIZADA_COLUMNS:
+            if col == 'id_orden_personalizada':
+                continue
+            column_type = (
+                'NUMERIC(12,2)' if col == 'precio'
+                else 'INTEGER' if col == 'cantidad'
+                else 'TIMESTAMPTZ' if col == 'fecha_creacion'
+                else 'TEXT'
+            )
+            default_sql = " DEFAULT NOW()" if col == 'fecha_creacion' else ""
+            if col == 'estado':
+                default_sql = " DEFAULT 'pendiente'"
+            if col == 'datos_json':
+                default_sql = " DEFAULT '{}'"
+            if col == 'cantidad':
+                default_sql = " DEFAULT 1"
+            conn.execute(sa.text(f'ALTER TABLE orden_personalizada ADD COLUMN IF NOT EXISTS "{col}" {column_type}{default_sql}'))
+        for item in ORDEN_PERSONALIZADA_PRECIOS_DEFAULT:
+            conn.execute(
+                sa.text("""
+                    INSERT INTO orden_personalizada_precio (producto, nombre, precio)
+                    VALUES (:producto, :nombre, :precio)
+                    ON CONFLICT (producto) DO NOTHING
+                """),
+                item
+            )
+
+
+def cargar_precios_orden_personalizada_df():
+    asegurar_tablas_orden_personalizada()
+    precios = read_table_df('orden_personalizada_precio')
+    if precios.empty:
+        precios = pd.DataFrame(ORDEN_PERSONALIZADA_PRECIOS_DEFAULT)
+    for col in ORDEN_PERSONALIZADA_PRECIO_COLUMNS:
+        if col not in precios.columns:
+            precios[col] = 0 if col == 'precio' else ''
+    precios['precio'] = pd.to_numeric(precios['precio'], errors='coerce').fillna(0.0)
+    nombres_ref = {
+        producto_personalizado_canonico(item['producto']): item['nombre']
+        for item in ORDEN_PERSONALIZADA_PRECIOS_DEFAULT
+    }
+    precios['producto'] = precios['producto'].apply(producto_personalizado_canonico)
+    precios = precios[precios['producto'].isin(nombres_ref.keys())].copy()
+    precios['nombre'] = precios['producto'].map(nombres_ref).fillna(precios['nombre'])
+    precios = precios.drop_duplicates(subset=['producto'], keep='first')
+    return precios[ORDEN_PERSONALIZADA_PRECIO_COLUMNS]
+
+
+def precios_orden_personalizada_mapa():
+    precios = cargar_precios_orden_personalizada_df()
+    mapa = {
+        normalizar_producto_personalizado(row.get('producto')): float(row.get('precio', 0) or 0)
+        for _, row in precios.iterrows()
+    }
+    for alias, canonico in ORDEN_PERSONALIZADA_PRODUCTO_ALIAS.items():
+        if canonico in mapa:
+            mapa[alias] = mapa[canonico]
+    return mapa
+
+
+def cargar_ordenes_personalizadas_df():
+    asegurar_tablas_orden_personalizada()
+    ordenes = read_table_df('orden_personalizada')
+    if ordenes.empty:
+        ordenes = pd.DataFrame(columns=ORDEN_PERSONALIZADA_COLUMNS)
+    for col in ORDEN_PERSONALIZADA_COLUMNS:
+        if col not in ordenes.columns:
+            ordenes[col] = 0 if col in {'id_orden_personalizada', 'precio'} else 1 if col == 'cantidad' else ''
+    ordenes['precio'] = pd.to_numeric(ordenes['precio'], errors='coerce').fillna(0.0)
+    ordenes['cantidad'] = pd.to_numeric(ordenes['cantidad'], errors='coerce').fillna(1).astype(int)
+    return ordenes[ORDEN_PERSONALIZADA_COLUMNS]
+
+
+def actualizar_precio_orden_personalizada(producto, precio):
+    producto_key = producto_personalizado_canonico(producto)
+    if not producto_key:
+        return False
+    precios_ref = {
+        producto_personalizado_canonico(item['producto']): item['nombre']
+        for item in ORDEN_PERSONALIZADA_PRECIOS_DEFAULT
+    }
+    nombre = precios_ref.get(producto_key, producto_key.replace('_', ' ').title())
+    asegurar_tablas_orden_personalizada()
+    with engine.begin() as conn:
+        conn.execute(
+            sa.text("""
+                INSERT INTO orden_personalizada_precio (producto, nombre, precio)
+                VALUES (:producto, :nombre, :precio)
+                ON CONFLICT (producto)
+                DO UPDATE SET precio = EXCLUDED.precio, nombre = EXCLUDED.nombre
+            """),
+            {'producto': producto_key, 'nombre': nombre, 'precio': float(precio)}
+        )
+    return True
+
+
+def actualizar_estado_ordenes_personalizadas_carrito(carrito, estado):
+    if estado not in ORDEN_PERSONALIZADA_ESTADOS_PAGO:
+        return
+    ids_orden = []
+    for item in carrito or []:
+        if not item.get('personalizado'):
+            continue
+        id_orden = pd.to_numeric(item.get('id_orden_personalizada'), errors='coerce')
+        if pd.notna(id_orden):
+            ids_orden.append(int(id_orden))
+    if not ids_orden:
+        return
+    asegurar_tablas_orden_personalizada()
+    with engine.begin() as conn:
+        stmt = sa.text("""
+                UPDATE orden_personalizada
+                SET estado = :estado
+                WHERE id_orden_personalizada IN :ids_orden
+            """).bindparams(sa.bindparam("ids_orden", expanding=True))
+        conn.execute(
+            stmt,
+            {'estado': estado, 'ids_orden': ids_orden}
+        )
+
+
 def normalizar_imagen_url(valor):
     ruta = str(valor or '').strip().replace('\\', '/')
     if not ruta or ruta.lower() == 'nan':
         return ''
-    if ruta.startswith('img/Empresa/') or ruta.startswith('img/Pagina/') or ruta.startswith('img/catalogo/'):
+    ruta = re.sub(r'^https?://[^/]+', '', ruta, flags=re.IGNORECASE)
+    if ruta.startswith('/static/'):
+        ruta = ruta[len('/static/'):]
+    elif ruta.startswith('static/'):
+        ruta = ruta[len('static/'):]
+    if ruta.startswith('/img/'):
+        ruta = ruta[1:]
+    ruta = ruta.lstrip()
+    if (
+        ruta.startswith('img/Empresa/')
+        or ruta.startswith('img/Pagina/')
+        or ruta.startswith('img/catalogo/')
+        or ruta.startswith('img/prendas/')
+        or ruta.startswith('img/estampados/')
+        or ruta.startswith('img/personalizadas/')
+        or ruta.startswith('img/comprobantes/')
+    ):
         return ruta
     if ruta.startswith('img/'):
         return f"img/Empresa/{ruta.split('/')[-1]}"
@@ -440,10 +657,10 @@ def enviar_codigo_registro(email, codigo):
         minutos_expiracion=REGISTER_CODE_EXP_MINUTES
     )
     if envio_ok:
-        return True, 'Código enviado correctamente. Revisa tu correo.'
+        return True, 'CÃ³digo enviado correctamente. Revisa tu correo.'
     return False, (
-        'No fue posible enviar el código de verificación al correo indicado. '
-        'Verifica la configuración SMTP del sistema e intenta nuevamente.'
+        'No fue posible enviar el cÃ³digo de verificaciÃ³n al correo indicado. '
+        'Verifica la configuraciÃ³n SMTP del sistema e intenta nuevamente.'
     )
 
 def validar_archivo_imagen(archivo):
@@ -455,7 +672,7 @@ def validar_archivo_imagen(archivo):
     tamano = archivo.tell()
     archivo.seek(0)
     if tamano > MAX_IMAGE_SIZE_BYTES:
-        return "La imagen excede el tamaño máximo permitido (3MB)."
+        return "La imagen excede el tamaÃ±o mÃ¡ximo permitido (3MB)."
     return None
 
 
@@ -472,6 +689,43 @@ def guardar_comprobante_transferencia(archivo, id_pedido):
     ruta_absoluta = os.path.join(carpeta_destino, nombre_archivo)
     archivo.save(ruta_absoluta)
     return f"img/comprobantes/{nombre_archivo}".replace('\\', '/'), ''
+
+
+def guardar_preview_personalizado_desde_data_url(data_url, prefijo='personalizada'):
+    raw = str(data_url or '').strip()
+    if not raw:
+        return '', 'No se recibiÃ³ imagen de vista previa.'
+
+    match = re.match(r'^data:image/(png|jpe?g|webp);base64,(.+)$', raw, flags=re.IGNORECASE | re.DOTALL)
+    if not match:
+        return '', 'El formato de la vista previa no es vÃ¡lido.'
+
+    ext = match.group(1).lower()
+    if ext == 'jpeg':
+        ext = 'jpg'
+    payload_b64 = match.group(2)
+
+    try:
+        contenido = base64.b64decode(payload_b64, validate=True)
+    except Exception:
+        return '', 'No se pudo procesar la imagen de vista previa.'
+
+    if not contenido:
+        return '', 'La imagen de vista previa estÃ¡ vacÃ­a.'
+    if len(contenido) > MAX_IMAGE_SIZE_BYTES:
+        return '', 'La imagen de vista previa supera el tamaÃ±o permitido (3MB).'
+
+    carpeta_destino = os.path.join('static', 'img', 'personalizadas')
+    os.makedirs(carpeta_destino, exist_ok=True)
+
+    nombre_archivo = (
+        f"{prefijo}_{datetime.now().strftime('%Y%m%d_%H%M%S_%f')}_{secrets.token_hex(4)}.{ext}"
+    )
+    ruta_absoluta = os.path.join(carpeta_destino, nombre_archivo)
+    with open(ruta_absoluta, 'wb') as f:
+        f.write(contenido)
+
+    return f"/static/img/personalizadas/{nombre_archivo}".replace('\\', '/'), ''
 
 
 def ruta_imagen_producto_absoluta(ruta_relativa):
@@ -875,7 +1129,11 @@ def buscar_promocion_por_codigo(promos_df, codigo, fecha_ref=None):
     return None
 
 
-def registrar_actividad(accion):
+def registrar_actividad(accion, forzar=False):
+    rol_actual = str(session.get('rol', '') or '').strip().lower()
+    if not forzar and rol_actual != 'admin':
+        return False
+
     registros = cargar_registros_df()
     nuevo_id = int(pd.to_numeric(registros['id_registro'], errors='coerce').max() + 1) if not registros.empty else 1
     actor = session.get('usuario', 'admin')
@@ -887,6 +1145,7 @@ def registrar_actividad(accion):
     }
     registros = pd.concat([registros, pd.DataFrame([nuevo_registro])], ignore_index=True)
     guardar_registros_df(registros)
+    return True
 
 
 def obtener_nombre_sesion():
@@ -1248,6 +1507,17 @@ def normalizar_carrito_por_stock(carrito):
     cambios = []
 
     for item in carrito:
+        if item.get('personalizado'):
+            cantidad = max(1, int(pd.to_numeric(item.get('cantidad', 1), errors='coerce') or 1))
+            precio = float(pd.to_numeric(item.get('precio', 0), errors='coerce') or 0)
+            item_personalizado = item.copy()
+            item_personalizado['id_producto'] = 0
+            item_personalizado['cantidad'] = cantidad
+            item_personalizado['precio'] = precio
+            item_personalizado['subtotal'] = float(precio) * cantidad
+            carrito_limpio.append(item_personalizado)
+            continue
+
         id_producto = pd.to_numeric(item.get('id_producto'), errors='coerce')
         cantidad_item = pd.to_numeric(item.get('cantidad', 0), errors='coerce')
         if pd.isna(id_producto) or pd.isna(cantidad_item):
@@ -1537,7 +1807,7 @@ def home():
     productos = cargar_productos_activos_df()
     lista_productos = productos.to_dict(orient='records')
 
-    # Promoción vigente por producto para mostrar en catálogo
+    # PromociÃ³n vigente por producto para mostrar en catÃ¡logo
     promos = cargar_promociones_df()
     hoy = datetime.now().date()
     mejor_promo_por_producto = obtener_mejor_promocion_por_producto(productos, promos, hoy)
@@ -1603,10 +1873,10 @@ def login():
     usuario = candidatos.loc[idx_usuario]
 
     if not password_coincide(usuario.get('password_hash', ''), password):
-        flash('Contraseña incorrecta.', 'password_error')
+        flash('ContraseÃ±a incorrecta.', 'password_error')
         return render_template('Usuarios/Autenticacion/login_form.html'), 401
 
-    # Migracion transparente: si la contraseña antigua estaba en texto plano, se hashea al iniciar sesión.
+    # Migracion transparente: si la contraseÃ±a antigua estaba en texto plano, se hashea al iniciar sesiÃ³n.
     password_guardado = str(usuario.get('password_hash', '') or '')
     if not password_esta_hasheado(password_guardado):
         usuarios.at[idx_usuario, 'password_hash'] = crear_hash_password(password)
@@ -1614,14 +1884,14 @@ def login():
 
     estado = str(usuario.get('estado', 'activo')).strip().lower()
     if estado != 'activo':
-        return 'Tu usuario está inactivo. Contacta al administrador.'
+        return 'Tu usuario estÃ¡ inactivo. Contacta al administrador.'
 
     rol = usuario['rol']
     id_usuario = usuario['id_usuario']
     nombre = str(usuario.get('nombre', '')).strip()
     email_sesion = str(usuario.get('email', email)).strip() or email
 
-    session.permanent = True  # evita perder la sesión al navegar entre pestañas
+    session.permanent = True  # evita perder la sesiÃ³n al navegar entre pestaÃ±as
     session['usuario'] = email_sesion
     session['id_usuario'] = int(id_usuario)
     session['rol'] = rol
@@ -1632,7 +1902,7 @@ def login():
     else:
         session.pop('carrito', None)
 
-    registrar_actividad('Inicio de sesión exitoso')
+    registrar_actividad('Inicio de sesiÃ³n exitoso')
 
     if rol == 'admin':
         return redirect(url_for('admin_dashboard'))
@@ -1649,7 +1919,7 @@ def forgot_password():
 
     email = normalizar_email(request.form.get('email', ''))
     if not email_es_valido(email):
-        flash('Debes ingresar un correo electrónico válido.', 'danger')
+        flash('Debes ingresar un correo electrÃ³nico vÃ¡lido.', 'danger')
         return render_template(
             'Usuarios/Autenticacion/forgot_password.html',
             reset_minutes=PASSWORD_RESET_EXP_MINUTES
@@ -1676,14 +1946,14 @@ def forgot_password():
         )
 
         if envio_ok:
-            registrar_actividad(f'Enlace de recuperación enviado a {email}')
+            registrar_actividad(f'Enlace de recuperaciÃ³n enviado a {email}')
         else:
             limpiar_token_recuperacion(usuarios, idx_usuario)
             guardar_usuarios_df(usuarios)
-            print(f'No fue posible enviar el correo de recuperación para: {email}')
+            print(f'No fue posible enviar el correo de recuperaciÃ³n para: {email}')
 
     flash(
-        'Si el correo existe en el sistema, te enviamos un enlace para restablecer tu contraseña.',
+        'Si el correo existe en el sistema, te enviamos un enlace para restablecer tu contraseÃ±a.',
         'info'
     )
     return redirect(url_for('forgot_password'))
@@ -1696,14 +1966,14 @@ def reset_password(token):
 
     encontrado = obtener_usuario_por_token_recuperacion(usuarios, token)
     if not encontrado:
-        flash('El enlace de recuperación no es válido o ya fue utilizado.', 'danger')
+        flash('El enlace de recuperaciÃ³n no es vÃ¡lido o ya fue utilizado.', 'danger')
         return redirect(url_for('forgot_password'))
 
     idx_usuario, usuario = encontrado
     if token_recuperacion_expirado(usuario):
         limpiar_token_recuperacion(usuarios, idx_usuario)
         guardar_usuarios_df(usuarios)
-        flash('El enlace de recuperación expiró. Solicita uno nuevo.', 'warning')
+        flash('El enlace de recuperaciÃ³n expirÃ³. Solicita uno nuevo.', 'warning')
         return redirect(url_for('forgot_password'))
 
     if request.method == 'GET':
@@ -1720,12 +1990,12 @@ def reset_password(token):
         return render_template('Usuarios/Autenticacion/reset_password.html', token=token), 400
 
     if new_password != confirm_password:
-        flash('Las contraseñas no coinciden.', 'danger')
+        flash('Las contraseÃ±as no coinciden.', 'danger')
         return render_template('Usuarios/Autenticacion/reset_password.html', token=token), 400
 
     if not password_cumple_estandares(new_password):
         flash(
-            'La contraseña debe tener mínimo 8 caracteres, mayúscula, minúscula, número y carácter especial.',
+            'La contraseÃ±a debe tener mÃ­nimo 8 caracteres, mayÃºscula, minÃºscula, nÃºmero y carÃ¡cter especial.',
             'danger'
         )
         return render_template('Usuarios/Autenticacion/reset_password.html', token=token), 400
@@ -1735,8 +2005,8 @@ def reset_password(token):
     guardar_usuarios_df(usuarios)
 
     email_usuario = str(usuario.get('email', '')).strip()
-    registrar_actividad(f'Contraseña restablecida por recuperación para {email_usuario}')
-    flash('Contraseña actualizada correctamente. Ya puedes iniciar sesión.', 'success')
+    registrar_actividad(f'ContraseÃ±a restablecida por recuperaciÃ³n para {email_usuario}')
+    flash('ContraseÃ±a actualizada correctamente. Ya puedes iniciar sesiÃ³n.', 'success')
     return redirect(url_for('login'))
 
 
@@ -1761,16 +2031,16 @@ def registro():
             return _render_registro(nombre, email), 400
 
         if not email_es_valido(email):
-            flash('Debes ingresar un correo electrónico válido.', 'danger')
+            flash('Debes ingresar un correo electrÃ³nico vÃ¡lido.', 'danger')
             return _render_registro(nombre, email), 400
 
         if password != confirm_password:
-            flash('Las contraseñas no coinciden.', 'danger')
+            flash('Las contraseÃ±as no coinciden.', 'danger')
             return _render_registro(nombre, email), 400
 
         if not password_cumple_estandares(password):
             flash(
-                'La contraseña debe tener mínimo 8 caracteres, mayúscula, minúscula, número y carácter especial.',
+                'La contraseÃ±a debe tener mÃ­nimo 8 caracteres, mayÃºscula, minÃºscula, nÃºmero y carÃ¡cter especial.',
                 'danger'
             )
             return _render_registro(nombre, email), 400
@@ -1780,8 +2050,8 @@ def registro():
 
         if email in usuarios['email'].values:
             flash(
-                'El correo electrónico ya está registrado con otra cuenta. '
-                'Por favor, utiliza otro correo electrónico válido.',
+                'El correo electrÃ³nico ya estÃ¡ registrado con otra cuenta. '
+                'Por favor, utiliza otro correo electrÃ³nico vÃ¡lido.',
                 'warning'
             )
             return _render_registro(nombre, email), 409
@@ -1799,7 +2069,7 @@ def registro():
             return _render_registro(nombre, email), 500
 
         flash(mensaje_envio, 'success')
-        flash('Ingresa el código de verificación para activar tu cuenta.', 'info')
+        flash('Ingresa el cÃ³digo de verificaciÃ³n para activar tu cuenta.', 'info')
         return redirect(url_for('registro_verificacion'))
 
     return _render_registro()
@@ -1812,10 +2082,10 @@ def registro_check_email():
         email = normalizar_email(payload.get('email', ''))
 
         if not email:
-            return jsonify({'success': False, 'exists': False, 'message': 'Debes ingresar un correo electrónico.'}), 400
+            return jsonify({'success': False, 'exists': False, 'message': 'Debes ingresar un correo electrÃ³nico.'}), 400
 
         if not email_es_valido(email):
-            return jsonify({'success': False, 'exists': False, 'message': 'El correo electrónico no es válido.'}), 400
+            return jsonify({'success': False, 'exists': False, 'message': 'El correo electrÃ³nico no es vÃ¡lido.'}), 400
 
         usuarios = cargar_usuarios_df()
         usuarios['email'] = usuarios['email'].astype(str).str.strip().str.lower()
@@ -1826,15 +2096,15 @@ def registro_check_email():
                 'success': True,
                 'exists': True,
                 'message': (
-                    'El correo electrónico ya está registrado con otra cuenta. '
-                    'Por favor, utiliza otro correo electrónico válido.'
+                    'El correo electrÃ³nico ya estÃ¡ registrado con otra cuenta. '
+                    'Por favor, utiliza otro correo electrÃ³nico vÃ¡lido.'
                 )
             })
 
         return jsonify({
             'success': True,
             'exists': False,
-            'message': 'Correo electrónico disponible.'
+            'message': 'Correo electrÃ³nico disponible.'
         })
     except Exception as e:
         print(f'Error validando correo de registro: {str(e)}')
@@ -1848,10 +2118,10 @@ def registro_send_code():
         email = normalizar_email(payload.get('email', ''))
 
         if not email:
-            return jsonify({'success': False, 'message': 'Debes ingresar un correo electrónico.'}), 400
+            return jsonify({'success': False, 'message': 'Debes ingresar un correo electrÃ³nico.'}), 400
 
         if not email_es_valido(email):
-            return jsonify({'success': False, 'message': 'El correo electrónico no es válido.'}), 400
+            return jsonify({'success': False, 'message': 'El correo electrÃ³nico no es vÃ¡lido.'}), 400
 
         usuarios = cargar_usuarios_df()
         usuarios['email'] = usuarios['email'].astype(str).str.strip().str.lower()
@@ -1859,8 +2129,8 @@ def registro_send_code():
             return jsonify({
                 'success': False,
                 'message': (
-                    'El correo electrónico ya está registrado con otra cuenta. '
-                    'Por favor, utiliza otro correo electrónico válido.'
+                    'El correo electrÃ³nico ya estÃ¡ registrado con otra cuenta. '
+                    'Por favor, utiliza otro correo electrÃ³nico vÃ¡lido.'
                 )
             }), 409
 
@@ -1883,8 +2153,8 @@ def registro_send_code():
             'message': mensaje_envio
         })
     except Exception as e:
-        print(f'Error al enviar código de registro: {str(e)}')
-        return jsonify({'success': False, 'message': 'Error interno enviando el código.'}), 500
+        print(f'Error al enviar cÃ³digo de registro: {str(e)}')
+        return jsonify({'success': False, 'message': 'Error interno enviando el cÃ³digo.'}), 500
 
 
 @app.route('/registro/verificacion', methods=['GET', 'POST'])
@@ -1904,7 +2174,7 @@ def registro_verificacion():
     registro_pendiente = obtener_registro_pendiente(email)
     if not registro_pendiente:
         session.pop('registro_pendiente_email', None)
-        flash('No hay un registro pendiente o el código ya expiró. Registra tus datos nuevamente.', 'warning')
+        flash('No hay un registro pendiente o el cÃ³digo ya expirÃ³. Registra tus datos nuevamente.', 'warning')
         return redirect(url_for('registro'))
 
     if request.method == 'POST':
@@ -1924,17 +2194,17 @@ def registro_verificacion():
 
         codigo_ingresado = request.form.get('verification_code', '').strip()
         if not codigo_ingresado:
-            flash('Debes ingresar el código de verificación.', 'danger')
+            flash('Debes ingresar el cÃ³digo de verificaciÃ³n.', 'danger')
             return _render_verificacion(email), 400
 
         registro_pendiente = obtener_registro_pendiente(email)
         if not registro_pendiente:
             session.pop('registro_pendiente_email', None)
-            flash('El código expiró. Debes iniciar el registro nuevamente.', 'warning')
+            flash('El cÃ³digo expirÃ³. Debes iniciar el registro nuevamente.', 'warning')
             return redirect(url_for('registro'))
 
         if str(codigo_ingresado) != str(registro_pendiente.get('code', '')).strip():
-            flash('Código de verificación incorrecto.', 'danger')
+            flash('CÃ³digo de verificaciÃ³n incorrecto.', 'danger')
             return _render_verificacion(email), 400
 
         usuarios = cargar_usuarios_df()
@@ -1943,8 +2213,8 @@ def registro_verificacion():
             PENDING_REGISTRATIONS.pop(email, None)
             session.pop('registro_pendiente_email', None)
             flash(
-                'El correo electrónico ya está registrado con otra cuenta. '
-                'Por favor, utiliza otro correo electrónico válido.',
+                'El correo electrÃ³nico ya estÃ¡ registrado con otra cuenta. '
+                'Por favor, utiliza otro correo electrÃ³nico vÃ¡lido.',
                 'warning'
             )
             return redirect(url_for('registro'))
@@ -2007,7 +2277,7 @@ def admin_dashboard():
         productos_agotados = obtener_productos_agotados()
         admin_nombre = obtener_nombre_sesion()
 
-        # Métricas de usuarios y ventas últimos 30 días
+        # MÃ©tricas de usuarios y ventas Ãºltimos 30 dÃ­as
         hoy = datetime.now()
         hace_30 = hoy - timedelta(days=30)
 
@@ -2082,7 +2352,7 @@ def admin_actualizar_destacados():
         .tolist()
     )
 
-    # Obtener listas por categoría
+    # Obtener listas por categorÃ­a
     ids_ejercito_raw = request.form.getlist('destacados_ejercito')
     ids_policia_raw = request.form.getlist('destacados_policia')
     ids_armada_raw = request.form.getlist('destacados_armada')
@@ -2106,7 +2376,7 @@ def admin_actualizar_destacados():
     productos['destacado_dashboard'] = False
     productos.loc[productos['eliminado'] == True, 'destacado_dashboard'] = False
 
-    # Asignar destacados por categoría
+    # Asignar destacados por categorÃ­a
     productos.loc[productos['id_producto'].isin(ids_ejercito), 'destacado_dashboard'] = True
     productos.loc[productos['id_producto'].isin(ids_policia), 'destacado_dashboard'] = True
     productos.loc[productos['id_producto'].isin(ids_armada), 'destacado_dashboard'] = True
@@ -2115,9 +2385,9 @@ def admin_actualizar_destacados():
 
     total_destacados = len(ids_ejercito) + len(ids_policia) + len(ids_armada)
     registrar_actividad(
-        "Administrador actualizó prendas destacadas por categoría:\n"
-        f"- Ejército: {len(ids_ejercito)} ({', '.join(str(x) for x in ids_ejercito) if ids_ejercito else 'ninguna'})\n"
-        f"- Policía: {len(ids_policia)} ({', '.join(str(x) for x in ids_policia) if ids_policia else 'ninguna'})\n"
+        "Administrador actualizÃ³ prendas destacadas por categorÃ­a:\n"
+        f"- EjÃ©rcito: {len(ids_ejercito)} ({', '.join(str(x) for x in ids_ejercito) if ids_ejercito else 'ninguna'})\n"
+        f"- PolicÃ­a: {len(ids_policia)} ({', '.join(str(x) for x in ids_policia) if ids_policia else 'ninguna'})\n"
         f"- Armada: {len(ids_armada)} ({', '.join(str(x) for x in ids_armada) if ids_armada else 'ninguna'})\n"
         f"- Total destacadas: {total_destacados}"
     )
@@ -2204,7 +2474,7 @@ def agregar_producto():
         fuerza = request.form.get('fuerza', '').strip()
         intendencia = request.form.get('intendencia', '').strip()
         if fuerza not in FUERZAS_OPCIONES or intendencia not in INTENDENCIAS_OPCIONES:
-            flash('Selecciona una fuerza e intendencia válidas.', 'danger')
+            flash('Selecciona una fuerza e intendencia vÃ¡lidas.', 'danger')
             return redirect(url_for('admin_productos'))
 
         imagenes = [
@@ -2217,7 +2487,7 @@ def agregar_producto():
                 imagenes = [imagen_unica]
 
         if len(imagenes) > MAX_IMAGES_PER_PRODUCT:
-            flash(f'Solo puedes subir hasta {MAX_IMAGES_PER_PRODUCT} imágenes por producto.', 'danger')
+            flash(f'Solo puedes subir hasta {MAX_IMAGES_PER_PRODUCT} imÃ¡genes por producto.', 'danger')
             return redirect(url_for('admin_productos'))
 
         for imagen in imagenes:
@@ -2251,7 +2521,7 @@ def agregar_producto():
             f"- stock: {int(request.form['stock'])}\n"
             f"- fuerza: {fuerza}\n"
             f"- intendencia: {intendencia}\n"
-            f"- imágenes: {len(galeria_guardada)}"
+            f"- imÃ¡genes: {len(galeria_guardada)}"
         )
 
         return redirect(url_for('admin_productos'))
@@ -2299,11 +2569,11 @@ def subir_imagen(id_producto):
             imagenes = [imagen_unica]
 
     if not imagenes:
-        flash("No se seleccionó ninguna imagen.")
+        flash("No se seleccionÃ³ ninguna imagen.")
         return redirect(url_for('admin_productos'))
 
     if len(imagenes) > MAX_IMAGES_PER_PRODUCT:
-        flash(f'Solo puedes subir hasta {MAX_IMAGES_PER_PRODUCT} imágenes por producto.', 'danger')
+        flash(f'Solo puedes subir hasta {MAX_IMAGES_PER_PRODUCT} imÃ¡genes por producto.', 'danger')
         return redirect(url_for('admin_productos'))
 
     for imagen in imagenes:
@@ -2319,7 +2589,7 @@ def subir_imagen(id_producto):
     if not idx.empty:
         productos.at[idx[0], 'imagen_url'] = galeria_guardada[0] if galeria_guardada else ''
         guardar_productos_df(productos)
-        flash(f"Galería reemplazada ({len(galeria_guardada)} imágenes).", 'success')
+        flash(f"GalerÃ­a reemplazada ({len(galeria_guardada)} imÃ¡genes).", 'success')
     else:
         flash("Producto no encontrado.", 'danger')
 
@@ -2342,7 +2612,7 @@ def agregar_imagenes_producto(id_producto):
         ]
 
     if not imagenes:
-        flash("No se seleccionaron imágenes para agregar.", 'warning')
+        flash("No se seleccionaron imÃ¡genes para agregar.", 'warning')
         return redirect(url_for('admin_productos'))
 
     for imagen in imagenes:
@@ -2363,7 +2633,7 @@ def agregar_imagenes_producto(id_producto):
         disponibles = max(0, MAX_IMAGES_PER_PRODUCT - len(galeria_actual))
         flash(
             f"Este producto ya tiene {len(galeria_actual)} imagen(es). "
-            f"Solo puedes agregar {disponibles} más (máximo {MAX_IMAGES_PER_PRODUCT}).",
+            f"Solo puedes agregar {disponibles} mÃ¡s (mÃ¡ximo {MAX_IMAGES_PER_PRODUCT}).",
             'danger'
         )
         return redirect(url_for('admin_productos'))
@@ -2373,7 +2643,7 @@ def agregar_imagenes_producto(id_producto):
     productos.at[idx[0], 'imagen_url'] = galeria_actualizada[0] if galeria_actualizada else ''
     guardar_productos_df(productos)
 
-    flash(f"Se agregaron {len(imagenes)} imágenes. Total: {len(galeria_actualizada)}.", 'success')
+    flash(f"Se agregaron {len(imagenes)} imÃ¡genes. Total: {len(galeria_actualizada)}.", 'success')
     return redirect(url_for('admin_productos'))
 
 
@@ -2609,7 +2879,7 @@ def admin_guardar_usuario():
         return redirect(url_for('admin_usuarios', **retorno_kwargs))
 
     if telefono and len(telefono) != 10:
-        flash('El telefono debe contener solo numeros y tener exactamente 10 digitos.', 'danger')
+        flash('El teléfono debe contener solo números y tener exactamente 10 dígitos.', 'danger')
         return redirect(url_for('admin_usuarios', **retorno_kwargs))
 
     usuarios = cargar_usuarios_df()
@@ -2621,16 +2891,16 @@ def admin_guardar_usuario():
         try:
             edit_id = int(float(id_usuario_raw))
         except ValueError:
-            flash('ID de usuario inválido.', 'danger')
+            flash('ID de usuario invÃ¡lido.', 'danger')
             return redirect(url_for('admin_usuarios', **retorno_kwargs))
 
     if edit_id is None and not password:
-        flash('La contraseña es obligatoria para crear usuarios.', 'danger')
+        flash('La contraseÃ±a es obligatoria para crear usuarios.', 'danger')
         return redirect(url_for('admin_usuarios', **retorno_kwargs))
 
     if password and not password_cumple_estandares(password):
         flash(
-            'La contraseña debe tener minimo 8 caracteres, mayuscula, minuscula, numero y caracter especial.',
+            'La contraseña debe tener mínimo 8 caracteres, mayúscula, minúscula, número y carácter especial.',
             'danger'
         )
         return redirect(url_for('admin_usuarios', **retorno_kwargs))
@@ -2639,13 +2909,13 @@ def admin_guardar_usuario():
     if edit_id is not None:
         existe_email = existe_email[existe_email['id_usuario'] != edit_id]
     if not existe_email.empty:
-        flash('Ese email ya está registrado por otro usuario.', 'danger')
+        flash('Ese email ya estÃ¡ registrado por otro usuario.', 'danger')
         return redirect(url_for('admin_usuarios', **retorno_kwargs))
 
     if edit_id is not None:
         idx = usuarios[usuarios['id_usuario'] == edit_id].index
         if idx.empty:
-            flash('Usuario no encontrado para edición.', 'danger')
+            flash('Usuario no encontrado para ediciÃ³n.', 'danger')
             return redirect(url_for('admin_usuarios', **retorno_kwargs))
 
         usuarios.at[idx[0], 'nombre'] = nombre
@@ -2794,11 +3064,75 @@ def admin_registros_export_excel():
     )
 
 
-@app.route('/admin/ajustes')
+@app.route('/admin/ajustes', methods=['GET', 'POST'])
 def admin_ajustes():
     if session.get('rol') != 'admin':
         return "Acceso denegado"
-    return render_template('Administrador/Ajustes/admin_ajustes_dashboard.html')
+
+    if request.method == 'POST':
+        producto = request.form.get('producto', '').strip()
+        try:
+            precio = float(request.form.get('precio', 0))
+        except ValueError:
+            precio = 0
+        if precio < 0:
+            precio = 0
+        if actualizar_precio_orden_personalizada(producto, precio):
+            flash('Precio de prenda personalizada actualizado correctamente.', 'success')
+            registrar_actividad(f"ActualizÃ³ precio personalizado '{producto}' a {formatear_cop(precio)}")
+        else:
+            flash('No fue posible actualizar el precio seleccionado.', 'warning')
+        return redirect(url_for('admin_ajustes'))
+
+    ordenes_df = cargar_ordenes_personalizadas_df()
+    if not ordenes_df.empty and 'estado' in ordenes_df.columns:
+        ordenes_df = ordenes_df[
+            ~ordenes_df['estado'].astype(str).str.strip().str.lower().eq('pendiente_pago')
+        ].copy()
+    if not ordenes_df.empty:
+        ordenes_df = ordenes_df.sort_values(by='id_orden_personalizada', ascending=False, na_position='last')
+    precios_df = cargar_precios_orden_personalizada_df().sort_values(by='nombre', ascending=True)
+    nombres_producto = {row['producto']: row['nombre'] for _, row in precios_df.iterrows()}
+    if not ordenes_df.empty:
+        ordenes_df = ordenes_df.copy()
+        ordenes_df['producto_nombre'] = ordenes_df['producto'].apply(
+            lambda valor: nombres_producto.get(
+                producto_personalizado_canonico(valor),
+                str(valor or '').replace('_', ' ').title()
+            )
+        )
+    pendientes = int(ordenes_df['estado'].astype(str).str.strip().str.lower().eq('pendiente').sum()) if not ordenes_df.empty else 0
+    return render_template(
+        'Administrador/Prendas personalizadas/admin_prendas_personalizadas.html',
+        ordenes_personalizadas=ordenes_df.to_dict('records'),
+        precios_personalizados=precios_df.to_dict('records'),
+        total_personalizadas=len(ordenes_df),
+        pendientes_personalizadas=pendientes
+    )
+
+
+@app.route('/admin/ajustes/orden-personalizada/<int:id_orden>/estado', methods=['POST'])
+def admin_orden_personalizada_estado(id_orden):
+    if session.get('rol') != 'admin':
+        return "Acceso denegado"
+    estado = request.form.get('estado', 'pendiente').strip().lower()
+    estados_validos = set(ORDEN_PERSONALIZADA_ESTADOS_PAGO.keys())
+    if estado not in estados_validos:
+        flash('Estado no vÃ¡lido para la solicitud personalizada.', 'warning')
+        return redirect(url_for('admin_ajustes'))
+    asegurar_tablas_orden_personalizada()
+    with engine.begin() as conn:
+        conn.execute(
+            sa.text("""
+                UPDATE orden_personalizada
+                SET estado = :estado
+                WHERE id_orden_personalizada = :id_orden
+            """),
+            {'estado': estado, 'id_orden': int(id_orden)}
+        )
+    registrar_actividad(f"ActualizÃ³ solicitud personalizada #{id_orden} a {estado}")
+    flash('Estado de la solicitud actualizado.', 'success')
+    return redirect(url_for('admin_ajustes'))
 
 
 @app.route('/admin/informes')
@@ -3527,6 +3861,67 @@ def _flash_resultado_notificacion_pedido(resultado, id_pedido):
         flash(f'El pedido #{id_pedido} fue actualizado, pero no se encontro un correo valido para notificar al cliente.', 'warning')
 
 
+def _obtener_items_personalizados_carrito(carrito):
+    items_personalizados = []
+    for item in carrito if isinstance(carrito, list) else []:
+        if not isinstance(item, dict):
+            continue
+        tiene_flag_personalizado = bool(item.get('personalizado'))
+        id_orden_personalizada = pd.to_numeric(item.get('id_orden_personalizada'), errors='coerce')
+        if not tiene_flag_personalizado and pd.isna(id_orden_personalizada):
+            continue
+        items_personalizados.append(item)
+    return items_personalizados
+
+
+def _notificar_pago_personalizado_admin(
+    id_pedido,
+    carrito,
+    total_final,
+    cliente_telefono,
+    cliente_direccion,
+    metodo_pago,
+    promo_aplicada=None,
+    descuento_promo=0,
+):
+    destinatario = normalizar_email(app.config.get('TRANSFER_SUPPORT_EMAIL', '')) or normalizar_email(app.config.get('MAIL_DEFAULT_SENDER', ''))
+    if not email_es_valido(destinatario):
+        return False
+
+    items_personalizados = _obtener_items_personalizados_carrito(carrito)
+    if not items_personalizados:
+        return False
+
+    productos = []
+    for item in items_personalizados:
+        productos.append({
+            'nombre': str(item.get('nombre', '') or 'Prenda personalizada').strip(),
+            'talla': str(item.get('talla', '') or '').strip(),
+            'cantidad': int(pd.to_numeric(item.get('cantidad', 0), errors='coerce') or 0),
+            'subtotal': formatear_cop(item.get('subtotal', 0)),
+            'id_orden_personalizada': int(pd.to_numeric(item.get('id_orden_personalizada'), errors='coerce') or 0),
+        })
+
+    cliente = {
+        'nombre': str(session.get('nombre', '') or '').strip(),
+        'email': normalizar_email(session.get('usuario', '')),
+        'telefono': str(cliente_telefono or '').strip(),
+        'direccion': str(cliente_direccion or '').strip(),
+    }
+
+    return enviar_notificacion_pago_personalizado_admin(
+        destinatario=destinatario,
+        id_pedido=id_pedido,
+        cliente=cliente,
+        productos=productos,
+        total=formatear_cop(total_final),
+        metodo_pago=str(metodo_pago or '').strip(),
+        fecha=datetime.now().strftime("%d/%m/%Y %H:%M"),
+        promo_codigo=promo_aplicada.get('codigo', '') if promo_aplicada else '',
+        descuento=formatear_cop(descuento_promo) if promo_aplicada else '',
+    )
+
+
 def _notificar_transferencia_admin(
     id_pedido,
     carrito,
@@ -3650,12 +4045,12 @@ def admin_pedidos_estado(id_pedido):
     origen = str(request.form.get('origen', '')).strip().lower()
     estados_validos = {clave for clave, _ in PEDIDO_STATUS_FLOW} | {'cancelado'}
     if estado_nuevo not in estados_validos:
-        flash('Estado de pedido inválido.', 'danger')
+        flash('Estado de pedido invÃ¡lido.', 'danger')
         return _redirigir_admin_pedidos_por_origen(origen, filtros, pago_filtros, ajustes_page, curso_page)
 
     pedidos = cargar_pedidos_df()
     if 'id_pedido' not in pedidos.columns:
-        flash('Estructura de pedidos inválida.', 'danger')
+        flash('Estructura de pedidos invÃ¡lida.', 'danger')
         return _redirigir_admin_pedidos_por_origen(origen, filtros, pago_filtros, ajustes_page, curso_page)
     if 'estado' not in pedidos.columns:
         pedidos['estado'] = 'confirmado'
@@ -3785,7 +4180,7 @@ def admin_pedidos_pago(id_pedido):
 
     if estado_pago_anterior != estado_pago_nuevo or estado_pedido_anterior != estado_pedido_nuevo:
         registrar_actividad(
-            f"Actualizo revision de pago para pedido #{id_pedido}: "
+            f"Actualizó revisión de pago para pedido #{id_pedido}: "
             f"{estado_pago_anterior or 'sin_estado'} -> {estado_pago_nuevo}"
         )
         if estado_pago_nuevo == 'aprobado':
@@ -3793,7 +4188,7 @@ def admin_pedidos_pago(id_pedido):
         elif estado_pago_nuevo == 'rechazado':
             flash(f'Transferencia del pedido #{id_pedido} rechazada. El pedido quedo cancelado.', 'warning')
         else:
-            flash(f'El pago del pedido #{id_pedido} quedo en revision.', 'info')
+            flash(f'El pago del pedido #{id_pedido} quedó en revisión.', 'info')
         resultado_notificacion = _notificar_actualizacion_pedido_cliente(
             id_pedido=id_pedido,
             id_usuario=id_usuario_pedido,
@@ -3819,11 +4214,11 @@ def _validar_cliente_pos(cliente_nombre, cliente_correo, cliente_documento, clie
     if any(not (caracter.isalpha() or caracter.isspace()) for caracter in cliente_nombre):
         return ('El nombre del cliente solo puede contener letras y espacios.', 'warning')
     if not re.fullmatch(r'[^@\s]+@[^@\s]+\.[^@\s]+', cliente_correo):
-        return ('Debes ingresar un correo electrónico válido.', 'warning')
+        return ('Debes ingresar un correo electrÃ³nico vÃ¡lido.', 'warning')
     if not cliente_documento.isdigit():
-        return ('La cédula solo puede contener números.', 'warning')
+        return ('La cÃ©dula solo puede contener nÃºmeros.', 'warning')
     if not cliente_telefono.isdigit() or len(cliente_telefono) > 10:
-        return ('El teléfono solo puede contener números y máximo 10 dígitos.', 'warning')
+        return ('El telÃ©fono solo puede contener nÃºmeros y mÃ¡ximo 10 dÃ­gitos.', 'warning')
     return None
 
 def _normalizar_metodo_pago_pos(metodo_pago):
@@ -3857,7 +4252,7 @@ def _validar_y_preparar_carrito_pos(items, productos, mejor_promo_por_producto):
             id_producto = int(item.get('id_producto', 0))
             cantidad = int(item.get('cantidad', 0))
         except (TypeError, ValueError):
-            return None, ('Hay productos inválidos en el carrito POS.', 'danger')
+            return None, ('Hay productos invÃ¡lidos en el carrito POS.', 'danger')
 
         if cantidad <= 0:
             return None, ('La cantidad debe ser mayor a cero.', 'danger')
@@ -3868,7 +4263,7 @@ def _validar_y_preparar_carrito_pos(items, productos, mejor_promo_por_producto):
 
         row_idx = idx[0]
         if bool(productos.at[row_idx, 'eliminado']):
-            return None, (f'El producto ID {id_producto} está eliminado.', 'danger')
+            return None, (f'El producto ID {id_producto} estÃ¡ eliminado.', 'danger')
 
         requiere_talla = producto_requiere_talla(productos.at[row_idx, 'intendencia'])
         talla = str(item.get('talla', '')).strip().upper()
@@ -3984,9 +4379,9 @@ def _construir_items_detalle_desde_carrito(carrito):
     items_detalle = []
     for item in carrito:
         items_detalle.append({
-            'id_producto': item['id_producto'],
-            'cantidad': item['cantidad'],
-            'subtotal': item['subtotal'],
+            'id_producto': int(pd.to_numeric(item.get('id_producto', 0), errors='coerce') or 0),
+            'cantidad': int(pd.to_numeric(item.get('cantidad', 1), errors='coerce') or 1),
+            'subtotal': float(pd.to_numeric(item.get('subtotal', 0), errors='coerce') or 0),
             'talla': str(item.get('talla', '')).strip()
         })
     return items_detalle
@@ -4125,7 +4520,7 @@ def admin_pos_checkout():
 
     productos = cargar_productos_df()
     if productos.empty:
-        flash('No existe el catálogo de productos.', 'danger')
+        flash('No existe el catÃ¡logo de productos.', 'danger')
         return redirect(url_for('admin_pos'))
 
     promos = cargar_promociones_df()
@@ -4167,7 +4562,7 @@ def admin_pos_checkout():
         f"- cliente: {cliente_nombre}\n"
         f"- correo: {cliente_correo}\n"
         f"- documento: {cliente_documento}\n"
-        f"- teléfono: {cliente_telefono}"
+        f"- telÃ©fono: {cliente_telefono}"
     )
     if total_descuento > 0:
         flash(
@@ -4220,7 +4615,7 @@ def editar_producto(id_producto):
         nueva_fuerza = request.form.get('fuerza', anterior['fuerza']).strip()
         nueva_intendencia = request.form.get('intendencia', anterior['intendencia']).strip()
         if nueva_fuerza not in FUERZAS_OPCIONES or nueva_intendencia not in INTENDENCIAS_OPCIONES:
-            flash('Selecciona una fuerza e intendencia válidas.', 'danger')
+            flash('Selecciona una fuerza e intendencia vÃ¡lidas.', 'danger')
             return redirect(url_for('admin_productos'))
 
         nueva_categoria = anterior['id_categoria']
@@ -4252,7 +4647,7 @@ def editar_producto(id_producto):
         if anterior['nombre'] != nuevo_nombre:
             cambios.append(f"- nombre: '{anterior['nombre']}' -> '{nuevo_nombre}'")
         if anterior['descripcion'] != nueva_descripcion:
-            cambios.append(f"- descripción: '{anterior['descripcion']}' -> '{nueva_descripcion}'")
+            cambios.append(f"- descripciÃ³n: '{anterior['descripcion']}' -> '{nueva_descripcion}'")
         if round(float(anterior['precio']), 2) != round(float(nuevo_precio), 2):
             cambios.append(f"- precio: {formatear_cop(anterior['precio'])} -> {formatear_cop(nuevo_precio)}")
         if int(anterior['stock']) != int(nuevo_stock):
@@ -4272,7 +4667,7 @@ def editar_producto(id_producto):
 
         return redirect(url_for('admin_productos'))
 
-    # Render formulario de edición (plantilla propia en Gestion productos)
+    # Render formulario de ediciÃ³n (plantilla propia en Gestion productos)
     return render_template(
         'Administrador/Gestion productos/editar_producto.html',
         producto=producto.iloc[0],
@@ -4285,13 +4680,13 @@ def editar_producto(id_producto):
 @app.route('/user')
 def user_dashboard():
     if session.get('rol') != 'normal':
-        flash('Debes iniciar sesión como usuario para acceder al catálogo.', 'warning')
+        flash('Debes iniciar sesiÃ³n como usuario para acceder al catÃ¡logo.', 'warning')
         return redirect(url_for('login'))
 
     productos = cargar_productos_activos_df()
     lista_productos = productos.to_dict(orient='records')
 
-    # Promoción vigente por producto para mostrar en catálogo
+    # PromociÃ³n vigente por producto para mostrar en catÃ¡logo
     promos = cargar_promociones_df()
     hoy = datetime.now().date()
     mejor_promo_por_producto = obtener_mejor_promocion_por_producto(productos, promos, hoy)
@@ -4317,7 +4712,7 @@ def user_dashboard():
             producto['promo_nombre'] = ''
             producto['promo_etiqueta'] = ''
         
-        # Galería para destacados (hasta 5 imágenes: 1 principal + 4 miniaturas; rellena con la principal si faltan)
+        # GalerÃ­a para destacados (hasta 5 imÃ¡genes: 1 principal + 4 miniaturas; rellena con la principal si faltan)
         galeria = obtener_galeria_producto(
             int(producto.get('id_producto', 0)),
             producto.get('imagen_url', '')
@@ -4328,7 +4723,7 @@ def user_dashboard():
             galeria.append(galeria[0])
         producto['galeria_dashboard'] = galeria[:5]
     
-    # Mostrar en los carruseles todas las prendas marcadas como destacadas en panel admin, filtradas por categoría.
+    # Mostrar en los carruseles todas las prendas marcadas como destacadas en panel admin, filtradas por categorÃ­a.
     productos_destacados_ejercito = [p for p in lista_productos if bool(p.get('destacado_dashboard', False)) and p.get('fuerza') == 'Ejercito']
     productos_destacados_policia = [p for p in lista_productos if bool(p.get('destacado_dashboard', False)) and p.get('fuerza') == 'Policia']
     productos_destacados_armada = [p for p in lista_productos if bool(p.get('destacado_dashboard', False)) and p.get('fuerza') == 'Armada']
@@ -4389,18 +4784,18 @@ def add_to_cart(id_producto):
         cantidad = 1
 
     if cantidad <= 0:
-        flash('Cantidad inválida.', 'warning')
+        flash('Cantidad invÃ¡lida.', 'warning')
         return redirect(url_for('user_dashboard'))
 
     producto_df = productos[productos['id_producto'] == id_producto]
     if producto_df.empty:
-        flash('El producto no existe o ya no está disponible.', 'warning')
+        flash('El producto no existe o ya no estÃ¡ disponible.', 'warning')
         return redirect(url_for('user_dashboard'))
 
     producto = producto_df.iloc[0]
     stock_actual = int(producto.get('stock', 0))
     if stock_actual <= 0:
-        flash(f'El producto "{producto["nombre"]}" está agotado.', 'warning')
+        flash(f'El producto "{producto["nombre"]}" estÃ¡ agotado.', 'warning')
         return redirect(url_for('user_dashboard'))
     if cantidad > stock_actual:
         flash(f'Solo hay {stock_actual} unidad(es) disponibles de "{producto["nombre"]}".', 'warning')
@@ -4431,7 +4826,7 @@ def add_to_cart(id_producto):
     if item_existente:
         nueva_cantidad = int(item_existente.get('cantidad', 0)) + cantidad
         if nueva_cantidad > stock_actual:
-            flash(f'No puedes agregar más de {stock_actual} unidad(es) de "{producto["nombre"]}".', 'warning')
+            flash(f'No puedes agregar mÃ¡s de {stock_actual} unidad(es) de "{producto["nombre"]}".', 'warning')
             return redirect(url_for('cart'))
         item_existente['cantidad'] = nueva_cantidad
         item_existente['subtotal'] = float(item_existente['precio']) * nueva_cantidad
@@ -4513,7 +4908,9 @@ def remove_from_cart(index):
     if session.get('rol') == 'normal':
         carrito = _obtener_carrito_sesion_usuario()
         if 0 <= index < len(carrito):
-            carrito.pop(index)
+            item_removido = carrito.pop(index)
+            if item_removido.get('personalizado'):
+                actualizar_estado_ordenes_personalizadas_carrito([item_removido], 'cancelada')
             session['carrito'] = carrito
             session.modified = True
             _sincronizar_carrito_usuario_desde_sesion()
@@ -4580,7 +4977,7 @@ def _resolver_promocion_checkout(codigo_promo, promos, total):
 
     promo_aplicada = buscar_promocion_por_codigo(promos, codigo_promo, datetime.now().date())
     if promo_aplicada is None:
-        return None, 0.0, ('El código promocional no es válido o no está vigente.', 'warning')
+        return None, 0.0, ('El cÃ³digo promocional no es vÃ¡lido o no estÃ¡ vigente.', 'warning')
 
     descuento_promo = calcular_descuento_promocion(total, promo_aplicada)
     return promo_aplicada, descuento_promo, None
@@ -4617,13 +5014,13 @@ def _validar_datos_cliente_checkout(telefono, direccion):
 
     if not telefono_limpio or not direccion_limpia:
         return None, None, (
-            'Antes de finalizar tu compra debes registrar el telefono y la direccion de entrega.',
+            'Antes de finalizar tu compra debes registrar el teléfono y la dirección de entrega.',
             'warning'
         )
 
     if len(telefono_limpio) != 10:
         return None, None, (
-            'El telefono debe contener solo numeros y tener exactamente 10 digitos.',
+            'El teléfono debe contener solo números y tener exactamente 10 dígitos.',
             'warning'
         )
 
@@ -4652,6 +5049,8 @@ def _guardar_contacto_checkout_usuario(telefono, direccion):
 
 def _validar_stock_checkout(productos, carrito):
     for item in carrito:
+        if item.get('personalizado'):
+            continue
         id_producto = int(item.get('id_producto', 0))
         cantidad = int(item.get('cantidad', 0))
         fila = productos[(productos['id_producto'] == id_producto) & (productos['eliminado'] == False)]
@@ -4677,6 +5076,8 @@ def _validar_stock_checkout(productos, carrito):
 def _descontar_stock_checkout(productos, carrito):
     agotados_en_compra = []
     for item in carrito:
+        if item.get('personalizado'):
+            continue
         id_producto = int(item.get('id_producto', 0))
         cantidad = int(item.get('cantidad', 0))
         idx = productos[productos['id_producto'] == id_producto].index[0]
@@ -4919,6 +5320,10 @@ def pay():
         cliente_telefono=cliente_telefono,
         cliente_direccion=cliente_direccion,
     )
+    actualizar_estado_ordenes_personalizadas_carrito(
+        carrito,
+        'en_revision' if metodo_pago == 'transferencia' else 'pendiente'
+    )
 
     registrar_actividad(
         f"Creo pedido #{nuevo_id_pedido} con {len(carrito)} producto(s) por {formatear_cop(total_final)}"
@@ -4959,7 +5364,7 @@ def pay():
         elif error_guardado:
             app.logger.warning("No se pudo guardar comprobante para pedido %s: %s", nuevo_id_pedido, error_guardado)
             flash(
-                'El pedido fue registrado, pero no se pudo guardar el comprobante. Contacta al administrador para completar la revision.',
+                'El pedido fue registrado, pero no se pudo guardar el comprobante. Contacta al administrador para completar la revisión.',
                 'warning'
             )
 
@@ -4996,7 +5401,7 @@ def pay_stripe_success():
 
     session_id = str(request.args.get('session_id', '') or '').strip()
     if not session_id:
-        flash('Stripe no envió el identificador de la sesión de pago.', 'warning')
+        flash('Stripe no enviÃ³ el identificador de la sesiÃ³n de pago.', 'warning')
         return redirect(url_for('cart', metodo_pago='tarjeta'))
 
     registro = _stripe_checkout_obtener(session_id)
@@ -5007,7 +5412,7 @@ def pay_stripe_success():
     usuario_registro = normalizar_email(registro.get('usuario_email', ''))
     usuario_sesion = normalizar_email(session.get('usuario', ''))
     if usuario_registro and usuario_sesion and usuario_registro != usuario_sesion:
-        flash('La sesión de pago no pertenece al usuario autenticado.', 'danger')
+        flash('La sesiÃ³n de pago no pertenece al usuario autenticado.', 'danger')
         return redirect(url_for('cart', metodo_pago='tarjeta'))
 
     estado_actual = str(registro.get('estado', '') or '').strip().lower()
@@ -5019,7 +5424,7 @@ def pay_stripe_success():
     try:
         stripe_session = obtener_checkout_sesion(session_id)
     except Exception as exc:
-        app.logger.exception("Error validando sesión Stripe %s: %s", session_id, exc)
+        app.logger.exception("Error validando sesiÃ³n Stripe %s: %s", session_id, exc)
         flash('No se pudo validar el pago con Stripe. Intenta nuevamente en unos segundos.', 'danger')
         return redirect(url_for('cart', metodo_pago='tarjeta'))
 
@@ -5036,7 +5441,7 @@ def pay_stripe_success():
         _stripe_checkout_marcar_estado(session_id, 'pagado_sin_carrito')
         flash(
             'El pago se confirmo, pero no se encontro el carrito asociado. '
-            'Contacta al administrador con el id de sesión.',
+            'Contacta al administrador con el id de sesiÃ³n.',
             'danger'
         )
         return redirect(url_for('user_orders'))
@@ -5094,7 +5499,7 @@ def pay_stripe_success():
     if error_stock:
         estado_pedido = 'pendiente_revision'
         registrar_actividad(
-            f"Pago Stripe {session_id} confirmado con stock en conflicto. Pedido quedo en revision."
+            f"Pago Stripe {session_id} confirmado con stock en conflicto. Pedido quedó en revisión."
         )
     else:
         agotados_en_compra = _descontar_stock_checkout(productos, carrito_checkout)
@@ -5114,6 +5519,21 @@ def pay_stripe_success():
         cliente_direccion=cliente_direccion,
     )
     _stripe_checkout_marcar_estado(session_id, 'pagado', nuevo_id_pedido)
+    actualizar_estado_ordenes_personalizadas_carrito(carrito_checkout, 'pendiente')
+    notificacion_personalizado_ok = _notificar_pago_personalizado_admin(
+        id_pedido=nuevo_id_pedido,
+        carrito=carrito_checkout,
+        total_final=total_final,
+        cliente_telefono=cliente_telefono,
+        cliente_direccion=cliente_direccion,
+        metodo_pago='Tarjeta',
+        promo_aplicada=promo_aplicada,
+        descuento_promo=descuento_promo,
+    )
+    if notificacion_personalizado_ok:
+        registrar_actividad(
+            f"Notificacion de pago de prenda personalizada enviada al administrador para pedido #{nuevo_id_pedido}"
+        )
 
     registrar_actividad(
         f"Stripe confirmado. Pedido #{nuevo_id_pedido} creado por {formatear_cop(total_final)}"
@@ -5128,7 +5548,7 @@ def pay_stripe_success():
     if error_stock:
         flash(
             'El pago se registro correctamente, pero hay cambios de stock. '
-            f'Tu pedido #{nuevo_id_pedido} quedo en revision.',
+            f'Tu pedido #{nuevo_id_pedido} quedó en revisión.',
             'warning'
         )
 
@@ -5283,7 +5703,7 @@ def user_profile():
     if 'direccion' not in usuario_dict:
         usuario_dict['direccion'] = ''
     
-    # Asegurar que existan las columnas de verificación
+    # Asegurar que existan las columnas de verificaciÃ³n
     if 'email_verified' not in usuario_dict:
         usuario_dict['email_verified'] = False
     
@@ -5292,8 +5712,6 @@ def user_profile():
         'notif_email': True,
         'notif_pedidos': True,
         'notif_promociones': True,
-        'perfil_publico': False,
-        'mostrar_historial': False,
         'idioma': 'es',
         'moneda': 'COP'
     }
@@ -5301,7 +5719,7 @@ def user_profile():
         if key not in usuario_dict or pd.isna(usuario_dict[key]):
             usuario_dict[key] = default_value
     
-    # Obtener estadísticas del usuario
+    # Obtener estadÃ­sticas del usuario
     pedidos_usuario = _obtener_pedidos_usuario_actual()
     pedidos_total = len(pedidos_usuario)
     montos_usuario = pd.to_numeric(
@@ -5391,20 +5809,20 @@ def send_password_change_code():
             guardar_usuarios_df(usuarios)
             return jsonify({
                 'success': False,
-                'message': 'No fue posible enviar el código al correo. Intenta nuevamente.'
+                'message': 'No fue posible enviar el cÃ³digo al correo. Intenta nuevamente.'
             }), 500
 
-        registrar_actividad(f'Código de cambio de contraseña enviado a {usuario_email}')
+        registrar_actividad(f'CÃ³digo de cambio de contraseÃ±a enviado a {usuario_email}')
         return jsonify({
             'success': True,
             'message': (
-                f'Código enviado a {usuario_email}. '
-                f'Es válido por {PASSWORD_CHANGE_CODE_EXP_MINUTES} minutos.'
+                f'CÃ³digo enviado a {usuario_email}. '
+                f'Es vÃ¡lido por {PASSWORD_CHANGE_CODE_EXP_MINUTES} minutos.'
             )
         })
     except Exception as e:
-        print(f'Error enviando código de cambio de contraseña: {str(e)}')
-        return jsonify({'success': False, 'message': 'Error interno enviando el código.'}), 500
+        print(f'Error enviando cÃ³digo de cambio de contraseÃ±a: {str(e)}')
+        return jsonify({'success': False, 'message': 'Error interno enviando el cÃ³digo.'}), 500
 
 @app.route('/user/profile/verify-password-change-code', methods=['POST'])
 
@@ -5419,7 +5837,7 @@ def verify_password_change_code():
         if not re.fullmatch(r'\d{6}', codigo_ingresado):
             return jsonify({
                 'success': False,
-                'message': 'El código debe tener 6 dígitos numéricos.'
+                'message': 'El cÃ³digo debe tener 6 dÃ­gitos numÃ©ricos.'
             }), 400
 
         usuarios = cargar_usuarios_df()
@@ -5436,7 +5854,7 @@ def verify_password_change_code():
         if not codigo_guardado:
             return jsonify({
                 'success': False,
-                'message': 'No hay un código activo. Solicita uno nuevo.'
+                'message': 'No hay un cÃ³digo activo. Solicita uno nuevo.'
             }), 400
 
         if codigo_cambio_password_expirado(usuario):
@@ -5444,22 +5862,22 @@ def verify_password_change_code():
             guardar_usuarios_df(usuarios)
             return jsonify({
                 'success': False,
-                'message': 'El código expiró. Solicita uno nuevo.'
+                'message': 'El cÃ³digo expirÃ³. Solicita uno nuevo.'
             }), 400
 
         if codigo_guardado != codigo_ingresado:
             return jsonify({
                 'success': False,
-                'message': 'El código es incorrecto. Verifica e intenta nuevamente.'
+                'message': 'El cÃ³digo es incorrecto. Verifica e intenta nuevamente.'
             }), 400
 
         return jsonify({
             'success': True,
-            'message': 'Código validado. Ya puedes continuar con el cambio de contraseña.'
+            'message': 'CÃ³digo validado. Ya puedes continuar con el cambio de contraseÃ±a.'
         })
     except Exception as e:
-        print(f'Error verificando código de cambio de contraseña: {str(e)}')
-        return jsonify({'success': False, 'message': 'Error interno verificando el código.'}), 500
+        print(f'Error verificando cÃ³digo de cambio de contraseÃ±a: {str(e)}')
+        return jsonify({'success': False, 'message': 'Error interno verificando el cÃ³digo.'}), 500
 
 @app.route('/user/profile/change-password', methods=['POST'])
 
@@ -5473,26 +5891,26 @@ def change_password():
     password_change_code = request.form.get('password_change_code', '').strip()
 
     if not password_change_code:
-        flash('Debes ingresar el código de seguridad enviado a tu correo.', 'danger')
+        flash('Debes ingresar el cÃ³digo de seguridad enviado a tu correo.', 'danger')
         return redirect(url_for('user_profile'))
 
     if not re.fullmatch(r'\d{6}', password_change_code):
-        flash('El código de seguridad debe tener 6 dígitos numéricos.', 'danger')
+        flash('El cÃ³digo de seguridad debe tener 6 dÃ­gitos numÃ©ricos.', 'danger')
         return redirect(url_for('user_profile'))
 
     if not current_password or not new_password:
-        flash('Debes completar todos los campos para cambiar la contraseña.', 'danger')
+        flash('Debes completar todos los campos para cambiar la contraseÃ±a.', 'danger')
         return redirect(url_for('user_profile'))
 
     if not password_cumple_estandares(new_password):
         flash(
-            'La contraseña debe tener mínimo 8 caracteres, mayúscula, minúscula, número y carácter especial.',
+            'La contraseÃ±a debe tener mÃ­nimo 8 caracteres, mayÃºscula, minÃºscula, nÃºmero y carÃ¡cter especial.',
             'danger'
         )
         return redirect(url_for('user_profile'))
 
     if current_password == new_password:
-        flash('La nueva contraseña debe ser diferente a la actual.', 'warning')
+        flash('La nueva contraseÃ±a debe ser diferente a la actual.', 'warning')
         return redirect(url_for('user_profile'))
 
     usuarios = cargar_usuarios_df()
@@ -5509,22 +5927,22 @@ def change_password():
 
     codigo_guardado = str(usuario.get('password_change_code', '') or '').replace('.0', '').strip()
     if not codigo_guardado:
-        flash('No hay un código activo. Solicita uno nuevo antes de cambiar la contraseña.', 'warning')
+        flash('No hay un cÃ³digo activo. Solicita uno nuevo antes de cambiar la contraseÃ±a.', 'warning')
         return redirect(url_for('user_profile'))
 
     if codigo_cambio_password_expirado(usuario):
         limpiar_codigo_cambio_password(usuarios, idx)
         guardar_usuarios_df(usuarios)
-        flash('El código de seguridad expiró. Solicita uno nuevo.', 'warning')
+        flash('El cÃ³digo de seguridad expirÃ³. Solicita uno nuevo.', 'warning')
         return redirect(url_for('user_profile'))
 
     if codigo_guardado != password_change_code:
-        flash('El código de seguridad es incorrecto.', 'danger')
+        flash('El cÃ³digo de seguridad es incorrecto.', 'danger')
         return redirect(url_for('user_profile'))
 
     password_guardado = usuario.get('password_hash', '')
     if not password_coincide(password_guardado, current_password):
-        flash('La contraseña actual es incorrecta.', 'danger')
+        flash('La contraseÃ±a actual es incorrecta.', 'danger')
         return redirect(url_for('user_profile'))
 
     usuarios.at[idx, 'password_hash'] = crear_hash_password(new_password)
@@ -5533,8 +5951,8 @@ def change_password():
     limpiar_codigo_cambio_password(usuarios, idx)
 
     guardar_usuarios_df(usuarios)
-    registrar_actividad(f'Usuario {usuario_email} cambió su contraseña con código de seguridad')
-    flash('Contraseña cambiada correctamente.', 'success')
+    registrar_actividad(f'Usuario {usuario_email} cambiÃ³ su contraseÃ±a con cÃ³digo de seguridad')
+    flash('ContraseÃ±a cambiada correctamente.', 'success')
     return redirect(url_for('user_profile'))
 
 @app.route('/user/profile/settings', methods=['POST'])
@@ -5547,8 +5965,6 @@ def update_settings():
     notif_email = request.form.get('notif_email') == 'on'
     notif_pedidos = request.form.get('notif_pedidos') == 'on'
     notif_promociones = request.form.get('notif_promociones') == 'on'
-    perfil_publico = request.form.get('perfil_publico') == 'on'
-    mostrar_historial = request.form.get('mostrar_historial') == 'on'
     idioma = request.form.get('idioma', 'es')
     moneda = request.form.get('moneda', 'COP')
     
@@ -5557,8 +5973,8 @@ def update_settings():
     usuario_email = session.get('usuario')
     
     # Asegurar que existan las columnas de configuracion
-    columnas_config = ['notif_email', 'notif_pedidos', 'notif_promociones', 
-                       'perfil_publico', 'mostrar_historial', 'idioma', 'moneda']
+    columnas_config = ['notif_email', 'notif_pedidos', 'notif_promociones',
+                       'idioma', 'moneda']
     for col in columnas_config:
         if col not in usuarios.columns:
             usuarios[col] = '' if col in ['idioma', 'moneda'] else False
@@ -5569,8 +5985,6 @@ def update_settings():
         usuarios.loc[idx, 'notif_email'] = notif_email
         usuarios.loc[idx, 'notif_pedidos'] = notif_pedidos
         usuarios.loc[idx, 'notif_promociones'] = notif_promociones
-        usuarios.loc[idx, 'perfil_publico'] = perfil_publico
-        usuarios.loc[idx, 'mostrar_historial'] = mostrar_historial
         usuarios.loc[idx, 'idioma'] = idioma
         usuarios.loc[idx, 'moneda'] = moneda
         
@@ -5585,7 +5999,7 @@ def update_settings():
 
 @app.route('/user/send-verification-code', methods=['POST'])
 def send_verification_code():
-    """Envía un código de verificación al correo del usuario."""
+    """EnvÃ­a un cÃ³digo de verificaciÃ³n al correo del usuario."""
     if session.get('rol') != 'normal':
         return jsonify({'success': False, 'message': 'Acceso denegado'}), 403
 
@@ -5618,10 +6032,10 @@ def send_verification_code():
             tipo='autenticacion',
             minutos_expiracion=REGISTER_CODE_EXP_MINUTES
         ):
-            registrar_actividad(f'Código de autenticación enviado a {usuario_email}')
+            registrar_actividad(f'CÃ³digo de autenticaciÃ³n enviado a {usuario_email}')
             return jsonify({
                 'success': True,
-                'message': 'Código enviado correctamente. Revisa tu correo.'
+                'message': 'CÃ³digo enviado correctamente. Revisa tu correo.'
             })
 
         usuarios.loc[usuario_idx, 'verification_code'] = ''
@@ -5630,13 +6044,13 @@ def send_verification_code():
         return jsonify({
             'success': False,
             'message': (
-                'No fue posible enviar el código de verificación al correo indicado. '
-                'Verifica la configuración SMTP del sistema e intenta nuevamente.'
+                'No fue posible enviar el cÃ³digo de verificaciÃ³n al correo indicado. '
+                'Verifica la configuraciÃ³n SMTP del sistema e intenta nuevamente.'
             )
         }), 500
 
     except Exception as e:
-        print(f'Error al enviar código: {str(e)}')
+        print(f'Error al enviar cÃ³digo: {str(e)}')
         return jsonify({
             'success': False,
             'message': f'Error: {str(e)}'
@@ -5645,7 +6059,7 @@ def send_verification_code():
 
 @app.route('/user/verify-email', methods=['POST'])
 def verify_email():
-    """Verifica el código ingresado por el usuario."""
+    """Verifica el cÃ³digo ingresado por el usuario."""
     if session.get('rol') != 'normal':
         return jsonify({'success': False, 'message': 'Acceso denegado'}), 403
 
@@ -5654,7 +6068,7 @@ def verify_email():
         codigo_ingresado = str(payload.get('code', '') or '').strip()
 
         if not codigo_ingresado:
-            return jsonify({'success': False, 'message': 'Debe ingresar un código'}), 400
+            return jsonify({'success': False, 'message': 'Debe ingresar un cÃ³digo'}), 400
 
         usuarios = cargar_usuarios_df()
         usuario_email = session.get('usuario')
@@ -5673,20 +6087,20 @@ def verify_email():
         usuario = usuarios.loc[usuario_idx[0]]
 
         if not usuario['verification_code']:
-            return jsonify({'success': False, 'message': 'No hay código de verificación. Solicita uno nuevo.'}), 400
+            return jsonify({'success': False, 'message': 'No hay cÃ³digo de verificaciÃ³n. Solicita uno nuevo.'}), 400
 
         if timestamp_expirado(usuario.get('verification_code_expiry', '')):
-            return jsonify({'success': False, 'message': 'El código ha expirado. Solicita uno nuevo.'}), 400
+            return jsonify({'success': False, 'message': 'El cÃ³digo ha expirado. Solicita uno nuevo.'}), 400
 
         codigo_guardado = str(usuario['verification_code']).replace('.0', '').strip()
         if codigo_guardado == str(codigo_ingresado):
             if not usuario['email_verified']:
                 usuarios.loc[usuario_idx, 'email_verified'] = True
-                mensaje_exito = '¡Correo verificado exitosamente!'
-                actividad = f'Usuario {usuario_email} verificó su correo electrónico'
+                mensaje_exito = 'Â¡Correo verificado exitosamente!'
+                actividad = f'Usuario {usuario_email} verificÃ³ su correo electrÃ³nico'
             else:
-                mensaje_exito = '¡Autenticación exitosa!'
-                actividad = f'Usuario {usuario_email} se autenticó correctamente'
+                mensaje_exito = 'Â¡AutenticaciÃ³n exitosa!'
+                actividad = f'Usuario {usuario_email} se autenticÃ³ correctamente'
 
             usuarios.loc[usuario_idx, 'verification_code'] = ''
             usuarios.loc[usuario_idx, 'verification_code_expiry'] = ''
@@ -5700,17 +6114,17 @@ def verify_email():
 
         return jsonify({
             'success': False,
-            'message': 'Código incorrecto. Verifica e intenta nuevamente.'
+            'message': 'CÃ³digo incorrecto. Verifica e intenta nuevamente.'
         }), 400
 
     except Exception as e:
-        print(f'Error al verificar código: {str(e)}')
+        print(f'Error al verificar cÃ³digo: {str(e)}')
         return jsonify({
             'success': False,
             'message': 'Error interno del servidor'
         }), 500
 
-# Ruta para el redireccionamiento para ver el catálogo
+# Ruta para el redireccionamiento para ver el catÃ¡logo
 @app.route('/armada')
 def armada():
     productos = cargar_productos_por_fuerza('Armada')
@@ -5760,7 +6174,7 @@ def producto_detalle(id_producto):
 
 @app.route('/admin/promo', methods=['GET','POST'])
 def admin_promo():
-    # Página de gestión de promociones para administradores
+    # PÃ¡gina de gestiÃ³n de promociones para administradores
     if session.get('rol') != 'admin':
         return "Acceso denegado"
 
@@ -5790,7 +6204,7 @@ def admin_promo():
             flash('La fecha de inicio no puede ser mayor que la fecha de fin.', 'warning')
             return redirect(url_for('admin_promo'))
         if pd.isna(id_producto):
-            flash('Debes seleccionar un producto para la promoción.', 'warning')
+            flash('Debes seleccionar un producto para la promociÃ³n.', 'warning')
             return redirect(url_for('admin_promo'))
         productos_ref = cargar_productos_activos_df()
         id_producto_num = int(id_producto)
@@ -5798,14 +6212,14 @@ def admin_promo():
             pd.to_numeric(productos_ref.get('id_producto', 0), errors='coerce') == id_producto_num
         ].empty
         if not existe_producto:
-            flash('El producto seleccionado no existe o está inactivo.', 'warning')
+            flash('El producto seleccionado no existe o estÃ¡ inactivo.', 'warning')
             return redirect(url_for('admin_promo'))
 
         promos = cargar_promociones_df()
         if codigo:
             existe_codigo = promos[promos['codigo'].astype(str).str.upper() == codigo]
             if not existe_codigo.empty:
-                flash('El código promocional ya existe. Usa otro.', 'warning')
+                flash('El cÃ³digo promocional ya existe. Usa otro.', 'warning')
                 return redirect(url_for('admin_promo'))
         next_id = int(pd.to_numeric(promos['id_promo'], errors='coerce').max() + 1) if not promos.empty else 1
         nuevo = {
@@ -5824,10 +6238,10 @@ def admin_promo():
         guardar_promociones_df(promos)
         detalle_desc = formatear_cop(valor_descuento) if tipo_descuento == 'valor_fijo' else f"{valor_descuento:.2f}%"
         registrar_actividad(
-            f"Promoción creada: {nombre}\n"
+            f"PromociÃ³n creada: {nombre}\n"
             f"- producto ID: {int(id_producto)}\n"
             f"- descuento: {detalle_desc}\n"
-            f"- código: {codigo or 'N/A'}"
+            f"- cÃ³digo: {codigo or 'N/A'}"
         )
         return redirect(url_for('admin_promo'))
 
@@ -6149,13 +6563,13 @@ def admin_charts_export_excel():
         resumen_df.to_excel(writer, sheet_name='Resumen', index=False)
         datos['ventas_producto_df'].to_excel(writer, sheet_name='Ventas por producto', index=False)
         datos['ventas_mes_df'].to_excel(writer, sheet_name='Ventas por mes', index=False)
-        datos['metodos_pago_df'].to_excel(writer, sheet_name='Métodos de pago', index=False)
+        datos['metodos_pago_df'].to_excel(writer, sheet_name='MÃ©todos de pago', index=False)
         datos['top_productos_df'].to_excel(writer, sheet_name='Top productos', index=False)
 
         wb = writer.book
         ws_producto = wb['Ventas por producto']
         ws_mes = wb['Ventas por mes']
-        ws_metodos = wb['Métodos de pago']
+        ws_metodos = wb['MÃ©todos de pago']
         ws_top = wb['Top productos']
         formato_cop = '[>=1000]#,##0.00 "COP";0.00 "COP"'
 
@@ -6243,7 +6657,136 @@ def admin_charts_export_excel():
 #orden personalizada
 @app.route('/orden-personalizada')
 def orden_personalizada():
-    return render_template('Usuarios/orden_personalizada/orden.html')
+    precios = precios_orden_personalizada_mapa()
+    return render_template('Usuarios/orden_personalizada/orden.html', precios_personalizados=precios)
+
+
+@app.route('/orden-personalizada/enviar', methods=['POST'])
+def enviar_orden_personalizada():
+    if session.get('rol') != 'normal':
+        return jsonify({'success': False, 'message': 'Debes iniciar sesiÃ³n para pagar una prenda personalizada.'}), 403
+
+    payload = request.get_json(silent=True) or {}
+    cliente = payload.get('cliente') or {}
+    detalle = payload.get('detalle') or {}
+
+    nombre = str(cliente.get('nombre', '')).strip()
+    correo = str(cliente.get('correo', '')).strip().lower()
+    telefono = re.sub(r'\D', '', str(cliente.get('telefono', '')))[:10]
+    direccion = str(cliente.get('direccion', '')).strip()
+    producto = producto_personalizado_canonico(detalle.get('producto', ''))
+    identidad = str(detalle.get('identidad', '')).strip()
+    try:
+        cantidad = int(detalle.get('cantidad', 1) or 1)
+    except (TypeError, ValueError):
+        cantidad = 1
+    cantidad = max(1, min(cantidad, 99))
+    imagen_url = str(detalle.get('imagen_url', '')).strip()
+    if imagen_url.startswith('data:image/'):
+        imagen_guardada, error_imagen = guardar_preview_personalizado_desde_data_url(
+            imagen_url,
+            prefijo='gafete_preview'
+        )
+        if error_imagen:
+            return jsonify({'success': False, 'message': error_imagen}), 400
+        imagen_url = imagen_guardada
+    elif imagen_url and not imagen_url.startswith('/static/img/'):
+        imagen_url = ''
+
+    if not nombre or not correo or not telefono or not direccion or not producto or not identidad:
+        return jsonify({'success': False, 'message': 'Faltan datos obligatorios para enviar la solicitud.'}), 400
+    if not re.fullmatch(r'[^@\s]+@[^@\s]+\.[^@\s]+', correo):
+        return jsonify({'success': False, 'message': 'El correo electrÃ³nico no es vÃ¡lido.'}), 400
+    if not re.fullmatch(r'[0-9]{10}', telefono):
+        return jsonify({'success': False, 'message': 'El telÃ©fono debe tener 10 dÃ­gitos.'}), 400
+
+    precios = precios_orden_personalizada_mapa()
+    precio_unitario = float(precios.get(producto, 0) or 0)
+    if precio_unitario <= 0:
+        precio_unitario = 45000.0
+    precio = precio_unitario * cantidad
+
+    asegurar_tablas_orden_personalizada()
+    datos_json = json.dumps(payload, ensure_ascii=False)
+    with engine.begin() as conn:
+        id_orden = conn.execute(
+            sa.text("""
+                INSERT INTO orden_personalizada (
+                    usuario_email, cliente_nombre, cliente_correo, cliente_telefono,
+                    cliente_direccion, rango, fecha_contingencia, identidad, producto,
+                    tecnica, color, estampado, talla, modelo_rh, modelo_presilla,
+                    cantidad, imagen_url, precio, estado, datos_json
+                )
+                VALUES (
+                    :usuario_email, :cliente_nombre, :cliente_correo, :cliente_telefono,
+                    :cliente_direccion, :rango, :fecha_contingencia, :identidad, :producto,
+                    :tecnica, :color, :estampado, :talla, :modelo_rh, :modelo_presilla,
+                    :cantidad, :imagen_url, :precio, 'pendiente_pago', :datos_json
+                )
+                RETURNING id_orden_personalizada
+            """),
+            {
+                'usuario_email': session.get('usuario', ''),
+                'cliente_nombre': nombre,
+                'cliente_correo': correo,
+                'cliente_telefono': telefono,
+                'cliente_direccion': direccion,
+                'rango': str(cliente.get('rango', '')).strip(),
+                'fecha_contingencia': str(cliente.get('fecha_contingencia', '')).strip(),
+                'identidad': identidad,
+                'producto': producto,
+                'tecnica': str(detalle.get('tecnica', '')).strip(),
+                'color': str(detalle.get('color', '')).strip(),
+                'estampado': str(detalle.get('estampado', '')).strip(),
+                'talla': str(detalle.get('talla', '')).strip(),
+                'modelo_rh': str(detalle.get('modelo_rh', '')).strip(),
+                'modelo_presilla': str(detalle.get('modelo_presilla', '')).strip(),
+                'cantidad': cantidad,
+                'imagen_url': imagen_url,
+                'precio': precio,
+                'datos_json': datos_json
+            }
+        ).scalar_one()
+
+    nombre_producto = str(detalle.get('producto_label', '') or '').strip() or producto.replace('_', ' ').title()
+    descripcion = " | ".join(
+        parte for parte in [
+            f"Identidad: {identidad}",
+            f"Color: {str(detalle.get('color', '')).strip()}",
+            f"TÃ©cnica: {str(detalle.get('tecnica', '')).strip()}",
+            f"Estampado: {str(detalle.get('estampado', '')).strip()}",
+            f"Rango: {str(cliente.get('rango', '')).strip()}",
+            f"Fecha contingencia: {str(cliente.get('fecha_contingencia', '')).strip()}",
+        ] if parte.split(": ", 1)[-1].strip()
+    )
+    imagen_carrito = imagen_url[8:] if imagen_url.startswith('/static/') else imagen_url
+    carrito = _obtener_carrito_sesion_usuario()
+    carrito.append({
+        'id_producto': 0,
+        'id_orden_personalizada': int(id_orden),
+        'personalizado': True,
+        'nombre': f"Prenda personalizada - {nombre_producto}",
+        'descripcion': descripcion,
+        'cantidad': cantidad,
+        'precio': precio_unitario,
+        'subtotal': precio,
+        'talla': str(detalle.get('talla', '')).strip(),
+        'imagen_url': imagen_carrito,
+    })
+    session['carrito'] = carrito
+    session['checkout_cliente_telefono'] = telefono
+    session['checkout_cliente_direccion'] = direccion
+    session.modified = True
+    _sincronizar_carrito_usuario_desde_sesion()
+    _guardar_contacto_checkout_usuario(telefono, direccion)
+
+    registrar_actividad(f"Solicitud personalizada #{id_orden} agregada al carrito por {correo}")
+    return jsonify({
+        'success': True,
+        'message': 'Prenda personalizada agregada al carrito.',
+        'id_orden': int(id_orden),
+        'redirect_url': url_for('cart')
+    })
 
 #sobre nosotros
 @app.route('/sobre-nosotros')
@@ -6252,5 +6795,3 @@ def sobre_nosotros():
 
 if __name__ == '__main__':
     app.run(debug=True, use_reloader=True)
-    
-

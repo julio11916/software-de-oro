@@ -32,12 +32,12 @@
                 <div class="hero-stat-card">
                     <span>Total de pedidos</span>
                     <strong>{{ pedidos|length }}</strong>
-                    <small>Historial visible en tu cuenta</small>
+                    <small>Disponible solo en tu cuenta</small>
                 </div>
                 <div class="hero-stat-card hero-stat-card--soft">
                     <span>Ultimo movimiento</span>
                     <strong>{{ pedidos[0].estado_label if pedidos else 'Sin pedidos' }}</strong>
-                    <small>{{ pedidos[0].fecha_pedido if pedidos else 'Aun no compras' }}</small>
+                    <small>{{ pedidos[0].fecha_pedido if pedidos else 'Aún no compras' }}</small>
                 </div>
             </aside>
         </section>
@@ -171,8 +171,8 @@
             <div class="orders-empty-state__icon">
                 <i class="fas fa-box-open"></i>
             </div>
-            <span class="orders-eyebrow">Aun sin historial</span>
-            <h1>Aun no has realizado ningun pedido</h1>
+            <span class="orders-eyebrow">Aún sin historial</span>
+            <h1>Aún no has realizado ningún pedido</h1>
             <p>Cuando completes tu primera compra, aquí podrás seguir el estado del pago y el avance del pedido en tiempo real.</p>
             <a href="{{ url_for('user_dashboard') }}" class="btn-start-shopping">
                 <i class="fas fa-store"></i>

@@ -18,7 +18,15 @@
                     {% if messages %}
                         {% for category, message in messages %}
                             {% set message_limpio = message
+                                | replace('ÃƒÆ’Ã‚Â±', 'ñ')
                                 | replace('ÃƒÂ±', 'ñ')
+                                | replace('ÃƒÂ¡', 'á')
+                                | replace('ÃƒÂ©', 'é')
+                                | replace('ÃƒÂ­', 'í')
+                                | replace('ÃƒÂ³', 'ó')
+                                | replace('ÃƒÂº', 'ú')
+                                | replace('Ã‚Â¿', '¿')
+                                | replace('Ã‚Â¡', '¡')
                                 | replace('Ã±', 'ñ')
                                 | replace('Ã¡', 'á')
                                 | replace('Ã©', 'é')

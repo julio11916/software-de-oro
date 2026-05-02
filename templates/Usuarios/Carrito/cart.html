@@ -11,11 +11,11 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/usuario/cart.css') }}">
 </head>
 
-<body class="page-with-catalog-header">
+<body class="page-with-catalog-header cart-page">
     {% include 'Usuarios/partials/header_offcanvas.html' %}
     {% include 'Usuarios/partials/_flash_toasts.html' %}
 
-    <main class="cart-shell">
+    <main class="cart-shell {% if not carrito %}cart-shell--empty{% endif %}">
         {% if carrito %}
         <section class="cart-hero">
             <div class="cart-hero__copy">
@@ -59,7 +59,12 @@
                             <div class="item-info">
                                 <div class="item-image">
                                     {% if item.imagen_url %}
-                                    <img src="{{ url_for('static', filename=item.imagen_url) }}" alt="{{ item.nombre }}" loading="lazy">
+                                    {% set _img = (item.imagen_url|string)|trim %}
+                                    {% if _img.startswith('http://') or _img.startswith('https://') or _img.startswith('/static/') %}
+                                    <img src="{{ _img }}" alt="{{ item.nombre }}" loading="lazy">
+                                    {% else %}
+                                    <img src="{{ url_for('static', filename=_img) }}" alt="{{ item.nombre }}" loading="lazy">
+                                    {% endif %}
                                     {% else %}
                                     <i class="fas fa-box-open"></i>
                                     {% endif %}
@@ -67,10 +72,16 @@
                                 <div class="item-details">
                                     <h5 class="item-name">{{ item.nombre }}</h5>
                                     <div class="item-meta-inline">
+                                        {% if item.personalizado %}
+                                        <span><i class="fas fa-wand-magic-sparkles"></i> Personalizada</span>
+                                        {% endif %}
                                         {% if item.talla %}
                                         <span><i class="fas fa-ruler-combined"></i> Talla {{ item.talla }}</span>
                                         {% endif %}
                                     </div>
+                                    {% if item.descripcion %}
+                                    <p class="item-description">{{ item.descripcion }}</p>
+                                    {% endif %}
                                 </div>
                             </div>
 

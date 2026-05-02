@@ -1,4 +1,75 @@
-﻿(function () {
+(function () {
+function showUserToast(message, tone = "info", options = {}) {
+    const durationMs = Number.isFinite(options.durationMs) ? options.durationMs : 7000;
+    const titleByTone = {
+        success: "Proceso completado",
+        danger: "Revisa esta accion",
+        warning: "Atencion",
+        info: "Informacion",
+    };
+    const iconByTone = {
+        success: "&#10003;",
+        danger: "&#10005;",
+        warning: "&#10005;",
+        info: "&#10003;",
+    };
+
+    let stack = document.getElementById("ordenPersonalizadaToastStack");
+    if (!stack) {
+        stack = document.createElement("div");
+        stack.id = "ordenPersonalizadaToastStack";
+        stack.className = "flash-toast-stack flash-toast-stack-user flash-toast-stack-client";
+        stack.setAttribute("aria-live", "polite");
+        stack.setAttribute("aria-atomic", "true");
+        document.body.appendChild(stack);
+    }
+
+    const toast = document.createElement("div");
+    toast.className = `flash-toast flash-toast-${tone} flash-toast-client`;
+    toast.setAttribute("role", "status");
+
+    const icon = document.createElement("div");
+    icon.className = "flash-toast-icon";
+    icon.innerHTML = `<span aria-hidden="true">${iconByTone[tone] || iconByTone.info}</span>`;
+
+    const copy = document.createElement("div");
+    copy.className = "flash-toast-copy";
+
+    const label = document.createElement("span");
+    label.className = "flash-toast-label";
+    label.textContent = options.title || titleByTone[tone] || titleByTone.info;
+
+    const text = document.createElement("span");
+    text.className = "flash-toast-text flash-toast-text--multiline";
+    text.textContent = String(message || "");
+
+    const close = document.createElement("button");
+    close.type = "button";
+    close.className = "flash-toast-close";
+    close.setAttribute("aria-label", "Cerrar alerta");
+    close.textContent = "\u00d7";
+
+    copy.appendChild(label);
+    copy.appendChild(text);
+    toast.appendChild(icon);
+    toast.appendChild(copy);
+    toast.appendChild(close);
+    stack.appendChild(toast);
+
+    const removeToast = () => {
+        toast.remove();
+        if (!stack.querySelector(".flash-toast")) {
+            stack.remove();
+        }
+    };
+
+    close.addEventListener("click", removeToast);
+
+    if (durationMs > 0) {
+        window.setTimeout(removeToast, durationMs);
+    }
+}
+
 try {
     const state = {
         // Datos personales
@@ -8,7 +79,8 @@ try {
         correo: "",
         telefono: "",
         anoContingencia: "",
-        // Configuracin de la prenda
+        fechaContingencia: "",
+        // ConfiguraciÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â³n de la prenda
         genero: "unisex",
         identidad: "",
         producto: "",
@@ -16,37 +88,443 @@ try {
         color: "",
         estampado: "",
         talla: null,
+        modeloRh: null,
+        modeloPresilla: null,
+        cantidad: 1,
         pasoActual: 1,
         vistaPrenda: "delantera",
     };
+    let enviandoOrdenPersonalizada = false;
 
+    const defaultPriceMap = {
+        guerrera: 160000,
+        camiseta: 45000,
+        buso: 78000,
+        gorra: 35000,
+        paoleta: 28000,
+        panoleta: 28000,
+        "paÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â±oleta": 28000,
+        "buso-manga-larga": 85000,
+        "buso_tactico": 95000,
+        "buso tactico": 95000,
+        presillas: 15000,
+        rh: 12000,
+        "gafete del nombre o apellido": 12000,
+    };
     const priceMap = {
-        camiseta: "$ 45.000",
-        buso: "$ 78.000",
-        gorra: "$ 35.000",
-        paoleta: "$ 28.000",
-        panoleta: "$ 28.000",
-        "pañoleta": "$ 28.000",
-        "buso-manga-larga": "$ 85.000",
-        "buso_tactico": "$ 95.000",
-        "buso tactico": "$ 95.000",
-        presillas: "$ 15.000",
-        rh: "$ 12.000",
+        ...defaultPriceMap,
+        ...(window.PRECIOS_ORDEN_PERSONALIZADA || {})
     };
 
     const productLabels = {
         camiseta: "Camiseta",
+        guerrera: "Guerrera",
         buso: "Buso",
         gorra: "Gorra",
-        paoleta: "Paoleta",
-        panoleta: "Pañoleta",
-        "pañoleta": "Pañoleta",
+        paoleta: "PaÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â±oleta",
+        panoleta: "PaÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â±oleta",
+        "paÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â±oleta": "PaÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â±oleta",
         "buso-manga-larga": "Buso manga larga",
-        "buso_tactico": "Buso Tctico",
-        "buso tactico": "Buso Tctico",
+        "buso_tactico": "Buso tÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¡ctico",
+        "buso tactico": "Buso tÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¡ctico",
         presillas: "Presillas",
         rh: "Rh",
+        "gafete del nombre o apellido": "Gafete de nombre o apellido",
     };
+
+    const CONTINGENCIA_MIN_DATE = "1940-01-01";
+    const ORDER_DRAFT_STORAGE_KEY = "nachohers_orden_personalizada_draft_v1";
+    const PERSISTED_STATE_KEYS = [
+        "nombre",
+        "rango",
+        "direccion",
+        "correo",
+        "telefono",
+        "anoContingencia",
+        "fechaContingencia",
+        "genero",
+        "identidad",
+        "producto",
+        "tecnica",
+        "color",
+        "estampado",
+        "talla",
+        "modeloRh",
+        "modeloPresilla",
+        "cantidad",
+        "pasoActual",
+        "vistaPrenda"
+    ];
+
+    function normalizeProductKey(value) {
+        return String(value || "").trim().toLowerCase().replace(/\s+/g, " ");
+    }
+
+    function isPanoletaProduct(producto) {
+        const productKey = normalizeProductKey(producto);
+        return (
+            productKey === "pañoleta" ||
+            productKey === "panoleta" ||
+            productKey === "paoleta" ||
+            /pa.*oleta/.test(productKey)
+        );
+    }
+
+    function isRestrictedProductForIdentity(producto, identidad) {
+        const identidadKey = normalizeProductKey(identidad);
+        const productoKey = normalizeProductKey(producto);
+        if (identidadKey !== "armada") return false;
+        return productoKey === "presillas" || isPanoletaProduct(productoKey);
+    }
+
+    function applyProductAvailabilityByIdentity() {
+        const identidadKey = normalizeProductKey(state.identidad || "policia");
+        const productCards = document.querySelectorAll("[data-producto]");
+
+        productCards.forEach((card) => {
+            const productoKey = normalizeProductKey(card.dataset.producto);
+            const isRestricted = isRestrictedProductForIdentity(productoKey, identidadKey);
+            card.style.display = isRestricted ? "none" : "";
+            if (isRestricted) card.classList.remove("seleccionada");
+        });
+
+        if (isRestrictedProductForIdentity(state.producto, identidadKey)) {
+            state.producto = "";
+            state.estampado = "";
+            document.querySelectorAll("[data-producto]").forEach(btn => btn.classList.remove("seleccionada"));
+            document.querySelectorAll("[data-estampado]").forEach(btn => btn.classList.remove("seleccionada"));
+        }
+    }
+
+    function getProductPriceValue(producto) {
+        const key = normalizeProductKey(producto);
+        return Number(priceMap[key] ?? priceMap[producto] ?? 45000) || 0;
+    }
+
+    function getOrderQuantity() {
+        const cantidad = Number.parseInt(state.cantidad, 10);
+        if (!Number.isFinite(cantidad)) return 1;
+        return Math.min(99, Math.max(1, cantidad));
+    }
+
+    function formatCopPrice(value) {
+        const amount = Number(value || 0);
+        return `$ ${amount.toLocaleString("es-CO", { maximumFractionDigits: 0 })}`;
+    }
+
+    function getProductPriceLabel(producto) {
+        return formatCopPrice(getProductPriceValue(producto));
+    }
+
+    function getOrderTotalValue() {
+        return getProductPriceValue(state.producto) * getOrderQuantity();
+    }
+
+    function getOrderPriceLabel() {
+        const cantidad = getOrderQuantity();
+        const total = getOrderTotalValue();
+        if (cantidad <= 1) return formatCopPrice(total);
+        return `${formatCopPrice(total)} (${cantidad} x ${getProductPriceLabel(state.producto)})`;
+    }
+
+    function productEndsAtStep3() {
+        const productoActual = normalizeProductKey(state.producto);
+        const identidadActual = normalizeProductKey(state.identidad);
+        const prendasTerminanPaso3 = ["rh", "gafete del nombre o apellido", "gafete", "presillas", "buso", "buso-manga-larga"];
+        const isGorraSinEstampado = productoActual === "gorra" && ["ejercito", "armada"].includes(identidadActual);
+        return prendasTerminanPaso3.includes(productoActual) || isGorraSinEstampado;
+    }
+
+    function updateFinalQuantityPlacement() {
+        const cantidadContainer = document.getElementById("cantidad-final-container");
+        if (!cantidadContainer) return;
+
+        const shouldShow = state.pasoActual === 4 || (state.pasoActual === 3 && productEndsAtStep3());
+        cantidadContainer.classList.toggle("seccion-hidden", !shouldShow);
+
+        if (shouldShow) {
+            const activeStep = document.getElementById(`paso${state.pasoActual}`);
+            const botonesNav = activeStep?.querySelector(".botones-navegacion");
+            if (activeStep && botonesNav) {
+                activeStep.insertBefore(cantidadContainer, botonesNav);
+            }
+        } else {
+            document.getElementById("panel-vista-previa")?.appendChild(cantidadContainer);
+        }
+    }
+
+    function validarCantidadFinal() {
+        const inputCantidad = document.getElementById("input-cantidad-prendas");
+        const cantidad = Number.parseInt(inputCantidad?.value || state.cantidad, 10);
+        if (!Number.isFinite(cantidad) || cantidad < 1 || cantidad > 99) {
+            showUserToast("Selecciona una cantidad entre 1 y 99 prendas.", "warning", { durationMs: 6500 });
+            return false;
+        }
+        state.cantidad = cantidad;
+        return true;
+    }
+
+    function getTodayInputDate() {
+        const today = new Date();
+        const year = today.getFullYear();
+        const month = String(today.getMonth() + 1).padStart(2, "0");
+        const day = String(today.getDate()).padStart(2, "0");
+        return `${year}-${month}-${day}`;
+    }
+
+    function sanitizePhone(value) {
+        return String(value || "").replace(/\D/g, "").slice(0, 10);
+    }
+
+    function isValidEmail(value) {
+        return /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(String(value || "").trim());
+    }
+
+    function isValidContingencyDate(value) {
+        const dateValue = String(value || "").trim();
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(dateValue)) return false;
+        return dateValue >= CONTINGENCIA_MIN_DATE && dateValue <= getTodayInputDate();
+    }
+
+    function formatDateForDisplay(value) {
+        const dateValue = String(value || "").trim();
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(dateValue)) return "";
+        const [year, month, day] = dateValue.split("-");
+        return `${day}/${month}/${year}`;
+    }
+
+    function parseDisplayDateToInput(value) {
+        const dateValue = String(value || "").trim();
+        const match = dateValue.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+        if (!match) return "";
+        return `${match[3]}-${match[2]}-${match[1]}`;
+    }
+
+    function setupContingencyDateLimit() {
+        const inputFechaContingencia = document.getElementById("input-fecha-contingencia");
+        if (!inputFechaContingencia) return;
+        inputFechaContingencia.min = CONTINGENCIA_MIN_DATE;
+        inputFechaContingencia.max = getTodayInputDate();
+    }
+
+    function captureStepOneInputs() {
+        const inputNombre = document.getElementById("input-nombre");
+        const inputRango = document.getElementById("input-rango");
+        const inputDireccion = document.getElementById("input-direccion");
+        const inputCorreo = document.getElementById("input-correo");
+        const inputTelefono = document.getElementById("input-telefono");
+        const inputFechaContingencia = document.getElementById("input-fecha-contingencia");
+        const inputTalla = document.getElementById("input-talla");
+        const inputCantidad = document.getElementById("input-cantidad-prendas");
+
+        if (inputNombre) state.nombre = inputNombre.value;
+        if (inputRango) state.rango = inputRango.value;
+        if (inputDireccion) state.direccion = inputDireccion.value;
+        if (inputCorreo) state.correo = inputCorreo.value.trim();
+        if (inputTelefono) {
+            inputTelefono.value = sanitizePhone(inputTelefono.value);
+            state.telefono = inputTelefono.value;
+        }
+        if (inputFechaContingencia) {
+            state.fechaContingencia = inputFechaContingencia.value;
+            state.anoContingencia = formatDateForDisplay(inputFechaContingencia.value);
+        }
+        if (inputTalla && inputTalla.value) state.talla = inputTalla.value;
+        if (inputCantidad) {
+            state.cantidad = Math.min(99, Math.max(1, Number.parseInt(inputCantidad.value, 10) || 1));
+            inputCantidad.value = state.cantidad;
+        }
+    }
+
+    function saveOrderDraft() {
+        try {
+            captureStepOneInputs();
+            const draft = {};
+            PERSISTED_STATE_KEYS.forEach((key) => {
+                draft[key] = state[key] ?? "";
+            });
+            localStorage.setItem(ORDER_DRAFT_STORAGE_KEY, JSON.stringify(draft));
+        } catch (error) {
+            console.warn("No se pudo guardar el borrador de la orden personalizada:", error);
+        }
+    }
+
+    function restoreOrderDraft() {
+        try {
+            const rawDraft = localStorage.getItem(ORDER_DRAFT_STORAGE_KEY);
+            if (!rawDraft) return;
+            const draft = JSON.parse(rawDraft);
+            if (!draft || typeof draft !== "object") return;
+
+            PERSISTED_STATE_KEYS.forEach((key) => {
+                if (Object.prototype.hasOwnProperty.call(draft, key)) {
+                    state[key] = draft[key];
+                }
+            });
+
+            state.pasoActual = Math.min(4, Math.max(1, Number(state.pasoActual) || 1));
+            state.producto = normalizeProductKey(state.producto);
+            state.telefono = sanitizePhone(state.telefono);
+            state.cantidad = Math.min(99, Math.max(1, Number.parseInt(state.cantidad, 10) || 1));
+            if (!state.fechaContingencia && state.anoContingencia) {
+                state.fechaContingencia = parseDisplayDateToInput(state.anoContingencia);
+            }
+            if (state.fechaContingencia && !isValidContingencyDate(state.fechaContingencia)) {
+                state.fechaContingencia = "";
+                state.anoContingencia = "";
+            }
+
+            const inputNombre = document.getElementById("input-nombre");
+            const inputRango = document.getElementById("input-rango");
+            const inputDireccion = document.getElementById("input-direccion");
+            const inputCorreo = document.getElementById("input-correo");
+            const inputTelefono = document.getElementById("input-telefono");
+            const inputFechaContingencia = document.getElementById("input-fecha-contingencia");
+            const inputTalla = document.getElementById("input-talla");
+            const inputCantidad = document.getElementById("input-cantidad-prendas");
+
+            if (inputNombre) inputNombre.value = state.nombre || "";
+            if (inputRango) inputRango.value = state.rango || "";
+            if (inputDireccion) inputDireccion.value = state.direccion || "";
+            if (inputCorreo) inputCorreo.value = state.correo || "";
+            if (inputTelefono) inputTelefono.value = state.telefono || "";
+            if (inputFechaContingencia) inputFechaContingencia.value = state.fechaContingencia || "";
+            if (inputTalla && state.talla) inputTalla.value = state.talla;
+            if (inputCantidad) inputCantidad.value = getOrderQuantity();
+
+            setActiveClass(document.querySelectorAll("[data-opcion]"), (element) => element.dataset.opcion === state.identidad, "activo");
+            setActiveClass(document.querySelectorAll("[data-tecnica]"), (element) => element.dataset.tecnica === state.tecnica, "activo");
+            setActiveClass(document.querySelectorAll("[data-producto]"), (element) => normalizeProductKey(element.dataset.producto) === normalizeProductKey(state.producto), "seleccionada");
+            setActiveClass(document.querySelectorAll("[data-color]"), (element) => element.dataset.color === state.color, "seleccionada");
+            setActiveClass(document.querySelectorAll("[data-genero]"), (element) => element.dataset.genero === state.genero, "activo");
+
+            if (btnVistaDelantera && btnVistaTrasera) {
+                btnVistaDelantera.classList.toggle("active", state.vistaPrenda !== "trasera");
+                btnVistaTrasera.classList.toggle("active", state.vistaPrenda === "trasera");
+            }
+
+            updateTabsByProduct();
+            updateEstampados();
+            updateTallaVisibility();
+            updateColorAvailability();
+            setActiveClass(document.querySelectorAll("[data-color]"), (element) => element.dataset.color === state.color, "seleccionada");
+            restoreEstampadoSelection();
+        } catch (error) {
+            console.warn("No se pudo restaurar el borrador de la orden personalizada:", error);
+        }
+    }
+
+    function restoreEstampadoSelection() {
+        const estampado = String(state.estampado || "");
+        if (!estampado) return;
+
+        let baseEstampado = estampado;
+        if (estampado.startsWith("distintivos")) baseEstampado = "distintivos";
+        if (estampado.startsWith("escudos")) baseEstampado = "escudos";
+
+        setActiveClass(
+            document.querySelectorAll("[data-estampado]"),
+            (element) => element.dataset.estampado === baseEstampado,
+            "seleccionada"
+        );
+
+        const selectDistintivo = document.getElementById("select-distintivo");
+        const dropdownDistintivos = document.getElementById("dropdown-distintivos-container");
+        if (baseEstampado === "distintivos" && selectDistintivo) {
+            if (dropdownDistintivos) dropdownDistintivos.style.display = "block";
+            selectDistintivo.value = estampado.replace("distintivos - ", "");
+        }
+
+        const selectEscudo = document.getElementById("select-escudo");
+        const dropdownEscudos = document.getElementById("dropdown-escudos-container");
+        if (baseEstampado === "escudos" && selectEscudo) {
+            if (dropdownEscudos) dropdownEscudos.style.display = "block";
+            selectEscudo.value = estampado.replace("escudos - ", "");
+        }
+    }
+
+    function getPreviewImageFit() {
+        const productName = (state.producto || "").toLowerCase().trim();
+        const isBack = state.vistaPrenda === "trasera";
+        const fit = {
+            width: "92%",
+            maxWidth: "500px",
+            maxHeight: "96%",
+            objectPosition: "center center",
+            transform: "none"
+        };
+
+        if (productName === "guerrera") {
+            fit.width = isBack ? "109%" : "107%";
+            fit.maxWidth = isBack ? "563px" : "545px";
+            fit.maxHeight = "99%";
+            fit.objectPosition = "center center";
+        }
+
+        if (productName === "buso") {
+            fit.width = isBack ? "107%" : "105%";
+            fit.maxWidth = isBack ? "551px" : "532px";
+            fit.maxHeight = "99%";
+        }
+
+        if (productName === "buso_tactico" || productName === "buso tactico" || productName === "buso-tactico") {
+            fit.width = isBack ? "107%" : "105%";
+            fit.maxWidth = isBack ? "551px" : "532px";
+            fit.maxHeight = "99%";
+        }
+
+        if (productName === "buso-manga-larga" || productName === "buso_manga_larga" || productName === "buso manga larga") {
+            fit.width = isBack ? "107%" : "105%";
+            fit.maxWidth = isBack ? "551px" : "532px";
+            fit.maxHeight = "99%";
+        }
+
+        return fit;
+    }
+
+    function getPreviewFrameFit() {
+        const productName = (state.producto || "").toLowerCase().trim();
+        const isBack = state.vistaPrenda === "trasera";
+        const frame = {
+            minHeight: "430px",
+            height: "min(500px, 64vh)",
+            padding: "0.8rem"
+        };
+
+        if (productName === "guerrera") {
+            frame.minHeight = "500px";
+            frame.height = "min(560px, 72vh)";
+            frame.padding = isBack ? "0.75rem" : "0.85rem";
+        }
+
+        if (productName === "buso" || productName === "buso_tactico" || productName === "buso tactico" || productName === "buso-tactico" || productName === "buso-manga-larga" || productName === "buso_manga_larga" || productName === "buso manga larga") {
+            frame.minHeight = isBack ? "500px" : "480px";
+            frame.height = isBack ? "min(560px, 72vh)" : "min(535px, 68vh)";
+            frame.padding = isBack ? "0.75rem" : "0.9rem";
+        }
+
+        return frame;
+    }
+
+    function applyPreviewFrameFit(containerEl) {
+        if (!containerEl) return;
+        const frame = getPreviewFrameFit();
+        containerEl.style.minHeight = frame.minHeight;
+        containerEl.style.height = frame.height;
+        containerEl.style.padding = frame.padding;
+    }
+
+    function applyPreviewImageFit(imgEl) {
+        if (!imgEl) return;
+        const fit = getPreviewImageFit();
+        imgEl.style.width = fit.width;
+        imgEl.style.height = "auto";
+        imgEl.style.maxWidth = fit.maxWidth;
+        imgEl.style.maxHeight = fit.maxHeight;
+        imgEl.style.objectFit = "contain";
+        imgEl.style.objectPosition = fit.objectPosition;
+        imgEl.style.transform = fit.transform;
+    }
 
     // Elementos del panel derecho (vista previa) - NUEVOS IDs
     const productoInfoPreview = document.getElementById("preview-producto");
@@ -54,6 +532,7 @@ try {
     const colorInfoPreview = document.getElementById("preview-color");
     const estampadoInfoPreview = document.getElementById("preview-estampado");
     const tallaInfoPreview = document.getElementById("preview-talla");
+    const cantidadInfoPreview = document.getElementById("preview-cantidad");
     const precioInfoPreview = document.getElementById("preview-precio");
     const btnVistaDelantera = document.getElementById("btn-vista-delantera");
     const btnVistaTrasera = document.getElementById("btn-vista-trasera");
@@ -81,7 +560,7 @@ try {
             gorra: "??",
             paoleta: "??",
             panoleta: "??",
-            "pañoleta": "??",
+            "paÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â±oleta": "??",
             "buso-manga-larga": "??",
             "buso_tactico": "??",
             "buso tactico": "??",
@@ -202,24 +681,24 @@ try {
             }
         }
 
-        // PAÑOLETA
-        if (productName.includes("pañoleta") || productName.includes("panoleta") || productName.includes("paoleta")) {
+        // PAÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¹Ãƒâ€¦Ã¢â‚¬Å“OLETA
+        if (productName.includes("paÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â±oleta") || productName.includes("panoleta") || productName.includes("paoleta")) {
             if (identidad === "ejercito") {
                 return isBack 
-                    ? "/static/img/prendas/ejercito/pañoletas/detras.png"
-                    : "/static/img/prendas/ejercito/pañoletas/frente.png";
+                    ? "/static/img/prendas/ejercito/paÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â±oletas/detras.png"
+                    : "/static/img/prendas/ejercito/paÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â±oletas/frente.png";
             } else if (identidad === "gaula") {
                 return isBack 
-                    ? "/static/img/prendas/gaula/Pañoletas/detras.png"
-                    : "/static/img/prendas/gaula/Pañoletas/frente.png";
+                    ? "/static/img/prendas/gaula/PaÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â±oletas/detras.png"
+                    : "/static/img/prendas/gaula/PaÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â±oletas/frente.png";
             } else if (identidad === "policia") {
                 return isBack 
-                    ? "/static/img/prendas/Policia/pañoletas/detras.png"
-                    : "/static/img/prendas/Policia/pañoletas/frente.png";
+                    ? "/static/img/prendas/Policia/paÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â±oletas/detras.png"
+                    : "/static/img/prendas/Policia/paÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â±oletas/frente.png";
             } else if (identidad === "armada") {
                 return isBack
-                    ? "/static/img/prendas/armada/pañoleta/detras.png"
-                    : "/static/img/prendas/armada/pañoleta/frente.png";
+                    ? "/static/img/prendas/armada/paÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â±oleta/detras.png"
+                    : "/static/img/prendas/armada/paÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â±oleta/frente.png";
             }
         }
         
@@ -347,13 +826,13 @@ try {
             if (identidad === "armada") return isBack ? `/static/img/prendas/armada/gorra/espaldar-armada.png` : `/static/img/prendas/armada/gorra/gorra ${colorName.replace("-claro", "")}.png`;
         }
 
-        // PAÑOLETA
-        if (productName.includes("pañoleta") || productName.includes("panoleta") || productName.includes("paoleta")) {
+        // PAÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¹Ãƒâ€¦Ã¢â‚¬Å“OLETA
+        if (productName.includes("paÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â±oleta") || productName.includes("panoleta") || productName.includes("paoleta")) {
             let c = colorName.replace('-claro', '').replace('-noche', '');
-            if (identidad === "ejercito") return isBack ? `/static/img/prendas/ejercito/pañoletas/detras.png` : `/static/img/prendas/ejercito/pañoletas/panoleta_${c}.png`;
-            if (identidad === "policia") return isBack ? `/static/img/prendas/Policia/pañoletas/detras.png` : `/static/img/prendas/Policia/pañoletas/${c}.png`;
-            if (identidad === "gaula") return isBack ? `/static/img/prendas/gaula/Pañoletas/detras.png` : `/static/img/prendas/gaula/Pañoletas/panoleta_${c}.png`;
-            if (identidad === "armada") return isBack ? `/static/img/prendas/armada/pañoleta/detras.png` : (colorName === "verde" || colorName === "verde-claro" ? `/static/img/prendas/armada/pañoleta/pañoleta verde .png` : `/static/img/prendas/armada/pañoleta/panoleta_${c}.png`);
+            if (identidad === "ejercito") return isBack ? `/static/img/prendas/ejercito/paÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â±oletas/detras.png` : `/static/img/prendas/ejercito/paÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â±oletas/panoleta_${c}.png`;
+            if (identidad === "policia") return isBack ? `/static/img/prendas/Policia/paÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â±oletas/detras.png` : `/static/img/prendas/Policia/paÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â±oletas/${c}.png`;
+            if (identidad === "gaula") return isBack ? `/static/img/prendas/gaula/PaÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â±oletas/detras.png` : `/static/img/prendas/gaula/PaÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â±oletas/panoleta_${c}.png`;
+            if (identidad === "armada") return isBack ? `/static/img/prendas/armada/paÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â±oleta/detras.png` : (colorName === "verde" || colorName === "verde-claro" ? `/static/img/prendas/armada/paÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â±oleta/paÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â±oleta verde .png` : `/static/img/prendas/armada/paÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â±oleta/panoleta_${c}.png`);
         }
         
         // RH
@@ -375,7 +854,7 @@ try {
             if (identidad === "policia") {
                 const bg = colorName === 'azul-noche' ? 'azul' : colorName;
                 
-                // Mapeo detallado de archivos que s existen en la carpeta de la Polica:
+                // Mapeo detallado de archivos que sÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â­ existen en la carpeta de la PolicÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â­a:
                 const policiaRhMap = {
                     "A+azul": "A+,azul.png",
                     "A+verde": "A+-verde.png",
@@ -528,10 +1007,167 @@ try {
         return colorHexMap[colorName] || "#cccccc";
     }
 
+    function getCurrentPreviewImage() {
+        const p = (state.producto || "").toLowerCase();
+        let imagen = null;
+
+        if (state.pasoActual >= 3 && state.color) {
+            if (p === "rh" && !state.modeloRh) {
+                imagen = getProductImage();
+            } else if ((p === "presillas" || p === "presilla") && !state.modeloPresilla) {
+                imagen = getProductImage();
+            } else {
+                imagen = getProductColorImage(state.color);
+            }
+        }
+
+        if (!imagen) {
+            if (["paÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â±oleta", "paÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â±oleta", "panoleta", "paoleta"].includes(p) && state.pasoActual >= 3 && !state.color) {
+                imagen = "";
+            } else {
+                imagen = getProductImage();
+            }
+        }
+
+        return imagen || "";
+    }
+
+    function esProductoGafete() {
+        const producto = normalizeProductKey(state.producto);
+        return producto === "gafete del nombre o apellido" || producto === "gafete";
+    }
+
+    function _obtenerRectRelativo(contenedorRect, elemento) {
+        if (!elemento) return null;
+        const rect = elemento.getBoundingClientRect();
+        if (!rect.width || !rect.height) return null;
+        return {
+            x: rect.left - contenedorRect.left,
+            y: rect.top - contenedorRect.top,
+            width: rect.width,
+            height: rect.height,
+        };
+    }
+
+    function _esperarImagenLista(imgEl) {
+        return new Promise((resolve) => {
+            if (!imgEl) {
+                resolve(false);
+                return;
+            }
+            if (imgEl.complete && imgEl.naturalWidth > 0) {
+                resolve(true);
+                return;
+            }
+            const onLoad = () => {
+                cleanup();
+                resolve(true);
+            };
+            const onError = () => {
+                cleanup();
+                resolve(false);
+            };
+            const cleanup = () => {
+                imgEl.removeEventListener("load", onLoad);
+                imgEl.removeEventListener("error", onError);
+            };
+            imgEl.addEventListener("load", onLoad, { once: true });
+            imgEl.addEventListener("error", onError, { once: true });
+            setTimeout(() => {
+                cleanup();
+                resolve(imgEl.complete && imgEl.naturalWidth > 0);
+            }, 500);
+        });
+    }
+
+    function _pintarTextoOverlay(ctx, contenedorRect, textoEl) {
+        if (!textoEl) return;
+        const texto = String(textoEl.textContent || "").trim();
+        if (!texto) return;
+        const style = window.getComputedStyle(textoEl);
+        if (style.display === "none" || style.visibility === "hidden" || Number(style.opacity) === 0) return;
+        const rect = _obtenerRectRelativo(contenedorRect, textoEl);
+        if (!rect) return;
+
+        const fontStyle = style.fontStyle || "normal";
+        const fontWeight = style.fontWeight || "700";
+        const fontSize = style.fontSize || "16px";
+        const fontFamily = style.fontFamily || "Arial, sans-serif";
+        ctx.font = `${fontStyle} ${fontWeight} ${fontSize} ${fontFamily}`;
+        ctx.fillStyle = style.color || "#000000";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText(texto, rect.x + rect.width / 2, rect.y + rect.height / 2);
+    }
+
+    async function exportarPreviewPersonalizadoDataUrl() {
+        const contenedor = document.getElementById("preview-container");
+        const imagen = document.getElementById("imagen-producto");
+        if (!contenedor || !imagen) return "";
+
+        const imagenLista = await _esperarImagenLista(imagen);
+        if (!imagenLista) return "";
+
+        const contenedorRect = contenedor.getBoundingClientRect();
+        if (!contenedorRect.width || !contenedorRect.height) return "";
+
+        const escala = 2;
+        const canvas = document.createElement("canvas");
+        canvas.width = Math.max(1, Math.round(contenedorRect.width * escala));
+        canvas.height = Math.max(1, Math.round(contenedorRect.height * escala));
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return "";
+        ctx.scale(escala, escala);
+
+        const rectImagen = _obtenerRectRelativo(contenedorRect, imagen);
+        if (rectImagen) {
+            ctx.drawImage(imagen, rectImagen.x, rectImagen.y, rectImagen.width, rectImagen.height);
+        }
+
+        const rangoOverlayImg = document.getElementById("rango-overlay-img");
+        if (rangoOverlayImg) {
+            const styleOverlayImg = window.getComputedStyle(rangoOverlayImg);
+            if (styleOverlayImg.display !== "none" && styleOverlayImg.visibility !== "hidden" && Number(styleOverlayImg.opacity) !== 0) {
+                const overlayLista = await _esperarImagenLista(rangoOverlayImg);
+                if (overlayLista) {
+                    const rectOverlayImg = _obtenerRectRelativo(contenedorRect, rangoOverlayImg);
+                    if (rectOverlayImg) {
+                        ctx.drawImage(
+                            rangoOverlayImg,
+                            rectOverlayImg.x,
+                            rectOverlayImg.y,
+                            rectOverlayImg.width,
+                            rectOverlayImg.height
+                        );
+                    }
+                }
+            }
+        }
+
+        const overlayRango = document.getElementById("overlay-rango");
+        const overlayNombre = document.getElementById("overlay-nombre");
+        _pintarTextoOverlay(ctx, contenedorRect, overlayRango);
+        _pintarTextoOverlay(ctx, contenedorRect, overlayNombre);
+
+        try {
+            return canvas.toDataURL("image/png");
+        } catch (error) {
+            console.warn("No se pudo exportar el preview personalizado:", error);
+            return "";
+        }
+    }
+
+    async function obtenerImagenPreviewParaPayload() {
+        const imagenBase = getCurrentPreviewImage();
+        if (!esProductoGafete()) return imagenBase;
+        const dataUrl = await exportarPreviewPersonalizadoDataUrl();
+        return dataUrl || imagenBase;
+    }
+
     function updateSummary() {
         const producto = productLabels[state.producto] || formatLabel(state.producto);
         const identidad = formatLabel(state.identidad);
-        const tecnica = state.tecnica === "bordado" ? "Bordado" : "Impresion";
+        const tecnica = state.tecnica === "bordado" ? "Bordado" : "ImpresiÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â³n";
         const color = formatLabel(state.color);
         const estampado = state.estampado ? formatLabel(state.estampado) : "Pendiente";
         const talla = state.talla || "Pendiente";
@@ -547,15 +1183,15 @@ try {
             modeloTxt = ` | Rango: ${state.modeloPresilla}`;
         }
         
-        const isEspecial = ["rh", "presillas", "gafete", "gafete del nombre o apellido", "pañoleta", "paoleta", "panoleta", "paÃ±oleta", "gorra"].includes((state.producto || "").toLowerCase());
+        const isEspecial = ["rh", "presillas", "gafete", "gafete del nombre o apellido", "paÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â±oleta", "paoleta", "panoleta", "paÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â±oleta", "gorra"].includes((state.producto || "").toLowerCase());
         
         let descripcionCompleta = `${identidad}`;
         
-        // El buso manga larga y el buso no llevan la tÃ©cnica (por ser sublimados por defecto)
+        // El buso manga larga y el buso no llevan la tÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â©cnica (por ser sublimados por defecto)
         const esMangaBusoOnly = ["buso", "buso-manga-larga", "buso_manga_larga", "buso manga larga"].includes((state.producto || "").toLowerCase());
         const esCualquierBuso = ["buso", "buso-manga-larga", "buso_manga_larga", "buso manga larga", "buso_tactico", "buso tactico", "buso-tactico"].includes((state.producto || "").toLowerCase());
         
-        // La tecnica (bordado/impresion) la llevan todos EXCEPTO los busos manga larga y el buso (y en gorras sÃ­)
+        // La tÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â©cnica (bordado/impresiÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â³n) la llevan todos excepto los busos manga larga y el buso.
         if (!esMangaBusoOnly) {
             descripcionCompleta += ` | ${tecnica}`;
         }
@@ -628,11 +1264,12 @@ try {
             tallaInfoPreview.textContent = isEspecial ? "No aplica" : (state.talla || "Pendiente");
             const filaTalla = tallaInfoPreview.parentElement;
             if (filaTalla && filaTalla.classList.contains('info-item')) {
-                // Ocultar si es especial, O si la talla no ha sido seleccionada aÃºn (talla es vacÃ­a o null)
+                // Ocultar si es especial, o si la talla no ha sido seleccionada aÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Âºn (talla vacÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â­a o null)
                 filaTalla.style.display = (isEspecial || !state.talla) ? 'none' : 'flex';
             }
         }
-        if (precioInfoPreview) precioInfoPreview.textContent = priceMap[state.producto] || "$ 45.000";
+        if (cantidadInfoPreview) cantidadInfoPreview.textContent = getOrderQuantity();
+        if (precioInfoPreview) precioInfoPreview.textContent = getOrderPriceLabel();
         if (descripcionInfoPreview) descripcionInfoPreview.textContent = descripcionCompleta;
         
         // Actualizar identidad y tcnica
@@ -658,35 +1295,12 @@ try {
             return hexMap[colorName] || "#cccccc";
         }
         
-        let imagen = null;
-        const p = (state.producto || "").toLowerCase();
-        
-        // Mostrar imagen a color SOLO si estamos en el paso 3 o superior, y hay color seleccionado.
-        if (state.pasoActual >= 3 && state.color) {
-            if (p === "rh" && !state.modeloRh) {
-                imagen = getProductImage(); // Si es RH falta el modelo, mostrar base
-            } else if ((p === "presillas" || p === "presilla") && !state.modeloPresilla) {
-                imagen = getProductImage(); // Si es Presilla falta el modelo, mostrar base
-            } else {
-                imagen = getProductColorImage(state.color);
-            }
-        }
-
-        // Si no hay imagen definida (por estar en paso < 3 o no tener color), usar la imagen base/molde
-        if (!imagen) {
-            // Para pañoletas, si estamos en paso 3 y no hay color, no mostrar nada
-            if (["pañoleta", "paÃ±oleta", "panoleta", "paoleta"].includes(p) && state.pasoActual >= 3 && !state.color) {
-                imagen = ""; // Sin imagen
-            } else {
-                // En pasos 1 y 2, o si es otro producto, mostrar siempre el boceto/molde
-                imagen = getProductImage();
-            }
-        }
+        const imagen = getCurrentPreviewImage();
         
         if (imagen) {
 
         // Siempre crear o actualizar el preview-container
-        // Aumentar un poco el tamaÃ±o si es un accesorio pequeÃ±o como Gafetes, RH o Presillas
+        // Aumentar un poco el tamaÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â±o si es un accesorio pequeÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â±o como gafetes, RH o presillas.
         let scaleStyle = "";
             const isGafete = state.producto === "gafete del nombre o apellido" || state.producto === "gafete";
             const isGorra = state.producto === "gorra";
@@ -703,24 +1317,30 @@ try {
             
             if (!existingContainer) {
                 preview.innerHTML = `
-                    <div id="preview-container" style="position: relative; text-align: center; background: white; width: 100%; height: 500px; display: flex; justify-content: center; align-items: center; overflow: hidden; border-radius: 8px;">
+                    <div id="preview-container" style="position: relative; text-align: center; background: transparent; width: 100%; min-height: 390px; height: min(430px, 58vh); padding: 1rem; display: flex; justify-content: center; align-items: center; overflow: hidden; border-radius: 18px;">
                         <style>
                             #imagen-producto {
-                                width: 100%;
-                                height: 100%;
-                                max-width: 500px;
-                                max-height: 500px;
+                                width: auto;
+                                height: auto;
+                                max-width: 430px;
+                                max-height: 88%;
                                 object-fit: contain;
-                                transition: transform 0.2s ease-in-out;
+                                object-position: center center;
+                                transition: transform 0.2s ease-in-out, max-width 0.2s ease-in-out, width 0.2s ease-in-out;
                                 z-index: 1;
                                 display: block;
                             }
                             #imagen-producto:hover {
-                                transform: scale(1.15);
+                                filter: drop-shadow(0 14px 22px rgba(20, 34, 58, 0.12));
                             }
                             @media (max-width: 768px) {
+                                #preview-container {
+                                    min-height: 320px;
+                                    height: 340px;
+                                }
                                 #imagen-producto {
                                     max-width: 300px;
+                                    max-height: 88%;
                                 }
                             }
                         </style>
@@ -736,6 +1356,9 @@ try {
                 `;
             }
             
+            existingContainer = preview.querySelector("#preview-container");
+            applyPreviewFrameFit(existingContainer);
+
             let imgEl = preview.querySelector("#imagen-producto");
             if (imagen) {
                 imgEl.src = imagen;
@@ -754,6 +1377,7 @@ try {
                 imgEl.style.display = 'none';
             }
             
+            applyPreviewImageFit(imgEl);
             if (isGafete || isRh) { imgEl.style.transform = "scale(1.3)"; } else if (isSmallItem) { imgEl.style.transform = "scale(1.3)"; } else { imgEl.style.transform = "none"; }
             
         let overlayEl = preview.querySelector("#gafete-overlay");
@@ -801,7 +1425,7 @@ try {
                 let topPosition = "50%";
                 
                 if (state.identidad === "policia") {
-                    // La Polica usa texto con estilo "nen"
+                    // La PolicÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â­a usa texto con estilo "nen".
                     if ((imagen && imagen.includes("verde")) || state.color === "verde-claro") {
                         textColor = "#d0d6c0"; // Blanco hueso / verde muy claro
                         shadowColor = "#394524"; // Sombra verde oliva oscuro
@@ -822,7 +1446,7 @@ try {
                     }
                     topPosition = "44%";
                 } else if (state.identidad === "ejercito" || state.identidad === "gaula" || state.identidad === "armada") {
-                    // Ejrcito, Gaula y Armada usan texto con efecto de bordado oscuro
+                    // EjÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â©rcito, Gaula y Armada usan texto con efecto de bordado oscuro.
                     if (state.identidad === "ejercito") {
                         textColor = "#1e2b14"; // Verde oliva muy oscuro
                         shadowColor = "rgba(0,0,0,0.8)";
@@ -873,7 +1497,7 @@ try {
                 }
                 
 
-                // Ajuste proporcional de tamaÃ±os para que sean equitativos y encajen y centrados
+                // Ajuste proporcional de tamaÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â±os para que sean equitativos y centrados.
                 divRango.style.fontWeight = "800";
                 divRango.style.color = textColor;
                 divRango.style.textShadow = shadowVal;
@@ -893,7 +1517,7 @@ try {
                 const rangoFinal = state.rango ? state.rango.charAt(0).toUpperCase() + state.rango.slice(1).toLowerCase() : 'Rango'; 
                 let nombreFinalRaw = state.nombre ? state.nombre.toUpperCase().trim() : 'NOMBRE';
                 
-                // LÃ³gica de EjÃ©rcito: Solo Apellido
+                // LÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â³gica de EjÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â©rcito: solo apellido.
                 const identId = state.identidad ? state.identidad.toLowerCase().trim() : '';
                 if (identId === 'ejercito' && nombreFinalRaw !== 'NOMBRE') {
                     let partes = nombreFinalRaw.split(/\s+/);
@@ -922,7 +1546,7 @@ try {
                 let maxCharsNombre = identId === 'ejercito' ? 8 : 10;
                 
                 if (identId === 'ejercito') {
-                    // Hacer el parche del gafete un poco mÃ¡s grande y bajarlo ligeramente si el contenedor lo permite
+                    // Hacer el parche del gafete un poco mÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¡s grande y bajarlo si el contenedor lo permite.
                     imgEl.style.transform = "scale(1.6)";
                     overlayEl.style.transform = "translate(-50%, -50%) scale(1.6)";
                 } else {
@@ -937,7 +1561,7 @@ try {
                     divNombre.style.fontSize = baseNombreSize + "px";
                 }
                 
-                // Escalar el rango para que sea equitativo y mas pequeÃ±o y centrado
+                // Escalar el rango para que sea equitativo, mÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¡s pequeÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â±o y centrado.
                 let baseRangoSize = identId === 'ejercito' ? 5 : 14;
                 let maxCharsRango = identId === 'ejercito' ? 18 : 12;
                 if (rangoFinal.length > maxCharsRango) {
@@ -954,7 +1578,7 @@ try {
                 if (rhOverlayEl) rhOverlayEl.style.display = "none";
             }
 
-            // LÃ³gica del OVERLAY para RANGOS en Busos y Gorras:
+            // LÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â³gica del overlay para rangos en busos y gorras:
             const esMuestraDistintivo = (esCualquierBuso || isGorra) && state.estampado && state.estampado.startsWith("distintivos - ") && state.vistaPrenda !== "trasera";
             if (esMuestraDistintivo) {
                 // Limpiar el String "distintivos - Coronel" -> "Coronel"
@@ -967,7 +1591,7 @@ try {
                     rangoFormat = rangoFormat.replace(/\s*\/\s*/g, " "); // espacios mantenidos
                     
                     if (isGorra) {
-                        // Para las gorras, las imÃ¡genes de rangos no son overlays pequeÃ±os, son LA GORRA COMPLETA con el rango.
+                        // Para las gorras, las imÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¡genes de rangos no son overlays pequeÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â±os, son la gorra completa con el rango.
                         // Entonces, reemplazamos la imagen principal de la prenda y ocultamos el overlay.
                         if (identId === "policia" && !rangoFormat.includes("azul") && !rangoFormat.includes("verde")) {
                             if (state.color === "azul-noche" || state.color === "negro" || !state.color) {
@@ -976,7 +1600,7 @@ try {
                                 rangoFormat += " verde";
                             }
                         } else if (identId === "gaula") {
-                            // En Gaula la carpeta es "gorras" en vez de "gorra". AdemÃ¡s, hay espacios raros en algunos archivos.
+                            // En Gaula la carpeta es "gorras" en vez de "gorra"; ademÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¡s hay espacios raros en algunos archivos.
                             let baseName = rangoFormat.trim();
                             if (state.color === "verde-claro") {
                                 // Maps for green distinctives
@@ -1109,17 +1733,17 @@ try {
             }
 
 
-        // Escudos en paÃ±oletas
-        const isPanoleta = ['pañoleta', 'paÃ±oleta', 'panoleta', 'paoleta'].includes((state.producto || '').toLowerCase());
+        // Escudos en paÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â±oletas
+        const isPanoleta = ['paÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â±oleta', 'paÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â±oleta', 'panoleta', 'paoleta'].includes((state.producto || '').toLowerCase());
         if (isPanoleta && state.estampado && state.estampado.toLowerCase().startsWith('escudos') && state.vistaPrenda !== 'trasera') {
-            // El dropdown solo da options Escudo 1 / Escudo 2. Ajustarlos segÃºn sea la lÃ³gica si tienen archivos  distintos
-            // De lo contrario mantenemos la lÃ³gica actual pero mostramos la imÃ¡gen base a color si no hay selecciÃ³n
+            // El dropdown solo da opciones Escudo 1 / Escudo 2. Ajustarlas segÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Âºn la lÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â³gica si tienen archivos distintos.
+            // De lo contrario mantenemos la lÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â³gica actual y mostramos la imagen base a color si no hay selecciÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â³n.
 
             const identId = state.identidad ? state.identidad.toLowerCase().trim() : 'policia';
             let escImgSrc = '';
             let c = (state.color || 'verde-claro').replace('-claro', '').replace('-noche', '');
 
-            // Agregar la lÃ³gica para diferentes escudos aquÃ­ si tienes diferentes archivos,
+            // Agregar la lÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â³gica para diferentes escudos aquÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â­ si tienes diferentes archivos.
             // por ejemplo para "Escudo 2" usar un archivo diferente.
             // Para mantenerlo sencillo, se usa la imagen de color si escogieron el escudo
 
@@ -1132,41 +1756,41 @@ try {
 
                 // Si seleccionaron escudo 2, agregar su path si aplica
                 if (state.estampado.includes('Estilo 3') || state.estampado.includes('Escudo 3')) {
-                     escImgSrc = `/static/img/estampados/ejercito/pañoleta/Escudos/estilo3.png`;
+                     escImgSrc = `/static/img/estampados/ejercito/paÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â±oleta/Escudos/estilo3.png`;
                 } else if (state.estampado.includes('Estilo ,3')) {
-                     escImgSrc = `/static/img/estampados/ejercito/pañoleta/Escudos/estilo,3.png`;
+                     escImgSrc = `/static/img/estampados/ejercito/paÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â±oleta/Escudos/estilo,3.png`;
                 } else if (state.estampado.includes('Estilo 2') || state.estampado.includes('Escudo 2')) {
-                     escImgSrc = `/static/img/estampados/ejercito/pañoleta/Escudos/estilo2.png`;
+                     escImgSrc = `/static/img/estampados/ejercito/paÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â±oleta/Escudos/estilo2.png`;
                 } else if (state.estampado.includes('Estilo ,2')) {
-                     escImgSrc = `/static/img/estampados/ejercito/pañoleta/Escudos/estilo,2.png`;
+                     escImgSrc = `/static/img/estampados/ejercito/paÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â±oleta/Escudos/estilo,2.png`;
                 } else if (state.estampado.includes('Estilo 1') || state.estampado.includes('Escudo 1')) {
-                     escImgSrc = `/static/img/estampados/ejercito/pañoleta/Escudos/estilo-1.png`;
+                     escImgSrc = `/static/img/estampados/ejercito/paÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â±oleta/Escudos/estilo-1.png`;
                 } else if (state.estampado.includes('Estilo -1')) {
-                     escImgSrc = `/static/img/estampados/ejercito/pañoleta/Escudos/estilo1.png`;
+                     escImgSrc = `/static/img/estampados/ejercito/paÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â±oleta/Escudos/estilo1.png`;
                 } else {
                      // Default
-                     escImgSrc = `/static/img/estampados/ejercito/pañoleta/Escudos/estilo-1.png`;
+                     escImgSrc = `/static/img/estampados/ejercito/paÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â±oleta/Escudos/estilo-1.png`;
                 }
             }
             else if (identId === 'gaula') {
                 if (state.color === "negro") {
                     if (state.estampado.includes('Estilo 2') || state.estampado.includes('Escudo 2')) {
-                        escImgSrc = `/static/img/estampados/gaula/pañoleta/Escudos/estampado 2.png`;
+                        escImgSrc = `/static/img/estampados/gaula/paÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â±oleta/Escudos/estampado 2.png`;
                     } else {
-                        escImgSrc = `/static/img/estampados/gaula/pañoleta/Escudos/estampado 1.png`;
+                        escImgSrc = `/static/img/estampados/gaula/paÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â±oleta/Escudos/estampado 1.png`;
                     }
                 } else {
                     if (state.estampado.includes('Estilo 2') || state.estampado.includes('Escudo 2')) {
-                        escImgSrc = `/static/img/estampados/gaula/pañoleta/Escudos/estampado2.png`;
+                        escImgSrc = `/static/img/estampados/gaula/paÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â±oleta/Escudos/estampado2.png`;
                     } else {
-                        escImgSrc = `/static/img/estampados/gaula/pañoleta/Escudos/estampado1.png`;
+                        escImgSrc = `/static/img/estampados/gaula/paÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â±oleta/Escudos/estampado1.png`;
                     }
                 }
             }
             else if (identId === 'armada') {
-                escImgSrc = `/static/img/estampados/armada/pañoleta/Escudos/${c === 'negro' ? 'negro.png' : 'verde.png'}`;
+                escImgSrc = `/static/img/estampados/armada/paÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â±oleta/Escudos/${c === 'negro' ? 'negro.png' : 'verde.png'}`;
             }
-            else escImgSrc = `/static/img/estampados/Policia/pañoleta/Escudos/pañoleta ${c.includes('azul') ? 'azul' : 'verde'}.png`; 
+            else escImgSrc = `/static/img/estampados/Policia/paÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â±oleta/Escudos/paÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â±oleta ${c.includes('azul') ? 'azul' : 'verde'}.png`; 
             
             // En caso que el substring sea vacio o "escudos"
             if (state.estampado.trim().toLowerCase() === "escudos") {
@@ -1197,6 +1821,8 @@ try {
                 </div>
             `;
         }
+
+        saveOrderDraft();
     }
 
     function updateStepIndicators() {
@@ -1220,30 +1846,30 @@ try {
     function validarPaso(paso) {
         switch(paso) {
             case 1:
-                return validarPaso1Realtime(true);
+                return validarPaso1Realtime(false);
             case 2:
                 if (!state.producto) {
-                    alert("?? Por favor selecciona un Producto");
+                    showUserToast("Por favor selecciona un producto.", "warning", { durationMs: 6500 });
                     return false;
                 }
                 break;
             case 3:
                 if (!state.color) {
-                    alert("?? Por favor selecciona un Color");
+                    showUserToast("Por favor selecciona un color.", "warning", { durationMs: 6500 });
                     return false;
                 }
                 if (state.producto === "rh" && !state.modeloRh) {
-                    alert("?? Por favor selecciona un Tipo de RH");
+                    showUserToast("Por favor selecciona un tipo de RH.", "warning", { durationMs: 6500 });
                     return false;
                 }
                 if ((state.producto === "presillas" || state.producto === "presilla") && !state.modeloPresilla) {
-                    alert("?? Por favor selecciona un Rango");
+                    showUserToast("Por favor selecciona un rango.", "warning", { durationMs: 6500 });
                     return false;
                 }
                 break;
             case 4:
                 if (!state.estampado) {
-                    alert("?? Por favor selecciona un Estampado");
+                    showUserToast("Por favor selecciona un estampado.", "warning", { durationMs: 6500 });
                     return false;
                 }
                 break;
@@ -1263,12 +1889,10 @@ try {
             
             // Lgica para el botn del paso 3
             if (btnPasos3) {
-                const prendasTerminanPaso3 = ["rh", "gafete del nombre o apellido", "gafete", "presillas", "buso", "buso-manga-larga"];
-                const isGorraEjercito = productoActual === "gorra" && state.identidad && state.identidad.toLowerCase() === "ejercito";
-                if (prendasTerminanPaso3.includes(productoActual) || isGorraEjercito) {
-                    btnPasos3.textContent = "Finalizar";
+                if (productEndsAtStep3()) {
+                    btnPasos3.innerHTML = '<i class="fas fa-check"></i> Finalizar';
                 } else {
-                    btnPasos3.textContent = "Siguiente";
+                    btnPasos3.innerHTML = 'Siguiente <i class="fas fa-arrow-right"></i>';
                 }
             }
             
@@ -1276,9 +1900,9 @@ try {
             if (btnPasos4) {
                 const prendasTerminanPaso4 = ["paoleta", "gorra"];
                 if (prendasTerminanPaso4.includes(productoActual)) {
-                    btnPasos4.textContent = "Finalizar";
+                    btnPasos4.innerHTML = '<i class="fas fa-check"></i> Finalizar';
                 } else {
-                    btnPasos4.textContent = "Siguiente";
+                    btnPasos4.innerHTML = 'Siguiente <i class="fas fa-arrow-right"></i>';
                 }
             }
         }
@@ -1346,6 +1970,7 @@ try {
         updateTabsByProduct();
         updateEstampados();
         updateVistaButtons();
+        updateFinalQuantityPlacement();
         
         // Validar el paso actual para habilitar/deshabilitar botones
         try {
@@ -1397,22 +2022,24 @@ try {
     }
 
     function updateTabsByProduct() {
+        applyProductAvailabilityByIdentity();
+
         const tabs = document.querySelectorAll("[data-area]");
         const barraAreas = document.querySelector(".barra-pestanas");
         let allowedAreas = [];
         let defaultActiveArea = null;
         
-        // Prendas especiales que SOLO tienen impresion-delantera
-        const prendasEspeciales = ["presillas", "rh", "paoleta", "pañoleta", "paÃ±oleta", "panoleta", "gorra", "contingencia", "gafete del nombre o apellido"];
+        // Prendas especiales que solo tienen impresiÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â³n delantera.
+        const prendasEspeciales = ["presillas", "rh", "paoleta", "paÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â±oleta", "paÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â±oleta", "panoleta", "gorra", "contingencia", "gafete del nombre o apellido"];
         const productoActualName = (state.producto || "").toLowerCase();
         const esProductoEspecial = prendasEspeciales.some(p => p.toLowerCase() === productoActualName);
 
-        // Si es prenda especial, solo mostrar impresion-delantera
+        // Si es prenda especial, solo mostrar impresiÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â³n delantera.
         if (esProductoEspecial) {
             allowedAreas = ["impresion-delantera"];
             defaultActiveArea = "impresion-delantera";
         } else {
-            // Para prendas normales (camiseta, buso, etc): pecho y mangas (SIN impresion-delantera)
+            // Para prendas normales (camiseta, buso, etc.): pecho y mangas, sin impresiÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â³n delantera.
             allowedAreas = [
                 "pecho-izquierdo",
                 "pecho-derecho",
@@ -1474,20 +2101,22 @@ try {
                     // Para gorras, escudos y parches no aplican
                     if (tipo === "escudos" || tipo === "parches") mostrar = false;
                 } else if (identidad === "policia") {
-                    if (producto === "pañoleta" || producto === "panoleta" || producto === "paoleta" || producto === "paÃ±oleta" || producto === "pa\u00f1oleta") {
-                        if (tipo !== "escudos") mostrar = false; // "las pañolestas solo tienen escudos nada mas"
+                    if (producto === "paÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â±oleta" || producto === "panoleta" || producto === "paoleta" || producto === "paÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â±oleta" || producto === "pa\u00f1oleta") {
+                        if (tipo !== "escudos") mostrar = false; // "las paÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â±olestas solo tienen escudos nada mas"
                     } else if (producto === "guerrera") {
                         if (tipo !== "distintivos" && tipo !== "escudos" && tipo !== "parches") mostrar = false;
                     } else if (producto === "buso-tactico" || producto === "buso_tactico" || producto === "buso tactico") {
                         if (tipo !== "parches" && tipo !== "escudos") mostrar = false;
                     }
-                } else if (producto === "paÃ±oleta" || producto === "panoleta" || producto === "paoleta" || producto === "pañoleta") {
-                    // Para pañoletas, parches y distintivos no aplican (otras fuerzas)
+                } else if (producto === "paÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â±oleta" || producto === "panoleta" || producto === "paoleta" || producto === "paÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â±oleta") {
+                    // Para paÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â±oletas, parches y distintivos no aplican (otras fuerzas)
                     if (tipo === "distintivos" || tipo === "parches") mostrar = false;
                 }
 
-                // Ocultar distintivos en todas las secciones para Armada (excepto en guerreras). Para Gaula, solo permitir en gorras. Para Ejército, permitir en guerreras.
-                if (identidad === "armada" && tipo === "distintivos" && producto !== "guerrera") {
+                // Ocultar distintivos en todas las secciones para Armada (excepto en guerreras). Para Gaula, solo permitir en gorras. Para EjÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â©rcito, permitir en guerreras.
+                if (producto === "guerrera" && tipo === "distintivos") {
+                    mostrar = false;
+                } else if (identidad === "armada" && tipo === "distintivos" && producto !== "guerrera") {
                     mostrar = false;
                 } else if (identidad === "ejercito" && tipo === "distintivos" && producto !== "guerrera") {
                     mostrar = false;
@@ -1508,7 +2137,7 @@ try {
                         if (tipo === "escudos") imgFolderUrl = `url('/static/img/estampados/ejercito/buso tactico/escudo/Escudo_Ejercito_Nacional_de_Colombia.svg.png')`;
                         else if (tipo === "nombres") imgFolderUrl = `url('/static/img/estampados/ejercito/${carpetaTipo}/nombre.png')`; // Ajusta el nombre si difiere
                         else if (tipo === "distintivos") {
-                            // Mostrar la misma portada que en la policía
+                            // Mostrar la misma portada que en la policÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â­a
                             imgFolderUrl = `url('/static/img/estampados/policia/gorra/Distintivos/distintivo.png')`;
                         }
                         else if (tipo === "parches") imgFolderUrl = `url('/static/img/estampados/ejercito/buso tactico/parches/Parche_Ejercito.png')`;
@@ -1519,9 +2148,9 @@ try {
                         else if (tipo === "parches") imgFolderUrl = `url('/static/img/estampados/gaula/guerrera/Parches/parche.png')`;
                     } else if (identidad === "armada") {
                         if (tipo === "escudos") {
-                            if (producto === "pañoleta" || producto === "panoleta") {
+                            if (producto === "paÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â±oleta" || producto === "panoleta") {
                                 const cc = (state.color || '').toLowerCase();
-                                imgFolderUrl = `url('/static/img/estampados/armada/pañoleta/Escudos/${cc === 'negro' ? 'negro.png' : 'verde.png'}')`;
+                                imgFolderUrl = `url('/static/img/estampados/armada/paÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â±oleta/Escudos/${cc === 'negro' ? 'negro.png' : 'verde.png'}')`;
                             } else {
                                 imgFolderUrl = `url('/static/img/estampados/armada/buso tactico/escudos/Escudo_Armada_Nacional_de_Colombia.svg.png')`;
                             }
@@ -1533,7 +2162,7 @@ try {
                         if (tipo === "escudos") imgFolderUrl = `url('/static/img/estampados/Policia/guerrera/escudos/policia.png')`;
                         else if (tipo === "nombres") imgFolderUrl = `url('/static/img/estampados/Policia/guerrera/nombres/nombre.png')`;
                         else if (tipo === "distintivos") {
-                            // Para distintivos de la policía, usar la carátula con barras y laureles dorados
+                            // Para distintivos de la policÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â­a, usar la carÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¡tula con barras y laureles dorados
                             imgFolderUrl = `url('/static/img/estampados/policia/gorra/Distintivos/distintivo.png')`; 
                         }
                         else if (tipo === "parches") imgFolderUrl = `url('/static/img/estampados/Policia/guerrera/Parches/parche_policia.png')`;
@@ -1550,8 +2179,21 @@ try {
             }
         });
         
-        // Manejar opciones especificas de distintivos segÃºn identidad y producto
+        // Manejar opciones especÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â­ficas de distintivos segÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Âºn identidad y producto.
+        const btnDistintivos = document.querySelector('[data-estampado="distintivos"]');
+        const distintivosVisible = !!btnDistintivos && window.getComputedStyle(btnDistintivos).display !== "none";
         const selectDistintivo = document.getElementById("select-distintivo");
+        const dropdownDistintivo = document.getElementById("dropdown-distintivos-container");
+
+        if (!distintivosVisible) {
+            if (state.estampado && state.estampado.startsWith("distintivos")) {
+                state.estampado = "";
+            }
+            if (btnDistintivos) btnDistintivos.classList.remove("seleccionada");
+            if (selectDistintivo) selectDistintivo.value = "";
+            if (dropdownDistintivo) dropdownDistintivo.style.display = "none";
+        }
+
         if (selectDistintivo) {
             const producto = state.producto ? state.producto.toLowerCase().trim() : "";
             Array.from(selectDistintivo.options).forEach(opt => {
@@ -1588,7 +2230,7 @@ try {
                 "guerrera": ["verde-claro"],
                 "paoleta": ["verde-claro", "negro", "beiches"],
                 "panoleta": ["verde-claro", "negro", "beiches"],
-                "pañoleta": ["verde-claro", "negro", "beiches"],
+                "paÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â±oleta": ["verde-claro", "negro", "beiches"],
                 "presillas": ["dorado", "verde-claro"],
                 "rh": ["verde-claro"]
             },
@@ -1604,7 +2246,7 @@ try {
                 "gorra": ["verde-claro", "azul-noche"],
                 "paoleta": ["verde-claro", "azul-noche"],
                 "panoleta": ["verde-claro", "azul-noche"],
-                "pañoleta": ["verde-claro", "azul-noche"],
+                "paÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â±oleta": ["verde-claro", "azul-noche"],
                 "presillas": ["dorado", "azul-noche"],
                 "rh": ["verde-claro", "azul-noche"]
             },
@@ -1620,7 +2262,7 @@ try {
                 "guerrera": ["verde-claro"],
                 "paoleta": ["verde-claro", "negro"],
                 "panoleta": ["verde-claro", "negro"],
-                "pañoleta": ["verde-claro", "negro"],
+                "paÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â±oleta": ["verde-claro", "negro"],
                 "presillas": ["verde-claro"],
                 "rh": ["verde-claro", "platiado"]
             },
@@ -1638,7 +2280,7 @@ try {
                 "gorra": ["verde-claro", "verde"],
                 "paoleta": ["verde-claro", "verde", "negro"],
                 "panoleta": ["verde-claro", "verde", "negro"],
-                "pañoleta": ["verde-claro", "verde", "negro"]
+                "paÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â±oleta": ["verde-claro", "verde", "negro"]
             }
         };
         
@@ -1734,7 +2376,7 @@ try {
                     <option value="Coronel">Coronel</option>
                     <option value="Teniente Coronel">Teniente Coronel</option>
                     <option value="Mayor">Mayor</option>
-                    <option value="Capitan">Capitán</option>
+                    <option value="Capitan">CapitÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¡n</option>
                     <option value="Teniente">Teniente</option>
                     <option value="Subteniente">Subteniente</option>
                     <option value="Subitendente">Subintendente</option>
@@ -1811,61 +2453,41 @@ try {
         const inputDireccion = document.getElementById("input-direccion");
         const inputCorreo = document.getElementById("input-correo");
         const inputTelefono = document.getElementById("input-telefono");
-        const inputAnoContingencia = document.getElementById("input-ano-contingencia");
-        const inputMesContingencia = document.getElementById("input-mes-contingencia");
+        const inputFechaContingencia = document.getElementById("input-fecha-contingencia");
         const inputTalla = document.getElementById("input-talla");
         const btnSiguiente = document.getElementById("btn-siguiente-paso1");
-        
         let valid = true;
-        let mensajeAlerta = "";
-
-        // Validar nombre: solo letras y espacios (incluye acentos y eÃ±es)
+        const lineasAlerta = [];
         const nombreValido = inputNombre && /^[A-Za-z\u00C0-\u017F\s]+$/.test(inputNombre.value.trim());
-        if (!nombreValido) { valid = false; mensajeAlerta += "- Nombre y Apellido (solo letras).\n"; }
-
-        // Validar rango: solo letras y espacios (incluye acentos y eÃ±es)
+        if (!nombreValido) { valid = false; lineasAlerta.push("- Nombre y apellido (solo letras)."); }
         const rangoValido = inputRango && /^[A-Za-z\u00C0-\u017F\s]+$/.test(inputRango.value.trim());
-        if (!rangoValido) { valid = false; mensajeAlerta += "- Rango (solo letras).\n"; }
-
-        // Validar direccin: cualquier caracter (solo q no est vaco)
+        if (!rangoValido) { valid = false; lineasAlerta.push("- Rango (solo letras)."); }
         const dirValida = inputDireccion && inputDireccion.value.trim().length > 0;
-        if (!dirValida) { valid = false; mensajeAlerta += "- Direccin.\n"; }
-
-        // Validar correo
-        const correoValido = inputCorreo && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(inputCorreo.value.trim());
-        if (!correoValido) { valid = false; mensajeAlerta += "- Correo Electrnico vlido.\n"; }
-
-        // Validar telfono: solo nmeros
-        const telValido = inputTelefono && /^[0-9]+$/.test(inputTelefono.value.trim());
-        if (!telValido) { valid = false; mensajeAlerta += "- Telfono (solo nmeros).\n"; }
-
-// Validar Mes y AÃ±o de Contingencia y Talla siempre
-        const mesValido2 = inputMesContingencia && inputMesContingencia.value.trim().length > 0;
-        const anoValido2 = inputAnoContingencia && inputAnoContingencia.value.trim().length > 0;
-        if (!mesValido2) { valid = false; mensajeAlerta += "- Mes de contingencia.\n"; }
-        if (!anoValido2) { valid = false; mensajeAlerta += "- AÃ±o de contingencia.\n"; }
-        
+        if (!dirValida) { valid = false; lineasAlerta.push("- Direccion."); }
+        const correoValido = inputCorreo && isValidEmail(inputCorreo.value);
+        if (!correoValido) { valid = false; lineasAlerta.push("- Correo electronico valido."); }
+        if (inputTelefono) {
+            inputTelefono.value = sanitizePhone(inputTelefono.value);
+        }
+        const telValido = inputTelefono && /^[0-9]{10}$/.test(inputTelefono.value.trim());
+        if (!telValido) { valid = false; lineasAlerta.push("- Telefono de 10 digitos numericos."); }
+        const fechaContingenciaValida = inputFechaContingencia && isValidContingencyDate(inputFechaContingencia.value);
+        if (!fechaContingenciaValida) {
+            valid = false;
+            lineasAlerta.push("- Fecha de contingencia entre 1940 y la fecha actual.");
+        }
         const tallaValida2 = inputTalla && inputTalla.value.trim().length > 0;
-        if (!tallaValida2 && !state.talla) { valid = false; mensajeAlerta += "- SelecciÃ³n de talla.\n"; }
-
-        // Validar Entidad (Identidad) seleccionada
-        if (!state.identidad) { valid = false; mensajeAlerta += "- Seleccionar una Entidad (Ej: Polica, Ejrcito).\n"; }
-
-        // Validar Tcnica seleccionada
-        if (!state.tecnica) { valid = false; mensajeAlerta += "- Seleccionar una Tcnica (Ej: Bordado).\n"; }
-
-        // Validar Talla
-        // (ya relanzada, pero la validaciÃ³n general de campos no obligarÃ¡ a tallas ni mes de contingencia a menos que sean prendras completas y asÃ­ lo quieras)
-        
+        if (!tallaValida2 && !state.talla) { valid = false; lineasAlerta.push("- Seleccion de talla."); }
+        if (!state.identidad) { valid = false; lineasAlerta.push("- Seleccionar una entidad (Ej: Policia, Ejercito)."); }
+        if (!state.tecnica) { valid = false; lineasAlerta.push("- Seleccionar una tecnica (Ej: Bordado)."); }
         if (btnSiguiente) {
             btnSiguiente.style.opacity = valid ? "1" : "0.5";
-            btnSiguiente.style.cursor = valid ? 'pointer' : 'not-allowed';
+            btnSiguiente.style.cursor = valid ? "pointer" : "not-allowed";
         }
-        
         if (mostrarAlerta === true && !valid) {
-            alert("Por favor, completa correctamente los siguientes campos obligatorios:\n\n" + mensajeAlerta);
+            const mensajeAlerta = lineasAlerta.join("\n");
+            showUserToast("Por favor, completa correctamente los siguientes campos obligatorios:\n\n" + mensajeAlerta, "warning", { durationMs: 9000 });
         }
-
         return valid;
     }
 
@@ -1914,13 +2536,7 @@ try {
             btnVistaDelantera.addEventListener("click", () => {
                 state.vistaPrenda = "delantera";
                 btnVistaDelantera.classList.add("active");
-                btnVistaDelantera.style.backgroundColor = "#ffd700";
-                btnVistaDelantera.style.color = "#000";
-                btnVistaDelantera.style.fontWeight = "bold";
                 btnVistaTrasera.classList.remove("active");
-                btnVistaTrasera.style.backgroundColor = "#f0f0f0";
-                btnVistaTrasera.style.color = "#333";
-                btnVistaTrasera.style.fontWeight = "normal";
                 updateSummary();
             });
         }
@@ -1929,13 +2545,7 @@ try {
             btnVistaTrasera.addEventListener("click", () => {
                 state.vistaPrenda = "trasera";
                 btnVistaTrasera.classList.add("active");
-                btnVistaTrasera.style.backgroundColor = "#ffd700";
-                btnVistaTrasera.style.color = "#000";
-                btnVistaTrasera.style.fontWeight = "bold";
                 btnVistaDelantera.classList.remove("active");
-                btnVistaDelantera.style.backgroundColor = "#f0f0f0";
-                btnVistaDelantera.style.color = "#333";
-                btnVistaDelantera.style.fontWeight = "normal";
                 updateSummary();
             });
         }
@@ -1946,32 +2556,30 @@ try {
         const inputDireccion = document.getElementById("input-direccion");
         const inputCorreo = document.getElementById("input-correo");
         const inputTelefono = document.getElementById("input-telefono");
-        const inputMesContingencia = document.getElementById("input-mes-contingencia");
-        const inputAnoContingencia = document.getElementById("input-ano-contingencia");
+        const inputFechaContingencia = document.getElementById("input-fecha-contingencia");
         const inputTalla = document.getElementById("input-talla");
+        const inputCantidad = document.getElementById("input-cantidad-prendas");
+        const btnCantidadMenos = document.getElementById("btn-cantidad-menos");
+        const btnCantidadMas = document.getElementById("btn-cantidad-mas");
         const btnSiguientePaso1 = document.getElementById("btn-siguiente-paso1");
         
-        if (inputNombre) inputNombre.addEventListener("input", validarPaso1Realtime);
-        if (inputRango) inputRango.addEventListener("input", validarPaso1Realtime);
-        if (inputDireccion) inputDireccion.addEventListener("input", validarPaso1Realtime);
-        if (inputCorreo) inputCorreo.addEventListener("input", validarPaso1Realtime);
-        if (inputTelefono) inputTelefono.addEventListener("input", validarPaso1Realtime);
-        if (inputMesContingencia) {
-            inputMesContingencia.addEventListener("change", () => {
-                const mesVal = inputMesContingencia.value || "";
-                const anoVal = inputAnoContingencia?.value || "";
-                state.anoContingencia = mesVal && anoVal ? `${mesVal} ${anoVal}` : "";
+        if (inputNombre) inputNombre.addEventListener("input", () => { validarPaso1Realtime(); saveOrderDraft(); });
+        if (inputRango) inputRango.addEventListener("input", () => { validarPaso1Realtime(); saveOrderDraft(); });
+        if (inputDireccion) inputDireccion.addEventListener("input", () => { validarPaso1Realtime(); saveOrderDraft(); });
+        if (inputCorreo) inputCorreo.addEventListener("input", () => { validarPaso1Realtime(); saveOrderDraft(); });
+        if (inputTelefono) {
+            inputTelefono.addEventListener("input", () => {
+                inputTelefono.value = sanitizePhone(inputTelefono.value);
                 validarPaso1Realtime();
-                updateSummary();
+                saveOrderDraft();
             });
         }
-        if (inputAnoContingencia) {
-            inputAnoContingencia.addEventListener("input", () => {
-                const mesVal = inputMesContingencia?.value || "";
-                const anoVal = inputAnoContingencia.value || "";
-                state.anoContingencia = mesVal && anoVal ? `${mesVal} ${anoVal}` : "";
+        if (inputFechaContingencia) {
+            inputFechaContingencia.addEventListener("change", () => {
+                state.anoContingencia = formatDateForDisplay(inputFechaContingencia.value);
                 validarPaso1Realtime();
                 updateSummary();
+                saveOrderDraft();
             });
         }
         if (inputTalla) {
@@ -1979,7 +2587,26 @@ try {
                 state.talla = inputTalla.value;
                 updateSummary();
                 validarPaso1Realtime();
+                saveOrderDraft();
             });
+        }
+        const setCantidadPrendas = (value) => {
+            const cantidad = Math.min(99, Math.max(1, Number.parseInt(value, 10) || 1));
+            state.cantidad = cantidad;
+            if (inputCantidad) inputCantidad.value = cantidad;
+            updateSummary();
+            validarPaso1Realtime();
+            saveOrderDraft();
+        };
+        if (inputCantidad) {
+            inputCantidad.addEventListener("input", () => setCantidadPrendas(inputCantidad.value));
+            inputCantidad.addEventListener("blur", () => setCantidadPrendas(inputCantidad.value));
+        }
+        if (btnCantidadMenos) {
+            btnCantidadMenos.addEventListener("click", () => setCantidadPrendas(getOrderQuantity() - 1));
+        }
+        if (btnCantidadMas) {
+            btnCantidadMas.addEventListener("click", () => setCantidadPrendas(getOrderQuantity() + 1));
         }
         
         // Desabilitar el botn inicialmente
@@ -1997,11 +2624,10 @@ try {
                 state.nombre = document.getElementById("input-nombre").value;
                 state.rango = document.getElementById("input-rango").value;
                 state.direccion = document.getElementById("input-direccion").value;
-                state.correo = document.getElementById("input-correo").value;
-                state.telefono = document.getElementById("input-telefono").value;
-                const mesVal = document.getElementById("input-mes-contingencia")?.value || "";
-                const anoVal = document.getElementById("input-ano-contingencia")?.value || "";
-                state.anoContingencia = mesVal && anoVal ? `${mesVal} ${anoVal}` : "";
+                state.correo = document.getElementById("input-correo").value.trim();
+                state.telefono = sanitizePhone(document.getElementById("input-telefono").value);
+                state.anoContingencia = formatDateForDisplay(document.getElementById("input-fecha-contingencia")?.value || "");
+                state.cantidad = getOrderQuantity();
                 
                 // Set default values if unchanged
                 const opcionActiva = document.querySelector("[data-opcion].activo");
@@ -2013,15 +2639,13 @@ try {
                 const inputTalla = document.getElementById("input-talla");
                 if (!state.talla && inputTalla && inputTalla.value) state.talla = inputTalla.value;
                 
-                // Forzar la validaciÃ³n aquÃ­
+                // Forzar la validaciÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â³n aquÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â­.
                 if (!state.identidad || !state.tecnica) {
-                    alert("AsegÃºrate de seleccionar una Entidad y TÃ©cnica.");
+                    showUserToast("Asegurate de seleccionar una entidad y una tecnica.", "warning", { durationMs: 7000 });
                     return;
                 }
                 
-                if (validarPaso(1)) {
-                    changeStep(2);
-                }
+                changeStep(2);
             });
         }
 
@@ -2034,16 +2658,22 @@ try {
                     (element) => element === button,
                     "activo"
                 );
+                updateTabsByProduct();
+                updateEstampados();
                 updateColorAvailability();
                 updateSummary();
                 validarPaso1Realtime();
+                validarPaso2Realtime();
             });
         });
 
         document.querySelectorAll("[data-producto]").forEach((button) => {
             button.addEventListener("click", () => {
+                if (window.getComputedStyle(button).display === "none") {
+                    return;
+                }
                 const previoProducto = state.producto;
-                state.producto = button.dataset.producto;
+                state.producto = normalizeProductKey(button.dataset.producto);
                 setActiveClass(
                     document.querySelectorAll("[data-producto]"),
                     (element) => element === button,
@@ -2086,9 +2716,9 @@ try {
                 
                 if (button.classList.contains("color-deshabilitado")) {
                     if (state.producto === "rh" && !state.modeloRh) {
-                        alert("⚠️ Por favor selecciona primero tu Tipo de Sangre.");
+                        showUserToast("Por favor selecciona primero tu tipo de sangre.", "warning", { durationMs: 6500 });
                     } else if ((state.producto === "presillas" || state.producto === "presilla") && !state.modeloPresilla) {
-                        alert("⚠️ Por favor selecciona primero tu Rango.");
+                        showUserToast("Por favor selecciona primero tu rango.", "warning", { durationMs: 6500 });
                     }
                     return;
                 }
@@ -2107,8 +2737,8 @@ try {
                     window.aplicarColorPrenda(state.color);
                 }
 
-                // If currently on pañoleta and escudos are shown, update options
-                if (['pañoleta', 'paÃ±oleta', 'panoleta', 'paoleta'].includes((state.producto || '').toLowerCase()) && state.estampado.startsWith("escudos")) {
+                // If currently on paÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â±oleta and escudos are shown, update options
+                if (['paÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â±oleta', 'paÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â±oleta', 'panoleta', 'paoleta'].includes((state.producto || '').toLowerCase()) && state.estampado.startsWith("escudos")) {
                     const selectEscudo = document.getElementById("select-escudo");
                     if (selectEscudo) {
                         const opt1 = Array.from(selectEscudo.options).find(o => o.value === "Estilo 1");
@@ -2150,7 +2780,7 @@ try {
                             updateSummary();
                         } else if (state.identidad === "armada") {
                             // En armada ocultamos los sub-estilos ya que el escImgSrc 
-                            // lo armamos segÃºn el color unicamente (verde o negro)
+                            // Lo armamos segÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Âºn el color ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Âºnicamente (verde o negro).
                             if (dropdownEscudosContainer) dropdownEscudosContainer.style.display = "none";
                             state.estampado = "escudos";
                             updateSummary();
@@ -2205,7 +2835,7 @@ try {
 
         document.getElementById("btn-finalizar")?.addEventListener("click", () => {
             updateSummary();
-            alert("La configuracion quedo lista. El siguiente paso sera conectarla al flujo real de carrito.");
+            showUserToast("La configuracion quedo lista. El siguiente paso sera conectarla al flujo real de carrito.", "info", { durationMs: 7000 });
         });
 
         // Botones de navegacin Siguiente/Atrs
@@ -2214,7 +2844,7 @@ try {
                 // Verificar si hay prendas que acaban en paso 2 directamente. (no especificado, va a 3 default)
                 changeStep(3);
             } else {
-                alert("Por favor selecciona un producto.");
+                showUserToast("Por favor selecciona un producto.", "warning", { durationMs: 6500 });
             }
         });
 
@@ -2233,25 +2863,21 @@ try {
         document.getElementById("btn-siguiente-paso3")?.addEventListener("click", () => {
             if (validarPaso(3)) {
                 if(state.producto === "rh" && (!state.color || !state.modeloRh)) {
-                    alert("Por favor selecciona un color y el tipo de RH.");
+                    showUserToast("Por favor selecciona un color y el tipo de RH.", "warning", { durationMs: 7000 });
                     return;
                 } else if (!state.color) {
-                    alert("Por favor selecciona un color.");
+                    showUserToast("Por favor selecciona un color.", "warning", { durationMs: 6500 });
                     return;
                 }
                 
-                // Verificar a qu paso ir: las prendas como RH, Gafetes, Presillas finalizan AQU (paso 3)
-                const prendasTerminanPaso3 = ["rh", "gafete del nombre o apellido", "gafete", "presillas", "buso", "buso-manga-larga"];
-                const productoActual = state.producto.toLowerCase();
-                const isGorraEjercito = productoActual === "gorra" && state.identidad && state.identidad.toLowerCase() === "ejercito";
-
-                if (prendasTerminanPaso3.includes(productoActual) || isGorraEjercito) {
+                if (productEndsAtStep3()) {
+                    if (!validarCantidadFinal()) return;
                     finalizarOrden();
                 } else {
                     changeStep(4);
                 }
             } else {
-                alert("Por favor selecciona un color.");
+                showUserToast("Por favor selecciona un color.", "warning", { durationMs: 6500 });
             }
         });
 
@@ -2261,9 +2887,10 @@ try {
 
         document.getElementById("btn-siguiente-paso4")?.addEventListener("click", () => {
             if (validarPaso(4)) {
+                if (!validarCantidadFinal()) return;
                 finalizarOrden();
             } else {
-                alert("Por favor selecciona un estampado.");
+                showUserToast("Por favor selecciona un estampado.", "warning", { durationMs: 6500 });
             }
         });
 
@@ -2271,67 +2898,160 @@ try {
             changeStep(3);
         });
 
-        function finalizarOrden() {
+        async function finalizarOrden() {
+            if (enviandoOrdenPersonalizada) return;
+            state.cantidad = getOrderQuantity();
             updateSummary();
             
             // Organize and format the summary data nicely
-            let summaryText = "✅ ¡Personalización completada!\\n\\n";
+            let summaryText = "ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã¢â‚¬Å“ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¦ ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¡PersonalizaciÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â³n completada!\\n\\n";
             
             summaryText += "--- DATOS DEL CLIENTE ---\\n";
-            summaryText += "• Nombre: " + (state.nombre || "No especificado") + "\\n";
-            summaryText += "• Correo: " + (state.correo || "No especificado") + "\\n";
-            summaryText += "• Teléfono: " + (state.telefono || "No especificado") + "\\n";
-            summaryText += "• Dirección: " + (state.direccion || "No especificada") + "\\n";
+            summaryText += "ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ Nombre: " + (state.nombre || "No especificado") + "\\n";
+            summaryText += "ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ Correo: " + (state.correo || "No especificado") + "\\n";
+            summaryText += "ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ TelÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â©fono: " + (state.telefono || "No especificado") + "\\n";
+            summaryText += "ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ DirecciÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â³n: " + (state.direccion || "No especificada") + "\\n";
             
-            summaryText += "\\n--- INFORMACIÓN INSTITUCIONAL ---\\n";
-            summaryText += "• Identidad/Fuerza: " + formatLabel(state.identidad) + "\\n";
+            summaryText += "\\n--- INFORMACIÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦ÃƒÂ¢Ã¢â€šÂ¬Ã…â€œN INSTITUCIONAL ---\\n";
+            summaryText += "ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ Identidad/Fuerza: " + formatLabel(state.identidad) + "\\n";
             if (state.rango) {
-                summaryText += "• Rango: " + state.rango + "\\n";
+                summaryText += "ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ Rango: " + state.rango + "\\n";
             }
             if (state.anoContingencia) {
-                summaryText += "• Año de contingencia: " + state.anoContingencia + "\\n";
+                summaryText += "ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ Fecha de contingencia: " + state.anoContingencia + "\\n";
             }
             
             summaryText += "\\n--- DETALLES DEL PRODUCTO ---\\n";
-            summaryText += "• Producto: " + (productLabels[state.producto] || formatLabel(state.producto)) + "\\n";
+            summaryText += "ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ Producto: " + (productLabels[state.producto] || formatLabel(state.producto)) + "\\n";
             if (state.color) {
-                summaryText += "• Color: " + formatLabel(state.color) + "\\n";
+                summaryText += "ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ Color: " + formatLabel(state.color) + "\\n";
             }
             if (state.talla) {
-                summaryText += "• Talla: " + state.talla + "\\n";
+                summaryText += "ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ Talla: " + state.talla + "\\n";
             }
             if (state.tecnica) {
-                summaryText += "• Técnica: " + (state.tecnica === "bordado" ? "Bordado" : "Impresión") + "\\n";
+                summaryText += "ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ TÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â©cnica: " + (state.tecnica === "bordado" ? "Bordado" : "ImpresiÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â³n") + "\\n";
             }
             if (state.estampado) {
-                summaryText += "• Estampado: " + formatLabel(state.estampado) + "\\n";
+                summaryText += "ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ Estampado: " + formatLabel(state.estampado) + "\\n";
             }
+            summaryText += "ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ Cantidad: " + getOrderQuantity() + "\\n";
+            summaryText += "ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ Precio total: " + getOrderPriceLabel() + "\\n";
+            const imagenPreviewPayload = await obtenerImagenPreviewParaPayload();
             
-            alert(summaryText);
+            const payload = {
+                cliente: {
+                    nombre: state.nombre,
+                    rango: state.rango,
+                    direccion: state.direccion,
+                    correo: state.correo,
+                    telefono: state.telefono,
+                    fecha_contingencia: state.fechaContingencia || state.anoContingencia,
+                },
+                detalle: {
+                    identidad: formatLabel(state.identidad),
+                    producto: normalizeProductKey(state.producto),
+                    producto_label: productLabels[normalizeProductKey(state.producto)] || formatLabel(state.producto),
+                    tecnica: state.tecnica === "bordado" ? "Bordado" : "ImpresiÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â³n",
+                    color: formatLabel(state.color),
+                    estampado: state.estampado ? formatLabel(state.estampado) : "Ninguno",
+                    talla: state.talla || "Sin talla",
+                    modelo_rh: state.modeloRh || "",
+                    modelo_presilla: state.modeloPresilla || "",
+                    cantidad: getOrderQuantity(),
+                    precio_unitario: getProductPriceValue(state.producto),
+                    precio_total: getOrderTotalValue(),
+                    imagen_url: imagenPreviewPayload,
+                    vista_prenda: state.vistaPrenda,
+                },
+            };
+
+            try {
+                enviandoOrdenPersonalizada = true;
+                const response = await fetch("/orden-personalizada/enviar", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify(payload),
+                });
+                const data = await response.json().catch(() => ({}));
+                if (!response.ok || !data.success) {
+                    throw new Error(data.message || "No fue posible agregar la prenda personalizada al carrito.");
+                }
+
+                localStorage.removeItem(ORDER_DRAFT_STORAGE_KEY);
+                showUserToast(
+                    `La prenda personalizada se agregÃƒÆ’Ã‚Â³ al carrito (cÃƒÆ’Ã‚Â³digo #${data.id_orden}). SerÃƒÆ’Ã‚Â¡s redirigido al carrito en unos segundos.`,
+                    "success",
+                    { title: "Solicitud registrada", durationMs: 5000 }
+                );
+                window.setTimeout(() => { window.location.href = data.redirect_url || "/cart"; }, 2200);
+            } catch (error) {
+                showUserToast(`No se pudo continuar al pago. ${error.message || "Intentalo nuevamente."}`, "danger", { durationMs: 8500 });
+            } finally {
+                enviandoOrdenPersonalizada = false;
+            }
         }
 
-        // Botón Atrás en el panel derecho
+        function prepararNuevaPrendaPersonalizada() {
+            state.producto = "";
+            state.color = "";
+            state.estampado = "";
+            state.talla = null;
+            state.modeloRh = null;
+            state.modeloPresilla = null;
+            state.cantidad = 1;
+            state.vistaPrenda = "delantera";
+
+            const inputTalla = document.getElementById("input-talla");
+            const inputCantidad = document.getElementById("input-cantidad-prendas");
+            if (inputTalla) inputTalla.value = "";
+            if (inputCantidad) inputCantidad.value = "1";
+
+            document.querySelectorAll("[data-producto], [data-color], [data-estampado]").forEach((element) => {
+                element.classList.remove("seleccionada");
+            });
+            document.querySelectorAll("[data-talla]").forEach((element) => {
+                element.classList.remove("activo");
+            });
+            if (btnVistaDelantera && btnVistaTrasera) {
+                btnVistaDelantera.classList.add("active");
+                btnVistaTrasera.classList.remove("active");
+            }
+
+            updateTabsByProduct();
+            updateEstampados();
+            updateTallaVisibility();
+            updateColorAvailability();
+            changeStep(1);
+            updateSummary();
+            saveOrderDraft();
+            document.querySelector(".indicadores-pasos")?.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+
+        // BotÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â³n AtrÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¡s en el panel derecho
         document.getElementById("btn-atras-panel")?.addEventListener("click", () => {
             if (state.pasoActual > 1) {
                 changeStep(state.pasoActual - 1);
             } else {
-                alert("⚠️ Ya estás en el primer paso");
+                showUserToast("Ya estas en el primer paso.", "info", { durationMs: 5000 });
             }
         });
 
-        // Botón Agregar al Carrito
+        // BotÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â³n Agregar al Carrito
         document.getElementById("btn-agregar-carrito")?.addEventListener("click", () => {
             if (validarPaso(4)) {
                 const producto = productLabels[state.producto] || formatLabel(state.producto);
                 const identidad = formatLabel(state.identidad);
-                const tecnica = state.tecnica === "bordado" ? "Bordado" : "Impresión";
+                const tecnica = state.tecnica === "bordado" ? "Bordado" : "ImpresiÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â³n";
                 const color = formatLabel(state.color);
                 const estampado = state.estampado ? formatLabel(state.estampado) : "Ninguno";
                 const talla = state.talla || "Sin talla";
                 
-                alert(`✅ Producto agregado al carrito:\n\nNombre: ${state.nombre}\nRango: ${state.rango}\nDirección: ${state.direccion}\nCorreo: ${state.correo}\nTeléfono: ${state.telefono}\nAño de contingencia: ${state.anoContingencia}\n\n${producto}\nIdentidad: ${identidad}\nTécnica: ${tecnica}\nColor: ${color}\nEstampado: ${estampado}\nTalla: ${talla}\nPrecio: ${priceMap[state.producto] || "$ 45.000"}`);
+                showUserToast(`Producto preparado para carrito:\n${producto}\n${identidad} - ${tecnica}\nColor: ${color}\nEstampado: ${estampado}\nTalla: ${talla}\nCantidad: ${getOrderQuantity()}\nPrecio total: ${getOrderPriceLabel()}`, "success", { title: "Producto agregado", durationMs: 8500 });
             } else {
-                alert("⚠️ Por favor completa todos los campos antes de agregar al carrito");
+                showUserToast("Por favor completa todos los campos antes de agregar al carrito.", "warning", { durationMs: 7000 });
             }
         });
 
@@ -2399,9 +3119,9 @@ try {
                 if (tipoEstampado === "distintivos") {
                     if (dropdownContainer) dropdownContainer.style.display = "block";
                     if (dropdownEscudosContainer) dropdownEscudosContainer.style.display = "none";
-                    // Guardar solo "distintivos" por ahora, se actualizarÃ¡ si elige una opciÃ³n del select
+                    // Guardar solo "distintivos" por ahora; se actualizarÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¡ si elige una opciÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â³n del select.
                     state.estampado = "distintivos";
-                } else if (tipoEstampado === "escudos" && ['pañoleta', 'paÃ±oleta', 'panoleta', 'paoleta'].includes((state.producto || '').toLowerCase())) {
+                } else if (tipoEstampado === "escudos" && ['paÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â±oleta', 'paÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â±oleta', 'panoleta', 'paoleta'].includes((state.producto || '').toLowerCase())) {
                     if (dropdownEscudosContainer) dropdownEscudosContainer.style.display = "block";
                     if (dropdownContainer) dropdownContainer.style.display = "none";
                     const selectEscudo = document.getElementById("select-escudo");
@@ -2422,7 +3142,7 @@ try {
                             if (optC3) optC3.style.display = "none";
                             
                             // Si es armada, ocultamos todo el contenedor dropdown para no dejar escoger estilo
-                            // y asÃ­ obligar un solo diseÃ±o que mapeamos automÃ¡tico
+                            // y asÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â­ usar un solo diseÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â±o mapeado automÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¡ticamente.
                             if (state.identidad === "armada") {
                                 if (dropdownEscudosContainer) dropdownEscudosContainer.style.display = "none";
                                 state.estampado = "escudos";
@@ -2546,6 +3266,8 @@ try {
         }
     }
 
+    setupContingencyDateLimit();
+    restoreOrderDraft();
     bindSelections();
     bindNavigation();
     bindTopbar();
@@ -2558,7 +3280,7 @@ try {
     
     changeStep(state.pasoActual);
 } catch(e) {
-    alert('Error JS: ' + e.message + ' en linea ' + e.lineNumber);
+    showUserToast('Error en la vista personalizada: ' + e.message + ' (linea ' + e.lineNumber + ')', 'danger', { durationMs: 9000, title: 'Error de interfaz' });
     console.error(e);
 }
 })();
