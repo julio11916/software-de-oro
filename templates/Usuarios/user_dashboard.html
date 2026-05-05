@@ -1,10 +1,10 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="es">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nachoher</title>
+    <title>Nachohers</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/usuario/catalog_base.css') }}">
@@ -21,7 +21,7 @@
                 </button>
 
                 <a class="brand-logo" href="{{ url_for('user_dashboard') }}">
-                    <img src="{{ url_for('static', filename='img/pagina/logo_header.png') }}" alt="Logo Nachoher">
+                    <img src="{{ url_for('static', filename='img/Pagina/logo_header.png') }}" alt="Logo Nachohers">
                 </a>
 
                 <div class="header-actions">
@@ -55,7 +55,7 @@
             <button type="button" class="btn-close-custom" data-bs-dismiss="offcanvas" aria-label="Close">
                 <i class="fas fa-xmark"></i>
             </button>
-            <img src="{{ url_for('static', filename='img/pagina/logo_header.png') }}" class="offcanvas-logo" alt="Logo">
+            <img src="{{ url_for('static', filename='img/Pagina/logo_header.png') }}" class="offcanvas-logo" alt="Logo">
             <span></span>
         </div>
         <div class="offcanvas-body">
@@ -98,7 +98,7 @@
         <div class="hero-content text-center">
             <p class="hero-kicker">BIENVENIDOS A</p>
             <a href="{{ url_for('user_dashboard') }}">
-                <img src="{{ url_for('static', filename='img/pagina/logo_transparente_2.png') }}" alt="Logo del proyecto"
+                <img src="{{ url_for('static', filename='img/Pagina/logo_transparente_2.png') }}" alt="Logo del proyecto"
                 class="logo">
             </a>
             <p class="hero-subtitle">Catálogo premium de prendas y accesorios</p>
@@ -122,32 +122,7 @@
         {% endwith %}
     </main>
 
-    <footer class="footer-compact">
-        <div class="container">
-            <div class="footer-content">
-                <div class="footer-brand">
-                    <i class="fas fa-crown"></i> <strong>Nachoher</strong>
-                </div>
-                <div class="footer-item">
-                    <i class="fas fa-map-marker-alt"></i> Urbanización Pablo Sexto
-                </div>
-                <div class="footer-item">
-                    <i class="fas fa-phone"></i> +57 3229393211
-                </div>
-                <div class="footer-item">
-                    <i class="fas fa-clock"></i> Lun-Vie 8:00-19:30 / Sab 8:00-14:00
-                </div>
-                <div class="footer-social">
-                    <a href="https://www.facebook.com/profile.php?id=61573294253539" target="_blank" rel="noopener noreferrer" aria-label="Facebook"><i class="fab fa-facebook"></i></a>
-                    <a href="https://www.instagram.com/nachoher_/" target="_blank" rel="noopener noreferrer" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
-                    <a href="#" aria-label="WhatsApp"><i class="fab fa-whatsapp"></i></a>
-                </div>
-            </div>
-            <div class="footer-bottom">
-                &copy; 2026 - Todos los derechos reservados
-            </div>
-        </div>
-    </footer>
+    {% include 'Usuarios/partials/footer.html' %}
 
     <script src="{{ url_for('static', filename='js/usuario/catalog_base.js') }}"></script>
     <script src="{{ url_for('static', filename='js/usuario/user_dashboard.js') }}"></script>

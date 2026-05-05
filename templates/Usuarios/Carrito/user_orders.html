@@ -32,12 +32,12 @@
                 <div class="hero-stat-card">
                     <span>Total de pedidos</span>
                     <strong>{{ pedidos|length }}</strong>
-                    <small>Historial visible en tu cuenta</small>
+                    <small>Disponible solo en tu cuenta</small>
                 </div>
                 <div class="hero-stat-card hero-stat-card--soft">
                     <span>Ultimo movimiento</span>
                     <strong>{{ pedidos[0].estado_label if pedidos else 'Sin pedidos' }}</strong>
-                    <small>{{ pedidos[0].fecha_pedido if pedidos else 'Aun no compras' }}</small>
+                    <small>{{ pedidos[0].fecha_pedido if pedidos else 'Aún no compras' }}</small>
                 </div>
             </aside>
         </section>
@@ -134,9 +134,9 @@
                                 {% if pedido.estado_pago_ui == 'rechazado' %}
                                 Tu comprobante fue rechazado. Contáctanos para coordinar cómo completar nuevamente el pago.
                                 {% elif pedido.estado_pago_ui == 'en_revision' %}
-                                Ya recibimos tu soporte y el equipo está revisando manualmente la transferencia.
+                                Ya recibimos tu comprobante y el equipo está revisando manualmente la transferencia.
                                 {% else %}
-                                El pedido ya fue registrado. Solo falta aprobar el comprobante enviado por correo y WhatsApp.
+                                El pedido ya fue registrado. Solo falta aprobar el comprobante adjunto desde la web.
                                 {% endif %}
                             </p>
                         </div>
@@ -171,8 +171,8 @@
             <div class="orders-empty-state__icon">
                 <i class="fas fa-box-open"></i>
             </div>
-            <span class="orders-eyebrow">Aun sin historial</span>
-            <h1>Aun no has realizado ningun pedido</h1>
+            <span class="orders-eyebrow">Aún sin historial</span>
+            <h1>Aún no has realizado ningún pedido</h1>
             <p>Cuando completes tu primera compra, aquí podrás seguir el estado del pago y el avance del pedido en tiempo real.</p>
             <a href="{{ url_for('user_dashboard') }}" class="btn-start-shopping">
                 <i class="fas fa-store"></i>
@@ -181,6 +181,8 @@
         </section>
         {% endif %}
     </main>
+
+    {% include 'Usuarios/partials/footer.html' %}
 
     <script src="{{ url_for('static', filename='js/usuario/catalog_base.js') }}"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>

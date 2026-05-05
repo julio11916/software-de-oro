@@ -74,32 +74,7 @@
         </section>
     </main>
 
-    <footer class="footer-compact">
-        <div class="container">
-            <div class="footer-content">
-                <div class="footer-brand">
-                    <i class="fas fa-crown"></i> <strong>Nachoher</strong>
-                </div>
-                <div class="footer-item">
-                    <i class="fas fa-map-marker-alt"></i> Urbanizaci&oacute;n Pablo Sexto
-                </div>
-                <div class="footer-item">
-                    <i class="fas fa-phone"></i> +57 3229393211
-                </div>
-                <div class="footer-item">
-                    <i class="fas fa-clock"></i> Lun-Vie 8:00-19:30 / Sab 8:00-14:00
-                </div>
-                <div class="footer-social">
-                    <a href="https://www.facebook.com/profile.php?id=61573294253539" target="_blank" rel="noopener noreferrer" aria-label="Facebook"><i class="fab fa-facebook"></i></a>
-                    <a href="https://www.instagram.com/nachoher_/" target="_blank" rel="noopener noreferrer" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
-                    <a href="#" aria-label="WhatsApp"><i class="fab fa-whatsapp"></i></a>
-                </div>
-            </div>
-            <div class="footer-bottom">
-                &copy; 2026 - Todos los derechos reservados
-            </div>
-        </div>
-    </footer>
+    {% include 'Usuarios/partials/footer.html' %}
 
     <script src="{{ url_for('static', filename='js/usuario/catalog_base.js') }}"></script>
     <script src="{{ url_for('static', filename='js/usuario/user_dashboard.js') }}"></script>

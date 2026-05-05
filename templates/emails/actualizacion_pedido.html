@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Actualizaci&oacute;n de pedido</title>
+</head>
+<body style="margin:0;padding:0;background:#f6f8fc;font-family:Arial,sans-serif;color:#1f2d3d;">
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#f6f8fc;padding:24px 12px;">
+        <tr>
+            <td align="center">
+                <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:600px;background:#ffffff;border-radius:12px;overflow:hidden;border:1px solid #e7ebf3;">
+                    <tr>
+                        <td style="background:#0b2f69;color:#ffffff;padding:20px 24px;">
+                            <h1 style="margin:0;font-size:22px;line-height:1.2;">{{ proyecto }}</h1>
+                            <p style="margin:6px 0 0 0;font-size:14px;opacity:.92;">Pedido #{{ id_pedido }}</p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding:24px;">
+                            <p style="margin:0 0 14px 0;font-size:15px;line-height:1.6;">
+                                Hola{% if nombre %}, {{ nombre }}{% endif %}.
+                            </p>
+                            <h2 style="margin:0 0 10px 0;font-size:20px;line-height:1.3;color:#0b2f69;">{{ titulo }}</h2>
+                            <p style="margin:0 0 14px 0;font-size:15px;line-height:1.6;">
+                                {{ resumen }}
+                            </p>
+                            <p style="margin:0 0 16px 0;font-size:15px;line-height:1.6;">
+                                {{ detalle }}
+                            </p>
+                            <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin:16px 0;border:1px solid #e7ebf3;border-radius:10px;overflow:hidden;">
+                                <tr>
+                                    <td style="padding:12px 14px;background:#f8fbff;color:#425466;font-size:13px;">Estado del pedido</td>
+                                    <td style="padding:12px 14px;font-size:14px;font-weight:700;color:#1f2d3d;">{{ estado_pedido_label or 'Actualizado' }}</td>
+                                </tr>
+                                {% if estado_pago_label %}
+                                <tr>
+                                    <td style="padding:12px 14px;background:#f8fbff;color:#425466;font-size:13px;border-top:1px solid #e7ebf3;">Estado del pago</td>
+                                    <td style="padding:12px 14px;font-size:14px;font-weight:700;color:#1f2d3d;border-top:1px solid #e7ebf3;">{{ estado_pago_label }}</td>
+                                </tr>
+                                {% endif %}
+                            </table>
+                            {% if url_pedidos %}
+                            <p style="margin:20px 0;">
+                                <a href="{{ url_pedidos }}" style="display:inline-block;padding:12px 20px;background:#0b2f69;color:#ffffff;text-decoration:none;border-radius:8px;font-weight:700;">
+                                    Ver mis pedidos
+                                </a>
+                            </p>
+                            {% endif %}
+                            <p style="margin:18px 0 0 0;font-size:14px;color:#425466;line-height:1.6;">
+                                Gracias,<br>
+                                El equipo de {{ proyecto }}
+                            </p>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>

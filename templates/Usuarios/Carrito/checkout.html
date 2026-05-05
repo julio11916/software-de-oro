@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Transferencia por QR - Nachoher</title>
+    <title>Transferencia por QR - Nachohers</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/usuario/catalog_base.css') }}">
@@ -20,11 +20,11 @@
             <div class="transfer-hero-copy">
                 <p class="transfer-kicker">Transferencia por QR</p>
                 <h1>Escanea el QR y env&iacute;a tu comprobante</h1>
-                <p class="transfer-lead">Tu pago se valida manualmente. Cuando confirmemos el comprobante, el pedido entrar&aacute; al flujo normal de preparaci&oacute;n y env&iacute;o.</p>
+                <p class="transfer-lead">Tu pago se valida manualmente. Adjunta aqu&iacute; una captura legible del comprobante y el administrador podr&aacute; revisarlo desde la zona de pedidos.</p>
                 <div class="transfer-hero-highlights">
                     <span><i class="fas fa-qrcode"></i> Pago exacto por QR</span>
-                    <span><i class="fas fa-envelope-open-text"></i> Validaci&oacute;n por correo</span>
-                    <span><i class="fab fa-whatsapp"></i> Confirmaci&oacute;n por WhatsApp</span>
+                    <span><i class="fas fa-image"></i> Comprobante obligatorio</span>
+                    <span><i class="fas fa-user-shield"></i> Revisi&oacute;n desde administraci&oacute;n</span>
                 </div>
             </div>
             <div class="transfer-hero-side">
@@ -94,15 +94,15 @@
                     <article class="transfer-proof-step">
                         <span class="transfer-proof-index">2</span>
                         <div>
-                            <strong>Env&iacute;a el comprobante por ambos canales</strong>
-                            <p>Correo y WhatsApp son parte del proceso de validaci&oacute;n manual.</p>
+                            <strong>Adjunta el comprobante en esta p&aacute;gina</strong>
+                            <p>Sube una imagen clara donde se vea la transferencia realizada.</p>
                         </div>
                     </article>
                     <article class="transfer-proof-step">
                         <span class="transfer-proof-index">3</span>
                         <div>
-                            <strong>Registra aqu&iacute; que ya pagaste</strong>
-                            <p>Con eso el pedido queda visible para revisi&oacute;n en administraci&oacute;n.</p>
+                            <strong>Registra el pago para revisi&oacute;n</strong>
+                            <p>Con eso el pedido y el comprobante quedan visibles para administraci&oacute;n.</p>
                         </div>
                     </article>
                 </div>
@@ -112,8 +112,8 @@
                     <ol>
                         <li>Escanea el QR y realiza la transferencia por el valor exacto.</li>
                         <li>Toma una captura legible del comprobante.</li>
-                        <li>Env&iacute;a la evidencia al correo y al WhatsApp que te mostramos en esta p&aacute;gina.</li>
-                        <li>Luego pulsa el bot&oacute;n <strong>Ya realic&eacute; la transferencia</strong>.</li>
+                        <li>Adjunta la imagen en el formulario de esta p&aacute;gina.</li>
+                        <li>Luego pulsa el bot&oacute;n <strong>Registrar transferencia</strong>.</li>
                     </ol>
                 </div>
             </section>
@@ -139,7 +139,7 @@
                 </div>
 
                 <div class="transfer-contact-box">
-                    <h3><i class="fas fa-paper-plane"></i> Env&iacute;a tu comprobante</h3>
+                    <h3><i class="fas fa-headset"></i> Canales de soporte</h3>
                     <div class="transfer-contact-item">
                         <span class="transfer-contact-label">Correo electr&oacute;nico</span>
                         <strong>{{ transfer_support_email }}</strong>
@@ -152,12 +152,12 @@
                         <strong>Pendiente de configurar</strong>
                         {% endif %}
                     </div>
-                    <p class="transfer-contact-help">Necesitamos ambos env&iacute;os para validar el comprobante desde administraci&oacute;n.</p>
+                    <p class="transfer-contact-help">Usa estos canales solo si necesitas ayuda. La validaci&oacute;n principal se har&aacute; con el comprobante adjunto en la web.</p>
                 </div>
 
                 <div class="transfer-upload-box">
-                    <h3><i class="fas fa-image"></i> Adjunta tu comprobante aqui</h3>
-                    <p class="transfer-contact-help">Este archivo no reemplaza el envio por correo y WhatsApp, pero nos ayuda a revisarlo mas rapido desde administracion.</p>
+                    <h3><i class="fas fa-image"></i> Adjunta tu comprobante aqu&iacute;</h3>
+                    <p class="transfer-contact-help">El archivo es obligatorio para registrar la transferencia. Usa una imagen JPG, PNG, GIF o WEBP de m&aacute;ximo 3MB.</p>
                 </div>
 
                 <form method="POST" action="{{ url_for('pay') }}" class="transfer-submit-form" enctype="multipart/form-data">
@@ -166,11 +166,19 @@
                     <input type="hidden" name="cliente_telefono" value="{{ cliente_telefono }}">
                     <input type="hidden" name="cliente_direccion" value="{{ cliente_direccion }}">
                     <div class="transfer-upload-field">
-                        <label for="comprobante_transferencia" class="form-label">Captura del comprobante (opcional recomendado)</label>
-                        <input id="comprobante_transferencia" name="comprobante_transferencia" type="file" class="form-control" accept=".jpg,.jpeg,.png,.gif,.webp,image/*">
+                        <label for="comprobante_transferencia" class="form-label">Captura del comprobante</label>
+                        <input id="comprobante_transferencia" name="comprobante_transferencia" type="file" class="form-control" accept=".jpg,.jpeg,.png,.gif,.webp,image/*" required>
+                        <small class="transfer-upload-hint">Debe verse el valor, la fecha y la confirmaci&oacute;n de la transferencia.</small>
+                        <div class="transfer-proof-preview" data-proof-preview hidden>
+                            <img src="" alt="Vista previa del comprobante" data-proof-preview-image>
+                            <button type="button" class="transfer-proof-preview__clear" data-proof-clear>
+                                <i class="fas fa-xmark"></i> Quitar
+                            </button>
+                        </div>
+                        <p class="transfer-upload-error" data-proof-error hidden></p>
                     </div>
                     <button type="submit" class="btn-transfer-confirm">
-                        <i class="fas fa-check-circle"></i> Ya realic&eacute; la transferencia
+                        <i class="fas fa-check-circle"></i> Registrar transferencia
                     </button>
                 </form>
 
@@ -188,7 +196,10 @@
         </div>
     </div>
 
+    {% include 'Usuarios/partials/footer.html' %}
+
     <script src="{{ url_for('static', filename='js/usuario/catalog_base.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/usuario/checkout.js') }}"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 

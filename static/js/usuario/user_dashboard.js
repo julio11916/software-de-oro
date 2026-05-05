@@ -11,40 +11,50 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        const getCardOffsets = () => cards.map((card) => card.offsetLeft);
-
         const updateButtons = () => {
             const maxScrollLeft = Math.max(0, track.scrollWidth - track.clientWidth);
-            const hasOverflow = maxScrollLeft > 8;
+            const hasOverflow = maxScrollLeft > 4;
 
-            prevBtn.disabled = !hasOverflow || track.scrollLeft <= 8;
-            nextBtn.disabled = !hasOverflow || track.scrollLeft >= maxScrollLeft - 8;
+            prevBtn.disabled = !hasOverflow;
+            nextBtn.disabled = !hasOverflow;
         };
 
-        const scrollToCard = (direction) => {
-            const current = Math.round(track.scrollLeft);
+        const getScrollStep = () => {
+            const firstCard = cards[0];
+            const trackStyles = window.getComputedStyle(track);
+            const gap = Number.parseFloat(trackStyles.columnGap || trackStyles.gap || '0') || 0;
+            const cardWidth = firstCard.getBoundingClientRect().width || 260;
+
+            return Math.max(cardWidth + gap, Math.min(track.clientWidth * 0.85, 340));
+        };
+
+        const scrollCards = (direction) => {
             const maxScrollLeft = Math.max(0, track.scrollWidth - track.clientWidth);
-            const offsets = getCardOffsets();
+            const atStart = track.scrollLeft <= 4;
+            const atEnd = track.scrollLeft >= maxScrollLeft - 4;
+            let target = track.scrollLeft + (getScrollStep() * direction);
 
-            let target = current;
-
-            if (direction > 0) {
-                target = offsets.find((offset) => offset > current + 16) ?? maxScrollLeft;
+            if (direction > 0 && atEnd) {
+                target = 0;
+            } else if (direction < 0 && atStart) {
+                target = maxScrollLeft;
             } else {
-                const previousOffsets = offsets.filter((offset) => offset < current - 16);
-                target = previousOffsets.length ? previousOffsets[previousOffsets.length - 1] : 0;
+                target = Math.max(0, Math.min(target, maxScrollLeft));
             }
 
             track.scrollTo({
-                left: Math.max(0, Math.min(target, maxScrollLeft)),
+                left: target,
                 behavior: 'smooth'
             });
+
+            window.setTimeout(updateButtons, 280);
         };
 
-        prevBtn.addEventListener('click', () => scrollToCard(-1));
-        nextBtn.addEventListener('click', () => scrollToCard(1));
+        prevBtn.addEventListener('click', () => scrollCards(-1));
+        nextBtn.addEventListener('click', () => scrollCards(1));
         track.addEventListener('scroll', updateButtons, { passive: true });
         window.addEventListener('resize', updateButtons);
+        window.addEventListener('load', updateButtons);
 
         updateButtons();
     });
