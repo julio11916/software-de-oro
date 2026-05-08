@@ -16,7 +16,8 @@ def load_local_env():
         load_dotenv()
         return
 
-    env_path = os.path.join(os.path.dirname(__file__), ".env")
+    project_root = os.path.dirname(os.path.dirname(__file__)) if os.path.basename(os.path.dirname(__file__)) == "core" else os.path.dirname(__file__)
+    env_path = os.path.join(project_root, ".env")
     if not os.path.exists(env_path):
         return
 
