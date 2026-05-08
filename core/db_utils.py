@@ -35,9 +35,22 @@ def load_local_env():
 
 load_local_env()
 
-DATABASE_URL = os.environ.get(
-    "DATABASE_URL",
-    "postgresql+psycopg://postgres:admin@localhost:5432/software_de_oro",
+def _normalize_database_url(raw_url):
+    url = str(raw_url or "").strip()
+    if not url:
+        return "postgresql+psycopg://postgres:admin@localhost:5432/software_de_oro"
+    if url.startswith("postgres://"):
+        return "postgresql+psycopg://" + url[len("postgres://") :]
+    if url.startswith("postgresql://") and not url.startswith("postgresql+"):
+        return "postgresql+psycopg://" + url[len("postgresql://") :]
+    return url
+
+
+DATABASE_URL = _normalize_database_url(
+    os.environ.get(
+        "DATABASE_URL",
+        "postgresql+psycopg://postgres:admin@localhost:5432/software_de_oro",
+    )
 )
 engine = sa.create_engine(DATABASE_URL, future=True)
 
