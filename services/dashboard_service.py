@@ -60,12 +60,20 @@ def construir_contexto_home(
     productos_destacados_armada = [
         p for p in lista_productos if bool(p.get("destacado_dashboard", False)) and p.get("fuerza") == "Armada"
     ]
+    productos_destacados_gaula = [
+        p for p in lista_productos if bool(p.get("destacado_dashboard", False)) and p.get("fuerza") == "Gaula"
+    ]
+    productos_destacados_variado = [
+        p for p in lista_productos if bool(p.get("destacado_dashboard", False)) and p.get("fuerza") == "Variado"
+    ]
 
     return {
         "productos": lista_productos,
         "productos_destacados_ejercito": productos_destacados_ejercito,
         "productos_destacados_policia": productos_destacados_policia,
         "productos_destacados_armada": productos_destacados_armada,
+        "productos_destacados_gaula": productos_destacados_gaula,
+        "productos_destacados_variado": productos_destacados_variado,
     }
 
 
@@ -142,7 +150,14 @@ def construir_contexto_admin_dashboard(
     }
 
 
-def actualizar_destacados_productos(productos, ids_ejercito_raw, ids_policia_raw, ids_armada_raw):
+def actualizar_destacados_productos(
+    productos,
+    ids_ejercito_raw,
+    ids_policia_raw,
+    ids_armada_raw,
+    ids_gaula_raw,
+    ids_variado_raw,
+):
     productos = productos.copy()
     productos["id_producto"] = pd.to_numeric(productos["id_producto"], errors="coerce")
     ids_disponibles = set(productos.loc[productos["eliminado"] == False, "id_producto"].dropna().astype(int).tolist())
@@ -161,19 +176,29 @@ def actualizar_destacados_productos(productos, ids_ejercito_raw, ids_policia_raw
     ids_ejercito = procesar_ids(ids_ejercito_raw)
     ids_policia = procesar_ids(ids_policia_raw)
     ids_armada = procesar_ids(ids_armada_raw)
+    ids_gaula = procesar_ids(ids_gaula_raw)
+    ids_variado = procesar_ids(ids_variado_raw)
 
     productos["destacado_dashboard"] = False
     productos.loc[productos["eliminado"] == True, "destacado_dashboard"] = False
     productos.loc[productos["id_producto"].isin(ids_ejercito), "destacado_dashboard"] = True
     productos.loc[productos["id_producto"].isin(ids_policia), "destacado_dashboard"] = True
     productos.loc[productos["id_producto"].isin(ids_armada), "destacado_dashboard"] = True
+    productos.loc[productos["id_producto"].isin(ids_gaula), "destacado_dashboard"] = True
+    productos.loc[productos["id_producto"].isin(ids_variado), "destacado_dashboard"] = True
 
     return {
         "productos": productos,
         "ids_ejercito": ids_ejercito,
         "ids_policia": ids_policia,
         "ids_armada": ids_armada,
-        "total_destacados": len(ids_ejercito) + len(ids_policia) + len(ids_armada),
+        "ids_gaula": ids_gaula,
+        "ids_variado": ids_variado,
+        "total_destacados": len(ids_ejercito)
+        + len(ids_policia)
+        + len(ids_armada)
+        + len(ids_gaula)
+        + len(ids_variado),
     }
 
 

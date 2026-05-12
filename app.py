@@ -51,6 +51,7 @@ from routes.admin import register_admin_legacy_routes
 from routes.auth import register_auth_legacy_routes
 from routes.checkout import register_checkout_legacy_routes
 from routes.custom_orders import register_custom_orders_legacy_routes
+from routes.main import healthcheck
 from routes.user import register_user_legacy_routes
 from services import auth_service as app_auth_service
 from services import dashboard_service as app_dashboard_service
@@ -84,6 +85,7 @@ if not app.secret_key:
     )
 
 init_extensions(app)
+app.add_url_rule("/health", endpoint="healthcheck", view_func=healthcheck)
 
 PENDING_REGISTRATIONS = {}
 

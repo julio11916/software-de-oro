@@ -424,6 +424,10 @@ def register_user_legacy_routes(app, legacy):
         productos = legacy.cargar_productos_por_fuerza("Gaula")
         return render_template("Usuarios/catalogo/gaula.html", productos=productos)
 
+    def variado():
+        productos = legacy.cargar_productos_por_fuerza("Variado")
+        return render_template("Usuarios/catalogo/variado.html", productos=productos)
+
     def ejercito():
         productos = legacy.cargar_productos_por_fuerza("Ejercito")
         return render_template("Usuarios/catalogo/ejercito.html", productos=productos)
@@ -465,6 +469,8 @@ def register_user_legacy_routes(app, legacy):
             productos_destacados_ejercito=contexto["productos_destacados_ejercito"],
             productos_destacados_policia=contexto["productos_destacados_policia"],
             productos_destacados_armada=contexto["productos_destacados_armada"],
+            productos_destacados_gaula=contexto["productos_destacados_gaula"],
+            productos_destacados_variado=contexto["productos_destacados_variado"],
         )
 
     def user_dashboard():
@@ -482,6 +488,8 @@ def register_user_legacy_routes(app, legacy):
             productos_destacados_ejercito=contexto["productos_destacados_ejercito"],
             productos_destacados_policia=contexto["productos_destacados_policia"],
             productos_destacados_armada=contexto["productos_destacados_armada"],
+            productos_destacados_gaula=contexto["productos_destacados_gaula"],
+            productos_destacados_variado=contexto["productos_destacados_variado"],
             cart_count=cart_count,
         )
 
@@ -510,6 +518,7 @@ def register_user_legacy_routes(app, legacy):
     app.add_url_rule("/armada", endpoint="armada", view_func=armada)
     app.add_url_rule("/policia", endpoint="policia", view_func=policia)
     app.add_url_rule("/gaula", endpoint="gaula", view_func=gaula)
+    app.add_url_rule("/variado", endpoint="variado", view_func=variado)
     app.add_url_rule("/ejercito", endpoint="ejercito", view_func=ejercito)
     app.add_url_rule("/producto/<int:id_producto>", endpoint="producto_detalle", view_func=producto_detalle)
     app.add_url_rule("/accesorios", endpoint="accesorios", view_func=accesorios)

@@ -31,16 +31,22 @@
 }
 
 .trash-image-wrap {
+    height: 230px;
+    padding: 12px;
     border-bottom: 1px solid #edf2fb;
+    background: #f3f7ff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .trash-card .card-img-top {
     width: 100%;
-    height: 200px;
-    object-fit: cover;
+    height: 100%;
+    object-fit: contain;
     object-position: center;
     display: block;
-    background: #f0f5ff;
+    background: transparent;
 }
 
 .trash-placeholder {
@@ -88,4 +94,11 @@
 .content-area {
     min-height: calc(100vh - 88px);
     background-color: #f4f7fb;
+}
+
+@media (max-width: 575.98px) {
+    .trash-image-wrap {
+        height: 210px;
+        padding: 10px;
+    }
 }
