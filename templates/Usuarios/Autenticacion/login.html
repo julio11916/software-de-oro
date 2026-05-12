@@ -71,6 +71,7 @@
                 <a class="offcanvas-link menu-normal" href="{{ url_for('armada') }}">  Armada</a>
                 <a class="offcanvas-link menu-normal" href="{{ url_for('ejercito') }}">  Ejército</a>
                 <a class="offcanvas-link menu-normal" href="{{ url_for('gaula') }}">  Gaula</a>
+                <a class="offcanvas-link menu-normal" href="{{ url_for('variado') }}">  Variado</a>
                 <a class="offcanvas-link menu-normal" href="{{ url_for('policia') }}">  Policía</a>
                 <a class="offcanvas-link active" href="{{ url_for('accesorios') }}">
                     <i class="fa-solid fa-glasses" style="color: rgb(29, 42, 51);"></i>
@@ -117,6 +118,14 @@
         {% endwith %}
 
         {% with carousel_id='armadaCarousel', titulo='Prendas destacadas - Armada', productos=productos_destacados_armada, empty_message='Aún no hay prendas destacadas disponibles para Armada.', is_public_featured=true %}
+        {% include 'Usuarios/partials/_featured_category_carousel.html' %}
+        {% endwith %}
+
+        {% with carousel_id='gaulaCarousel', titulo='Prendas destacadas - Gaula', productos=productos_destacados_gaula, empty_message='Aún no hay prendas destacadas disponibles para Gaula.', is_public_featured=true %}
+        {% include 'Usuarios/partials/_featured_category_carousel.html' %}
+        {% endwith %}
+
+        {% with carousel_id='variadoCarousel', titulo='Prendas destacadas - Variado', productos=productos_destacados_variado, empty_message='Aún no hay prendas destacadas disponibles para Variado.', is_public_featured=true %}
         {% include 'Usuarios/partials/_featured_category_carousel.html' %}
         {% endwith %}
     </main>

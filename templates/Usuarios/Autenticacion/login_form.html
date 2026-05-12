@@ -17,33 +17,14 @@
                 {% with messages = get_flashed_messages(with_categories=true) %}
                     {% if messages %}
                         {% for category, message in messages %}
-                            {% set message_limpio = message
-                                | replace('ÃƒÆ’Ã‚Â±', 'ñ')
-                                | replace('ÃƒÂ±', 'ñ')
-                                | replace('ÃƒÂ¡', 'á')
-                                | replace('ÃƒÂ©', 'é')
-                                | replace('ÃƒÂ­', 'í')
-                                | replace('ÃƒÂ³', 'ó')
-                                | replace('ÃƒÂº', 'ú')
-                                | replace('Ã‚Â¿', '¿')
-                                | replace('Ã‚Â¡', '¡')
-                                | replace('Ã±', 'ñ')
-                                | replace('Ã¡', 'á')
-                                | replace('Ã©', 'é')
-                                | replace('Ã­', 'í')
-                                | replace('Ã³', 'ó')
-                                | replace('Ãº', 'ú')
-                                | replace('Â¿', '¿')
-                                | replace('Â¡', '¡')
-                            %}
                             {% if category == 'email_error' %}
                                 {% set ns.email_error = true %}
-                                {% set _ = ns.alert_messages.append(message_limpio) %}
+                                {% set _ = ns.alert_messages.append(message) %}
                             {% elif category == 'password_error' %}
                                 {% set ns.password_error = true %}
-                                {% set _ = ns.alert_messages.append(message_limpio) %}
+                                {% set _ = ns.alert_messages.append(message) %}
                             {% else %}
-                                {% set _ = ns.alert_messages.append(message_limpio) %}
+                                {% set _ = ns.alert_messages.append(message) %}
                             {% endif %}
                         {% endfor %}
                     {% endif %}

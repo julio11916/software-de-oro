@@ -1413,6 +1413,8 @@ def register_admin_legacy_routes(app, legacy):
         ids_ejercito = resultado["ids_ejercito"]
         ids_policia = resultado["ids_policia"]
         ids_armada = resultado["ids_armada"]
+        ids_gaula = resultado["ids_gaula"]
+        ids_variado = resultado["ids_variado"]
         total_destacados = resultado["total_destacados"]
 
         legacy.registrar_actividad(
@@ -1420,6 +1422,8 @@ def register_admin_legacy_routes(app, legacy):
             f"- Ejercito: {len(ids_ejercito)} ({', '.join(str(x) for x in ids_ejercito) if ids_ejercito else 'ninguna'})\n"
             f"- Policia: {len(ids_policia)} ({', '.join(str(x) for x in ids_policia) if ids_policia else 'ninguna'})\n"
             f"- Armada: {len(ids_armada)} ({', '.join(str(x) for x in ids_armada) if ids_armada else 'ninguna'})\n"
+            f"- Gaula: {len(ids_gaula)} ({', '.join(str(x) for x in ids_gaula) if ids_gaula else 'ninguna'})\n"
+            f"- Variado: {len(ids_variado)} ({', '.join(str(x) for x in ids_variado) if ids_variado else 'ninguna'})\n"
             f"- Total destacadas: {total_destacados}"
         )
 

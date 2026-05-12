@@ -57,8 +57,6 @@ ORDEN_PERSONALIZADA_PRODUCTO_ALIAS = {
     'pa\u00f1oleta': 'pa\u00f1oleta',
     'paoleta': 'pa\u00f1oleta',
     'panoleta': 'pa\u00f1oleta',
-    'paÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â±oleta': 'pa\u00f1oleta',
-    'paÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â±oleta': 'pa\u00f1oleta',
 }
 PEDIDO_STATUS_FLOW = [
     ('confirmado', 'Confirmado'),
@@ -67,15 +65,15 @@ PEDIDO_STATUS_FLOW = [
     ('entregado', 'Entregado'),
 ]
 PEDIDO_STATUS_EXTRA = {
-    'pago_en_revision': 'Pago en revisiÃƒÆ’Ã‚Â³n',
+    'pago_en_revision': 'Pago en revisión',
     'cancelado': 'Cancelado',
-    'pendiente_revision': 'Pendiente de revisiÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â³n',
+    'pendiente_revision': 'Pendiente de revisión',
     'completado': 'Completado',
 }
 ORDEN_PERSONALIZADA_ESTADOS_PAGO = {
     'pendiente_pago': 'Pendiente de pago',
     'pendiente': 'Pendiente',
-    'en_revision': 'En revisiÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â³n',
+    'en_revision': 'En revisión',
     'cotizada': 'Cotizada',
     'completada': 'Completada',
     'cancelada': 'Cancelada',
@@ -92,7 +90,7 @@ PEDIDO_STATUS_LABELS = {
 }
 PAGO_STATUS_LABELS = {
     'pendiente_comprobante': 'Pendiente de comprobante',
-    'en_revision': 'En revisiÃƒÆ’Ã‚Â³n',
+    'en_revision': 'En revisión',
     'aprobado': 'Aprobado',
     'rechazado': 'Rechazado',
 }
@@ -106,7 +104,7 @@ PROMO_COLUMNS = [
     'activo'
 ]
 
-FUERZAS_OPCIONES = ["Policia", "Ejercito", "Armada", "Gaula"]
+FUERZAS_OPCIONES = ["Policia", "Ejercito", "Armada", "Gaula", "Variado"]
 INTENDENCIAS_OPCIONES = [
     "Busos", "Camibusos", "Gorras", "Pa\u00f1oletas", "Sudaderas",
     "Pantalonetas", "Colchas", "Tendidos", "Chuspas para ropa sucia",
@@ -115,7 +113,6 @@ INTENDENCIAS_OPCIONES = [
 TALLAS_OPCIONES = ["XS", "S", "M", "L", "XL", "XXL"]
 INTENDENCIAS_SIN_TALLA = {
     "pa\u00f1oleta", "pa\u00f1oletas",
-    "paÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â±oleta", "paÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â±oletas",
     "panoleta", "panoletas",
     "gorra", "gorras",
     "colcha", "colchas",

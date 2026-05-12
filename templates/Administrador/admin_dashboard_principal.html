@@ -164,9 +164,15 @@
                                     <li class="nav-item" role="presentation">
                                         <button class="nav-link" id="armada-tab" data-bs-toggle="tab" data-bs-target="#armada" type="button" role="tab" aria-controls="armada" aria-selected="false">Armada</button>
                                     </li>
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link" id="gaula-tab" data-bs-toggle="tab" data-bs-target="#gaula" type="button" role="tab" aria-controls="gaula" aria-selected="false">Gaula</button>
+                                    </li>
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link" id="variado-tab" data-bs-toggle="tab" data-bs-target="#variado" type="button" role="tab" aria-controls="variado" aria-selected="false">Variado</button>
+                                    </li>
                                 </ul>
                                 <div class="tab-content" id="destacadosTabContent">
-                                    {% for fuerza in ['Ejercito', 'Policia', 'Armada'] %}
+                                    {% for fuerza in ['Ejercito', 'Policia', 'Armada', 'Gaula', 'Variado'] %}
                                     <div class="tab-pane fade {% if loop.first %}show active{% endif %}" id="{{ fuerza.lower() }}" role="tabpanel" aria-labelledby="{{ fuerza.lower() }}-tab">
                                         <div class="featured-list mt-3">
                                             {% set productos_fuerza = productos_destacables | selectattr('fuerza', 'equalto', fuerza) | list %}

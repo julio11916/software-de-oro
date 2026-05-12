@@ -80,6 +80,8 @@ def build_workflow_legacy_bindings(
             ids_ejercito_raw=request_obj.form.getlist('destacados_ejercito'),
             ids_policia_raw=request_obj.form.getlist('destacados_policia'),
             ids_armada_raw=request_obj.form.getlist('destacados_armada'),
+            ids_gaula_raw=request_obj.form.getlist('destacados_gaula'),
+            ids_variado_raw=request_obj.form.getlist('destacados_variado'),
         )
         guardar_productos_df_fn(resultado['productos'])
         return resultado
