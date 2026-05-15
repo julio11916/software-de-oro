@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict xwMlf6EahcCv8IJI2HdqZUFmWhT9wDJkVQ2PXgi2Pffn2OPa7xPvUBJuS4osWnj
+\restrict VCnSjubPq17TQvkclbIml2TLO2pbO5RLD9ZCVs5O5RNgg9nbyq8zLM24183igd6
 
 -- Dumped from database version 18.3
 -- Dumped by pg_dump version 18.3
@@ -331,7 +331,7 @@ demo.logout@local.test	[{"cantidad": 3, "id_producto": 7, "nombre": "Demo", "pre
 persistencia.test@local.test	[{"cantidad": 2, "id_producto": 1, "nombre": "Item A", "precio": 10000.0, "subtotal": 20000.0}]	2026-04-07 14:00:29.504371-05
 img.test@local.test	[{"cantidad": 1, "id_producto": 1, "nombre": "Producto test", "precio": 10000.0, "subtotal": 10000.0, "imagen_url": "img/Empresa/producto_1.jpg", "descripcion": "Damn"}]	2026-04-07 14:25:41.012404-05
 img2.test@local.test	[{"cantidad": 1, "id_producto": 1, "nombre": "X", "precio": 12000.0, "subtotal": 12000.0, "imagen_url": "img/Empresa/producto_1.jpg", "descripcion": "Damn"}]	2026-04-07 15:12:59.000695-05
-julio@gmail.com	[]	2026-05-08 13:47:39.870268-05
+julio@gmail.com	[{"cantidad": 1, "descripcion": "Diseñada para brindar comodidad y estilo en cualquier ocasión. Disponible en versiones con camuflado, que incluyen diseños representativos y gráficos alusivos a la institución.", "id_producto": 3, "imagen_url": "img/Empresa/producto_3_1.jpg", "nombre": "Camiseta unisex con camuflado", "precio": 100000.0, "subtotal": 100000.0, "talla": "L"}]	2026-05-13 13:19:30.623066-05
 julio11916@gmail.com	[{"cantidad": 1, "descripcion": "Camiseta manga larga cómoda y resistente. Ideal para climas frescos y actividades diarias.", "id_producto": 11, "imagen_url": "img/Empresa/producto_11.jpg", "nombre": "Camiseta unisex manga larga sin estampado color negro", "precio": 80000.0, "subtotal": 80000.0, "talla": "XS"}]	2026-04-29 15:55:25.578723-05
 \.
 
@@ -458,6 +458,8 @@ COPY public.detalle_pedido (id_detalle, id_pedido, id_producto, cantidad, subtot
 63	56	4	1	50000	S
 64	57	4	1	50000	S
 65	58	0	1	12000	L
+66	59	12	1	80000	L
+67	60	12	1	80000	XS
 \.
 
 
@@ -466,6 +468,7 @@ COPY public.detalle_pedido (id_detalle, id_pedido, id_producto, cantidad, subtot
 --
 
 COPY public.orden_personalizada (id_orden_personalizada, usuario_email, cliente_nombre, cliente_correo, cliente_telefono, cliente_direccion, rango, fecha_contingencia, identidad, producto, tecnica, color, estampado, talla, modelo_rh, modelo_presilla, precio, estado, datos_json, fecha_creacion, cantidad, imagen_url) FROM stdin;
+1	julio@gmail.com	julio cesar	julio@gmail.com	3219047309	diagonal7	drago	2026-05-13	Policia	guerrera	Bordado	Azul Noche	Escudos	L			160000.00	cancelada	{"cliente": {"nombre": "julio cesar", "rango": "drago", "direccion": "diagonal7", "correo": "julio@gmail.com", "telefono": "3219047309", "fecha_contingencia": "2026-05-13"}, "detalle": {"identidad": "Policia", "producto": "guerrera", "producto_label": "Guerrera", "tecnica": "Bordado", "color": "Azul Noche", "estampado": "Escudos", "talla": "L", "modelo_rh": "", "modelo_presilla": "", "cantidad": 1, "precio_unitario": 160000, "precio_total": 160000, "imagen_url": "/static/img/prendas/Policia/guerrera/guerrera_policia.png", "vista_prenda": "delantera"}}	2026-05-13 13:19:22.683328-05	1	/static/img/prendas/Policia/guerrera/guerrera_policia.png
 \.
 
 
@@ -495,6 +498,20 @@ paÃ±oleta	PaÃ±oleta	28000.00
 --
 
 COPY public.pagos (id_pago, id_pedido, monto, metodo_pago, fecha_pago, estado_pago, id_promo, codigo_promo, tipo_descuento, valor_descuento, monto_descuento, comprobante_url) FROM stdin;
+24	24	590000	transferencia	2026-03-25 17:54:38	aprobado				0	0	
+25	25	1150000	tarjeta	2026-03-25 18:05:47	aprobado	1		porcentaje	50	50000	
+26	26	60000	tarjeta	2026-03-25 18:34:52	aprobado				0	0	
+27	27	80000	tarjeta	2026-03-25 18:49:29	aprobado				0	0	
+28	28	80000	tarjeta	2026-03-25 18:56:24	aprobado				0	0	
+48	50	160000	tarjeta	2026-04-16 16:30:04	aprobado				0	0	
+49	51	160000	tarjeta	2026-04-16 17:42:38	aprobado				0	0	
+29	29	160000	efectivo	2026-03-25 19:05:41	aprobado				0	0	
+30	30	80000	efectivo	2026-03-25 19:10:26	aprobado				0	0	
+31	31	50000	qr	2026-03-25 19:23:24	aprobado	1		porcentaje	50	50000	
+32	32	50000	qr	2026-03-25 19:33:14	aprobado	1		porcentaje	50	50000	
+33	33	50000	qr	2026-03-25 19:35:47	aprobado	1		porcentaje	50	50000	
+34	34	50000	qr	2026-03-25 19:40:22	aprobado	1		porcentaje	50	50000	
+35	35	50000	qr	2026-03-25 19:56:07	aprobado	1		porcentaje	50	50000	
 40	40	50000	transferencia	2026-04-08 14:45:29	aprobado				0	0	
 41	41	50000	transferencia	2026-04-08 14:46:15	aprobado				0	0	
 52	54	160000	tarjeta	2026-04-16 18:50:57	aprobado				0	0	
@@ -523,20 +540,6 @@ COPY public.pagos (id_pago, id_pedido, monto, metodo_pago, fecha_pago, estado_pa
 23	23	10000	tarjeta	2026-03-25 17:30:05	aprobado				0	0	
 50	52	50000	transferencia	2026-04-16 18:20:23	aprobado				0	0	
 51	53	50000	tarjeta	2026-04-16 18:45:10	aprobado				0	0	
-24	24	590000	transferencia	2026-03-25 17:54:38	aprobado				0	0	
-25	25	1150000	tarjeta	2026-03-25 18:05:47	aprobado	1		porcentaje	50	50000	
-26	26	60000	tarjeta	2026-03-25 18:34:52	aprobado				0	0	
-27	27	80000	tarjeta	2026-03-25 18:49:29	aprobado				0	0	
-28	28	80000	tarjeta	2026-03-25 18:56:24	aprobado				0	0	
-48	50	160000	tarjeta	2026-04-16 16:30:04	aprobado				0	0	
-49	51	160000	tarjeta	2026-04-16 17:42:38	aprobado				0	0	
-29	29	160000	efectivo	2026-03-25 19:05:41	aprobado				0	0	
-30	30	80000	efectivo	2026-03-25 19:10:26	aprobado				0	0	
-31	31	50000	qr	2026-03-25 19:23:24	aprobado	1		porcentaje	50	50000	
-32	32	50000	qr	2026-03-25 19:33:14	aprobado	1		porcentaje	50	50000	
-33	33	50000	qr	2026-03-25 19:35:47	aprobado	1		porcentaje	50	50000	
-34	34	50000	qr	2026-03-25 19:40:22	aprobado	1		porcentaje	50	50000	
-35	35	50000	qr	2026-03-25 19:56:07	aprobado	1		porcentaje	50	50000	
 36	36	50000	qr	2026-03-25 20:29:37	aprobado	1		porcentaje	50	50000	
 46	48	80000	transferencia	2026-04-09 00:27:50	aprobado				0	0	
 47	49	80000	tarjeta	2026-04-09 00:44:04	aprobado				0	0	
@@ -546,7 +549,9 @@ COPY public.pagos (id_pago, id_pedido, monto, metodo_pago, fecha_pago, estado_pa
 38	38	50000	transferencia	2026-03-27 16:51:25	aprobado	1		porcentaje	50	50000	
 39	39	250000	transferencia	2026-04-08 14:36:43	aprobado				0	0	
 55	57	50000	transferencia	2026-04-29 15:22:40	aprobado				0	0	img/comprobantes/comprobante_pedido_57_20260429_152240_517277.png
-56	58	12000	tarjeta	2026-05-01 13:36:20	aprobado				0	0	\N
+56	58	12000	tarjeta	2026-05-01 13:36:20	aprobado				0	0	
+57	59	80000	transferencia	2026-05-11 14:01:51	aprobado				0	0	img/comprobantes/comprobante_pedido_59_20260511_140151_586201.png
+58	60	80000	tarjeta	2026-05-12 13:16:55	aprobado				0	0	\N
 \.
 
 
@@ -555,6 +560,18 @@ COPY public.pagos (id_pago, id_pedido, monto, metodo_pago, fecha_pago, estado_pa
 --
 
 COPY public.pedidos (id_pedido, id_usuario, fecha_pedido, estado, cliente_telefono, cliente_direccion) FROM stdin;
+30	nico@gmail.com	2026-03-25 19:10:26	completado		
+31	nico@gmail.com	2026-03-25 19:23:24	completado		
+32	nico@gmail.com	2026-03-25 19:33:13	completado		
+33	nico@gmail.com	2026-03-25 19:35:47	completado		
+34	nico@gmail.com	2026-03-25 19:40:22	completado		
+35	nico@gmail.com	2026-03-25 19:56:06	completado		
+36	nico@gmail.com	2026-03-25 20:29:37	completado		
+37	nico@gmail.com	2026-03-27 14:14:32	completado		
+38	nico@gmail.com	2026-03-27 16:51:25	completado		
+58	2	2026-05-01 13:36:20	confirmado	3135264367	adsfgvzsd<ge<
+59	2	2026-05-11 14:01:51	confirmado	3135264367	adsfgvzsd<ge<
+60	nico@gmail.com	2026-05-12 13:16:55	completado		
 39	12	2026-04-08 14:36:43	pendiente		
 40	12	2026-04-08 14:45:29	pendiente		
 41	12	2026-04-08 14:46:15	empaquetado		
@@ -599,16 +616,6 @@ COPY public.pedidos (id_pedido, id_usuario, fecha_pedido, estado, cliente_telefo
 27	nico@gmail.com	2026-03-25 18:49:29	completado		
 28	nico@gmail.com	2026-03-25 18:56:24	completado		
 29	nico@gmail.com	2026-03-25 19:05:41	completado		
-30	nico@gmail.com	2026-03-25 19:10:26	completado		
-31	nico@gmail.com	2026-03-25 19:23:24	completado		
-32	nico@gmail.com	2026-03-25 19:33:13	completado		
-33	nico@gmail.com	2026-03-25 19:35:47	completado		
-34	nico@gmail.com	2026-03-25 19:40:22	completado		
-35	nico@gmail.com	2026-03-25 19:56:06	completado		
-36	nico@gmail.com	2026-03-25 20:29:37	completado		
-37	nico@gmail.com	2026-03-27 14:14:32	completado		
-38	nico@gmail.com	2026-03-27 16:51:25	completado		
-58	2	2026-05-01 13:36:20	confirmado	3135264367	adsfgvzsd<ge<
 \.
 
 
@@ -617,26 +624,19 @@ COPY public.pedidos (id_pedido, id_usuario, fecha_pedido, estado, cliente_telefo
 --
 
 COPY public.producto (id_producto, nombre, descripcion, precio, stock, id_categoria, fuerza, intendencia, imagen_url, eliminado, destacado_dashboard) FROM stdin;
-12	Camiseta unisex manga larga sin estampado color negro	Camiseta manga larga cómoda y resistente. Ideal para climas frescos y actividades diarias.	80000	10	1	Policia	Camibusos	img/Empresa/producto_12.jpg	f	t
-13	Guerrera	Prenda superior del uniforme. Se caracteriza por su diseño estructurado, funcional y representativo, pensado para brindar una apariencia formal y profesional.	160000	7	1	Gaula	Camuflados	img/Empresa/producto_13.jpg	f	f
-14	Pantalón	Pantalón inspirado en el uniforme del gaula, diseñado para brindar resistencia, comodidad y funcionalidad en actividades diarias.	180000	10	1	Gaula	Camuflados	img/Empresa/producto_14.jpg	f	f
-15	Camiseta unisex sin estampado color negro	Camiseta cómoda y resistente. Ideal para climas frescos y actividades diarias.	50000	10	1	Gaula	Busos	img/Empresa/producto_15.jpg	f	f
-16	Camiseta unisex sin estampado color blanco	Camiseta cómoda y resistente. Ideal para climas frescos y actividades diarias.	50000	10	1	Gaula	Busos	img/Empresa/producto_16.jpg	f	f
-17	Guerrera	Prenda superior del uniforme. Se caracteriza por su diseño estructurado, funcional y representativo, pensado para brindar una apariencia formal y profesional.	160000	10	1	Policia	Camuflados	img/Empresa/producto_17.jpg	f	t
-18	Pantalón	Pantalón inspirado en el uniforme de la policía, diseñado para brindar resistencia, comodidad y funcionalidad en actividades diarias.	180000	10	1	Policia	Camuflados	img/Empresa/producto_18.jpg	f	t
-19	Moño	Moño decorativo inspirado en accesorios formales utilizados en uniformes institucionales. Perfecto para completar un estilo elegante.	10000	10	1	Policia	Panoletas	img/Empresa/producto_19.jpg	f	t
-20	Pañoleta policia sin estampado	Diseñada para brindar comodidad y estilo en cualquier ocasión. Ideal para quienes prefieren un estilo más sencillo y versátil.	60000	10	1	Policia	Panoletas	img/Empresa/producto_20.jpg	f	t
-1	Camiseta mallada	Damn	60	10	1	Policia	Busos	img/Empresa/producto_1.jpg	t	f
-2	Armando Estaban Quito	puro de corazon	100000	100	1	Gaula	Camibusos	img/Empresa/producto_2_1.jpg	t	f
-3	Camiseta unisex con camuflado	Diseñada para brindar comodidad y estilo en cualquier ocasión. Disponible en versiones con camuflado, que incluyen diseños representativos y gráficos alusivos a la institución.	100000	10	1	Ejercito	Camuflados	img/Empresa/producto_3_1.jpg	f	t
-4	Camiseta unisex sin estampado color negro	Diseñada para brindar comodidad y estilo en cualquier ocasión. Ideal para quienes prefieren un estilo más sencillo y versátil.	50000	8	1	Ejercito	Busos	img/Empresa/producto_4_1.jpg	f	t
-5	Camiseta unisex sin estampado color blanco	Diseñada para brindar comodidad y estilo en cualquier ocasión. Ideal para quienes prefieren un estilo más sencillo y versátil.	50000	10	1	Ejercito	Busos	img/Empresa/producto_5.jpg	f	t
-6	Camiseta unisex color verde	Diseñada para brindar comodidad y estilo en cualquier ocasión. Ideal para quienes prefieren un estilo más sencillo y versátil.	50000	10	1	Ejercito	Busos	img/Empresa/producto_6.jpg	f	t
-7	Pantalón	Pantalón inspirado en el uniforme del Ejército Nacional de Colombia, diseñado para brindar resistencia, comodidad y funcionalidad en actividades diarias.	120000	10	1	Ejercito	Camuflados	img/Empresa/producto_7.jpg	f	t
-8	Guerrera	Prenda superior utilizado en el uniforme. Caracterizado por su diseño estructurado, funcional y representativo, pensado para brindar una apariencia formal y profesional.	160000	10	1	Ejercito	Camuflados	img/Empresa/producto_8.jpg	f	t
-9	Camiseta unisex sin estampado color negro	Diseñada para brindar comodidad y estilo en cualquier ocasión. Ideal para quienes prefieren un estilo más sencillo y versátil.	50000	0	1	Policia	Busos	img/Empresa/producto_9_1.jpg	f	t
-10	Camiseta unisex sin estampado color blanco	Diseñada para brindar comodidad y estilo en cualquier ocasión. Ideal para quienes prefieren un estilo más sencillo y versátil.	50000	10	1	Policia	Busos	img/Empresa/producto_10.jpg	f	t
-11	Camiseta unisex manga larga sin estampado color negro	Camiseta manga larga cómoda y resistente. Ideal para climas frescos y actividades diarias.	80000	10	1	Ejercito	Camibusos	img/Empresa/producto_11.jpg	f	t
+3	Camiseta unisex con camuflado	Diseñada para brindar comodidad y estilo en cualquier ocasión. Disponible en versiones con camuflado, que incluyen diseños representativos y gráficos alusivos a la institución.	100000	10	1	Ejercito	Camuflados	img/catalogo/ejercito/t-shirt_short_estampada.png	f	t
+6	Camiseta unisex color verde	Diseñada para brindar comodidad y estilo en cualquier ocasión. Ideal para quienes prefieren un estilo más sencillo y versátil.	50000	10	1	Ejercito	Busos	img/catalogo/ejercito/t-shirt_short_green.png	f	t
+7	Pantalón	Pantalón inspirado en el uniforme del Ejército Nacional de Colombia, diseñado para brindar resistencia, comodidad y funcionalidad en actividades diarias.	120000	10	1	Ejercito	Camuflados	img/catalogo/ejercito/pantalon_ejercito.png	f	t
+8	Guerrera	Prenda superior utilizado en el uniforme. Caracterizado por su diseño estructurado, funcional y representativo, pensado para brindar una apariencia formal y profesional.	160000	10	1	Ejercito	Camuflados	img/catalogo/ejercito/guerrera_ejercito.png	f	t
+12	Camiseta unisex manga larga sin estampado color negro	Camiseta manga larga cómoda y resistente. Ideal para climas frescos y actividades diarias.	80000	9	1	Variado	Camibusos	img/catalogo/Variado/Camiseta_mangalarga_negro.jpg	f	t
+13	Guerrera	Prenda superior del uniforme. Se caracteriza por su diseño estructurado, funcional y representativo, pensado para brindar una apariencia formal y profesional.	160000	10	1	Gaula	Camuflados	img/catalogo/gaula/guerrera_gaula.png	f	t
+14	Pantalón	Pantalón inspirado en el uniforme del gaula, diseñado para brindar resistencia, comodidad y funcionalidad en actividades diarias.	180000	10	1	Gaula	Camuflados	img/catalogo/gaula/pantalon_gaula.png	f	t
+15	Camiseta unisex sin estampado color negro	Camiseta cómoda y resistente. Ideal para climas frescos y actividades diarias.	50000	10	1	Variado	Busos	img/catalogo/Variado/Camiseta_negro.jpg	f	t
+16	Camiseta unisex sin estampado color blanco	Camiseta cómoda y resistente. Ideal para climas frescos y actividades diarias.	50000	10	1	Variado	Busos	img/catalogo/Variado/Camiseta_blanco.jpg	f	t
+17	Guerrera	Prenda superior del uniforme. Se caracteriza por su diseño estructurado, funcional y representativo, pensado para brindar una apariencia formal y profesional.	160000	10	1	Policia	Camuflados	img/catalogo/policia/guerrera_policia.png	f	t
+18	Pantalón	Pantalón inspirado en el uniforme de la policía, diseñado para brindar resistencia, comodidad y funcionalidad en actividades diarias.	180000	10	1	Policia	Camuflados	img/catalogo/policia/pantalon_policia.png	f	t
+19	Moño	Moño decorativo inspirado en accesorios formales utilizados en uniformes institucionales. Perfecto para completar un estilo elegante.	10000	10	1	Policia	Panoletas	img/catalogo/policia/Moño.jpg	f	t
+20	Pañoleta policia sin estampado	Diseñada para brindar comodidad y estilo en cualquier ocasión. Ideal para quienes prefieren un estilo más sencillo y versátil.	60000	10	1	Policia	Panoletas	img/catalogo/policia/Pañoleta_policia.jpg	f	t
 \.
 
 
@@ -655,68 +655,6 @@ COPY public.promociones (id_promo, nombre, descripcion, tipo_descuento, valor_de
 --
 
 COPY public.registros (id_registro, id_usuario, accion, fecha_accion) FROM stdin;
-113	nico@gmail.com	Inicio de sesion exitoso	2026-03-25 13:07:08
-114	nico@gmail.com	Promocion creada: Promo Camiseta unisex con camuflado\n- producto ID: 3\n- descuento: 50.00%\n- codigo: N/A	2026-03-25 13:11:43
-115	nico@gmail.com	Promocion desactivada: Promo Camiseta unisex con camuflado	2026-03-25 13:12:28
-117	nico@gmail.com	Promocion desactivada: Promo Camiseta unisex con camuflado	2026-03-25 13:12:36
-118	nico@gmail.com	Promocion activada: Promo Camiseta unisex con camuflado	2026-03-25 13:12:46
-120	nico@gmail.com	Inicio de sesion exitoso	2026-03-25 13:20:35
-122	nico@gmail.com	POS registro venta #15 por COP 10.000,00 (1 producto(s))\n- total bruto: COP 10.000,00\n- descuento aplicado: COP 0,00\n- cliente: cata\n- correo: ratalina@gmail.com\n- documento: 092893264\n- teléfono: 3204567896	2026-03-25 15:12:42
-123	nico@gmail.com	Inicio de sesión exitoso	2026-03-25 15:46:09
-124	nico@gmail.com	POS registro venta #16 por COP 10.000,00 (1 producto(s))\n- total bruto: COP 10.000,00\n- descuento aplicado: COP 0,00\n- cliente: cata\n- correo: ratalina@gmail.com\n- documento: 34795368972\n- teléfono: 3204567896	2026-03-25 15:46:55
-225	nico@gmail.com	Actualizo producto 'Camiseta unisex con camuflado' (ID 3)\n- stock: 5 -> 10	2026-04-08 18:03:06
-125	nico@gmail.com	POS registro venta #17 por COP 10.000,00 (1 producto(s))\n- total bruto: COP 10.000,00\n- descuento aplicado: COP 0,00\n- cliente: cata\n- correo: ratalina@gmail.com\n- documento: 34795368972\n- teléfono: 3204567896	2026-03-25 15:47:56
-127	nico@gmail.com	POS registro venta #18 por COP 10.000,00 (1 producto(s))\n- total bruto: COP 10.000,00\n- descuento aplicado: COP 0,00\n- cliente: cata\n- correo: ratalina@gmail.com\n- documento: 34795368972\n- teléfono: 3204567896	2026-03-25 16:19:50
-239	nico@gmail.com	Inicio de sesión exitoso	2026-04-12 18:09:03
-128	nico@gmail.com	POS registro venta #19 por COP 10.000,00 (1 producto(s))\n- total bruto: COP 10.000,00\n- descuento aplicado: COP 0,00\n- cliente: cata\n- correo: ratalina@gmail.com\n- documento: 34795368972\n- teléfono: 3204567896	2026-03-25 16:28:10
-242	nico@gmail.com	Actualizo producto 'Camiseta unisex manga larga sin estampado color negro' (ID 11)\n- stock: 7 -> 10	2026-04-16 12:50:19
-129	nico@gmail.com	POS registro venta #20 por COP 10.000,00 (1 producto(s))\n- total bruto: COP 10.000,00\n- descuento aplicado: COP 0,00\n- cliente: cata\n- correo: ratalina@gmail.com\n- documento: 34795368972\n- teléfono: 3204567896	2026-03-25 16:43:35
-130	nico@gmail.com	Inicio de sesión exitoso	2026-03-25 17:08:15
-131	nico@gmail.com	Inicio de sesión exitoso	2026-03-25 17:08:16
-155	nico@gmail.com	Actualizo producto 'Camiseta unisex manga larga sin estampado color negro' (ID 11)\n- stock: 9 -> 10	2026-03-25 18:09:42
-132	nico@gmail.com	POS registro venta #21 por COP 10.000,00 (1 producto(s))\n- total bruto: COP 10.000,00\n- descuento aplicado: COP 0,00\n- cliente: cata\n- correo: ratalina@gmail.com\n- documento: 34795368972\n- teléfono: 3204567896	2026-03-25 17:08:48
-173	nico@gmail.com	Actualizo producto 'Camiseta unisex con camuflado' (ID 3)\n- stock: 4 -> 10	2026-03-25 20:30:48
-175	nico@gmail.com	Inicio de sesión exitoso	2026-03-27 13:22:05
-133	nico@gmail.com	POS registro venta #22 por COP 10.000,00 (1 producto(s))\n- total bruto: COP 10.000,00\n- descuento aplicado: COP 0,00\n- cliente: cata\n- correo: ratalina@gmail.com\n- documento: 34795368972\n- teléfono: 3204567896	2026-03-25 17:17:22
-134	nico@gmail.com	POS registro venta #23 por COP 10.000,00 (1 producto(s))\n- total bruto: COP 10.000,00\n- descuento aplicado: COP 0,00\n- cliente: cata\n- correo: ratalina@gmail.com\n- documento: 34795368972\n- teléfono: 3204567896	2026-03-25 17:30:05
-272	nico@gmail.com	Inicio de sesiÃ³n exitoso	2026-04-21 16:16:24
-80	nico@gmail.com	Inicio de sesion exitoso	2026-03-23 17:20:19
-84	nico@gmail.com	Inicio de sesion exitoso	2026-03-24 14:39:04
-85	nico@gmail.com	Actualizo producto 'Camiseta unisex con camuflado' (ID 3)\n- precio: COP 100,00 -> COP 100.000,00	2026-03-24 14:39:38
-86	nico@gmail.com	Inicio de sesion exitoso	2026-03-24 14:41:37
-87	nico@gmail.com	Actualizo producto 'Camiseta unisex sin estampado color negro' (ID 4)\n- precio: COP 50,00 -> COP 50.000,00	2026-03-24 14:41:57
-88	nico@gmail.com	Actualizo producto 'Camiseta unisex sin estampado color blanco' (ID 5)\n- precio: COP 50,00 -> COP 50.000,00	2026-03-24 14:42:20
-89	nico@gmail.com	Actualizo producto 'Camiseta unisex color verde' (ID 6)\n- precio: COP 50,00 -> COP 50.000,00	2026-03-24 14:42:31
-90	nico@gmail.com	Actualizo producto 'Pantalón' (ID 7)\n- precio: COP 120,00 -> COP 120.000,00	2026-03-24 14:42:41
-91	nico@gmail.com	Actualizo producto 'Guerrera' (ID 8)\n- precio: COP 160,00 -> COP 160.000,00	2026-03-24 14:42:53
-188	admin	Nuevo usuario registrado y verificado: julio cesar otalvaro sanchez	2026-04-02 18:52:23
-189	admin	Enlace de recuperacion enviado a nachoher072+recoverytest1775230812@gmail.com	2026-04-03 10:40:14
-190	admin	Contrasena restablecida por recuperacion para nachoher072+recoverytest1775230812@gmail.com	2026-04-03 10:40:14
-196	admin	Nuevo usuario registrado y verificado: jilmer	2026-04-03 11:55:51
-197	nico@gmail.com	Inicio de sesión exitoso	2026-04-03 12:20:55
-198	nico@gmail.com	Inicio de sesión exitoso	2026-04-06 20:37:32
-199	nico@gmail.com	Inicio de sesión exitoso	2026-04-06 22:30:20
-2	nico@gmail.com	Inicio de sesión exitoso	2026-03-07 01:19:16
-121	nico@gmail.com	Promocion creada: Promo Guerrera\n- producto ID: 13\n- descuento: COP 140.000,00\n- codigo: N/A	2026-03-25 13:22:32
-28	nico@gmail.com	Inicio de sesión exitoso	2026-03-14 16:08:55
-31	nico@gmail.com	Inicio de sesión exitoso	2026-03-16 21:17:20
-36	nico@gmail.com	Inicio de sesion exitoso	2026-03-17 16:50:35
-38	nico@gmail.com	Inicio de sesion exitoso	2026-03-17 17:03:36
-47	nico@gmail.com	Elimino producto: Armando Estaban Quito (ID 2)	2026-03-18 13:23:43
-92	nico@gmail.com	Actualizo producto 'Camiseta unisex sin estampado color negro' (ID 9)\n- precio: COP 50,00 -> COP 50.000,00	2026-03-24 14:43:31
-94	nico@gmail.com	Actualizo producto 'Camiseta unisex manga larga sin estampado color negro' (ID 11)\n- precio: COP 80,00 -> COP 80.000,00	2026-03-24 14:43:53
-254	nico@gmail.com	Actualizo estado de pedido #53: enviado -> entregado	2026-04-16 18:46:44
-95	nico@gmail.com	Actualizo producto 'Camiseta unisex manga larga sin estampado color negro' (ID 12)\n- precio: COP 80,00 -> COP 80.000,00	2026-03-24 14:44:49
-259	nico@gmail.com	Inicio de sesión exitoso	2026-04-20 15:22:16
-261	nico@gmail.com	Inicio de sesión exitoso	2026-04-21 14:00:41
-96	nico@gmail.com	Actualizo producto 'Guerrera' (ID 13)\n- precio: COP 160,00 -> COP 160.000,00	2026-03-24 14:44:58
-97	nico@gmail.com	Actualizo producto 'Pantalón' (ID 14)\n- precio: COP 180,00 -> COP 180.000,00	2026-03-24 14:45:15
-98	nico@gmail.com	Actualizo producto 'Camiseta unisex sin estampado color negro' (ID 15)\n- precio: COP 50,00 -> COP 50.000,00	2026-03-24 14:45:29
-151	nico@gmail.com	Actualizo producto 'Camiseta unisex con camuflado' (ID 3)\n- stock: 9 -> 10	2026-03-25 18:09:10
-99	nico@gmail.com	Actualizo producto 'Camiseta unisex sin estampado color blanco' (ID 16)\n- precio: COP 50,00 -> COP 50.000,00	2026-03-24 14:45:40
-100	nico@gmail.com	Actualizo producto 'Guerrera' (ID 17)\n- precio: COP 160,00 -> COP 160.000,00	2026-03-24 14:45:51
-101	nico@gmail.com	Actualizo producto 'Pañoleta policia sin estampado' (ID 20)\n- precio: COP 60,00 -> COP 60.000,00	2026-03-24 14:46:02
-102	nico@gmail.com	Actualizo producto 'Pañoleta policia sin estampado' (ID 20)\n- sin cambios detectados	2026-03-24 14:46:02
 103	nico@gmail.com	Actualizo producto 'Moño' (ID 19)\n- precio: COP 20,00 -> COP 10.000,00	2026-03-24 14:46:22
 104	nico@gmail.com	Actualizo producto 'Pantalón' (ID 18)\n- precio: COP 180,00 -> COP 180.000,00	2026-03-24 14:46:32
 106	nico@gmail.com	Inicio de sesion exitoso	2026-03-24 14:51:37
@@ -728,8 +666,8 @@ COPY public.registros (id_registro, id_usuario, accion, fecha_accion) FROM stdin
 224	nico@gmail.com	Actualizo producto 'Camiseta unisex color verde' (ID 6)\n- stock: 4 -> 10	2026-04-08 18:02:58
 226	nico@gmail.com	Actualizo producto 'Camiseta unisex sin estampado color negro' (ID 4)\n- stock: 7 -> 10	2026-04-08 18:03:18
 227	nico@gmail.com	Actualizo producto 'Camiseta unisex sin estampado color blanco' (ID 5)\n- stock: 9 -> 10	2026-04-08 18:03:24
-256	nico@gmail.com	Inicio de sesión exitoso	2026-04-16 18:54:32
 228	nico@gmail.com	Actualizo producto 'Camiseta unisex sin estampado color blanco' (ID 5)\n- sin cambios detectados	2026-04-08 18:03:24
+68	nico@gmail.com	Creo producto 'Moño' (ID 19)\n- precio: COP 20,00\n- stock: 10\n- fuerza: Policia\n- intendencia: Panoletas	2026-03-18 14:33:51
 229	nico@gmail.com	POS registro venta #45 por COP 80.000,00 (1 producto(s))\n- total bruto: COP 80.000,00\n- descuento aplicado: COP 0,00\n- cliente: cata\n- correo: ratalina@gmail.com\n- documento: 34795368972\n- telÃƒÂ©fono: 3204567896	2026-04-08 18:06:49
 230	nico@gmail.com	POS registro venta #46 por COP 10.000,00 (1 producto(s))\n- total bruto: COP 10.000,00\n- descuento aplicado: COP 0,00\n- cliente: cata\n- correo: ratalina@gmail.com\n- documento: 34795368972\n- telÃƒÂ©fono: 3204567896	2026-04-08 21:47:43
 247	nico@gmail.com	Inicio de sesión exitoso	2026-04-16 17:39:42
@@ -760,6 +698,17 @@ COPY public.registros (id_registro, id_usuario, accion, fecha_accion) FROM stdin
 56	nico@gmail.com	Creo producto 'Camiseta unisex sin estampado color blanco' (ID 10)\n- precio: COP 50,00\n- stock: 10\n- fuerza: Policia\n- intendencia: Busos	2026-03-18 13:41:20
 57	nico@gmail.com	Creo producto 'Camiseta unisex manga larga sin estampado color negro' (ID 11)\n- precio: COP 80,00\n- stock: 10\n- fuerza: Ejercito\n- intendencia: Camibusos	2026-03-18 13:46:48
 93	nico@gmail.com	Actualizo producto 'Camiseta unisex sin estampado color blanco' (ID 10)\n- precio: COP 50,00 -> COP 50.000,00	2026-03-24 14:43:39
+242	nico@gmail.com	Actualizo producto 'Camiseta unisex manga larga sin estampado color negro' (ID 11)\n- stock: 7 -> 10	2026-04-16 12:50:19
+113	nico@gmail.com	Inicio de sesion exitoso	2026-03-25 13:07:08
+300	nico@gmail.com	Inicio de sesión exitoso	2026-04-28 13:09:29
+114	nico@gmail.com	Promocion creada: Promo Camiseta unisex con camuflado\n- producto ID: 3\n- descuento: 50.00%\n- codigo: N/A	2026-03-25 13:11:43
+261	nico@gmail.com	Inicio de sesión exitoso	2026-04-21 14:00:41
+256	nico@gmail.com	Inicio de sesión exitoso	2026-04-16 18:54:32
+96	nico@gmail.com	Actualizo producto 'Guerrera' (ID 13)\n- precio: COP 160,00 -> COP 160.000,00	2026-03-24 14:44:58
+97	nico@gmail.com	Actualizo producto 'Pantalón' (ID 14)\n- precio: COP 180,00 -> COP 180.000,00	2026-03-24 14:45:15
+98	nico@gmail.com	Actualizo producto 'Camiseta unisex sin estampado color negro' (ID 15)\n- precio: COP 50,00 -> COP 50.000,00	2026-03-24 14:45:29
+151	nico@gmail.com	Actualizo producto 'Camiseta unisex con camuflado' (ID 3)\n- stock: 9 -> 10	2026-03-25 18:09:10
+99	nico@gmail.com	Actualizo producto 'Camiseta unisex sin estampado color blanco' (ID 16)\n- precio: COP 50,00 -> COP 50.000,00	2026-03-24 14:45:40
 58	nico@gmail.com	Creo producto 'Camiseta unisex manga larga sin estampado color negro' (ID 12)\n- precio: COP 80,00\n- stock: 10\n- fuerza: Policia\n- intendencia: Camibusos	2026-03-18 13:47:35
 116	nico@gmail.com	Promocion activada: Promo Camiseta unisex con camuflado	2026-03-25 13:12:28
 34	nico@gmail.com	Inicio de sesión exitoso	2026-03-17 15:53:47
@@ -767,7 +716,6 @@ COPY public.registros (id_registro, id_usuario, accion, fecha_accion) FROM stdin
 60	nico@gmail.com	Creo producto 'Pantalón' (ID 14)\n- precio: COP 180,00\n- stock: 10\n- fuerza: Gaula\n- intendencia: Camuflados	2026-03-18 14:15:35
 61	nico@gmail.com	Creo producto 'Camiseta unisex sin estampado color negro' (ID 15)\n- precio: COP 50,00\n- stock: 10\n- fuerza: Gaula\n- intendencia: Busos	2026-03-18 14:18:51
 62	nico@gmail.com	Creo producto 'Camiseta unisex sin estampado color blanco' (ID 16)\n- precio: COP 50,00\n- stock: 10\n- fuerza: Gaula\n- intendencia: Busos	2026-03-18 14:20:17
-63	nico@gmail.com	Creo producto 'Guerrera' (ID 17)\n- precio: COP 160,00\n- stock: 10\n- fuerza: Policia\n- intendencia: Camuflados	2026-03-18 14:23:44
 64	nico@gmail.com	Creo producto 'Pantalón' (ID 18)\n- precio: COP 180,00\n- stock: 10\n- fuerza: Policia\n- intendencia: Camuflados	2026-03-18 14:25:10
 235	nico@gmail.com	Administrador actualizó prendas destacadas:\n- total destacadas: 5\n- ids: 6, 5, 4, 11, 8	2026-04-09 00:03:19
 245	nico@gmail.com	Inicio de sesión exitoso	2026-04-16 16:36:31
@@ -777,7 +725,6 @@ COPY public.registros (id_registro, id_usuario, accion, fecha_accion) FROM stdin
 193	admin	Contrasena restablecida por recuperacion para somosdecimob2020@gmail.com	2026-04-03 11:26:18
 269	nico@gmail.com	Inicio de sesiÃ³n exitoso	2026-04-21 16:15:19
 67	nico@gmail.com	Inicio de sesion exitoso	2026-03-18 14:32:38
-68	nico@gmail.com	Creo producto 'Moño' (ID 19)\n- precio: COP 20,00\n- stock: 10\n- fuerza: Policia\n- intendencia: Panoletas	2026-03-18 14:33:51
 126	nico@gmail.com	Actualizo producto 'Moño' (ID 19)\n- stock: 7 -> 10	2026-03-25 15:52:35
 69	nico@gmail.com	Creo producto 'Pañoleta policia sin estampado' (ID 20)\n- precio: COP 60,00\n- stock: 10\n- fuerza: Policia\n- intendencia: Panoletas	2026-03-18 14:36:43
 74	nico@gmail.com	Inicio de sesion exitoso	2026-03-18 14:56:43
@@ -787,7 +734,6 @@ COPY public.registros (id_registro, id_usuario, accion, fecha_accion) FROM stdin
 4	nico@gmail.com	Actualizo producto 'Camiseta mallada' (ID 1)\n- sin cambios detectados	2026-03-07 01:26:25
 222	nico@gmail.com	Inicio de sesiÃƒÂ³n exitoso	2026-04-08 16:45:00
 5	nico@gmail.com	Creo producto 'Armando Estaban Quito' (ID 2)\n- precio: COP 100.000,00\n- stock: 100\n- fuerza: Gaula\n- intendencia: Camibusos	2026-03-07 01:45:18
-6	nico@gmail.com	Inicio de sesión exitoso	2026-03-07 16:33:28
 135	nico@gmail.com	POS registro venta #24 por COP 590.000,00 (7 producto(s))\n- total bruto: COP 590.000,00\n- descuento aplicado: COP 0,00\n- cliente: cata\n- correo: ratalina@gmail.com\n- documento: 34795368972\n- teléfono: 3204567896	2026-03-25 17:54:38
 179	nico@gmail.com	Inicio de sesión exitoso	2026-03-27 16:43:07
 136	nico@gmail.com	Actualizo producto 'Camiseta unisex manga larga sin estampado color negro' (ID 12)\n- stock: 9 -> 10	2026-03-25 18:03:10
@@ -798,6 +744,7 @@ COPY public.registros (id_registro, id_usuario, accion, fecha_accion) FROM stdin
 142	nico@gmail.com	Actualizo producto 'Pañoleta policia sin estampado' (ID 20)\n- stock: 9 -> 10	2026-03-25 18:04:30
 253	nico@gmail.com	Actualizo estado de pedido #53: pendiente -> enviado	2026-04-16 18:46:40
 310	nico@gmail.com	Inicio de sesión exitoso	2026-04-29 15:55:35
+189	admin	Enlace de recuperacion enviado a nachoher072+recoverytest1775230812@gmail.com	2026-04-03 10:40:14
 143	nico@gmail.com	POS registro venta #25 por COP 1.150.000,00 (14 producto(s))\n- total bruto: COP 1.200.000,00\n- descuento aplicado: COP 50.000,00\n- cliente: cata\n- correo: ratalina@gmail.com\n- documento: 34795368972\n- teléfono: 3204567896	2026-03-25 18:05:47
 144	nico@gmail.com	Actualizo producto 'Camiseta unisex sin estampado color negro' (ID 9)\n- stock: 9 -> 10	2026-03-25 18:08:20
 145	nico@gmail.com	Actualizo producto 'Camiseta unisex sin estampado color blanco' (ID 10)\n- stock: 9 -> 10	2026-03-25 18:08:26
@@ -808,6 +755,61 @@ COPY public.registros (id_registro, id_usuario, accion, fecha_accion) FROM stdin
 323	nico@gmail.com	Inicio de sesión exitoso	2026-04-30 17:10:46
 153	nico@gmail.com	Actualizo producto 'Camiseta unisex sin estampado color blanco' (ID 5)\n- stock: 9 -> 10	2026-03-25 18:09:20
 154	nico@gmail.com	Actualizo producto 'Camiseta unisex color verde' (ID 6)\n- stock: 9 -> 10	2026-03-25 18:09:31
+102	nico@gmail.com	Actualizo producto 'Pañoleta policia sin estampado' (ID 20)\n- sin cambios detectados	2026-03-24 14:46:02
+63	nico@gmail.com	Creo producto 'Guerrera' (ID 17)\n- precio: COP 160,00\n- stock: 10\n- fuerza: Policia\n- intendencia: Camuflados	2026-03-18 14:23:44
+100	nico@gmail.com	Actualizo producto 'Guerrera' (ID 17)\n- precio: COP 160,00 -> COP 160.000,00	2026-03-24 14:45:51
+101	nico@gmail.com	Actualizo producto 'Pañoleta policia sin estampado' (ID 20)\n- precio: COP 60,00 -> COP 60.000,00	2026-03-24 14:46:02
+115	nico@gmail.com	Promocion desactivada: Promo Camiseta unisex con camuflado	2026-03-25 13:12:28
+117	nico@gmail.com	Promocion desactivada: Promo Camiseta unisex con camuflado	2026-03-25 13:12:36
+118	nico@gmail.com	Promocion activada: Promo Camiseta unisex con camuflado	2026-03-25 13:12:46
+120	nico@gmail.com	Inicio de sesion exitoso	2026-03-25 13:20:35
+122	nico@gmail.com	POS registro venta #15 por COP 10.000,00 (1 producto(s))\n- total bruto: COP 10.000,00\n- descuento aplicado: COP 0,00\n- cliente: cata\n- correo: ratalina@gmail.com\n- documento: 092893264\n- teléfono: 3204567896	2026-03-25 15:12:42
+123	nico@gmail.com	Inicio de sesión exitoso	2026-03-25 15:46:09
+124	nico@gmail.com	POS registro venta #16 por COP 10.000,00 (1 producto(s))\n- total bruto: COP 10.000,00\n- descuento aplicado: COP 0,00\n- cliente: cata\n- correo: ratalina@gmail.com\n- documento: 34795368972\n- teléfono: 3204567896	2026-03-25 15:46:55
+225	nico@gmail.com	Actualizo producto 'Camiseta unisex con camuflado' (ID 3)\n- stock: 5 -> 10	2026-04-08 18:03:06
+125	nico@gmail.com	POS registro venta #17 por COP 10.000,00 (1 producto(s))\n- total bruto: COP 10.000,00\n- descuento aplicado: COP 0,00\n- cliente: cata\n- correo: ratalina@gmail.com\n- documento: 34795368972\n- teléfono: 3204567896	2026-03-25 15:47:56
+127	nico@gmail.com	POS registro venta #18 por COP 10.000,00 (1 producto(s))\n- total bruto: COP 10.000,00\n- descuento aplicado: COP 0,00\n- cliente: cata\n- correo: ratalina@gmail.com\n- documento: 34795368972\n- teléfono: 3204567896	2026-03-25 16:19:50
+239	nico@gmail.com	Inicio de sesión exitoso	2026-04-12 18:09:03
+128	nico@gmail.com	POS registro venta #19 por COP 10.000,00 (1 producto(s))\n- total bruto: COP 10.000,00\n- descuento aplicado: COP 0,00\n- cliente: cata\n- correo: ratalina@gmail.com\n- documento: 34795368972\n- teléfono: 3204567896	2026-03-25 16:28:10
+129	nico@gmail.com	POS registro venta #20 por COP 10.000,00 (1 producto(s))\n- total bruto: COP 10.000,00\n- descuento aplicado: COP 0,00\n- cliente: cata\n- correo: ratalina@gmail.com\n- documento: 34795368972\n- teléfono: 3204567896	2026-03-25 16:43:35
+130	nico@gmail.com	Inicio de sesión exitoso	2026-03-25 17:08:15
+131	nico@gmail.com	Inicio de sesión exitoso	2026-03-25 17:08:16
+155	nico@gmail.com	Actualizo producto 'Camiseta unisex manga larga sin estampado color negro' (ID 11)\n- stock: 9 -> 10	2026-03-25 18:09:42
+132	nico@gmail.com	POS registro venta #21 por COP 10.000,00 (1 producto(s))\n- total bruto: COP 10.000,00\n- descuento aplicado: COP 0,00\n- cliente: cata\n- correo: ratalina@gmail.com\n- documento: 34795368972\n- teléfono: 3204567896	2026-03-25 17:08:48
+173	nico@gmail.com	Actualizo producto 'Camiseta unisex con camuflado' (ID 3)\n- stock: 4 -> 10	2026-03-25 20:30:48
+175	nico@gmail.com	Inicio de sesión exitoso	2026-03-27 13:22:05
+133	nico@gmail.com	POS registro venta #22 por COP 10.000,00 (1 producto(s))\n- total bruto: COP 10.000,00\n- descuento aplicado: COP 0,00\n- cliente: cata\n- correo: ratalina@gmail.com\n- documento: 34795368972\n- teléfono: 3204567896	2026-03-25 17:17:22
+134	nico@gmail.com	POS registro venta #23 por COP 10.000,00 (1 producto(s))\n- total bruto: COP 10.000,00\n- descuento aplicado: COP 0,00\n- cliente: cata\n- correo: ratalina@gmail.com\n- documento: 34795368972\n- teléfono: 3204567896	2026-03-25 17:30:05
+272	nico@gmail.com	Inicio de sesiÃ³n exitoso	2026-04-21 16:16:24
+80	nico@gmail.com	Inicio de sesion exitoso	2026-03-23 17:20:19
+84	nico@gmail.com	Inicio de sesion exitoso	2026-03-24 14:39:04
+6	nico@gmail.com	Inicio de sesión exitoso	2026-03-07 16:33:28
+85	nico@gmail.com	Actualizo producto 'Camiseta unisex con camuflado' (ID 3)\n- precio: COP 100,00 -> COP 100.000,00	2026-03-24 14:39:38
+86	nico@gmail.com	Inicio de sesion exitoso	2026-03-24 14:41:37
+87	nico@gmail.com	Actualizo producto 'Camiseta unisex sin estampado color negro' (ID 4)\n- precio: COP 50,00 -> COP 50.000,00	2026-03-24 14:41:57
+88	nico@gmail.com	Actualizo producto 'Camiseta unisex sin estampado color blanco' (ID 5)\n- precio: COP 50,00 -> COP 50.000,00	2026-03-24 14:42:20
+89	nico@gmail.com	Actualizo producto 'Camiseta unisex color verde' (ID 6)\n- precio: COP 50,00 -> COP 50.000,00	2026-03-24 14:42:31
+90	nico@gmail.com	Actualizo producto 'Pantalón' (ID 7)\n- precio: COP 120,00 -> COP 120.000,00	2026-03-24 14:42:41
+91	nico@gmail.com	Actualizo producto 'Guerrera' (ID 8)\n- precio: COP 160,00 -> COP 160.000,00	2026-03-24 14:42:53
+186	nico@gmail.com	Inicio de sesión exitoso	2026-04-02 17:30:25
+188	admin	Nuevo usuario registrado y verificado: julio cesar otalvaro sanchez	2026-04-02 18:52:23
+190	admin	Contrasena restablecida por recuperacion para nachoher072+recoverytest1775230812@gmail.com	2026-04-03 10:40:14
+196	admin	Nuevo usuario registrado y verificado: jilmer	2026-04-03 11:55:51
+197	nico@gmail.com	Inicio de sesión exitoso	2026-04-03 12:20:55
+198	nico@gmail.com	Inicio de sesión exitoso	2026-04-06 20:37:32
+199	nico@gmail.com	Inicio de sesión exitoso	2026-04-06 22:30:20
+2	nico@gmail.com	Inicio de sesión exitoso	2026-03-07 01:19:16
+121	nico@gmail.com	Promocion creada: Promo Guerrera\n- producto ID: 13\n- descuento: COP 140.000,00\n- codigo: N/A	2026-03-25 13:22:32
+28	nico@gmail.com	Inicio de sesión exitoso	2026-03-14 16:08:55
+31	nico@gmail.com	Inicio de sesión exitoso	2026-03-16 21:17:20
+36	nico@gmail.com	Inicio de sesion exitoso	2026-03-17 16:50:35
+38	nico@gmail.com	Inicio de sesion exitoso	2026-03-17 17:03:36
+47	nico@gmail.com	Elimino producto: Armando Estaban Quito (ID 2)	2026-03-18 13:23:43
+92	nico@gmail.com	Actualizo producto 'Camiseta unisex sin estampado color negro' (ID 9)\n- precio: COP 50,00 -> COP 50.000,00	2026-03-24 14:43:31
+94	nico@gmail.com	Actualizo producto 'Camiseta unisex manga larga sin estampado color negro' (ID 11)\n- precio: COP 80,00 -> COP 80.000,00	2026-03-24 14:43:53
+254	nico@gmail.com	Actualizo estado de pedido #53: enviado -> entregado	2026-04-16 18:46:44
+95	nico@gmail.com	Actualizo producto 'Camiseta unisex manga larga sin estampado color negro' (ID 12)\n- precio: COP 80,00 -> COP 80.000,00	2026-03-24 14:44:49
+259	nico@gmail.com	Inicio de sesión exitoso	2026-04-20 15:22:16
 156	nico@gmail.com	Actualizo producto 'Guerrera' (ID 13)\n- stock: 9 -> 10	2026-03-25 18:10:05
 157	nico@gmail.com	Actualizo producto 'Guerrera' (ID 8)\n- stock: 9 -> 10	2026-03-25 18:10:12
 158	nico@gmail.com	Actualizo producto 'Pantalón' (ID 7)\n- stock: 9 -> 10	2026-03-25 18:10:22
@@ -820,19 +822,21 @@ COPY public.registros (id_registro, id_usuario, accion, fecha_accion) FROM stdin
 277	nico@gmail.com	Cambio de estado para usuario hola3@gmail.com (ID 5) -> inactivo	2026-04-22 13:05:11
 164	nico@gmail.com	POS registro venta #30 por COP 80.000,00 (1 producto(s))\n- total bruto: COP 80.000,00\n- descuento aplicado: COP 0,00\n- cliente: cata\n- correo: ratalina@gmail.com\n- documento: 34795368972\n- teléfono: 3204567896	2026-03-25 19:10:26
 165	nico@gmail.com	Actualizo producto 'Camiseta unisex manga larga sin estampado color negro' (ID 12)\n- stock: 6 -> 10	2026-03-25 19:21:58
+301	nico@gmail.com	Inicio de sesión exitoso	2026-04-28 13:12:41
 166	nico@gmail.com	Actualizo producto 'Camiseta unisex manga larga sin estampado color negro' (ID 11)\n- stock: 9 -> 10	2026-03-25 19:22:10
 167	nico@gmail.com	POS registro venta #31 por COP 50.000,00 (1 producto(s))\n- total bruto: COP 100.000,00\n- descuento aplicado: COP 50.000,00\n- cliente: cata\n- correo: ratalina@gmail.com\n- documento: 34795368972\n- teléfono: 3204567896	2026-03-25 19:23:24
 168	nico@gmail.com	POS registro venta #32 por COP 50.000,00 (1 producto(s))\n- total bruto: COP 100.000,00\n- descuento aplicado: COP 50.000,00\n- cliente: cata\n- correo: ratalina@gmail.com\n- documento: 34795368972\n- teléfono: 3204567896	2026-03-25 19:33:14
 169	nico@gmail.com	POS registro venta #33 por COP 50.000,00 (1 producto(s))\n- total bruto: COP 100.000,00\n- descuento aplicado: COP 50.000,00\n- cliente: cata\n- correo: ratalina@gmail.com\n- documento: 34795368972\n- teléfono: 3204567896	2026-03-25 19:35:47
+318	nico@gmail.com	Inicio de sesión exitoso	2026-04-30 12:10:42
 170	nico@gmail.com	POS registro venta #34 por COP 50.000,00 (1 producto(s))\n- total bruto: COP 100.000,00\n- descuento aplicado: COP 50.000,00\n- cliente: cata\n- correo: ratalina@gmail.com\n- documento: 34795368972\n- teléfono: 3204567896	2026-03-25 19:40:22
 171	nico@gmail.com	POS registro venta #35 por COP 50.000,00 (1 producto(s))\n- total bruto: COP 100.000,00\n- descuento aplicado: COP 50.000,00\n- cliente: cata\n- correo: ratalina@gmail.com\n- documento: 34795368972\n- teléfono: 3204567896	2026-03-25 19:56:07
 172	nico@gmail.com	POS registro venta #36 por COP 50.000,00 (1 producto(s))\n- total bruto: COP 100.000,00\n- descuento aplicado: COP 50.000,00\n- cliente: cata\n- correo: ratalina@gmail.com\n- documento: 34795368972\n- teléfono: 3204567896	2026-03-25 20:29:37
+344	nico@gmail.com	Inicio de sesión exitoso	2026-05-08 15:44:17
 176	nico@gmail.com	POS registro venta #37 por COP 50.000,00 (1 producto(s))\n- total bruto: COP 100.000,00\n- descuento aplicado: COP 50.000,00\n- cliente: cata\n- correo: ratalina@gmail.com\n- documento: 34795368972\n- teléfono: 3204567896	2026-03-27 14:14:32
 178	nico@gmail.com	Inicio de sesión exitoso	2026-03-27 15:12:36
 180	nico@gmail.com	POS registro venta #38 por COP 50.000,00 (1 producto(s))\n- total bruto: COP 100.000,00\n- descuento aplicado: COP 50.000,00\n- cliente: cata\n- correo: ratalina@gmail.com\n- documento: 34795368972\n- teléfono: 3204567896	2026-03-27 16:51:25
 181	nico@gmail.com	Inicio de sesión exitoso	2026-04-02 16:45:28
 183	admin	Nuevo usuario registrado: julio cesar otalvaro sanchez	2026-04-02 16:50:05
-186	nico@gmail.com	Inicio de sesión exitoso	2026-04-02 17:30:25
 187	nico@gmail.com	Inicio de sesión exitoso	2026-04-02 17:45:54
 252	nico@gmail.com	Inicio de sesión exitoso	2026-04-16 18:46:17
 255	nico@gmail.com	POS registro venta #54 por COP 160.000,00 (1 producto(s))\n- total bruto: COP 160.000,00\n- descuento aplicado: COP 0,00\n- cliente: cata\n- correo: ratalina@gmail.com\n- documento: 34795368972\n- teléfono: 3204567896	2026-04-16 18:50:57
@@ -845,6 +849,7 @@ COPY public.registros (id_registro, id_usuario, accion, fecha_accion) FROM stdin
 267	nico@gmail.com	Administrador actualizó prendas destacadas por categoría:\n- Ejército: 5 (6, 5, 4, 11, 8)\n- Policía: 4 (10, 9, 12, 17)\n- Armada: 0 (ninguna)\n- Total destacadas: 9	2026-04-21 14:02:23
 268	nico@gmail.com	Actualizo estado de pedido #55: pendiente -> confirmado	2026-04-21 14:24:00
 270	nico@gmail.com	Administrador actualizÃ³ prendas destacadas por categorÃ­a:\n- EjÃ©rcito: 5 (6, 5, 4, 11, 8)\n- PolicÃ­a: 5 (10, 9, 12, 17, 18)\n- Armada: 0 (ninguna)\n- Total destacadas: 10	2026-04-21 16:15:50
+364	nico@gmail.com	Elimino producto: Camiseta unisex manga larga sin estampado color negro (ID 11)	2026-05-11 16:48:36
 273	nico@gmail.com	Administrador actualizÃ³ prendas destacadas por categorÃ­a:\n- EjÃ©rcito: 5 (6, 5, 4, 11, 3)\n- PolicÃ­a: 5 (10, 9, 12, 17, 18)\n- Armada: 0 (ninguna)\n- Total destacadas: 10	2026-04-21 16:16:36
 274	nico@gmail.com	Actualizo estado de pedido #55: confirmado -> enviado	2026-04-21 16:20:21
 275	nico@gmail.com	Actualizo estado de pedido #55: enviado -> entregado	2026-04-21 16:37:24
@@ -862,8 +867,6 @@ COPY public.registros (id_registro, id_usuario, accion, fecha_accion) FROM stdin
 294	nico@gmail.com	Administrador actualizó prendas destacadas por categoría:\n- Ejército: 7 (6, 5, 4, 11, 3, 8, 7)\n- Policía: 7 (10, 9, 12, 17, 18, 19, 20)\n- Armada: 0 (ninguna)\n- Total destacadas: 14	2026-04-26 14:12:52
 295	nico@gmail.com	Actualizo revision de pago para pedido #56: en_revision -> aprobado	2026-04-26 14:13:13
 299	nico@gmail.com	Inicio de sesión exitoso	2026-04-28 12:45:19
-300	nico@gmail.com	Inicio de sesión exitoso	2026-04-28 13:09:29
-301	nico@gmail.com	Inicio de sesión exitoso	2026-04-28 13:12:41
 302	nico@gmail.com	Inicio de sesión exitoso	2026-04-28 14:41:04
 303	nico@gmail.com	Actualizo estado de pedido #50: enviado -> empaquetado	2026-04-29 13:47:02
 304	nico@gmail.com	Actualizo estado de pedido #56: confirmado -> enviado	2026-04-29 14:26:08
@@ -872,7 +875,6 @@ COPY public.registros (id_registro, id_usuario, accion, fecha_accion) FROM stdin
 312	nico@gmail.com	Actualizo revision de pago para pedido #57: en_revision -> aprobado	2026-04-29 15:57:24
 313	nico@gmail.com	Actualizo estado de pedido #57: confirmado -> empaquetado	2026-04-29 15:57:39
 314	nico@gmail.com	Actualizo estado de pedido #57: empaquetado -> enviado	2026-04-29 15:57:48
-318	nico@gmail.com	Inicio de sesión exitoso	2026-04-30 12:10:42
 321	nico@gmail.com	Inicio de sesión exitoso	2026-04-30 12:26:42
 330	nico@gmail.com	Actualizó solicitud personalizada #4 a cancelada	2026-05-01 11:26:20
 331	nico@gmail.com	Actualizó solicitud personalizada #3 a completada	2026-05-01 11:26:28
@@ -880,6 +882,37 @@ COPY public.registros (id_registro, id_usuario, accion, fecha_accion) FROM stdin
 333	nico@gmail.com	Actualizó precio personalizado 'buso' a COP 50.000,00	2026-05-01 11:31:22
 334	nico@gmail.com	Actualizó solicitud personalizada #4 a cancelada	2026-05-01 11:32:01
 343	nico@gmail.com	Actualizó solicitud personalizada #11 a pendiente	2026-05-01 13:37:39
+345	nico@gmail.com	Inicio de sesión exitoso	2026-05-11 14:05:54
+346	nico@gmail.com	Actualizo revision de pago para pedido #59: pendiente_comprobante -> aprobado	2026-05-11 14:07:49
+347	nico@gmail.com	Elimino definitivamente el producto: Camiseta mallada (ID 1)	2026-05-11 14:11:20
+348	nico@gmail.com	Elimino definitivamente el producto: Armando Estaban Quito (ID 2)	2026-05-11 14:11:23
+349	nico@gmail.com	Inicio de sesión exitoso	2026-05-11 15:24:39
+350	nico@gmail.com	Administrador actualizo prendas destacadas por categoria:\n- Ejercito: 7 (6, 5, 4, 11, 3, 8, 7)\n- Policia: 7 (10, 9, 12, 17, 18, 19, 20)\n- Armada: 0 (ninguna)\n- Gaula: 3 (16, 15, 13)\n- Total destacadas: 17	2026-05-11 15:56:22
+351	nico@gmail.com	Administrador actualizo prendas destacadas por categoria:\n- Ejercito: 7 (6, 5, 4, 11, 3, 8, 7)\n- Policia: 7 (10, 9, 12, 17, 18, 19, 20)\n- Armada: 0 (ninguna)\n- Gaula: 4 (16, 15, 13, 14)\n- Total destacadas: 18	2026-05-11 15:56:44
+352	nico@gmail.com	Administrador actualizo prendas destacadas por categoria:\n- Ejercito: 7 (6, 5, 4, 11, 3, 8, 7)\n- Policia: 7 (10, 9, 12, 17, 18, 19, 20)\n- Armada: 0 (ninguna)\n- Gaula: 4 (16, 15, 13, 14)\n- Total destacadas: 18	2026-05-11 15:57:02
+353	nico@gmail.com	Actualizo producto 'Camiseta unisex sin estampado color negro' (ID 4)\n- fuerza: Ejercito -> Variado	2026-05-11 16:45:58
+354	nico@gmail.com	Actualizo producto 'Camiseta unisex manga larga sin estampado color negro' (ID 12)\n- fuerza: Policia -> Variado	2026-05-11 16:46:15
+355	nico@gmail.com	Actualizo producto 'Camiseta unisex sin estampado color negro' (ID 9)\n- fuerza: Policia -> Variado	2026-05-11 16:46:27
+356	nico@gmail.com	Actualizo producto 'Camiseta unisex sin estampado color blanco' (ID 10)\n- fuerza: Policia -> Variado	2026-05-11 16:46:44
+357	nico@gmail.com	Actualizo producto 'Camiseta unisex sin estampado color blanco' (ID 5)\n- fuerza: Ejercito -> Variado	2026-05-11 16:46:59
+358	nico@gmail.com	Actualizo producto 'Camiseta unisex manga larga sin estampado color negro' (ID 11)\n- fuerza: Ejercito -> Variado	2026-05-11 16:47:16
+359	nico@gmail.com	Actualizo producto 'Camiseta unisex sin estampado color negro' (ID 15)\n- fuerza: Gaula -> Variado	2026-05-11 16:47:29
+360	nico@gmail.com	Actualizo producto 'Camiseta unisex sin estampado color blanco' (ID 16)\n- fuerza: Gaula -> Variado	2026-05-11 16:47:36
+361	nico@gmail.com	Elimino producto: Camiseta unisex sin estampado color negro (ID 4)	2026-05-11 16:48:03
+362	nico@gmail.com	Elimino producto: Camiseta unisex sin estampado color blanco (ID 5)	2026-05-11 16:48:12
+363	nico@gmail.com	Elimino producto: Camiseta unisex sin estampado color blanco (ID 10)	2026-05-11 16:48:25
+365	nico@gmail.com	Elimino producto: Camiseta unisex sin estampado color negro (ID 9)	2026-05-11 16:48:45
+366	nico@gmail.com	Actualizo producto 'Guerrera' (ID 13)\n- stock: 7 -> 10	2026-05-11 16:53:24
+367	nico@gmail.com	Actualizo producto 'Camiseta unisex manga larga sin estampado color negro' (ID 12)\n- stock: 9 -> 10	2026-05-11 16:53:35
+368	nico@gmail.com	POS registro venta #60 por COP 80.000,00 (1 producto(s))\n- total bruto: COP 80.000,00\n- descuento aplicado: COP 0,00\n- cliente: julio\n- correo: julio11916@gmail.com\n- documento: 1111042086\n- telefono: 3102577460	2026-05-12 13:16:55
+369	nico@gmail.com	Inicio de sesión exitoso	2026-05-13 13:15:38
+370	nico@gmail.com	Inicio de sesión exitoso	2026-05-13 14:03:36
+371	nico@gmail.com	Administrador actualizo prendas destacadas por categoria:\n- Ejercito: 4 (6, 3, 8, 7)\n- Policia: 4 (17, 18, 19, 20)\n- Armada: 0 (ninguna)\n- Gaula: 2 (13, 14)\n- Variado: 3 (16, 15, 12)\n- Total destacadas: 13	2026-05-13 14:03:47
+372	nico@gmail.com	Elimino definitivamente el producto: Camiseta unisex sin estampado color negro (ID 4)	2026-05-15 13:20:18
+373	nico@gmail.com	Elimino definitivamente el producto: Camiseta unisex sin estampado color blanco (ID 5)	2026-05-15 13:20:20
+374	nico@gmail.com	Elimino definitivamente el producto: Camiseta unisex sin estampado color negro (ID 9)	2026-05-15 13:20:23
+375	nico@gmail.com	Elimino definitivamente el producto: Camiseta unisex sin estampado color blanco (ID 10)	2026-05-15 13:20:27
+376	nico@gmail.com	Elimino definitivamente el producto: Camiseta unisex manga larga sin estampado color negro (ID 11)	2026-05-15 13:20:29
 \.
 
 
@@ -902,6 +935,7 @@ cs_test_a1viXGwU38ndZ6IYIfF4qEe0SKtwLfsTjCIYK7nHGm483owgG0hWeJf0TI	julio@gmail.c
 cs_test_a1cqlM1Jx5GDt2VPER9HcqlQFIryuXxxJNOcrDs3v7SIlFHaiF3qZI4TEX	julio@gmail.com		5ad2293156c6db8b023159773f428428180ca6be1229475981fef0c18037449f	50000.00	creado	\N	2026-04-29 14:54:38.055912-05	2026-04-29 14:54:38.055912-05	[{"cantidad": 1, "descripcion": "Diseñada para brindar comodidad y estilo en cualquier ocasión. Ideal para quienes prefieren un estilo más sencillo y versátil.", "id_producto": 4, "imagen_url": "img/Empresa/producto_4_1.jpg", "nombre": "Camiseta unisex sin estampado color negro", "precio": 50000.0, "subtotal": 50000.0, "talla": "S"}]
 cs_test_a1roFiWVRRRVQyKukdVJ5oKrUI8PQRoDeqrJ3nfDhgt6ZtZE1h5PurG0Ar	julio@gmail.com		85af84fede680296664934685e6c7506929f5854aaac5001e9d6ca816e99ecc0	50000.00	creado	\N	2026-04-30 02:08:10.189483-05	2026-04-30 02:08:10.189483-05	[{"cantidad": 1, "descripcion": "Diseñada para brindar comodidad y estilo en cualquier ocasión. Ideal para quienes prefieren un estilo más sencillo y versátil.", "id_producto": 4, "imagen_url": "img/Empresa/producto_4_1.jpg", "nombre": "Camiseta unisex sin estampado color negro", "precio": 50000.0, "subtotal": 50000.0, "talla": "XL"}]
 cs_test_a1PYwnfIAWTxF4UOqlLVyTdgFACKMU3gBGYEPO7N0Diua7Yb8sc2Zxh5b1	julio@gmail.com		e4ba91d714262d32c17ddf8232ab33f777f7092c22900d16fa4936a444173bce	12000.00	pagado	58	2026-05-01 13:35:48.515167-05	2026-05-01 13:36:20.284808-05	[{"cantidad": 1, "descripcion": "Identidad: Policia | Color: Azul Noche | Técnica: Bordado | Estampado: Ninguno | Rango: drago | Fecha contingencia: 2026-05-01", "id_orden_personalizada": 11, "id_producto": 0, "imagen_url": "img/personalizadas/gafete_preview_20260501_132035_679521_ea5df843.png", "nombre": "Prenda personalizada - Gafete de nombre o apellido", "personalizado": true, "precio": 12000.0, "subtotal": 12000.0, "talla": "L"}]
+cs_test_a15jE1YHQWlscMveSc2kXxTdfVsYAmzbJm9ABkY3C6r96ZYdaW00khlMw1	julio@gmail.com		4b66a3672d2f2324051adfd50143c6cdd919b7e4957395b8d94456500e6c66f2	100000.00	creado	\N	2026-05-12 13:20:51.768016-05	2026-05-12 13:20:51.768016-05	[{"cantidad": 1, "descripcion": "Diseñada para brindar comodidad y estilo en cualquier ocasión. Disponible en versiones con camuflado, que incluyen diseños representativos y gráficos alusivos a la institución.", "id_producto": 3, "imagen_url": "img/Empresa/producto_3_1.jpg", "nombre": "Camiseta unisex con camuflado", "precio": 100000.0, "subtotal": 100000.0, "talla": "L"}]
 \.
 
 
@@ -913,7 +947,7 @@ COPY public.usuarios (id_usuario, nombre, email, password_hash, rol, estado, fec
 12	julio cesar otalvaro sanchez	julio11916@gmail.com	scrypt:32768:8:1$gyCyGHOJIsL3kD7o$bd88fa0a8f98b2af0afee2c62c5bacbe89cec318d32fab3d1974769017c11c330e0427854170c5023db442262aedf508790a7b20dbb48cf70e8638eae9025b94	normal	activo	2026-04-02 18:52:23	t		\N		\N	906298	2026-04-08 14:38:15-05	nan	diagonal7#1-28 rocio parte alta
 13	jilmer	c65238944@gmail.com	scrypt:32768:8:1$omQpXag2INR8SgL1$e9acff045519d2bd46f7c429390c1189e2e02abc29b7a9e6d076d20a98f667464472ed40b3d14253739785c0f955d5eb7cae9a10abfd0872a4f933ef60cbaa9a	normal	activo	2026-04-03 11:55:51	t		\N		\N		\N	\N	\N
 1	Nico	nico@gmail.com	scrypt:32768:8:1$3oBOoha9lG4w3a2E$7b2225fd3dfb693854e6664a153332f011956c20a8c756e57a7e5aeebe20a83ee83fb67aca68c2927b54e8be91ea3574d5ed0b942afecd0518d372a17f0aec1d	admin	activo	2026-02-06 14:55:32	f		\N		\N		\N	\N	\N
-2	Julio	julio@gmail.com	scrypt:32768:8:1$LelqMtI3TmTMyzOE$bebb09284b93879bd665d266791c9d2b8fb8ddd46c90620e350e6cfbce10695ae1bdcfbe52fae9a7cd79af1bec0e0bacea6a1dc725a5c757f07ad6d499b4e29b	normal	activo	2026-02-06 14:55:32	f	801703	2026-03-06 14:07:29		\N		\N	3135264367	adsfgvzsd<ge<
+2	Julio	julio@gmail.com	scrypt:32768:8:1$LelqMtI3TmTMyzOE$bebb09284b93879bd665d266791c9d2b8fb8ddd46c90620e350e6cfbce10695ae1bdcfbe52fae9a7cd79af1bec0e0bacea6a1dc725a5c757f07ad6d499b4e29b	normal	activo	2026-02-06 14:55:32	f	801703	2026-03-06 14:07:29		\N		\N	3219047309	diagonal7
 3	Alvaréx Freo	alv@gmail.com	admin	normal	activo	2026-02-06 16:40:07	f		\N		\N		\N	\N	\N
 4	jilmer	hola@gmail.com	admin	admin	activo	2026-02-20 15:47:06	f		\N		\N		\N	\N	\N
 5	Isabel	hola3@gmail.com	123456789	normal	inactivo	2026-02-20 15:47:36	f		\N		\N		\N	\N	\N
@@ -937,7 +971,7 @@ SELECT pg_catalog.setval('public.categoria_producto_id_categoria_seq', 44, true)
 -- Name: orden_personalizada_id_orden_personalizada_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.orden_personalizada_id_orden_personalizada_seq', 1, false);
+SELECT pg_catalog.setval('public.orden_personalizada_id_orden_personalizada_seq', 1, true);
 
 
 --
@@ -991,5 +1025,5 @@ REVOKE USAGE ON SCHEMA public FROM PUBLIC;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict xwMlf6EahcCv8IJI2HdqZUFmWhT9wDJkVQ2PXgi2Pffn2OPa7xPvUBJuS4osWnj
+\unrestrict VCnSjubPq17TQvkclbIml2TLO2pbO5RLD9ZCVs5O5RNgg9nbyq8zLM24183igd6
 

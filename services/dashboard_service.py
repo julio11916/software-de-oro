@@ -103,7 +103,7 @@ def construir_contexto_admin_dashboard(
     if not pedidos_df.empty:
         pedidos_df = pedidos_df.copy()
         pedidos_df["fecha_pedido_dt"] = pd.to_datetime(
-            pedidos_df["fecha_pedido"], dayfirst=True, errors="coerce", utc=True
+            pedidos_df["fecha_pedido"], errors="coerce", utc=True
         ).dt.tz_convert(None)
         pedidos_ult_mes = pedidos_df[pedidos_df["fecha_pedido_dt"] >= hace_30]
         usuarios_compraron_ult_mes = pedidos_ult_mes["id_usuario"].nunique()

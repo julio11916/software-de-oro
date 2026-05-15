@@ -341,13 +341,25 @@ def build_workflow_legacy_bindings(
 
     _asegurar_columnas_descuento_pagos = order_service.asegurar_columnas_descuento_pagos
 
-    def _resolver_promocion_checkout(codigo_promo, promos, total):
+    def _resolver_promocion_checkout(codigo_promo, promos, total, carrito=None):
         return order_service.resolver_promocion_checkout(
             codigo_promo,
             promos,
             total,
             buscar_promocion_por_codigo=buscar_promocion_por_codigo_fn,
             calcular_descuento_promocion=calcular_descuento_promocion_fn,
+            carrito=carrito,
+        )
+
+    def _aplicar_promociones_carrito(carrito, productos, promos, codigo_promo=""):
+        return order_service.aplicar_promociones_carrito(
+            carrito,
+            productos,
+            promos,
+            obtener_mejor_promocion_por_producto_fn=obtener_mejor_promocion_por_producto_fn,
+            calcular_descuento_promocion_fn=calcular_descuento_promocion_fn,
+            buscar_promocion_por_codigo_fn=buscar_promocion_por_codigo_fn,
+            codigo_promo=codigo_promo,
         )
 
     def _obtener_contacto_checkout_predeterminado():
@@ -454,6 +466,7 @@ def build_workflow_legacy_bindings(
         '_registrar_venta_pos_admin': _registrar_venta_pos_admin,
         '_asegurar_columnas_descuento_pagos': _asegurar_columnas_descuento_pagos,
         '_resolver_promocion_checkout': _resolver_promocion_checkout,
+        '_aplicar_promociones_carrito': _aplicar_promociones_carrito,
         '_obtener_contacto_checkout_predeterminado': _obtener_contacto_checkout_predeterminado,
         '_validar_datos_cliente_checkout': _validar_datos_cliente_checkout,
         '_guardar_contacto_checkout_usuario': _guardar_contacto_checkout_usuario,

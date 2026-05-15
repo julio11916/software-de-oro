@@ -119,30 +119,35 @@ def build_auth_image_legacy_bindings(
     def ruta_imagen_producto_absoluta(ruta_relativa):
         return app_image_service.ruta_imagen_producto_absoluta(ruta_relativa)
 
-    def listar_archivos_galeria_producto(id_producto):
+    def listar_archivos_galeria_producto(id_producto, fuerza=""):
         return app_image_service.listar_archivos_galeria_producto(
             id_producto,
             allowed_image_extensions=allowed_image_extensions,
+            fuerza=fuerza,
         )
 
-    def migrar_legacy_a_galeria(id_producto):
+    def migrar_legacy_a_galeria(id_producto, fuerza=""):
         return app_image_service.migrar_legacy_a_galeria(
             id_producto,
             allowed_image_extensions=allowed_image_extensions,
+            fuerza=fuerza,
         )
 
-    def limpiar_imagenes_producto(id_producto):
+    def limpiar_imagenes_producto(id_producto, fuerza=""):
         return app_image_service.limpiar_imagenes_producto(
             id_producto,
             allowed_image_extensions=allowed_image_extensions,
+            fuerza=fuerza,
         )
 
-    def guardar_galeria_producto(id_producto, imagenes, reemplazar=True):
+    def guardar_galeria_producto(id_producto, imagenes, reemplazar=True, fuerza="", intendencia=""):
         return app_image_service.guardar_galeria_producto(
             id_producto,
             imagenes,
             allowed_image_extensions=allowed_image_extensions,
             reemplazar=reemplazar,
+            fuerza=fuerza,
+            intendencia=intendencia,
         )
 
     def obtener_galeria_producto(id_producto, imagen_principal=""):

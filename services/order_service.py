@@ -29,7 +29,7 @@ def asegurar_columnas_descuento_pagos(pagos):
     return pagos
 
 
-def resolver_promocion_checkout(codigo_promo, promos, total, buscar_promocion_por_codigo, calcular_descuento_promocion):
+def resolver_promocion_checkout(codigo_promo, promos, total, buscar_promocion_por_codigo, calcular_descuento_promocion, carrito=None):
     if not codigo_promo:
         return None, 0.0, None
 
@@ -37,8 +37,106 @@ def resolver_promocion_checkout(codigo_promo, promos, total, buscar_promocion_po
     if promo_aplicada is None:
         return None, 0.0, ("El codigo promocional no es valido o no esta vigente.", "warning")
 
-    descuento_promo = calcular_descuento_promocion(total, promo_aplicada)
+    id_producto_promo = pd.to_numeric(promo_aplicada.get("id_producto"), errors="coerce")
+    subtotal_aplicable = 0.0
+    if carrito is not None and pd.notna(id_producto_promo):
+        id_producto_promo = int(id_producto_promo)
+        for item in carrito if isinstance(carrito, list) else []:
+            if int(pd.to_numeric(item.get("id_producto", 0), errors="coerce") or 0) != id_producto_promo:
+                continue
+            subtotal_aplicable += float(pd.to_numeric(item.get("subtotal", 0), errors="coerce") or 0)
+    else:
+        subtotal_aplicable = float(total)
+
+    if subtotal_aplicable <= 0:
+        return None, 0.0, ("El codigo promocional no aplica a los productos de tu carrito.", "warning")
+
+    descuento_promo = calcular_descuento_promocion(subtotal_aplicable, promo_aplicada)
     return promo_aplicada, descuento_promo, None
+
+
+def aplicar_promociones_carrito(
+    carrito,
+    productos,
+    promos,
+    obtener_mejor_promocion_por_producto_fn,
+    calcular_descuento_promocion_fn,
+    buscar_promocion_por_codigo_fn,
+    codigo_promo="",
+):
+    carrito_base = carrito if isinstance(carrito, list) else []
+    productos_ref = productos.copy() if isinstance(productos, pd.DataFrame) else pd.DataFrame()
+    if productos_ref.empty or not carrito_base:
+        return carrito_base, 0.0, 0.0, None, 0.0, None
+
+    hoy = datetime.now().date()
+    productos_ref["id_producto"] = pd.to_numeric(productos_ref.get("id_producto", 0), errors="coerce")
+    productos_ref["precio"] = pd.to_numeric(productos_ref.get("precio", 0), errors="coerce").fillna(0.0)
+    promos_ref = promos.copy() if isinstance(promos, pd.DataFrame) else pd.DataFrame()
+    promo_codigo = None
+    codigo_norm = str(codigo_promo or "").strip().upper()
+    if codigo_norm:
+        promo_codigo = buscar_promocion_por_codigo_fn(promos_ref, codigo_norm, hoy)
+        if promo_codigo is None:
+            return carrito_base, sum(float(pd.to_numeric(i.get("subtotal", 0), errors="coerce") or 0) for i in carrito_base), 0.0, None, 0.0, ("El codigo promocional no es valido o no esta vigente.", "warning")
+
+    mejor_auto = obtener_mejor_promocion_por_producto_fn(productos_ref, promos_ref, hoy)
+    total_bruto = 0.0
+    total_descuento = 0.0
+    promo_codigo_aplico = False
+    carrito_actualizado = []
+
+    for item in carrito_base:
+        item_final = dict(item) if isinstance(item, dict) else {}
+        cantidad = max(1, int(pd.to_numeric(item_final.get("cantidad", 1), errors="coerce") or 1))
+        id_producto = int(pd.to_numeric(item_final.get("id_producto", 0), errors="coerce") or 0)
+
+        if item_final.get("personalizado"):
+            precio_unitario = float(pd.to_numeric(item_final.get("precio", 0), errors="coerce") or 0)
+            subtotal_bruto = float(pd.to_numeric(item_final.get("subtotal", precio_unitario * cantidad), errors="coerce") or 0)
+            item_final["precio"] = precio_unitario
+            item_final["subtotal"] = subtotal_bruto
+            item_final["subtotal_bruto"] = subtotal_bruto
+            item_final["monto_descuento"] = 0.0
+            carrito_actualizado.append(item_final)
+            total_bruto += subtotal_bruto
+            continue
+
+        fila = productos_ref[productos_ref["id_producto"] == id_producto]
+        precio_unitario = float(fila.iloc[0]["precio"]) if not fila.empty else float(pd.to_numeric(item_final.get("precio", 0), errors="coerce") or 0)
+        subtotal_bruto = precio_unitario * cantidad
+
+        promo = mejor_auto.get(id_producto)
+        if promo_codigo is not None:
+            id_producto_codigo = int(pd.to_numeric(promo_codigo.get("id_producto", 0), errors="coerce") or 0)
+            if id_producto_codigo == id_producto:
+                promo = promo_codigo
+                promo_codigo_aplico = True
+
+        descuento_unitario = calcular_descuento_promocion_fn(precio_unitario, promo) if promo else 0.0
+        subtotal_descuento = min(subtotal_bruto, descuento_unitario * cantidad)
+        subtotal_final = max(0.0, subtotal_bruto - subtotal_descuento)
+
+        item_final["precio"] = precio_unitario
+        item_final["subtotal"] = subtotal_final
+        item_final["subtotal_bruto"] = subtotal_bruto
+        item_final["monto_descuento"] = subtotal_descuento
+        item_final["promo_id"] = promo.get("id_promo", "") if promo else ""
+        item_final["promo_codigo"] = promo.get("codigo", "") if promo else ""
+        item_final["promo_nombre"] = promo.get("nombre", "") if promo else ""
+        item_final["promo_tipo_descuento"] = promo.get("tipo_descuento", "") if promo else ""
+        item_final["promo_valor_descuento"] = float(pd.to_numeric(promo.get("valor_descuento", 0), errors="coerce") or 0) if promo else 0.0
+        item_final["promo_fecha_fin"] = str(promo.get("fecha_fin", "") or "") if promo else ""
+
+        carrito_actualizado.append(item_final)
+        total_bruto += subtotal_bruto
+        total_descuento += subtotal_descuento
+
+    if promo_codigo is not None and not promo_codigo_aplico:
+        return carrito_base, total_bruto, 0.0, None, 0.0, ("El codigo promocional no aplica a los productos de tu carrito.", "warning")
+
+    total_final = max(0.0, total_bruto - total_descuento)
+    return carrito_actualizado, total_final, total_descuento, promo_codigo, total_bruto, None
 
 
 def obtener_contacto_checkout_predeterminado(normalizar_email, cargar_usuarios_df):
@@ -175,6 +273,8 @@ def registrar_compra_checkout_usuario(
     )
 
     resumen_promos = resumen_promocion_desde_promo_aplicada(promo_aplicada)
+    if not promo_aplicada and float(descuento_promo or 0) > 0:
+        resumen_promos = resumen_promocion_pago_desde_carrito(carrito)
     crear_pago_para_pedido(
         pagos=pagos,
         id_pedido=nuevo_id_pedido,

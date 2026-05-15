@@ -101,9 +101,9 @@ try {
         camiseta: 45000,
         buso: 78000,
         gorra: 35000,
+        "pañoleta": 28000,
         paoleta: 28000,
         panoleta: 28000,
-        "paÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â±oleta": 28000,
         "buso-manga-larga": 85000,
         "buso_tactico": 95000,
         "buso tactico": 95000,
@@ -121,12 +121,12 @@ try {
         guerrera: "Guerrera",
         buso: "Buso",
         gorra: "Gorra",
-        paoleta: "PaÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â±oleta",
-        panoleta: "PaÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â±oleta",
-        "paÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â±oleta": "PaÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â±oleta",
+        "pañoleta": "Pañoleta",
+        paoleta: "Pañoleta",
+        panoleta: "Pañoleta",
         "buso-manga-larga": "Buso manga larga",
-        "buso_tactico": "Buso tÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¡ctico",
-        "buso tactico": "Buso tÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¡ctico",
+        "buso_tactico": "Buso táctico",
+        "buso tactico": "Buso táctico",
         presillas: "Presillas",
         rh: "Rh",
         "gafete del nombre o apellido": "Gafete de nombre o apellido",
@@ -558,12 +558,12 @@ try {
             camiseta: "??",
             buso: "??",
             gorra: "??",
-            paoleta: "??",
-            panoleta: "??",
-            "paÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â±oleta": "??",
+            paoleta: "Pañoleta",
+            panoleta: "Pañoleta",
+            "pañoleta": "Pañoleta",
             "buso-manga-larga": "??",
-            "buso_tactico": "??",
-            "buso tactico": "??",
+            "buso_tactico": "Buso táctico",
+            "buso tactico": "Buso táctico",
             presillas: "??",
             rh: "??",
         };
@@ -682,23 +682,23 @@ try {
         }
 
         // PAÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¹Ãƒâ€¦Ã¢â‚¬Å“OLETA
-        if (productName.includes("paÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â±oleta") || productName.includes("panoleta") || productName.includes("paoleta")) {
+        if (isPanoletaProduct(productName)) {
             if (identidad === "ejercito") {
                 return isBack 
-                    ? "/static/img/prendas/ejercito/paÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â±oletas/detras.png"
-                    : "/static/img/prendas/ejercito/paÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â±oletas/frente.png";
+                    ? "/static/img/prendas/ejercito/pañoletas/detras.png"
+                    : "/static/img/prendas/ejercito/pañoletas/frente.png";
             } else if (identidad === "gaula") {
                 return isBack 
-                    ? "/static/img/prendas/gaula/PaÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â±oletas/detras.png"
-                    : "/static/img/prendas/gaula/PaÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â±oletas/frente.png";
+                    ? "/static/img/prendas/gaula/Pañoletas/detras.png"
+                    : "/static/img/prendas/gaula/Pañoletas/frente.png";
             } else if (identidad === "policia") {
                 return isBack 
-                    ? "/static/img/prendas/Policia/paÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â±oletas/detras.png"
-                    : "/static/img/prendas/Policia/paÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â±oletas/frente.png";
+                    ? "/static/img/prendas/Policia/pañoletas/detras.png"
+                    : "/static/img/prendas/Policia/pañoletas/frente.png";
             } else if (identidad === "armada") {
                 return isBack
-                    ? "/static/img/prendas/armada/paÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â±oleta/detras.png"
-                    : "/static/img/prendas/armada/paÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â±oleta/frente.png";
+                    ? "/static/img/prendas/armada/pañoleta/detras.png"
+                    : "/static/img/prendas/armada/pañoleta/frente.png";
             }
         }
         
@@ -827,12 +827,12 @@ try {
         }
 
         // PAÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¹Ãƒâ€¦Ã¢â‚¬Å“OLETA
-        if (productName.includes("paÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â±oleta") || productName.includes("panoleta") || productName.includes("paoleta")) {
+        if (isPanoletaProduct(productName)) {
             let c = colorName.replace('-claro', '').replace('-noche', '');
-            if (identidad === "ejercito") return isBack ? `/static/img/prendas/ejercito/paÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â±oletas/detras.png` : `/static/img/prendas/ejercito/paÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â±oletas/panoleta_${c}.png`;
-            if (identidad === "policia") return isBack ? `/static/img/prendas/Policia/paÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â±oletas/detras.png` : `/static/img/prendas/Policia/paÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â±oletas/${c}.png`;
-            if (identidad === "gaula") return isBack ? `/static/img/prendas/gaula/PaÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â±oletas/detras.png` : `/static/img/prendas/gaula/PaÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â±oletas/panoleta_${c}.png`;
-            if (identidad === "armada") return isBack ? `/static/img/prendas/armada/paÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â±oleta/detras.png` : (colorName === "verde" || colorName === "verde-claro" ? `/static/img/prendas/armada/paÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â±oleta/paÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â±oleta verde .png` : `/static/img/prendas/armada/paÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â±oleta/panoleta_${c}.png`);
+            if (identidad === "ejercito") return isBack ? `/static/img/prendas/ejercito/pañoletas/detras.png` : `/static/img/prendas/ejercito/pañoletas/panoleta_${c}.png`;
+            if (identidad === "policia") return isBack ? `/static/img/prendas/Policia/pañoletas/detras.png` : `/static/img/prendas/Policia/pañoletas/${c}.png`;
+            if (identidad === "gaula") return isBack ? `/static/img/prendas/gaula/Pañoletas/detras.png` : `/static/img/prendas/gaula/Pañoletas/panoleta_${c}.png`;
+            if (identidad === "armada") return isBack ? `/static/img/prendas/armada/pañoleta/detras.png` : (colorName === "verde" || colorName === "verde-claro" ? `/static/img/prendas/armada/pañoleta/pañoleta verde .png` : `/static/img/prendas/armada/pañoleta/panoleta_${c}.png`);
         }
         
         // RH
@@ -1022,7 +1022,7 @@ try {
         }
 
         if (!imagen) {
-            if (["paÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â±oleta", "paÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â±oleta", "panoleta", "paoleta"].includes(p) && state.pasoActual >= 3 && !state.color) {
+            if (["pañoleta", "panoleta", "paoleta"].includes(p) && state.pasoActual >= 3 && !state.color) {
                 imagen = "";
             } else {
                 imagen = getProductImage();
@@ -1167,15 +1167,15 @@ try {
     function updateSummary() {
         const producto = productLabels[state.producto] || formatLabel(state.producto);
         const identidad = formatLabel(state.identidad);
-        const tecnica = state.tecnica === "bordado" ? "Bordado" : "ImpresiÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â³n";
+        const tecnica = state.tecnica === "bordado" ? "Bordado" : "Impresión";
         const color = formatLabel(state.color);
         const estampado = state.estampado ? formatLabel(state.estampado) : "Pendiente";
         const talla = state.talla || "Pendiente";
 
-        // Formatear mes/ao
+        // Formatear mes/año.
         let contingenciaFmt = state.anoContingencia ? state.anoContingencia : "Pendiente";
         
-        // Crear descripcion completa con TODOS los pasos
+        // Crear descripción completa con todos los pasos.
         let modeloTxt = "";
         if (state.producto === "rh" && state.modeloRh) {
             modeloTxt = ` | Tipo de Sangre: ${state.modeloRh}`;
@@ -1183,15 +1183,16 @@ try {
             modeloTxt = ` | Rango: ${state.modeloPresilla}`;
         }
         
-        const isEspecial = ["rh", "presillas", "gafete", "gafete del nombre o apellido", "paÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â±oleta", "paoleta", "panoleta", "paÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â±oleta", "gorra"].includes((state.producto || "").toLowerCase());
+        const productoKey = normalizeProductKey(state.producto);
+        const isEspecial = ["rh", "presillas", "gafete", "gafete del nombre o apellido", "gorra"].includes(productoKey) || isPanoletaProduct(productoKey);
         
         let descripcionCompleta = `${identidad}`;
         
-        // El buso manga larga y el buso no llevan la tÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â©cnica (por ser sublimados por defecto)
-        const esMangaBusoOnly = ["buso", "buso-manga-larga", "buso_manga_larga", "buso manga larga"].includes((state.producto || "").toLowerCase());
-        const esCualquierBuso = ["buso", "buso-manga-larga", "buso_manga_larga", "buso manga larga", "buso_tactico", "buso tactico", "buso-tactico"].includes((state.producto || "").toLowerCase());
+        // El buso manga larga y el buso no llevan técnica porque son sublimados por defecto.
+        const esMangaBusoOnly = ["buso", "buso-manga-larga", "buso_manga_larga", "buso manga larga"].includes(productoKey);
+        const esCualquierBuso = ["buso", "buso-manga-larga", "buso_manga_larga", "buso manga larga", "buso_tactico", "buso tactico", "buso-tactico"].includes(productoKey);
         
-        // La tÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â©cnica (bordado/impresiÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â³n) la llevan todos excepto los busos manga larga y el buso.
+        // La técnica aplica a todos excepto busos y busos manga larga.
         if (!esMangaBusoOnly) {
             descripcionCompleta += ` | ${tecnica}`;
         }
@@ -1206,8 +1207,8 @@ try {
             descripcionCompleta += ` | Talla: ${talla}`;
         }
         
-        // El estampado s aplica a paoletas y se quita para otros especiales, lo definimos ac:
-        const llevaEstampado = !["rh", "presillas", "gafete", "gafete del nombre o apellido"].includes((state.producto || "").toLowerCase());
+        // El estampado aplica a pañoletas y gorras, y se oculta para otros productos especiales.
+        const llevaEstampado = !["rh", "presillas", "gafete", "gafete del nombre o apellido"].includes(productoKey);
         
         // Agregar a la descripcionCompleta SOLO si ya eligio un estampado
         if (llevaEstampado && state.estampado) {
@@ -1232,7 +1233,8 @@ try {
 
         let pEst = document.getElementById("preview-estampado");
         if (pEst && pEst.parentElement) {
-            pEst.parentElement.style.display = (isEspecial && (state.producto || "").toLowerCase() !== "gorra" && (state.producto || "").toLowerCase() !== "pa\u00f1oleta" && (state.producto || "").toLowerCase() !== "panoleta") ? "none" : "flex";
+            const productoPermiteEstampadoEspecial = productoKey === "gorra" || isPanoletaProduct(productoKey);
+            pEst.parentElement.style.display = (isEspecial && !productoPermiteEstampadoEspecial) ? "none" : "flex";
         }
         // Actualizar panel derecho (vista previa)
         if (productoInfoPreview) productoInfoPreview.textContent = producto;
@@ -1734,7 +1736,7 @@ try {
 
 
         // Escudos en paÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â±oletas
-        const isPanoleta = ['paÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â±oleta', 'paÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â±oleta', 'panoleta', 'paoleta'].includes((state.producto || '').toLowerCase());
+        const isPanoleta = ['pañoleta', 'panoleta', 'paoleta'].includes((state.producto || '').toLowerCase());
         if (isPanoleta && state.estampado && state.estampado.toLowerCase().startsWith('escudos') && state.vistaPrenda !== 'trasera') {
             // El dropdown solo da opciones Escudo 1 / Escudo 2. Ajustarlas segÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Âºn la lÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â³gica si tienen archivos distintos.
             // De lo contrario mantenemos la lÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â³gica actual y mostramos la imagen base a color si no hay selecciÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â³n.
@@ -1756,41 +1758,41 @@ try {
 
                 // Si seleccionaron escudo 2, agregar su path si aplica
                 if (state.estampado.includes('Estilo 3') || state.estampado.includes('Escudo 3')) {
-                     escImgSrc = `/static/img/estampados/ejercito/paÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â±oleta/Escudos/estilo3.png`;
+                     escImgSrc = `/static/img/estampados/ejercito/pañoleta/Escudos/estilo3.png`;
                 } else if (state.estampado.includes('Estilo ,3')) {
-                     escImgSrc = `/static/img/estampados/ejercito/paÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â±oleta/Escudos/estilo,3.png`;
+                     escImgSrc = `/static/img/estampados/ejercito/pañoleta/Escudos/estilo,3.png`;
                 } else if (state.estampado.includes('Estilo 2') || state.estampado.includes('Escudo 2')) {
-                     escImgSrc = `/static/img/estampados/ejercito/paÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â±oleta/Escudos/estilo2.png`;
+                     escImgSrc = `/static/img/estampados/ejercito/pañoleta/Escudos/estilo2.png`;
                 } else if (state.estampado.includes('Estilo ,2')) {
-                     escImgSrc = `/static/img/estampados/ejercito/paÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â±oleta/Escudos/estilo,2.png`;
+                     escImgSrc = `/static/img/estampados/ejercito/pañoleta/Escudos/estilo,2.png`;
                 } else if (state.estampado.includes('Estilo 1') || state.estampado.includes('Escudo 1')) {
-                     escImgSrc = `/static/img/estampados/ejercito/paÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â±oleta/Escudos/estilo-1.png`;
+                     escImgSrc = `/static/img/estampados/ejercito/pañoleta/Escudos/estilo-1.png`;
                 } else if (state.estampado.includes('Estilo -1')) {
-                     escImgSrc = `/static/img/estampados/ejercito/paÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â±oleta/Escudos/estilo1.png`;
+                     escImgSrc = `/static/img/estampados/ejercito/pañoleta/Escudos/estilo1.png`;
                 } else {
                      // Default
-                     escImgSrc = `/static/img/estampados/ejercito/paÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â±oleta/Escudos/estilo-1.png`;
+                     escImgSrc = `/static/img/estampados/ejercito/pañoleta/Escudos/estilo-1.png`;
                 }
             }
             else if (identId === 'gaula') {
                 if (state.color === "negro") {
                     if (state.estampado.includes('Estilo 2') || state.estampado.includes('Escudo 2')) {
-                        escImgSrc = `/static/img/estampados/gaula/paÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â±oleta/Escudos/estampado 2.png`;
+                        escImgSrc = `/static/img/estampados/gaula/pañoleta/Escudos/estampado 2.png`;
                     } else {
-                        escImgSrc = `/static/img/estampados/gaula/paÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â±oleta/Escudos/estampado 1.png`;
+                        escImgSrc = `/static/img/estampados/gaula/pañoleta/Escudos/estampado 1.png`;
                     }
                 } else {
                     if (state.estampado.includes('Estilo 2') || state.estampado.includes('Escudo 2')) {
-                        escImgSrc = `/static/img/estampados/gaula/paÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â±oleta/Escudos/estampado2.png`;
+                        escImgSrc = `/static/img/estampados/gaula/pañoleta/Escudos/estampado2.png`;
                     } else {
-                        escImgSrc = `/static/img/estampados/gaula/paÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â±oleta/Escudos/estampado1.png`;
+                        escImgSrc = `/static/img/estampados/gaula/pañoleta/Escudos/estampado1.png`;
                     }
                 }
             }
             else if (identId === 'armada') {
-                escImgSrc = `/static/img/estampados/armada/paÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â±oleta/Escudos/${c === 'negro' ? 'negro.png' : 'verde.png'}`;
+                escImgSrc = `/static/img/estampados/armada/pañoleta/Escudos/${c === 'negro' ? 'negro.png' : 'verde.png'}`;
             }
-            else escImgSrc = `/static/img/estampados/Policia/paÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â±oleta/Escudos/paÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â±oleta ${c.includes('azul') ? 'azul' : 'verde'}.png`; 
+            else escImgSrc = `/static/img/estampados/policia/pañoleta/Escudos/pañoleta ${c.includes('azul') ? 'azul' : 'verde'}.png`;
             
             // En caso que el substring sea vacio o "escudos"
             if (state.estampado.trim().toLowerCase() === "escudos") {
@@ -2029,17 +2031,16 @@ try {
         let allowedAreas = [];
         let defaultActiveArea = null;
         
-        // Prendas especiales que solo tienen impresiÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â³n delantera.
-        const prendasEspeciales = ["presillas", "rh", "paoleta", "paÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â±oleta", "paÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â±oleta", "panoleta", "gorra", "contingencia", "gafete del nombre o apellido"];
-        const productoActualName = (state.producto || "").toLowerCase();
-        const esProductoEspecial = prendasEspeciales.some(p => p.toLowerCase() === productoActualName);
+        // Prendas especiales que solo tienen impresión delantera.
+        const productoActualName = normalizeProductKey(state.producto);
+        const esProductoEspecial = ["presillas", "rh", "gorra", "contingencia", "gafete del nombre o apellido"].includes(productoActualName) || isPanoletaProduct(productoActualName);
 
-        // Si es prenda especial, solo mostrar impresiÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â³n delantera.
+        // Si es prenda especial, solo mostrar impresión delantera.
         if (esProductoEspecial) {
             allowedAreas = ["impresion-delantera"];
             defaultActiveArea = "impresion-delantera";
         } else {
-            // Para prendas normales (camiseta, buso, etc.): pecho y mangas, sin impresiÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â³n delantera.
+            // Para prendas normales: pecho y mangas, sin impresión delantera.
             allowedAreas = [
                 "pecho-izquierdo",
                 "pecho-derecho",
@@ -2062,7 +2063,7 @@ try {
             }
         });
 
-        // Establecer la pestaa activa por defecto segn el producto
+        // Establecer la pestaña activa por defecto según el producto.
         tabs.forEach((tab) => {
             tab.classList.remove("activa");
             if (tab.dataset.area === defaultActiveArea && tab.style.display !== "none") {
@@ -2070,7 +2071,7 @@ try {
             }
         });
 
-        // Habilitar todas las tcnicas para todos los productos
+        // Habilitar todas las técnicas para todos los productos.
         const tecnicaButtons = document.querySelectorAll("[data-tecnica]");
         tecnicaButtons.forEach((button) => {
             button.disabled = false;
@@ -2081,7 +2082,7 @@ try {
 
     function updateTallaVisibility() {
         const btnSiguiente = document.getElementById("btn-siguiente-paso4");
-        // En este caso, el paso 4 es el ltimo y va hacia la confirmacin.
+        // En este caso, el paso 4 es el último y va hacia la confirmación.
         if (btnSiguiente) btnSiguiente.style.display = "inline-block";
     }
 
@@ -2101,15 +2102,15 @@ try {
                     // Para gorras, escudos y parches no aplican
                     if (tipo === "escudos" || tipo === "parches") mostrar = false;
                 } else if (identidad === "policia") {
-                    if (producto === "paÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â±oleta" || producto === "panoleta" || producto === "paoleta" || producto === "paÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â±oleta" || producto === "pa\u00f1oleta") {
-                        if (tipo !== "escudos") mostrar = false; // "las paÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â±olestas solo tienen escudos nada mas"
+                    if (isPanoletaProduct(producto)) {
+                        if (tipo !== "escudos") mostrar = false;
                     } else if (producto === "guerrera") {
                         if (tipo !== "distintivos" && tipo !== "escudos" && tipo !== "parches") mostrar = false;
                     } else if (producto === "buso-tactico" || producto === "buso_tactico" || producto === "buso tactico") {
                         if (tipo !== "parches" && tipo !== "escudos") mostrar = false;
                     }
-                } else if (producto === "paÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â±oleta" || producto === "panoleta" || producto === "paoleta" || producto === "paÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â±oleta") {
-                    // Para paÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â±oletas, parches y distintivos no aplican (otras fuerzas)
+                } else if (isPanoletaProduct(producto)) {
+                    // Para pañoletas, parches y distintivos no aplican en otras fuerzas.
                     if (tipo === "distintivos" || tipo === "parches") mostrar = false;
                 }
 
@@ -2148,9 +2149,9 @@ try {
                         else if (tipo === "parches") imgFolderUrl = `url('/static/img/estampados/gaula/guerrera/Parches/parche.png')`;
                     } else if (identidad === "armada") {
                         if (tipo === "escudos") {
-                            if (producto === "paÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â±oleta" || producto === "panoleta") {
+                            if (isPanoletaProduct(producto)) {
                                 const cc = (state.color || '').toLowerCase();
-                                imgFolderUrl = `url('/static/img/estampados/armada/paÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â±oleta/Escudos/${cc === 'negro' ? 'negro.png' : 'verde.png'}')`;
+                                imgFolderUrl = `url('/static/img/estampados/armada/pañoleta/Escudos/${cc === 'negro' ? 'negro.png' : 'verde.png'}')`;
                             } else {
                                 imgFolderUrl = `url('/static/img/estampados/armada/buso tactico/escudos/Escudo_Armada_Nacional_de_Colombia.svg.png')`;
                             }
@@ -2228,9 +2229,9 @@ try {
                 "gafete del nombre o apellido": ["verde-claro"],
                 "gorra": ["verde-claro"],
                 "guerrera": ["verde-claro"],
+                "pañoleta": ["verde-claro", "negro", "beiches"],
                 "paoleta": ["verde-claro", "negro", "beiches"],
                 "panoleta": ["verde-claro", "negro", "beiches"],
-                "paÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â±oleta": ["verde-claro", "negro", "beiches"],
                 "presillas": ["dorado", "verde-claro"],
                 "rh": ["verde-claro"]
             },
@@ -2244,9 +2245,9 @@ try {
                 "gafete": ["verde-claro", "azul-noche"],
                 "gafete del nombre o apellido": ["verde-claro", "azul-noche"],
                 "gorra": ["verde-claro", "azul-noche"],
+                "pañoleta": ["verde-claro", "azul-noche"],
                 "paoleta": ["verde-claro", "azul-noche"],
                 "panoleta": ["verde-claro", "azul-noche"],
-                "paÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â±oleta": ["verde-claro", "azul-noche"],
                 "presillas": ["dorado", "azul-noche"],
                 "rh": ["verde-claro", "azul-noche"]
             },
@@ -2260,9 +2261,9 @@ try {
                 "gafete del nombre o apellido": ["verde-claro"],
                 "gorra": ["verde-claro", "negro"],
                 "guerrera": ["verde-claro"],
+                "pañoleta": ["verde-claro", "negro"],
                 "paoleta": ["verde-claro", "negro"],
                 "panoleta": ["verde-claro", "negro"],
-                "paÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â±oleta": ["verde-claro", "negro"],
                 "presillas": ["verde-claro"],
                 "rh": ["verde-claro", "platiado"]
             },
@@ -2278,9 +2279,9 @@ try {
                 "gafete del nombre o apellido": ["verde-claro"],
                 "guerrera": ["verde-claro", "verde"],
                 "gorra": ["verde-claro", "verde"],
+                "pañoleta": ["verde-claro", "verde", "negro"],
                 "paoleta": ["verde-claro", "verde", "negro"],
                 "panoleta": ["verde-claro", "verde", "negro"],
-                "paÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â±oleta": ["verde-claro", "verde", "negro"]
             }
         };
         
@@ -2376,10 +2377,10 @@ try {
                     <option value="Coronel">Coronel</option>
                     <option value="Teniente Coronel">Teniente Coronel</option>
                     <option value="Mayor">Mayor</option>
-                    <option value="Capitan">CapitÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¡n</option>
+                    <option value="Capitan">Capitán</option>
                     <option value="Teniente">Teniente</option>
                     <option value="Subteniente">Subteniente</option>
-                    <option value="Subitendente">Subintendente</option>
+                    <option value="Subintendente">Subintendente</option>
                 </select>
             `;
         }
@@ -2463,23 +2464,23 @@ try {
         const rangoValido = inputRango && /^[A-Za-z\u00C0-\u017F\s]+$/.test(inputRango.value.trim());
         if (!rangoValido) { valid = false; lineasAlerta.push("- Rango (solo letras)."); }
         const dirValida = inputDireccion && inputDireccion.value.trim().length > 0;
-        if (!dirValida) { valid = false; lineasAlerta.push("- Direccion."); }
+        if (!dirValida) { valid = false; lineasAlerta.push("- Dirección."); }
         const correoValido = inputCorreo && isValidEmail(inputCorreo.value);
-        if (!correoValido) { valid = false; lineasAlerta.push("- Correo electronico valido."); }
+        if (!correoValido) { valid = false; lineasAlerta.push("- Correo electrónico válido."); }
         if (inputTelefono) {
             inputTelefono.value = sanitizePhone(inputTelefono.value);
         }
         const telValido = inputTelefono && /^[0-9]{10}$/.test(inputTelefono.value.trim());
-        if (!telValido) { valid = false; lineasAlerta.push("- Telefono de 10 digitos numericos."); }
+        if (!telValido) { valid = false; lineasAlerta.push("- Teléfono de 10 dígitos numéricos."); }
         const fechaContingenciaValida = inputFechaContingencia && isValidContingencyDate(inputFechaContingencia.value);
         if (!fechaContingenciaValida) {
             valid = false;
             lineasAlerta.push("- Fecha de contingencia entre 1940 y la fecha actual.");
         }
         const tallaValida2 = inputTalla && inputTalla.value.trim().length > 0;
-        if (!tallaValida2 && !state.talla) { valid = false; lineasAlerta.push("- Seleccion de talla."); }
-        if (!state.identidad) { valid = false; lineasAlerta.push("- Seleccionar una entidad (Ej: Policia, Ejercito)."); }
-        if (!state.tecnica) { valid = false; lineasAlerta.push("- Seleccionar una tecnica (Ej: Bordado)."); }
+        if (!tallaValida2 && !state.talla) { valid = false; lineasAlerta.push("- Selección de talla."); }
+        if (!state.identidad) { valid = false; lineasAlerta.push("- Seleccionar una entidad (Ej: Policía, Ejército)."); }
+        if (!state.tecnica) { valid = false; lineasAlerta.push("- Seleccionar una técnica (Ej: Bordado)."); }
         if (btnSiguiente) {
             btnSiguiente.style.opacity = valid ? "1" : "0.5";
             btnSiguiente.style.cursor = valid ? "pointer" : "not-allowed";
@@ -2641,7 +2642,7 @@ try {
                 
                 // Forzar la validaciÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â³n aquÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â­.
                 if (!state.identidad || !state.tecnica) {
-                    showUserToast("Asegurate de seleccionar una entidad y una tecnica.", "warning", { durationMs: 7000 });
+                    showUserToast("Asegúrate de seleccionar una entidad y una técnica.", "warning", { durationMs: 7000 });
                     return;
                 }
                 
@@ -2738,7 +2739,7 @@ try {
                 }
 
                 // If currently on paÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â±oleta and escudos are shown, update options
-                if (['paÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â±oleta', 'paÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â±oleta', 'panoleta', 'paoleta'].includes((state.producto || '').toLowerCase()) && state.estampado.startsWith("escudos")) {
+                if (['pañoleta', 'panoleta', 'paoleta'].includes((state.producto || '').toLowerCase()) && state.estampado.startsWith("escudos")) {
                     const selectEscudo = document.getElementById("select-escudo");
                     if (selectEscudo) {
                         const opt1 = Array.from(selectEscudo.options).find(o => o.value === "Estilo 1");
@@ -2835,7 +2836,7 @@ try {
 
         document.getElementById("btn-finalizar")?.addEventListener("click", () => {
             updateSummary();
-            showUserToast("La configuracion quedo lista. El siguiente paso sera conectarla al flujo real de carrito.", "info", { durationMs: 7000 });
+            showUserToast("La configuración quedó lista. El siguiente paso será conectarla al flujo real de carrito.", "info", { durationMs: 7000 });
         });
 
         // Botones de navegacin Siguiente/Atrs
@@ -2903,40 +2904,40 @@ try {
             state.cantidad = getOrderQuantity();
             updateSummary();
             
-            // Organize and format the summary data nicely
-            let summaryText = "ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã¢â‚¬Å“ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¦ ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¡PersonalizaciÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â³n completada!\\n\\n";
+            // Organizar y mostrar el resumen de la personalización.
+            let summaryText = "¡Personalización completada!\n\n";
             
-            summaryText += "--- DATOS DEL CLIENTE ---\\n";
-            summaryText += "ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ Nombre: " + (state.nombre || "No especificado") + "\\n";
-            summaryText += "ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ Correo: " + (state.correo || "No especificado") + "\\n";
-            summaryText += "ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ TelÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â©fono: " + (state.telefono || "No especificado") + "\\n";
-            summaryText += "ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ DirecciÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â³n: " + (state.direccion || "No especificada") + "\\n";
+            summaryText += "--- DATOS DEL CLIENTE ---\n";
+            summaryText += "Nombre: " + (state.nombre || "No especificado") + "\n";
+            summaryText += "Correo: " + (state.correo || "No especificado") + "\n";
+            summaryText += "Teléfono: " + (state.telefono || "No especificado") + "\n";
+            summaryText += "Dirección: " + (state.direccion || "No especificada") + "\n";
             
-            summaryText += "\\n--- INFORMACIÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦ÃƒÂ¢Ã¢â€šÂ¬Ã…â€œN INSTITUCIONAL ---\\n";
-            summaryText += "ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ Identidad/Fuerza: " + formatLabel(state.identidad) + "\\n";
+            summaryText += "\n--- INFORMACIÓN INSTITUCIONAL ---\n";
+            summaryText += "Identidad/Fuerza: " + formatLabel(state.identidad) + "\n";
             if (state.rango) {
-                summaryText += "ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ Rango: " + state.rango + "\\n";
+                summaryText += "Rango: " + state.rango + "\n";
             }
             if (state.anoContingencia) {
-                summaryText += "ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ Fecha de contingencia: " + state.anoContingencia + "\\n";
+                summaryText += "Fecha de contingencia: " + state.anoContingencia + "\n";
             }
             
-            summaryText += "\\n--- DETALLES DEL PRODUCTO ---\\n";
-            summaryText += "ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ Producto: " + (productLabels[state.producto] || formatLabel(state.producto)) + "\\n";
+            summaryText += "\n--- DETALLES DEL PRODUCTO ---\n";
+            summaryText += "Producto: " + (productLabels[state.producto] || formatLabel(state.producto)) + "\n";
             if (state.color) {
-                summaryText += "ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ Color: " + formatLabel(state.color) + "\\n";
+                summaryText += "Color: " + formatLabel(state.color) + "\n";
             }
             if (state.talla) {
-                summaryText += "ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ Talla: " + state.talla + "\\n";
+                summaryText += "Talla: " + state.talla + "\n";
             }
             if (state.tecnica) {
-                summaryText += "ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ TÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â©cnica: " + (state.tecnica === "bordado" ? "Bordado" : "ImpresiÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â³n") + "\\n";
+                summaryText += "Técnica: " + (state.tecnica === "bordado" ? "Bordado" : "Impresión") + "\n";
             }
             if (state.estampado) {
-                summaryText += "ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ Estampado: " + formatLabel(state.estampado) + "\\n";
+                summaryText += "Estampado: " + formatLabel(state.estampado) + "\n";
             }
-            summaryText += "ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ Cantidad: " + getOrderQuantity() + "\\n";
-            summaryText += "ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ Precio total: " + getOrderPriceLabel() + "\\n";
+            summaryText += "Cantidad: " + getOrderQuantity() + "\n";
+            summaryText += "Precio total: " + getOrderPriceLabel() + "\n";
             const imagenPreviewPayload = await obtenerImagenPreviewParaPayload();
             
             const payload = {
@@ -2952,7 +2953,7 @@ try {
                     identidad: formatLabel(state.identidad),
                     producto: normalizeProductKey(state.producto),
                     producto_label: productLabels[normalizeProductKey(state.producto)] || formatLabel(state.producto),
-                    tecnica: state.tecnica === "bordado" ? "Bordado" : "ImpresiÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â³n",
+                    tecnica: state.tecnica === "bordado" ? "Bordado" : "Impresión",
                     color: formatLabel(state.color),
                     estampado: state.estampado ? formatLabel(state.estampado) : "Ninguno",
                     talla: state.talla || "Sin talla",
@@ -2982,13 +2983,13 @@ try {
 
                 localStorage.removeItem(ORDER_DRAFT_STORAGE_KEY);
                 showUserToast(
-                    `La prenda personalizada se agregÃƒÆ’Ã‚Â³ al carrito (cÃƒÆ’Ã‚Â³digo #${data.id_orden}). SerÃƒÆ’Ã‚Â¡s redirigido al carrito en unos segundos.`,
+                    `La prenda personalizada se agregó al carrito (código #${data.id_orden}). Serás redirigido al carrito en unos segundos.`,
                     "success",
                     { title: "Solicitud registrada", durationMs: 5000 }
                 );
                 window.setTimeout(() => { window.location.href = data.redirect_url || "/cart"; }, 2200);
             } catch (error) {
-                showUserToast(`No se pudo continuar al pago. ${error.message || "Intentalo nuevamente."}`, "danger", { durationMs: 8500 });
+                showUserToast(`No se pudo continuar al pago. ${error.message || "Inténtalo nuevamente."}`, "danger", { durationMs: 8500 });
             } finally {
                 enviandoOrdenPersonalizada = false;
             }
@@ -3035,7 +3036,7 @@ try {
             if (state.pasoActual > 1) {
                 changeStep(state.pasoActual - 1);
             } else {
-                showUserToast("Ya estas en el primer paso.", "info", { durationMs: 5000 });
+                showUserToast("Ya estás en el primer paso.", "info", { durationMs: 5000 });
             }
         });
 
@@ -3044,7 +3045,7 @@ try {
             if (validarPaso(4)) {
                 const producto = productLabels[state.producto] || formatLabel(state.producto);
                 const identidad = formatLabel(state.identidad);
-                const tecnica = state.tecnica === "bordado" ? "Bordado" : "ImpresiÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â³n";
+                const tecnica = state.tecnica === "bordado" ? "Bordado" : "Impresión";
                 const color = formatLabel(state.color);
                 const estampado = state.estampado ? formatLabel(state.estampado) : "Ninguno";
                 const talla = state.talla || "Sin talla";
@@ -3121,7 +3122,7 @@ try {
                     if (dropdownEscudosContainer) dropdownEscudosContainer.style.display = "none";
                     // Guardar solo "distintivos" por ahora; se actualizarÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¡ si elige una opciÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â³n del select.
                     state.estampado = "distintivos";
-                } else if (tipoEstampado === "escudos" && ['paÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â±oleta', 'paÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â±oleta', 'panoleta', 'paoleta'].includes((state.producto || '').toLowerCase())) {
+                } else if (tipoEstampado === "escudos" && ['pañoleta', 'panoleta', 'paoleta'].includes((state.producto || '').toLowerCase())) {
                     if (dropdownEscudosContainer) dropdownEscudosContainer.style.display = "block";
                     if (dropdownContainer) dropdownContainer.style.display = "none";
                     const selectEscudo = document.getElementById("select-escudo");
@@ -3280,7 +3281,7 @@ try {
     
     changeStep(state.pasoActual);
 } catch(e) {
-    showUserToast('Error en la vista personalizada: ' + e.message + ' (linea ' + e.lineNumber + ')', 'danger', { durationMs: 9000, title: 'Error de interfaz' });
+    showUserToast('Error en la vista personalizada: ' + e.message + ' (línea ' + e.lineNumber + ')', 'danger', { durationMs: 9000, title: 'Error de interfaz' });
     console.error(e);
 }
 })();
