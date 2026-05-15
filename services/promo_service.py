@@ -37,6 +37,10 @@ def promocion_esta_aplicable(promo: Mapping[str, Any], fecha_ref: Optional[date]
     return bool(promo.get('activo', False)) and estado_vigencia_promocion(promo, fecha_ref) == 'vigente'
 
 
+def promocion_requiere_codigo(promo: Mapping[str, Any]) -> bool:
+    return bool(str(promo.get('codigo', '') or '').strip())
+
+
 def calcular_descuento_promocion(subtotal, promo):
     subtotal = max(0.0, float(subtotal))
     tipo = str(promo.get('tipo_descuento', 'porcentaje')).strip().lower()
@@ -78,6 +82,8 @@ def obtener_mejor_promocion_por_producto(
     for _, row in promos_df.iterrows():
         promo = row.to_dict()
         if not promocion_esta_aplicable(promo, fecha_ref):
+            continue
+        if promocion_requiere_codigo(promo):
             continue
 
         id_producto_promo = pd.to_numeric(promo.get('id_producto'), errors='coerce')

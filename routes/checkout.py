@@ -138,11 +138,28 @@ def register_checkout_legacy_routes(app, legacy):
 
             carrito = legacy._obtener_carrito_sesion_usuario()
             carrito_enriquecido = legacy._enriquecer_carrito_con_imagenes(carrito)
+            productos = legacy.cargar_productos_df()
+            promos = legacy.cargar_promociones_df()
+            carrito_enriquecido, total, total_descuento, _, total_bruto, error_promo = legacy._aplicar_promociones_carrito(
+                carrito_enriquecido,
+                productos,
+                promos,
+                codigo_promo,
+            )
+            if error_promo:
+                flash(error_promo[0], error_promo[1])
+                codigo_promo = ""
+                session["checkout_codigo_promo"] = ""
+                carrito_enriquecido, total, total_descuento, _, total_bruto, _ = legacy._aplicar_promociones_carrito(
+                    carrito_enriquecido,
+                    productos,
+                    promos,
+                    "",
+                )
             if carrito_enriquecido != carrito:
                 session["carrito"] = carrito_enriquecido
                 session.modified = True
                 legacy._sincronizar_carrito_usuario_desde_sesion()
-            total = sum(float(item.get("subtotal", 0)) for item in carrito_enriquecido)
             contacto_cliente = legacy._obtener_contacto_checkout_predeterminado()
             telefono_cliente = str(contacto_cliente.get("telefono", "") or "").strip()
             direccion_cliente = str(contacto_cliente.get("direccion", "") or "").strip()
@@ -151,6 +168,8 @@ def register_checkout_legacy_routes(app, legacy):
                 "Usuarios/Carrito/cart.html",
                 carrito=carrito_enriquecido,
                 total=total,
+                total_bruto=total_bruto,
+                total_descuento=total_descuento,
                 selected_metodo_pago=metodo_pago,
                 selected_codigo_promo=codigo_promo,
                 cliente_telefono=telefono_cliente,
@@ -250,26 +269,32 @@ def register_checkout_legacy_routes(app, legacy):
         session["checkout_cliente_direccion"] = cliente_direccion
         legacy._guardar_contacto_checkout_usuario(cliente_telefono, cliente_direccion)
 
-        total = sum(float(item.get("subtotal", 0)) for item in carrito)
         promos = legacy.cargar_promociones_df()
-        promo_aplicada, descuento_promo, error_promo = legacy._resolver_promocion_checkout(codigo_promo, promos, total)
-        if error_promo:
-            flash(error_promo[0], error_promo[1])
-            return redirect(url_for("cart", metodo_pago=metodo_pago, codigo_promo=codigo_promo))
-
         productos = legacy.cargar_productos_df()
         if productos.empty:
             flash("No existe la base de productos.", "danger")
             return redirect(url_for("cart", metodo_pago=metodo_pago, codigo_promo=codigo_promo))
 
-        error_stock = legacy._validar_stock_checkout(productos, carrito)
+        carrito_calculado, total_final, descuento_promo, promo_aplicada, _, error_promo = legacy._aplicar_promociones_carrito(
+            carrito,
+            productos,
+            promos,
+            codigo_promo,
+        )
+        if error_promo:
+            flash(error_promo[0], error_promo[1])
+            return redirect(url_for("cart", metodo_pago=metodo_pago, codigo_promo=codigo_promo))
+        session["carrito"] = carrito_calculado
+        session.modified = True
+        legacy._sincronizar_carrito_usuario_desde_sesion()
+
+        error_stock = legacy._validar_stock_checkout(productos, carrito_calculado)
         if error_stock:
             flash(error_stock[0], error_stock[1])
             return redirect(url_for("cart", metodo_pago=metodo_pago, codigo_promo=codigo_promo))
 
-        total_final = max(0.0, float(total) - float(descuento_promo))
         if metodo_pago == "tarjeta":
-            return legacy._iniciar_pago_stripe_desde_carrito(carrito, codigo_promo, total_final)
+            return legacy._iniciar_pago_stripe_desde_carrito(carrito_calculado, codigo_promo, total_final)
 
         return redirect(url_for("checkout", metodo_pago="transferencia", codigo_promo=codigo_promo))
 
@@ -282,7 +307,6 @@ def register_checkout_legacy_routes(app, legacy):
             flash("No hay productos en el carrito.", "warning")
             return redirect(url_for("cart"))
 
-        total = sum(float(item.get("subtotal", 0)) for item in carrito)
         codigo_promo = request.form.get("codigo_promo", "").strip().upper()
         metodo_pago = str(request.form.get("metodo_pago", "") or "").strip().lower()
         comprobante_transferencia = request.files.get("comprobante_transferencia")
@@ -319,13 +343,20 @@ def register_checkout_legacy_routes(app, legacy):
             return redirect(url_for("cart"))
 
         promos = legacy.cargar_promociones_df()
-        promo_aplicada, descuento_promo, error_promo = legacy._resolver_promocion_checkout(codigo_promo, promos, total)
+        carrito_calculado, total_final, descuento_promo, promo_aplicada, _, error_promo = legacy._aplicar_promociones_carrito(
+            carrito,
+            productos,
+            promos,
+            codigo_promo,
+        )
         if error_promo:
             flash(error_promo[0], error_promo[1])
             return redirect(url_for("cart", metodo_pago=metodo_pago, codigo_promo=codigo_promo))
+        session["carrito"] = carrito_calculado
+        session.modified = True
+        legacy._sincronizar_carrito_usuario_desde_sesion()
 
-        total_final = max(0.0, float(total) - float(descuento_promo))
-        error_stock = legacy._validar_stock_checkout(productos, carrito)
+        error_stock = legacy._validar_stock_checkout(productos, carrito_calculado)
         if error_stock:
             flash(error_stock[0], error_stock[1])
             return redirect(url_for("cart", metodo_pago=metodo_pago, codigo_promo=codigo_promo))
@@ -341,12 +372,12 @@ def register_checkout_legacy_routes(app, legacy):
                 return redirect(url_for("checkout", metodo_pago="transferencia", codigo_promo=codigo_promo))
 
         if metodo_pago == "tarjeta":
-            return legacy._iniciar_pago_stripe_desde_carrito(carrito, codigo_promo, total_final)
-        agotados_en_compra = legacy._descontar_stock_checkout(productos, carrito)
+            return legacy._iniciar_pago_stripe_desde_carrito(carrito_calculado, codigo_promo, total_final)
+        agotados_en_compra = legacy._descontar_stock_checkout(productos, carrito_calculado)
         legacy.guardar_productos_df(productos)
 
         nuevo_id_pedido = legacy._registrar_compra_checkout_usuario(
-            carrito=carrito,
+            carrito=carrito_calculado,
             pedidos=pedidos,
             detalle_pedido=detalle_pedido,
             pagos=pagos,
@@ -359,7 +390,7 @@ def register_checkout_legacy_routes(app, legacy):
             cliente_direccion=cliente_direccion,
         )
         legacy.actualizar_estado_ordenes_personalizadas_carrito(
-            carrito,
+            carrito_calculado,
             "en_revision" if metodo_pago == "transferencia" else "pendiente",
         )
 

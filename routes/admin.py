@@ -24,15 +24,19 @@ def register_admin_legacy_routes(app, legacy):
             descripcion = request.form.get("descripcion", "").strip()
             tipo_descuento = request.form.get("tipo_descuento", "porcentaje").strip().lower()
             if tipo_descuento not in ["porcentaje", "valor_fijo"]:
-                tipo_descuento = "porcentaje"
+                flash("Selecciona un tipo de descuento valido.", "warning")
+                return redirect(url_for("admin_promo"))
             try:
-                valor_descuento = float(request.form.get("valor_descuento", 0))
-            except ValueError:
-                valor_descuento = 0
-            if valor_descuento < 0:
-                valor_descuento = 0
-            if tipo_descuento == "porcentaje":
-                valor_descuento = min(valor_descuento, 100)
+                valor_descuento = float(request.form.get("valor_descuento", ""))
+            except (TypeError, ValueError):
+                flash("Ingresa un valor de descuento valido.", "warning")
+                return redirect(url_for("admin_promo"))
+            if valor_descuento <= 0:
+                flash("El descuento debe ser mayor a cero. No se permiten valores negativos.", "warning")
+                return redirect(url_for("admin_promo"))
+            if tipo_descuento == "porcentaje" and valor_descuento > 100:
+                flash("El porcentaje de descuento no puede superar el 100%.", "warning")
+                return redirect(url_for("admin_promo"))
 
             codigo = request.form.get("codigo", "").strip().upper()
             fecha_inicio = request.form.get("fecha_inicio", "")
@@ -40,7 +44,10 @@ def register_admin_legacy_routes(app, legacy):
             activo = request.form.get("activo") == "on"
             inicio_date = legacy.parsear_fecha_promocion(fecha_inicio)
             fin_date = legacy.parsear_fecha_promocion(fecha_fin)
-            if inicio_date and fin_date and inicio_date > fin_date:
+            if not inicio_date or not fin_date:
+                flash("La fecha de inicio y la fecha de finalizacion son obligatorias.", "warning")
+                return redirect(url_for("admin_promo"))
+            if inicio_date > fin_date:
                 flash("La fecha de inicio no puede ser mayor que la fecha de fin.", "warning")
                 return redirect(url_for("admin_promo"))
             if pd.isna(id_producto):
@@ -52,16 +59,28 @@ def register_admin_legacy_routes(app, legacy):
                 pd.to_numeric(productos_ref.get("id_producto", 0), errors="coerce") == id_producto_num
             ].empty
             if not existe_producto:
-                flash("El producto seleccionado no existe o está inactivo.", "warning")
+                flash("El producto seleccionado no existe o est? inactivo.", "warning")
+                return redirect(url_for("admin_promo"))
+            producto_ref = productos_ref[
+                pd.to_numeric(productos_ref.get("id_producto", 0), errors="coerce") == id_producto_num
+            ].iloc[0]
+            precio_producto = float(pd.to_numeric(producto_ref.get("precio", 0), errors="coerce") or 0)
+            if tipo_descuento == "valor_fijo" and valor_descuento >= precio_producto:
+                flash("El descuento fijo debe ser inferior al precio establecido de la prenda.", "warning")
                 return redirect(url_for("admin_promo"))
 
             promos = legacy.cargar_promociones_df()
             if codigo:
+                if not re.fullmatch(r"[A-Z0-9_-]{3,30}", codigo):
+                    flash("El c?digo promocional debe tener entre 3 y 30 caracteres: letras, n?meros, guion o guion bajo.", "warning")
+                    return redirect(url_for("admin_promo"))
                 existe_codigo = promos[promos["codigo"].astype(str).str.upper() == codigo]
                 if not existe_codigo.empty:
-                    flash("El código promocional ya existe. Usa otro.", "warning")
+                    flash("El c?digo promocional ya existe. Usa otro.", "warning")
                     return redirect(url_for("admin_promo"))
             next_id = int(pd.to_numeric(promos["id_promo"], errors="coerce").max() + 1) if not promos.empty else 1
+            if not nombre:
+                nombre = f"Promoci?n {producto_ref.get('nombre', 'producto')}"
             nuevo = {
                 "id_promo": next_id,
                 "nombre": nombre,
@@ -515,7 +534,13 @@ def register_admin_legacy_routes(app, legacy):
                 flash(error_validacion, "danger")
                 return redirect(url_for("admin_productos"))
 
-        galeria_guardada = legacy.guardar_galeria_producto(nuevo_id, imagenes, reemplazar=True)
+        galeria_guardada = legacy.guardar_galeria_producto(
+            nuevo_id,
+            imagenes,
+            reemplazar=True,
+            fuerza=fuerza,
+            intendencia=intendencia,
+        )
         imagen_url = galeria_guardada[0] if galeria_guardada else ""
 
         nuevo_producto = {
@@ -586,10 +611,18 @@ def register_admin_legacy_routes(app, legacy):
                 flash(error_validacion, "danger")
                 return redirect(url_for("admin_productos"))
 
-        galeria_guardada = legacy.guardar_galeria_producto(id_producto, imagenes, reemplazar=True)
         productos = legacy.cargar_productos_df()
         idx = productos[productos["id_producto"] == id_producto].index
         if not idx.empty:
+            fuerza = str(productos.at[idx[0], "fuerza"]) if "fuerza" in productos.columns else ""
+            intendencia = str(productos.at[idx[0], "intendencia"]) if "intendencia" in productos.columns else ""
+            galeria_guardada = legacy.guardar_galeria_producto(
+                id_producto,
+                imagenes,
+                reemplazar=True,
+                fuerza=fuerza,
+                intendencia=intendencia,
+            )
             productos.at[idx[0], "imagen_url"] = galeria_guardada[0] if galeria_guardada else ""
             legacy.guardar_productos_df(productos)
             flash(f"Galeria reemplazada ({len(galeria_guardada)} imagenes).", "success")
@@ -631,7 +664,15 @@ def register_admin_legacy_routes(app, legacy):
             )
             return redirect(url_for("admin_productos"))
 
-        legacy.guardar_galeria_producto(id_producto, imagenes, reemplazar=False)
+        fuerza = str(productos.at[idx[0], "fuerza"]) if "fuerza" in productos.columns else ""
+        intendencia = str(productos.at[idx[0], "intendencia"]) if "intendencia" in productos.columns else ""
+        legacy.guardar_galeria_producto(
+            id_producto,
+            imagenes,
+            reemplazar=False,
+            fuerza=fuerza,
+            intendencia=intendencia,
+        )
         galeria_actualizada = legacy.obtener_galeria_producto(id_producto, "")
         productos.at[idx[0], "imagen_url"] = galeria_actualizada[0] if galeria_actualizada else ""
         legacy.guardar_productos_df(productos)
