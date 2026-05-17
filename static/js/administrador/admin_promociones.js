@@ -75,11 +75,14 @@ function fillPromoModal(product) {
     }
 
     refs.form.action = product.postUrl || '#';
+    refs.form.dataset.productPrice = String(product.precio || '0');
     refs.productId.value = product.id || '';
-    refs.nombre.value = `Promo ${product.nombre || ''}`.trim();
+    refs.nombre.value = '';
     refs.descripcion.value = '';
     refs.tipo.value = 'porcentaje';
     refs.valor.value = '';
+    refs.valor.min = '0.01';
+    refs.valor.removeAttribute('max');
     refs.fechaInicio.value = '';
     refs.fechaFin.value = '';
     refs.codigo.value = '';
@@ -99,6 +102,69 @@ function fillPromoModal(product) {
         refs.image.src = '';
         refs.image.classList.add('d-none');
         refs.imageEmpty.classList.remove('d-none');
+    }
+
+    updateDiscountLimits();
+}
+
+function updateDiscountLimits() {
+    const { refs } = promoModalState;
+    if (!refs.tipo || !refs.valor || !refs.form) {
+        return;
+    }
+
+    const productPrice = Number.parseFloat(refs.form.dataset.productPrice || '0') || 0;
+    refs.valor.min = '0.01';
+    refs.valor.setCustomValidity('');
+
+    if (refs.tipo.value === 'porcentaje') {
+        refs.valor.max = '100';
+    } else if (productPrice > 0) {
+        refs.valor.max = String(Math.max(0.01, productPrice - 0.01));
+    } else {
+        refs.valor.removeAttribute('max');
+    }
+}
+
+function validatePromoForm(event) {
+    const { refs } = promoModalState;
+    if (!refs.form) {
+        return;
+    }
+
+    [refs.productId, refs.tipo, refs.valor, refs.fechaInicio, refs.fechaFin, refs.codigo].forEach((field) => {
+        if (field) {
+            field.setCustomValidity('');
+        }
+    });
+
+    const productPrice = Number.parseFloat(refs.form.dataset.productPrice || '0') || 0;
+    const discountValue = Number.parseFloat(refs.valor.value || '0');
+    const startDate = refs.fechaInicio.value;
+    const endDate = refs.fechaFin.value;
+    const code = (refs.codigo.value || '').trim();
+
+    if (!refs.productId.value) {
+        refs.productId.setCustomValidity('Selecciona un producto para crear la promoción.');
+    } else if (!discountValue || discountValue <= 0) {
+        refs.valor.setCustomValidity('El descuento debe ser mayor a cero.');
+    } else if (refs.tipo.value === 'porcentaje' && discountValue > 100) {
+        refs.valor.setCustomValidity('El porcentaje no puede superar el 100%.');
+    } else if (refs.tipo.value === 'valor_fijo' && productPrice > 0 && discountValue >= productPrice) {
+        refs.valor.setCustomValidity('El descuento fijo debe ser inferior al precio de la prenda.');
+    } else if (!startDate) {
+        refs.fechaInicio.setCustomValidity('La fecha de inicio es obligatoria.');
+    } else if (!endDate) {
+        refs.fechaFin.setCustomValidity('La fecha de finalización es obligatoria.');
+    } else if (startDate > endDate) {
+        refs.fechaFin.setCustomValidity('La fecha de fin no puede ser anterior al inicio.');
+    } else if (code && !/^[A-Z0-9_-]{3,30}$/i.test(code)) {
+        refs.codigo.setCustomValidity('El código debe tener de 3 a 30 caracteres: letras, números, guion o guion bajo.');
+    }
+
+    if (!refs.form.checkValidity()) {
+        event.preventDefault();
+        refs.form.reportValidity();
     }
 }
 
@@ -246,8 +312,16 @@ document.addEventListener('DOMContentLoaded', () => {
         modalElement.addEventListener('hidden.bs.modal', () => {
             if (promoModalState.refs.form) {
                 promoModalState.refs.form.reset();
+                promoModalState.refs.form.dataset.productPrice = '0';
             }
         });
+
+        if (promoModalState.refs.tipo) {
+            promoModalState.refs.tipo.addEventListener('change', updateDiscountLimits);
+        }
+        if (promoModalState.refs.form) {
+            promoModalState.refs.form.addEventListener('submit', validatePromoForm);
+        }
     }
 
     schedulePromoForceArrowUpdate();

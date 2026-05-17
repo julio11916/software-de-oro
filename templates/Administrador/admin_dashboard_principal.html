@@ -155,24 +155,14 @@
                             </p>
                             <form method="POST" action="{{ url_for('admin_actualizar_destacados') }}">
                                 <ul class="nav nav-tabs" id="destacadosTabs" role="tablist">
+                                    {% for fuerza in fuerzas %}
                                     <li class="nav-item" role="presentation">
-                                        <button class="nav-link active" id="ejercito-tab" data-bs-toggle="tab" data-bs-target="#ejercito" type="button" role="tab" aria-controls="ejercito" aria-selected="true">Ej&eacute;rcito</button>
+                                        <button class="nav-link {% if loop.first %}active{% endif %}" id="{{ fuerza.lower() }}-tab" data-bs-toggle="tab" data-bs-target="#{{ fuerza.lower() }}" type="button" role="tab" aria-controls="{{ fuerza.lower() }}" aria-selected="{{ 'true' if loop.first else 'false' }}">{{ fuerza }}</button>
                                     </li>
-                                    <li class="nav-item" role="presentation">
-                                        <button class="nav-link" id="policia-tab" data-bs-toggle="tab" data-bs-target="#policia" type="button" role="tab" aria-controls="policia" aria-selected="false">Polic&iacute;a</button>
-                                    </li>
-                                    <li class="nav-item" role="presentation">
-                                        <button class="nav-link" id="armada-tab" data-bs-toggle="tab" data-bs-target="#armada" type="button" role="tab" aria-controls="armada" aria-selected="false">Armada</button>
-                                    </li>
-                                    <li class="nav-item" role="presentation">
-                                        <button class="nav-link" id="gaula-tab" data-bs-toggle="tab" data-bs-target="#gaula" type="button" role="tab" aria-controls="gaula" aria-selected="false">Gaula</button>
-                                    </li>
-                                    <li class="nav-item" role="presentation">
-                                        <button class="nav-link" id="variado-tab" data-bs-toggle="tab" data-bs-target="#variado" type="button" role="tab" aria-controls="variado" aria-selected="false">Variado</button>
-                                    </li>
+                                    {% endfor %}
                                 </ul>
                                 <div class="tab-content" id="destacadosTabContent">
-                                    {% for fuerza in ['Ejercito', 'Policia', 'Armada', 'Gaula', 'Variado'] %}
+                                    {% for fuerza in fuerzas %}
                                     <div class="tab-pane fade {% if loop.first %}show active{% endif %}" id="{{ fuerza.lower() }}" role="tabpanel" aria-labelledby="{{ fuerza.lower() }}-tab">
                                         <div class="featured-list mt-3">
                                             {% set productos_fuerza = productos_destacables | selectattr('fuerza', 'equalto', fuerza) | list %}

@@ -66,6 +66,9 @@ def construir_contexto_home(
     productos_destacados_variado = [
         p for p in lista_productos if bool(p.get("destacado_dashboard", False)) and p.get("fuerza") == "Variado"
     ]
+    productos_destacados_accesorios = [
+        p for p in lista_productos if bool(p.get("destacado_dashboard", False)) and p.get("fuerza") == "Accesorios"
+    ]
 
     return {
         "productos": lista_productos,
@@ -74,6 +77,7 @@ def construir_contexto_home(
         "productos_destacados_armada": productos_destacados_armada,
         "productos_destacados_gaula": productos_destacados_gaula,
         "productos_destacados_variado": productos_destacados_variado,
+        "productos_destacados_accesorios": productos_destacados_accesorios,
     }
 
 
@@ -84,6 +88,7 @@ def construir_contexto_admin_dashboard(
     usuarios_df,
     pedidos_df,
     detalle_df,
+    fuerzas_opciones,
 ):
     lista_productos = productos_activos.to_dict(orient="records")
 
@@ -147,6 +152,7 @@ def construir_contexto_admin_dashboard(
         "top_productos": top_productos,
         "productos_destacables": productos_destacables,
         "destacados_count": destacados_count,
+        "fuerzas": fuerzas_opciones,
     }
 
 
@@ -157,6 +163,7 @@ def actualizar_destacados_productos(
     ids_armada_raw,
     ids_gaula_raw,
     ids_variado_raw,
+    ids_accesorios_raw,
 ):
     productos = productos.copy()
     productos["id_producto"] = pd.to_numeric(productos["id_producto"], errors="coerce")
@@ -178,6 +185,7 @@ def actualizar_destacados_productos(
     ids_armada = procesar_ids(ids_armada_raw)
     ids_gaula = procesar_ids(ids_gaula_raw)
     ids_variado = procesar_ids(ids_variado_raw)
+    ids_accesorios = procesar_ids(ids_accesorios_raw)
 
     productos["destacado_dashboard"] = False
     productos.loc[productos["eliminado"] == True, "destacado_dashboard"] = False
@@ -186,6 +194,7 @@ def actualizar_destacados_productos(
     productos.loc[productos["id_producto"].isin(ids_armada), "destacado_dashboard"] = True
     productos.loc[productos["id_producto"].isin(ids_gaula), "destacado_dashboard"] = True
     productos.loc[productos["id_producto"].isin(ids_variado), "destacado_dashboard"] = True
+    productos.loc[productos["id_producto"].isin(ids_accesorios), "destacado_dashboard"] = True
 
     return {
         "productos": productos,
@@ -194,11 +203,13 @@ def actualizar_destacados_productos(
         "ids_armada": ids_armada,
         "ids_gaula": ids_gaula,
         "ids_variado": ids_variado,
+        "ids_accesorios": ids_accesorios,
         "total_destacados": len(ids_ejercito)
         + len(ids_policia)
         + len(ids_armada)
         + len(ids_gaula)
-        + len(ids_variado),
+        + len(ids_variado)
+        + len(ids_accesorios),
     }
 
 

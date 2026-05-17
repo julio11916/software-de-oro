@@ -1,5 +1,41 @@
 /* JS especifico del dashboard autenticado */
 
+function updatePromotionCountdowns() {
+    document.querySelectorAll('.promo-live[data-promo-end]').forEach((element) => {
+        const endDateRaw = element.dataset.promoEnd;
+        if (!endDateRaw) {
+            return;
+        }
+
+        const endDate = new Date(`${endDateRaw}T23:59:59`);
+        if (Number.isNaN(endDate.getTime())) {
+            return;
+        }
+
+        const diffMs = endDate.getTime() - Date.now();
+        if (diffMs <= 0) {
+            element.textContent = 'Promoción vencida.';
+            return;
+        }
+
+        const totalMinutes = Math.floor(diffMs / 60000);
+        const days = Math.floor(totalMinutes / 1440);
+        const hours = Math.floor((totalMinutes % 1440) / 60);
+        const minutes = totalMinutes % 60;
+        const baseText = element.dataset.baseText || element.textContent.trim();
+        element.dataset.baseText = baseText;
+
+        let remaining = '';
+        if (days > 0) {
+            remaining = `${days} día(s), ${hours} hora(s)`;
+        } else {
+            remaining = `${hours} hora(s), ${minutes} minuto(s)`;
+        }
+
+        element.textContent = `${baseText} Quedan ${remaining}.`;
+    });
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('[data-featured-rail]').forEach((rail) => {
         const track = rail.querySelector('[data-featured-track]');
@@ -58,4 +94,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         updateButtons();
     });
+
+    updatePromotionCountdowns();
+    window.setInterval(updatePromotionCountdowns, 60000);
 });

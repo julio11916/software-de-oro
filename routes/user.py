@@ -180,8 +180,8 @@ def register_user_legacy_routes(app, legacy):
                     "message": f"Código enviado a {usuario_email}. Es válido por {legacy.PASSWORD_CHANGE_CODE_EXP_MINUTES} minutos.",
                 }
             )
-        except Exception as e:
-            print(f"Error enviando código de cambio de contraseña: {str(e)}")
+        except Exception:
+            app.logger.exception("Error enviando código de cambio de contraseña")
             return jsonify({"success": False, "message": "Error interno enviando el código."}), 500
 
     def verify_password_change_code():
@@ -216,8 +216,8 @@ def register_user_legacy_routes(app, legacy):
                 return jsonify({"success": False, "message": "El código es incorrecto. Verifica e intenta nuevamente."}), 400
 
             return jsonify({"success": True, "message": "Código validado. Ya puedes continuar con el cambio de contraseña."})
-        except Exception as e:
-            print(f"Error verificando código de cambio de contraseña: {str(e)}")
+        except Exception:
+            app.logger.exception("Error verificando código de cambio de contraseña")
             return jsonify({"success": False, "message": "Error interno verificando el código."}), 500
 
     def change_password():
@@ -359,9 +359,9 @@ def register_user_legacy_routes(app, legacy):
                     "message": "No fue posible enviar el código de verificación al correo indicado. Verifica la configuración SMTP del sistema e intenta nuevamente.",
                 }
             ), 500
-        except Exception as e:
-            print(f"Error al enviar código: {str(e)}")
-            return jsonify({"success": False, "message": f"Error: {str(e)}"}), 500
+        except Exception:
+            app.logger.exception("Error al enviar código de verificación de correo")
+            return jsonify({"success": False, "message": "Error interno enviando el código."}), 500
 
     def verify_email():
         if session.get("rol") != "normal":
@@ -408,28 +408,86 @@ def register_user_legacy_routes(app, legacy):
                 return jsonify({"success": True, "message": mensaje_exito})
 
             return jsonify({"success": False, "message": "Código incorrecto. Verifica e intenta nuevamente."}), 400
-        except Exception as e:
-            print(f"Error al verificar código: {str(e)}")
+        except Exception:
+            app.logger.exception("Error al verificar código de correo")
             return jsonify({"success": False, "message": "Error interno del servidor"}), 500
 
+    def _productos_catalogo_con_promos(fuerza):
+        productos = legacy.cargar_productos_activos_df()
+        if productos.empty:
+            return []
+
+        productos = productos.copy()
+        if "fuerza" not in productos.columns:
+            productos["fuerza"] = ""
+        productos["fuerza_norm"] = productos["fuerza"].astype(str).str.strip().str.lower()
+        if fuerza.lower() == "accesorios":
+            if "intendencia" not in productos.columns:
+                productos["intendencia"] = ""
+            intendencia_norm = productos["intendencia"].astype(str).str.strip().str.lower()
+            productos_fuerza = productos[
+                (productos["fuerza_norm"] == "accesorios") | (intendencia_norm == "accesorios")
+            ].copy()
+        else:
+            productos_fuerza = productos[productos["fuerza_norm"] == fuerza.lower()].copy()
+        if productos_fuerza.empty:
+            return []
+
+        hoy = datetime.now().date()
+        promos = legacy.cargar_promociones_df()
+        mejor_promo = legacy.obtener_mejor_promocion_por_producto(productos_fuerza, promos, hoy)
+        lista_productos = productos_fuerza.drop(columns=["fuerza_norm"], errors="ignore").to_dict(orient="records")
+
+        for producto in lista_productos:
+            id_producto_raw = pd.to_numeric(producto.get("id_producto", 0), errors="coerce")
+            id_producto = int(id_producto_raw) if pd.notna(id_producto_raw) else 0
+            precio_base_raw = pd.to_numeric(producto.get("precio", 0), errors="coerce")
+            precio_base = float(precio_base_raw) if pd.notna(precio_base_raw) else 0.0
+            promo = mejor_promo.get(id_producto)
+            producto["precio_original"] = precio_base
+            producto["precio_con_descuento"] = precio_base
+            producto["promo_activa"] = False
+            producto["promo_nombre"] = ""
+            producto["promo_etiqueta"] = ""
+            producto["promo_fecha_fin"] = ""
+
+            if promo:
+                descuento = legacy.calcular_descuento_promocion(precio_base, promo)
+                producto["precio_con_descuento"] = max(0.0, precio_base - descuento)
+                producto["promo_activa"] = True
+                producto["promo_nombre"] = str(promo.get("nombre", "") or "").strip()
+                producto["promo_fecha_fin"] = str(promo.get("fecha_fin", "") or "").strip()
+                if str(promo.get("tipo_descuento", "")).strip().lower() == "valor_fijo":
+                    producto["promo_etiqueta"] = f"-{legacy.formatear_cop(promo.get('valor_descuento', 0))}"
+                else:
+                    valor_pct_raw = pd.to_numeric(promo.get("valor_descuento", 0), errors="coerce")
+                    valor_pct = float(valor_pct_raw) if pd.notna(valor_pct_raw) else 0.0
+                    producto["promo_etiqueta"] = f"-{valor_pct:g}%"
+
+            galeria = legacy.obtener_galeria_producto(id_producto, producto.get("imagen_url", ""))
+            if galeria:
+                producto["imagen_url"] = galeria[0]
+
+        return lista_productos
+
     def armada():
-        productos = legacy.cargar_productos_por_fuerza("Armada")
+        productos = _productos_catalogo_con_promos("Armada")
         return render_template("Usuarios/catalogo/armada.html", productos=productos)
 
     def policia():
-        productos = legacy.cargar_productos_por_fuerza("Policia")
+        productos = _productos_catalogo_con_promos("Policia")
         return render_template("Usuarios/catalogo/policia.html", productos=productos)
 
     def gaula():
-        productos = legacy.cargar_productos_por_fuerza("Gaula")
+        productos = _productos_catalogo_con_promos("Gaula")
         return render_template("Usuarios/catalogo/gaula.html", productos=productos)
 
     def variado():
-        productos = legacy.cargar_productos_por_fuerza("Variado")
+        productos = _productos_catalogo_con_promos("Variado")
         return render_template("Usuarios/catalogo/variado.html", productos=productos)
 
     def ejercito():
-        productos = legacy.cargar_productos_por_fuerza("Ejercito")
+        productos = _productos_catalogo_con_promos("Ejercito")
         return render_template("Usuarios/catalogo/ejercito.html", productos=productos)
 
     def producto_detalle(id_producto):
@@ -439,6 +497,29 @@ def register_user_legacy_routes(app, legacy):
             return "Producto no encontrado"
 
         producto_dict = producto.iloc[0].to_dict()
+        promos = legacy.cargar_promociones_df()
+        mejor_promo = legacy.obtener_mejor_promocion_por_producto(producto, promos, datetime.now().date())
+        promo = mejor_promo.get(int(producto_dict.get("id_producto", id_producto)))
+        precio_base_raw = pd.to_numeric(producto_dict.get("precio", 0), errors="coerce")
+        precio_base = float(precio_base_raw) if pd.notna(precio_base_raw) else 0.0
+        producto_dict["precio_original"] = precio_base
+        producto_dict["precio_con_descuento"] = precio_base
+        producto_dict["promo_activa"] = False
+        producto_dict["promo_nombre"] = ""
+        producto_dict["promo_etiqueta"] = ""
+        producto_dict["promo_fecha_fin"] = ""
+        if promo:
+            descuento = legacy.calcular_descuento_promocion(precio_base, promo)
+            producto_dict["precio_con_descuento"] = max(0.0, precio_base - descuento)
+            producto_dict["promo_activa"] = True
+            producto_dict["promo_nombre"] = str(promo.get("nombre", "") or "").strip()
+            producto_dict["promo_fecha_fin"] = str(promo.get("fecha_fin", "") or "").strip()
+            if str(promo.get("tipo_descuento", "")).strip().lower() == "valor_fijo":
+                producto_dict["promo_etiqueta"] = f"-{legacy.formatear_cop(promo.get('valor_descuento', 0))}"
+            else:
+                valor_pct_raw = pd.to_numeric(promo.get("valor_descuento", 0), errors="coerce")
+                valor_pct = float(valor_pct_raw) if pd.notna(valor_pct_raw) else 0.0
+                producto_dict["promo_etiqueta"] = f"-{valor_pct:g}%"
         galeria = legacy.obtener_galeria_producto(id_producto, producto_dict.get("imagen_url", ""))[: legacy.MAX_IMAGES_PER_PRODUCT]
         producto_dict["imagenes"] = galeria
         if galeria:
@@ -455,7 +536,7 @@ def register_user_legacy_routes(app, legacy):
         )
 
     def accesorios():
-        productos = legacy.cargar_productos_por_intendencia("Accesorios")
+        productos = _productos_catalogo_con_promos("Accesorios")
         return render_template("Usuarios/catalogo/accesorios.html", productos=productos)
 
     def sobre_nosotros():
@@ -471,6 +552,7 @@ def register_user_legacy_routes(app, legacy):
             productos_destacados_armada=contexto["productos_destacados_armada"],
             productos_destacados_gaula=contexto["productos_destacados_gaula"],
             productos_destacados_variado=contexto["productos_destacados_variado"],
+            productos_destacados_accesorios=contexto["productos_destacados_accesorios"],
         )
 
     def user_dashboard():
@@ -490,6 +572,7 @@ def register_user_legacy_routes(app, legacy):
             productos_destacados_armada=contexto["productos_destacados_armada"],
             productos_destacados_gaula=contexto["productos_destacados_gaula"],
             productos_destacados_variado=contexto["productos_destacados_variado"],
+            productos_destacados_accesorios=contexto["productos_destacados_accesorios"],
             cart_count=cart_count,
         )
 

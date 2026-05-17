@@ -488,6 +488,15 @@ body.page-with-catalog-header {
     font-size: 1.08rem;
 }
 
+.item-discount-note {
+    display: block;
+    margin-top: 0.35rem;
+    color: #1f8f4f;
+    font-size: 0.78rem;
+    line-height: 1.35;
+    font-weight: 700;
+}
+
 .item-actions {
     display: flex;
     justify-content: center;
@@ -641,6 +650,12 @@ body.page-with-catalog-header {
     line-height: 1.5;
 }
 
+.summary-highlight .summary-discount {
+    margin: 0.25rem 0;
+    color: #d8ffe7;
+    font-weight: 800;
+}
+
 .summary-details {
     margin-bottom: 1rem;
     padding: 0.2rem 0;
@@ -686,6 +701,11 @@ body.page-with-catalog-header {
 .summary-row i {
     margin-right: 0.3rem;
     font-size: 0.9rem;
+}
+
+.summary-row--discount {
+    color: #1f8f4f;
+    font-weight: 800;
 }
 
 .text-success {

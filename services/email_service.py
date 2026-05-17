@@ -1,3 +1,4 @@
+import logging
 import random
 import string
 import mimetypes
@@ -6,6 +7,7 @@ import os
 from flask import current_app, render_template
 from flask_mail import Mail, Message
 
+logger = logging.getLogger(__name__)
 mail = Mail()
 
 
@@ -48,8 +50,8 @@ def enviar_codigo_verificacion(email, codigo, tipo='registro', minutos_expiracio
 
         mail.send(msg)
         return True
-    except Exception as e:
-        print(f"Error al enviar correo: {str(e)}")
+    except Exception:
+        logger.exception("Error al enviar correo")
         return False
 
 
@@ -69,8 +71,8 @@ def enviar_recuperacion_password(email, enlace_recuperacion, minutos_expiracion=
         )
         mail.send(msg)
         return True
-    except Exception as e:
-        print(f"Error al enviar correo de recuperacion: {str(e)}")
+    except Exception:
+        logger.exception("Error al enviar correo de recuperación")
         return False
 
 
@@ -186,8 +188,8 @@ def enviar_actualizacion_pedido(
         )
         mail.send(msg)
         return True
-    except Exception as e:
-        print(f"Error al enviar correo de actualizacion de pedido: {str(e)}")
+    except Exception:
+        logger.exception("Error al enviar correo de actualización de pedido")
         return False
 
 
@@ -236,8 +238,8 @@ def enviar_notificacion_transferencia_admin(
 
         mail.send(msg)
         return True
-    except Exception as e:
-        print(f"Error al enviar notificacion de transferencia al administrador: {str(e)}")
+    except Exception:
+        logger.exception("Error al enviar notificación de transferencia al administrador")
         return False
 
 
@@ -277,6 +279,6 @@ def enviar_notificacion_pago_personalizado_admin(
         )
         mail.send(msg)
         return True
-    except Exception as e:
-        print(f"Error al enviar notificacion de pago personalizado al administrador: {str(e)}")
+    except Exception:
+        logger.exception("Error al enviar notificación de pago personalizado al administrador")
         return False

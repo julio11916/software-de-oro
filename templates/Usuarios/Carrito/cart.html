@@ -93,6 +93,13 @@
                                 <div class="item-side-pill item-side-pill--price">
                                     <span>Subtotal</span>
                                     <strong>{{ item.subtotal|cop }}</strong>
+                                    {% if item.monto_descuento %}
+                                    <small class="item-discount-note">
+                                        Ahorro {{ item.monto_descuento|cop }}
+                                        {% if item.promo_nombre %}<br>{{ item.promo_nombre }}{% endif %}
+                                        {% if item.promo_fecha_fin %}<br>Vigente hasta {{ item.promo_fecha_fin }}{% endif %}
+                                    </small>
+                                    {% endif %}
                                 </div>
                                 <div class="item-actions">
                                     <form method="POST" action="{{ url_for('remove_from_cart', index=loop.index0) }}">
@@ -131,10 +138,23 @@
                     <div class="summary-highlight">
                         <span>Total final</span>
                         <strong class="total-amount">{{ total|cop }}</strong>
+                        {% if total_descuento %}
+                        <small class="summary-discount">Ahorraste {{ total_descuento|cop }} en promociones activas.</small>
+                        {% endif %}
                         <small>Incluye impuestos y envío sin costo adicional</small>
                     </div>
 
                     <div class="summary-details">
+                        {% if total_bruto and total_descuento %}
+                        <div class="summary-row">
+                            <span><i class="fas fa-receipt"></i> Subtotal</span>
+                            <span>{{ total_bruto|cop }}</span>
+                        </div>
+                        <div class="summary-row summary-row--discount">
+                            <span><i class="fas fa-tags"></i> Promociones</span>
+                            <span>-{{ total_descuento|cop }}</span>
+                        </div>
+                        {% endif %}
                         <div class="summary-row">
                             <span><i class="fas fa-shopping-bag"></i> Productos</span>
                             <span>{{ carrito|length }}</span>

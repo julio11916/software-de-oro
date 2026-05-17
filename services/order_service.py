@@ -42,7 +42,8 @@ def resolver_promocion_checkout(codigo_promo, promos, total, buscar_promocion_po
     if carrito is not None and pd.notna(id_producto_promo):
         id_producto_promo = int(id_producto_promo)
         for item in carrito if isinstance(carrito, list) else []:
-            if int(pd.to_numeric(item.get("id_producto", 0), errors="coerce") or 0) != id_producto_promo:
+            item_id = pd.to_numeric(item.get("id_producto", 0), errors="coerce")
+            if pd.isna(item_id) or int(item_id) != id_producto_promo:
                 continue
             subtotal_aplicable += float(pd.to_numeric(item.get("subtotal", 0), errors="coerce") or 0)
     else:
@@ -88,12 +89,16 @@ def aplicar_promociones_carrito(
 
     for item in carrito_base:
         item_final = dict(item) if isinstance(item, dict) else {}
-        cantidad = max(1, int(pd.to_numeric(item_final.get("cantidad", 1), errors="coerce") or 1))
-        id_producto = int(pd.to_numeric(item_final.get("id_producto", 0), errors="coerce") or 0)
+        cantidad_raw = pd.to_numeric(item_final.get("cantidad", 1), errors="coerce")
+        cantidad = max(1, int(cantidad_raw) if pd.notna(cantidad_raw) else 1)
+        id_producto_raw = pd.to_numeric(item_final.get("id_producto", 0), errors="coerce")
+        id_producto = int(id_producto_raw) if pd.notna(id_producto_raw) else 0
 
         if item_final.get("personalizado"):
-            precio_unitario = float(pd.to_numeric(item_final.get("precio", 0), errors="coerce") or 0)
-            subtotal_bruto = float(pd.to_numeric(item_final.get("subtotal", precio_unitario * cantidad), errors="coerce") or 0)
+            precio_raw = pd.to_numeric(item_final.get("precio", 0), errors="coerce")
+            precio_unitario = float(precio_raw) if pd.notna(precio_raw) else 0.0
+            subtotal_raw = pd.to_numeric(item_final.get("subtotal", precio_unitario * cantidad), errors="coerce")
+            subtotal_bruto = float(subtotal_raw) if pd.notna(subtotal_raw) else 0.0
             item_final["precio"] = precio_unitario
             item_final["subtotal"] = subtotal_bruto
             item_final["subtotal_bruto"] = subtotal_bruto
@@ -108,7 +113,8 @@ def aplicar_promociones_carrito(
 
         promo = mejor_auto.get(id_producto)
         if promo_codigo is not None:
-            id_producto_codigo = int(pd.to_numeric(promo_codigo.get("id_producto", 0), errors="coerce") or 0)
+            id_producto_codigo_raw = pd.to_numeric(promo_codigo.get("id_producto", 0), errors="coerce")
+            id_producto_codigo = int(id_producto_codigo_raw) if pd.notna(id_producto_codigo_raw) else 0
             if id_producto_codigo == id_producto:
                 promo = promo_codigo
                 promo_codigo_aplico = True
@@ -1248,9 +1254,11 @@ def validar_cliente_pos(cliente_nombre, cliente_correo, cliente_documento, clien
     if not re.fullmatch(r"[^@\s]+@[^@\s]+\.[^@\s]+", cliente_correo):
         return ("Debes ingresar un correo electronico valido.", "warning")
     if not cliente_documento.isdigit():
-        return ("La cedula solo puede contener numeros.", "warning")
-    if not cliente_telefono.isdigit() or len(cliente_telefono) > 10:
-        return ("El telefono solo puede contener numeros y maximo 10 digitos.", "warning")
+        return ("La cédula solo puede contener números.", "warning")
+    if len(cliente_documento) < 8:
+        return ("La cédula debe tener mínimo 8 números.", "warning")
+    if not cliente_telefono.isdigit() or len(cliente_telefono) != 10:
+        return ("El teléfono debe contener exactamente 10 dígitos numéricos.", "warning")
     return None
 
 

@@ -66,7 +66,18 @@
                 <div class="col-md-6">
                     <div class="product-info">
                         <h1 class="product-title">{{ producto.nombre }}</h1>
+                        {% if producto.promo_activa %}
+                        <p class="product-price product-price--promo">
+                            <span class="product-price-old">{{ producto.precio_original|cop }}</span>
+                            <strong>{{ producto.precio_con_descuento|cop }}</strong>
+                            <span class="product-promo-badge">{{ producto.promo_etiqueta }}</span>
+                        </p>
+                        <p class="product-promo-live promo-live" data-promo-end="{{ producto.promo_fecha_fin }}">
+                            Promoción activa{% if producto.promo_nombre %}: {{ producto.promo_nombre }}{% endif %}. Vigente hasta {{ producto.promo_fecha_fin }}.
+                        </p>
+                        {% else %}
                         <p class="product-price">{{ producto.precio|cop }}</p>
+                        {% endif %}
                         <p class="product-description">{{ producto.descripcion }}</p>
                         <p class="stock-info">
                             <i class="fas fa-box"></i>

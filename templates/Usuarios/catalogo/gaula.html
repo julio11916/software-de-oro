@@ -39,7 +39,21 @@
                     <div class="catalog-details">
                         <h2 class="item-title">{{ producto.nombre }}</h2>
                         <ul class="item-meta">
-                            <li>Precio: {{ producto.precio|cop }}</li>
+                            <li>
+                                Precio:
+                                {% if producto.promo_activa %}
+                                <span class="promo-old-price">{{ producto.precio_original|cop }}</span>
+                                <strong class="promo-new-price">{{ producto.precio_con_descuento|cop }}</strong>
+                                <span class="promo-badge">{{ producto.promo_etiqueta }}</span>
+                                {% else %}
+                                {{ producto.precio|cop }}
+                                {% endif %}
+                            </li>
+                            {% if producto.promo_activa %}
+                            <li class="promo-live" data-promo-end="{{ producto.promo_fecha_fin }}">
+                                Promoción activa{% if producto.promo_nombre %}: {{ producto.promo_nombre }}{% endif %}. Vigente hasta {{ producto.promo_fecha_fin }}.
+                            </li>
+                            {% endif %}
                             <li>{{ producto.descripcion or 'Producto disponible para el GAULA.' }}</li>
                             <li>
                                 {% if producto.stock|int > 0 %}
@@ -82,5 +96,3 @@
 
 </body>
 </html>
-
-
