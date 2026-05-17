@@ -62,6 +62,42 @@ body {
     margin-bottom: 1rem;
 }
 
+.product-price--promo {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.65rem;
+}
+
+.product-price--promo strong {
+    color: #168348;
+}
+
+.product-price-old {
+    color: #777;
+    font-size: 1.25rem;
+    text-decoration: line-through;
+}
+
+.product-promo-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.28rem 0.7rem;
+    border-radius: 999px;
+    background: #e3f8eb;
+    color: #13713d;
+    border: 1px solid #bfe9cf;
+    font-size: 0.85rem;
+    font-weight: 800;
+}
+
+.product-promo-live {
+    color: #17653a;
+    font-weight: 700;
+    margin-top: -0.45rem;
+    margin-bottom: 1rem;
+}
+
 .product-description {
     font-size: 1.1rem;
     color: #666;

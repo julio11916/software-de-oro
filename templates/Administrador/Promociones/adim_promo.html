@@ -229,12 +229,18 @@
                                             <small>Descuento: <strong>{{ p.descuento_total|cop }}</strong></small>
                                         </td>
                                         <td>
+                                            {% if p.estado_vigencia == 'vencida' %}
+                                            <button type="button" class="btn btn-sm btn-secondary" disabled title="Una promoción vencida no se puede reactivar.">
+                                                Vencida
+                                            </button>
+                                            {% else %}
                                             <form method="POST" action="{{ url_for('admin_promo_toggle', id_promo=p.id_promo) }}">
                                                 <button type="submit"
                                                     class="btn btn-sm btn-{{ 'warning' if p.activo else 'success' }}">
                                                     {{ 'Desactivar' if p.activo else 'Activar' }}
                                                 </button>
                                             </form>
+                                            {% endif %}
                                         </td>
                                     </tr>
                                     {% endfor %}
@@ -294,8 +300,8 @@
                                     <p>Define el nombre comercial y la descripción visible de la promoción.</p>
                                     <div class="row g-3">
                                         <div class="col-12">
-                                            <label for="promoNombreInput" class="form-label">Nombre de la promoción</label>
-                                            <input type="text" id="promoNombreInput" name="nombre" class="form-control" required>
+                                            <label for="promoNombreInput" class="form-label">Nombre de la promoción (opcional)</label>
+                                            <input type="text" id="promoNombreInput" name="nombre" class="form-control">
                                         </div>
                                         <div class="col-12">
                                             <label for="promoDescripcionInput" class="form-label">Descripción</label>
@@ -311,7 +317,7 @@
                                     <div class="row g-3">
                                         <div class="col-sm-6">
                                             <label for="promoTipoInput" class="form-label">Tipo</label>
-                                            <select id="promoTipoInput" name="tipo_descuento" class="form-select">
+                                            <select id="promoTipoInput" name="tipo_descuento" class="form-select" required>
                                                 <option value="porcentaje">Porcentaje (%)</option>
                                                 <option value="valor_fijo">Valor fijo (COP)</option>
                                             </select>
@@ -319,15 +325,15 @@
                                         <div class="col-sm-6">
                                             <label for="promoValorInput" class="form-label">Valor</label>
                                             <input type="number" id="promoValorInput" name="valor_descuento" class="form-control"
-                                                min="0" step="0.01" required>
+                                                min="0.01" step="0.01" required>
                                         </div>
                                         <div class="col-sm-6">
                                             <label for="promoInicioInput" class="form-label">Inicio</label>
-                                            <input type="date" id="promoInicioInput" name="fecha_inicio" class="form-control">
+                                            <input type="date" id="promoInicioInput" name="fecha_inicio" class="form-control" required>
                                         </div>
                                         <div class="col-sm-6">
                                             <label for="promoFinInput" class="form-label">Fin</label>
-                                            <input type="date" id="promoFinInput" name="fecha_fin" class="form-control">
+                                            <input type="date" id="promoFinInput" name="fecha_fin" class="form-control" required>
                                         </div>
                                     </div>
                                 </div>

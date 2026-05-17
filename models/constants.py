@@ -104,7 +104,7 @@ PROMO_COLUMNS = [
     'activo'
 ]
 
-FUERZAS_OPCIONES = ["Policia", "Ejercito", "Armada", "Gaula", "Variado"]
+FUERZAS_OPCIONES = ["Policia", "Ejercito", "Armada", "Gaula", "Variado", "Accesorios"]
 INTENDENCIAS_OPCIONES = [
     "Busos", "Camibusos", "Gorras", "Pa\u00f1oletas", "Sudaderas",
     "Pantalonetas", "Colchas", "Tendidos", "Chuspas para ropa sucia",

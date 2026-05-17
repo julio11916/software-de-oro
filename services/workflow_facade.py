@@ -68,6 +68,7 @@ def build_workflow_legacy_bindings(
             usuarios_df=cargar_usuarios_df_fn(),
             pedidos_df=cargar_pedidos_df_fn(),
             detalle_df=cargar_detalle_pedido_df_fn(),
+            fuerzas_opciones=fuerzas_opciones,
         )
 
     def _actualizar_destacados_dashboard():
@@ -82,6 +83,7 @@ def build_workflow_legacy_bindings(
             ids_armada_raw=request_obj.form.getlist('destacados_armada'),
             ids_gaula_raw=request_obj.form.getlist('destacados_gaula'),
             ids_variado_raw=request_obj.form.getlist('destacados_variado'),
+            ids_accesorios_raw=request_obj.form.getlist('destacados_accesorios'),
         )
         guardar_productos_df_fn(resultado['productos'])
         return resultado

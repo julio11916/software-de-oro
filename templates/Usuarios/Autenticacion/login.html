@@ -128,6 +128,9 @@
         {% with carousel_id='variadoCarousel', titulo='Prendas destacadas - Variado', productos=productos_destacados_variado, empty_message='Aún no hay prendas destacadas disponibles para Variado.', is_public_featured=true %}
         {% include 'Usuarios/partials/_featured_category_carousel.html' %}
         {% endwith %}
+        {% with carousel_id='accesoriosCarousel', titulo='Prendas destacadas - Accesorios', productos=productos_destacados_accesorios, empty_message='Aún no hay accesorios destacados disponibles.', is_public_featured=true %}
+        {% include 'Usuarios/partials/_featured_category_carousel.html' %}
+        {% endwith %}
     </main>
 
     {% include 'Usuarios/partials/footer.html' %}

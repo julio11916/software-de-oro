@@ -18,6 +18,29 @@ def register_checkout_legacy_routes(app, legacy):
                 return "Producto no encontrado"
 
             producto_dict = producto.iloc[0].to_dict()
+            promos = legacy.cargar_promociones_df()
+            mejor_promo = legacy.obtener_mejor_promocion_por_producto(producto, promos, datetime.now().date())
+            promo = mejor_promo.get(int(producto_dict.get("id_producto", id_producto)))
+            precio_base_raw = pd.to_numeric(producto_dict.get("precio", 0), errors="coerce")
+            precio_base = float(precio_base_raw) if pd.notna(precio_base_raw) else 0.0
+            producto_dict["precio_original"] = precio_base
+            producto_dict["precio_con_descuento"] = precio_base
+            producto_dict["promo_activa"] = False
+            producto_dict["promo_nombre"] = ""
+            producto_dict["promo_etiqueta"] = ""
+            producto_dict["promo_fecha_fin"] = ""
+            if promo:
+                descuento = legacy.calcular_descuento_promocion(precio_base, promo)
+                producto_dict["precio_con_descuento"] = max(0.0, precio_base - descuento)
+                producto_dict["promo_activa"] = True
+                producto_dict["promo_nombre"] = str(promo.get("nombre", "") or "").strip()
+                producto_dict["promo_fecha_fin"] = str(promo.get("fecha_fin", "") or "").strip()
+                if str(promo.get("tipo_descuento", "")).strip().lower() == "valor_fijo":
+                    producto_dict["promo_etiqueta"] = f"-{legacy.formatear_cop(promo.get('valor_descuento', 0))}"
+                else:
+                    valor_pct_raw = pd.to_numeric(promo.get("valor_descuento", 0), errors="coerce")
+                    valor_pct = float(valor_pct_raw) if pd.notna(valor_pct_raw) else 0.0
+                    producto_dict["promo_etiqueta"] = f"-{valor_pct:g}%"
             galeria = legacy.obtener_galeria_producto(id_producto, producto_dict.get("imagen_url", ""))[: legacy.MAX_IMAGES_PER_PRODUCT]
             producto_dict["imagenes"] = galeria
             if galeria:
@@ -457,7 +480,7 @@ def register_checkout_legacy_routes(app, legacy):
             fecha=datetime.now().strftime("%d/%m/%Y %H:%M"),
             total=total_final,
             promo_codigo=promo_aplicada.get("codigo", "") if promo_aplicada else None,
-            descuento=descuento_promo if promo_aplicada else 0,
+            descuento=descuento_promo,
             confirmacion_manual=(metodo_pago == "transferencia"),
             transfer_support_email=legacy.app.config.get("TRANSFER_SUPPORT_EMAIL", ""),
             transfer_support_whatsapp=legacy.app.config.get("TRANSFER_SUPPORT_WHATSAPP", ""),

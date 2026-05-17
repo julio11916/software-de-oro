@@ -79,7 +79,7 @@ app.jinja_env.auto_reload = True
 app.secret_key = str(app.config.get("SECRET_KEY", "")).strip()
 if not app.secret_key:
     app.secret_key = os.urandom(32)
-    print(
+    app.logger.warning(
         "ADVERTENCIA: SECRET_KEY no est\u00e1 configurada en el entorno. "
         "Usando una clave temporal para esta ejecuci\u00f3n."
     )
@@ -253,4 +253,10 @@ _obtener_pedidos_usuario_actual = partial(
 )
 
 if __name__ == '__main__':
-    app.run(debug=True, use_reloader=True)
+    debug_enabled = str(os.getenv("FLASK_DEBUG", app.config.get("DEBUG", ""))).strip().lower() in {
+        "1",
+        "true",
+        "yes",
+        "on",
+    }
+    app.run(debug=debug_enabled, use_reloader=debug_enabled)

@@ -129,12 +129,12 @@
                                 <div class="mb-2">
                                     <label class="form-label">Número de cédula</label>
                                     <input type="text" id="clienteDocumentoInput" name="cliente_documento" class="form-control"
-                                        placeholder="Número de cédula" inputmode="numeric" pattern="[0-9]+" required>
+                                        placeholder="Número de cédula" inputmode="numeric" pattern="[0-9]{8,}" minlength="8" required>
                                 </div>
                                 <div class="mb-3">
                                     <label class="form-label">Teléfono</label>
                                     <input type="text" id="clienteTelefonoInput" name="cliente_telefono" class="form-control"
-                                        placeholder="Teléfono" inputmode="numeric" pattern="[0-9]{1,10}" maxlength="10" required>
+                                        placeholder="Teléfono" inputmode="numeric" pattern="[0-9]{10}" minlength="10" maxlength="10" required>
                                 </div>
 
                                 <div class="mb-3">
@@ -207,4 +207,3 @@
 </body>
 
 </html>
-

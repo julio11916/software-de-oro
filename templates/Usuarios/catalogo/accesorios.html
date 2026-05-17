@@ -34,13 +34,27 @@
                 {% for producto in productos %}
                 <div class="catalog-row {% if loop.index0 % 2 == 1 %}is-reverse{% endif %}">
                     <div class="catalog-media">
-                        <img src="{{ url_for('static', filename=producto.imagen_url if producto.imagen_url else 'img/catalogo/armada/guerrera_ejercito.png') }}"
+                        <img src="{{ url_for('static', filename=producto.imagen_url if producto.imagen_url else 'img/Pagina/logo.jpeg') }}"
                             alt="{{ producto.nombre }}">
                     </div>
                     <div class="catalog-details">
                         <h2 class="item-title">{{ producto.nombre }}</h2>
                         <ul class="item-meta">
-                            <li>Precio: {{ producto.precio|cop }}</li>
+                            <li>
+                                Precio:
+                                {% if producto.promo_activa %}
+                                <span class="promo-old-price">{{ producto.precio_original|cop }}</span>
+                                <strong class="promo-new-price">{{ producto.precio_con_descuento|cop }}</strong>
+                                <span class="promo-badge">{{ producto.promo_etiqueta }}</span>
+                                {% else %}
+                                {{ producto.precio|cop }}
+                                {% endif %}
+                            </li>
+                            {% if producto.promo_activa %}
+                            <li class="promo-live" data-promo-end="{{ producto.promo_fecha_fin }}">
+                                Promoción activa{% if producto.promo_nombre %}: {{ producto.promo_nombre }}{% endif %}. Vigente hasta {{ producto.promo_fecha_fin }}.
+                            </li>
+                            {% endif %}
                             <li>{{ producto.descripcion or 'Accesorio disponible.' }}</li>
                             <li>
                                 {% if producto.stock|int > 0 %}
@@ -50,7 +64,11 @@
                                 {% endif %}
                             </li>
                         </ul>
+                        {% if session.get('rol') == 'normal' %}
                         <a class="btn-costs" href="{{ url_for('product_detail', id_producto=producto.id_producto, from='accesorios') }}">
+                        {% else %}
+                        <a class="btn-costs" href="{{ url_for('producto_detalle', id_producto=producto.id_producto, from='accesorios') }}">
+                        {% endif %}
                             Ver producto
                         </a>
                     </div>

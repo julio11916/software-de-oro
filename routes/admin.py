@@ -24,12 +24,12 @@ def register_admin_legacy_routes(app, legacy):
             descripcion = request.form.get("descripcion", "").strip()
             tipo_descuento = request.form.get("tipo_descuento", "porcentaje").strip().lower()
             if tipo_descuento not in ["porcentaje", "valor_fijo"]:
-                flash("Selecciona un tipo de descuento valido.", "warning")
+                flash("Selecciona un tipo de descuento válido.", "warning")
                 return redirect(url_for("admin_promo"))
             try:
                 valor_descuento = float(request.form.get("valor_descuento", ""))
             except (TypeError, ValueError):
-                flash("Ingresa un valor de descuento valido.", "warning")
+                flash("Ingresa un valor de descuento válido.", "warning")
                 return redirect(url_for("admin_promo"))
             if valor_descuento <= 0:
                 flash("El descuento debe ser mayor a cero. No se permiten valores negativos.", "warning")
@@ -45,7 +45,7 @@ def register_admin_legacy_routes(app, legacy):
             inicio_date = legacy.parsear_fecha_promocion(fecha_inicio)
             fin_date = legacy.parsear_fecha_promocion(fecha_fin)
             if not inicio_date or not fin_date:
-                flash("La fecha de inicio y la fecha de finalizacion son obligatorias.", "warning")
+                flash("La fecha de inicio y la fecha de finalización son obligatorias.", "warning")
                 return redirect(url_for("admin_promo"))
             if inicio_date > fin_date:
                 flash("La fecha de inicio no puede ser mayor que la fecha de fin.", "warning")
@@ -59,12 +59,13 @@ def register_admin_legacy_routes(app, legacy):
                 pd.to_numeric(productos_ref.get("id_producto", 0), errors="coerce") == id_producto_num
             ].empty
             if not existe_producto:
-                flash("El producto seleccionado no existe o est? inactivo.", "warning")
+                flash("El producto seleccionado no existe o está inactivo.", "warning")
                 return redirect(url_for("admin_promo"))
             producto_ref = productos_ref[
                 pd.to_numeric(productos_ref.get("id_producto", 0), errors="coerce") == id_producto_num
             ].iloc[0]
-            precio_producto = float(pd.to_numeric(producto_ref.get("precio", 0), errors="coerce") or 0)
+            precio_producto_raw = pd.to_numeric(producto_ref.get("precio", 0), errors="coerce")
+            precio_producto = float(precio_producto_raw) if pd.notna(precio_producto_raw) else 0.0
             if tipo_descuento == "valor_fijo" and valor_descuento >= precio_producto:
                 flash("El descuento fijo debe ser inferior al precio establecido de la prenda.", "warning")
                 return redirect(url_for("admin_promo"))
@@ -72,15 +73,15 @@ def register_admin_legacy_routes(app, legacy):
             promos = legacy.cargar_promociones_df()
             if codigo:
                 if not re.fullmatch(r"[A-Z0-9_-]{3,30}", codigo):
-                    flash("El c?digo promocional debe tener entre 3 y 30 caracteres: letras, n?meros, guion o guion bajo.", "warning")
+                    flash("El código promocional debe tener entre 3 y 30 caracteres: letras, números, guion o guion bajo.", "warning")
                     return redirect(url_for("admin_promo"))
                 existe_codigo = promos[promos["codigo"].astype(str).str.upper() == codigo]
                 if not existe_codigo.empty:
-                    flash("El c?digo promocional ya existe. Usa otro.", "warning")
+                    flash("El código promocional ya existe. Usa otro.", "warning")
                     return redirect(url_for("admin_promo"))
             next_id = int(pd.to_numeric(promos["id_promo"], errors="coerce").max() + 1) if not promos.empty else 1
             if not nombre:
-                nombre = f"Promoci?n {producto_ref.get('nombre', 'producto')}"
+                nombre = f"Promoción {producto_ref.get('nombre', 'producto')}"
             nuevo = {
                 "id_promo": next_id,
                 "nombre": nombre,
@@ -173,10 +174,14 @@ def register_admin_legacy_routes(app, legacy):
         promos = legacy.cargar_promociones_df()
         idx = promos[promos["id_promo"] == id_promo].index
         if not idx.empty:
+            promo_actual = promos.loc[idx[0]].to_dict()
+            if legacy.estado_vigencia_promocion(promo_actual, datetime.now().date()) == "vencida":
+                flash("La promoción está vencida y no se puede reactivar ni cambiar de estado.", "warning")
+                return redirect(url_for("admin_promo"))
             promos.loc[idx, "activo"] = ~promos.loc[idx, "activo"]
             legacy.guardar_promociones_df(promos)
             legacy.registrar_actividad(
-                f"Promocion {'activada' if promos.loc[idx, 'activo'].iloc[0] else 'desactivada'}: {promos.loc[idx, 'nombre'].iloc[0]}"
+                f"Promoción {'activada' if promos.loc[idx, 'activo'].iloc[0] else 'desactivada'}: {promos.loc[idx, 'nombre'].iloc[0]}"
             )
         return redirect(url_for("admin_promo"))
 
@@ -1456,6 +1461,7 @@ def register_admin_legacy_routes(app, legacy):
         ids_armada = resultado["ids_armada"]
         ids_gaula = resultado["ids_gaula"]
         ids_variado = resultado["ids_variado"]
+        ids_accesorios = resultado["ids_accesorios"]
         total_destacados = resultado["total_destacados"]
 
         legacy.registrar_actividad(
@@ -1465,6 +1471,7 @@ def register_admin_legacy_routes(app, legacy):
             f"- Armada: {len(ids_armada)} ({', '.join(str(x) for x in ids_armada) if ids_armada else 'ninguna'})\n"
             f"- Gaula: {len(ids_gaula)} ({', '.join(str(x) for x in ids_gaula) if ids_gaula else 'ninguna'})\n"
             f"- Variado: {len(ids_variado)} ({', '.join(str(x) for x in ids_variado) if ids_variado else 'ninguna'})\n"
+            f"- Accesorios: {len(ids_accesorios)} ({', '.join(str(x) for x in ids_accesorios) if ids_accesorios else 'ninguna'})\n"
             f"- Total destacadas: {total_destacados}"
         )
 

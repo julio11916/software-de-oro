@@ -112,7 +112,7 @@ def register_auth_legacy_routes(app, legacy):
             else:
                 legacy.limpiar_token_recuperacion(usuarios, idx_usuario)
                 legacy.guardar_usuarios_df(usuarios)
-                print(f"No fue posible enviar el correo de recuperación para: {email}")
+                app.logger.warning("No fue posible enviar el correo de recuperación para: %s", email)
 
         flash(
             "Si el correo existe en el sistema, te enviamos un enlace para restablecer tu contraseña.",
@@ -257,8 +257,8 @@ def register_auth_legacy_routes(app, legacy):
                 )
 
             return jsonify({"success": True, "exists": False, "message": "Correo electrónico disponible."})
-        except Exception as e:
-            print(f"Error validando correo de registro: {str(e)}")
+        except Exception:
+            app.logger.exception("Error validando correo de registro")
             return jsonify({"success": False, "exists": False, "message": "Error interno validando el correo."}), 500
 
     def registro_send_code():
@@ -300,8 +300,8 @@ def register_auth_legacy_routes(app, legacy):
 
             session["registro_pendiente_email"] = email
             return jsonify({"success": True, "message": mensaje_envio})
-        except Exception as e:
-            print(f"Error al enviar código de registro: {str(e)}")
+        except Exception:
+            app.logger.exception("Error al enviar código de registro")
             return jsonify({"success": False, "message": "Error interno enviando el código."}), 500
 
     def registro_verificacion():

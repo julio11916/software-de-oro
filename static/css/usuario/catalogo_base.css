@@ -399,6 +399,35 @@ input[type="submit"]:focus {
     font-size: 1.2rem;
 }
 
+.promo-old-price {
+    color: #777;
+    text-decoration: line-through;
+    margin-right: 8px;
+}
+
+.promo-new-price {
+    color: #168348;
+    font-weight: 800;
+    margin-right: 8px;
+}
+
+.promo-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 9px;
+    border-radius: 999px;
+    background: #e3f8eb;
+    color: #13713d;
+    border: 1px solid #bfe9cf;
+    font-size: 0.78rem;
+    font-weight: 800;
+}
+
+.item-meta .promo-live {
+    color: #17653a;
+    font-weight: 700;
+}
+
 .btn-costs {
     background: transparent;
     border: 1px solid #000;

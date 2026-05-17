@@ -362,12 +362,22 @@ function handleCheckout(event) {
         return;
     }
 
-    if (!/^\d{1,10}$/.test(telefono)) {
+    if (documento.length < 8) {
         event.preventDefault();
-        alert('El teléfono solo puede contener números y máximo 10 dígitos.');
+        alert('La cédula debe tener mínimo 8 números.');
+        if (clienteDocumentoInput) {
+            clienteDocumentoInput.focus();
+        }
+        return;
+    }
+
+    if (!/^\d{10}$/.test(telefono)) {
+        event.preventDefault();
+        alert('El teléfono debe contener exactamente 10 dígitos numéricos.');
         if (clienteTelefonoInput) {
             clienteTelefonoInput.focus();
         }
+        return;
     }
 }
 

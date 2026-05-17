@@ -80,7 +80,7 @@ try {
         telefono: "",
         anoContingencia: "",
         fechaContingencia: "",
-        // ConfiguraciÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â³n de la prenda
+        // Configuración de la prenda
         genero: "unisex",
         identidad: "",
         producto: "",
@@ -555,20 +555,20 @@ try {
 
     function getProductIcon() {
         const iconMap = {
-            camiseta: "??",
-            buso: "??",
-            gorra: "??",
-            paoleta: "Pañoleta",
-            panoleta: "Pañoleta",
-            "pañoleta": "Pañoleta",
-            "buso-manga-larga": "??",
-            "buso_tactico": "Buso táctico",
-            "buso tactico": "Buso táctico",
-            presillas: "??",
-            rh: "??",
+            camiseta: "fa-shirt",
+            buso: "fa-shirt",
+            gorra: "fa-hat-cowboy",
+            paoleta: "fa-bandage",
+            panoleta: "fa-bandage",
+            "pañoleta": "fa-bandage",
+            "buso-manga-larga": "fa-shirt",
+            "buso_tactico": "fa-vest",
+            "buso tactico": "fa-vest",
+            presillas: "fa-certificate",
+            rh: "fa-droplet",
         };
         
-        return iconMap[state.producto] || "??";
+        return iconMap[state.producto] || "fa-palette";
     }
 
     function getProductImage() {
@@ -681,7 +681,7 @@ try {
             }
         }
 
-        // PAÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¹Ãƒâ€¦Ã¢â‚¬Å“OLETA
+        // PAÑOLETA
         if (isPanoletaProduct(productName)) {
             if (identidad === "ejercito") {
                 return isBack 
@@ -826,7 +826,7 @@ try {
             if (identidad === "armada") return isBack ? `/static/img/prendas/armada/gorra/espaldar-armada.png` : `/static/img/prendas/armada/gorra/gorra ${colorName.replace("-claro", "")}.png`;
         }
 
-        // PAÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¹Ãƒâ€¦Ã¢â‚¬Å“OLETA
+        // PAÑOLETA
         if (isPanoletaProduct(productName)) {
             let c = colorName.replace('-claro', '').replace('-noche', '');
             if (identidad === "ejercito") return isBack ? `/static/img/prendas/ejercito/pañoletas/detras.png` : `/static/img/prendas/ejercito/pañoletas/panoleta_${c}.png`;
@@ -854,7 +854,7 @@ try {
             if (identidad === "policia") {
                 const bg = colorName === 'azul-noche' ? 'azul' : colorName;
                 
-                // Mapeo detallado de archivos que sÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â­ existen en la carpeta de la PolicÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â­a:
+                // Mapeo detallado de archivos que sí existen en la carpeta de la Policía:
                 const policiaRhMap = {
                     "A+azul": "A+,azul.png",
                     "A+verde": "A+-verde.png",
@@ -993,7 +993,7 @@ try {
     }
 
     function getColorHex(colorName) {
-        // Mapeo de nombres de color a cdigos hexadecimales
+        // Mapeo de nombres de color a códigos hexadecimales
         const colorHexMap = {
             blanco: "#ffffff",
             negro: "#000000",
@@ -1266,7 +1266,7 @@ try {
             tallaInfoPreview.textContent = isEspecial ? "No aplica" : (state.talla || "Pendiente");
             const filaTalla = tallaInfoPreview.parentElement;
             if (filaTalla && filaTalla.classList.contains('info-item')) {
-                // Ocultar si es especial, o si la talla no ha sido seleccionada aÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Âºn (talla vacÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â­a o null)
+                // Ocultar si es especial, o si la talla no ha sido seleccionada aún (talla vacía o null)
                 filaTalla.style.display = (isEspecial || !state.talla) ? 'none' : 'flex';
             }
         }
@@ -1274,15 +1274,15 @@ try {
         if (precioInfoPreview) precioInfoPreview.textContent = getOrderPriceLabel();
         if (descripcionInfoPreview) descripcionInfoPreview.textContent = descripcionCompleta;
         
-        // Actualizar identidad y tcnica
+        // Actualizar identidad y técnica
         const identidadPreview = document.getElementById("preview-identidad");
         const tecnicaPreview = document.getElementById("preview-tecnica");
         if (identidadPreview) identidadPreview.textContent = identidad;
         if (tecnicaPreview) tecnicaPreview.textContent = tecnica;
 
-        // Mostrar preview con imagen del producto o cono
+        // Mostrar preview con imagen del producto o icono
         // En Paso 3 o superior, mostrar la imagen con el color seleccionado
-        // Mapeo de colores a cdigos hexadecimales
+        // Mapeo de colores a códigos hexadecimales
         function getColorHex(colorName) {
             const hexMap = {
                 "blanco": "#ffffff",
@@ -1302,7 +1302,7 @@ try {
         if (imagen) {
 
         // Siempre crear o actualizar el preview-container
-        // Aumentar un poco el tamaÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â±o si es un accesorio pequeÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â±o como gafetes, RH o presillas.
+        // Aumentar un poco el tamaño si es un accesorio pequeño como gafetes, RH o presillas.
         let scaleStyle = "";
             const isGafete = state.producto === "gafete del nombre o apellido" || state.producto === "gafete";
             const isGorra = state.producto === "gorra";
@@ -1421,13 +1421,13 @@ try {
         else if (isGafete && state.vistaPrenda !== "trasera") {
                 overlayEl.style.display = "flex";
 
-                // Determinar colores basados en la seleccin o en la imagen mostrada
-                let textColor = "#000000"; // Negro por defecto para la mayora de fuerzas
+                // Determinar colores basados en la selección o en la imagen mostrada
+                let textColor = "#000000"; // Negro por defecto para la mayoría de fuerzas
                 let shadowColor = "transparent"; // Sin sombra por defecto  
                 let topPosition = "50%";
                 
                 if (state.identidad === "policia") {
-                    // La PolicÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â­a usa texto con estilo "nen".
+                    // La Policía usa texto con estilo "nen".
                     if ((imagen && imagen.includes("verde")) || state.color === "verde-claro") {
                         textColor = "#d0d6c0"; // Blanco hueso / verde muy claro
                         shadowColor = "#394524"; // Sombra verde oliva oscuro
@@ -1448,14 +1448,14 @@ try {
                     }
                     topPosition = "44%";
                 } else if (state.identidad === "ejercito" || state.identidad === "gaula" || state.identidad === "armada") {
-                    // EjÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â©rcito, Gaula y Armada usan texto con efecto de bordado oscuro.
+                    // Ejército, Gaula y Armada usan texto con efecto de bordado oscuro.
                     if (state.identidad === "ejercito") {
                         textColor = "#1e2b14"; // Verde oliva muy oscuro
                         shadowColor = "rgba(0,0,0,0.8)";
                         topPosition = "50%";
                     } else {
-                        textColor = "#000000"; // Negro puro para max contraste
-                        shadowColor = "transparent"; // Sin sombra gruesa para conservar la tipografia
+                        textColor = "#000000"; // Negro puro para máximo contraste
+                        shadowColor = "transparent"; // Sin sombra gruesa para conservar la tipografía
                         topPosition = "52%";
                     }
                 }
@@ -1484,7 +1484,7 @@ try {
                     divNombre.style.order = "2";
                     divRango.style.order = "1";
                 } else {
-                    // Policia, Gaula y Armada usan la misma tipografia de gafetes
+                    // Policía, Gaula y Armada usan la misma tipografía de gafetes
                     divNombre.style.fontFamily = "'Arial Rounded MT Bold', 'Helvetica Rounded', Arial, sans-serif";
                     divRango.style.fontFamily = "'Arial Rounded MT Bold', 'Helvetica Rounded', Arial, sans-serif";
                     divNombre.style.letterSpacing = "0.5px";
@@ -1499,7 +1499,7 @@ try {
                 }
                 
 
-                // Ajuste proporcional de tamaÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â±os para que sean equitativos y centrados.
+                // Ajuste proporcional de tamaños para que sean equitativos y centrados.
                 divRango.style.fontWeight = "800";
                 divRango.style.color = textColor;
                 divRango.style.textShadow = shadowVal;
@@ -1519,7 +1519,7 @@ try {
                 const rangoFinal = state.rango ? state.rango.charAt(0).toUpperCase() + state.rango.slice(1).toLowerCase() : 'Rango'; 
                 let nombreFinalRaw = state.nombre ? state.nombre.toUpperCase().trim() : 'NOMBRE';
                 
-                // LÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â³gica de EjÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â©rcito: solo apellido.
+                // Lógica de Ejército: solo apellido.
                 const identId = state.identidad ? state.identidad.toLowerCase().trim() : '';
                 if (identId === 'ejercito' && nombreFinalRaw !== 'NOMBRE') {
                     let partes = nombreFinalRaw.split(/\s+/);
@@ -1548,7 +1548,7 @@ try {
                 let maxCharsNombre = identId === 'ejercito' ? 8 : 10;
                 
                 if (identId === 'ejercito') {
-                    // Hacer el parche del gafete un poco mÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¡s grande y bajarlo si el contenedor lo permite.
+                    // Hacer el parche del gafete un poco más grande y bajarlo si el contenedor lo permite.
                     imgEl.style.transform = "scale(1.6)";
                     overlayEl.style.transform = "translate(-50%, -50%) scale(1.6)";
                 } else {
@@ -1563,7 +1563,7 @@ try {
                     divNombre.style.fontSize = baseNombreSize + "px";
                 }
                 
-                // Escalar el rango para que sea equitativo, mÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¡s pequeÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â±o y centrado.
+                // Escalar el rango para que sea equitativo, más pequeño y centrado.
                 let baseRangoSize = identId === 'ejercito' ? 5 : 14;
                 let maxCharsRango = identId === 'ejercito' ? 18 : 12;
                 if (rangoFinal.length > maxCharsRango) {
@@ -1580,7 +1580,7 @@ try {
                 if (rhOverlayEl) rhOverlayEl.style.display = "none";
             }
 
-            // LÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â³gica del overlay para rangos en busos y gorras:
+            // Lógica del overlay para rangos en busos y gorras:
             const esMuestraDistintivo = (esCualquierBuso || isGorra) && state.estampado && state.estampado.startsWith("distintivos - ") && state.vistaPrenda !== "trasera";
             if (esMuestraDistintivo) {
                 // Limpiar el String "distintivos - Coronel" -> "Coronel"
@@ -1593,7 +1593,7 @@ try {
                     rangoFormat = rangoFormat.replace(/\s*\/\s*/g, " "); // espacios mantenidos
                     
                     if (isGorra) {
-                        // Para las gorras, las imÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¡genes de rangos no son overlays pequeÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â±os, son la gorra completa con el rango.
+                        // Para las gorras, las imágenes de rangos no son overlays pequeños; son la gorra completa con el rango.
                         // Entonces, reemplazamos la imagen principal de la prenda y ocultamos el overlay.
                         if (identId === "policia" && !rangoFormat.includes("azul") && !rangoFormat.includes("verde")) {
                             if (state.color === "azul-noche" || state.color === "negro" || !state.color) {
@@ -1602,7 +1602,7 @@ try {
                                 rangoFormat += " verde";
                             }
                         } else if (identId === "gaula") {
-                            // En Gaula la carpeta es "gorras" en vez de "gorra"; ademÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¡s hay espacios raros en algunos archivos.
+                            // En Gaula la carpeta es "gorras" en vez de "gorra"; además hay espacios raros en algunos archivos.
                             let baseName = rangoFormat.trim();
                             if (state.color === "verde-claro") {
                                 // Maps for green distinctives
@@ -1735,17 +1735,17 @@ try {
             }
 
 
-        // Escudos en paÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â±oletas
+        // Escudos en pañoletas
         const isPanoleta = ['pañoleta', 'panoleta', 'paoleta'].includes((state.producto || '').toLowerCase());
         if (isPanoleta && state.estampado && state.estampado.toLowerCase().startsWith('escudos') && state.vistaPrenda !== 'trasera') {
-            // El dropdown solo da opciones Escudo 1 / Escudo 2. Ajustarlas segÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Âºn la lÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â³gica si tienen archivos distintos.
-            // De lo contrario mantenemos la lÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â³gica actual y mostramos la imagen base a color si no hay selecciÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â³n.
+            // El dropdown solo da opciones Escudo 1 / Escudo 2. Ajustarlas según la lógica si tienen archivos distintos.
+            // De lo contrario mantenemos la lógica actual y mostramos la imagen base a color si no hay selección.
 
             const identId = state.identidad ? state.identidad.toLowerCase().trim() : 'policia';
             let escImgSrc = '';
             let c = (state.color || 'verde-claro').replace('-claro', '').replace('-noche', '');
 
-            // Agregar la lÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â³gica para diferentes escudos aquÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â­ si tienes diferentes archivos.
+            // Agregar la lógica para diferentes escudos aquí si tienes diferentes archivos.
             // por ejemplo para "Escudo 2" usar un archivo diferente.
             // Para mantenerlo sencillo, se usa la imagen de color si escogieron el escudo
 
@@ -1880,7 +1880,6 @@ try {
     }
 
     function changeStep(step) {
-        console.log(`?? changeStep(${step}) - pasoActual: ${state.pasoActual} ? ${step}`);
 
         // Update the button text for dynamic steps
         const btnPasos3 = document.getElementById("btn-siguiente-paso3");
@@ -1889,7 +1888,7 @@ try {
         if (state.producto) {
             const productoActual = state.producto.toLowerCase();
             
-            // Lgica para el botn del paso 3
+            // Lógica para el botón del paso 3
             if (btnPasos3) {
                 if (productEndsAtStep3()) {
                     btnPasos3.innerHTML = '<i class="fas fa-check"></i> Finalizar';
@@ -1898,7 +1897,7 @@ try {
                 }
             }
             
-            // Lgica para el botn del paso 4
+            // Lógica para el botón del paso 4
             if (btnPasos4) {
                 const prendasTerminanPaso4 = ["paoleta", "gorra"];
                 if (prendasTerminanPaso4.includes(productoActual)) {
@@ -1943,7 +1942,7 @@ try {
         }
         state.pasoActual = step;
         
-        // ?? Actualizar Layout PRIMERO (para evitar que cualquier error detenga esto)
+        // Actualizar layout primero para evitar que cualquier error detenga esto
         updatePanelLayout();
         
         document.querySelectorAll(".paso-contenido").forEach((section) => {
@@ -1961,7 +1960,7 @@ try {
                     } else if (step === 1) {
                         // En el paso 1 no mostramos la info en el lado izquierdo
                         document.querySelector('.panel-derecho').appendChild(infoProducto);
-                        infoProducto.style.display = 'none'; // o block si el panel derecho est oculto de todos modos
+                        infoProducto.style.display = 'none'; // o block si el panel derecho está oculto de todos modos
                     }
                 }
             }
@@ -1984,7 +1983,6 @@ try {
                     validarPaso2Realtime();
                     break;
                 case 3:
-                    console.log("  ? Estamos en paso 3 (COLOR), llamando updateColorAvailability()");
                     updateColorAvailability();
                     validarPaso3Realtime();
                     break;
@@ -1993,7 +1991,7 @@ try {
                     break;
             }
         } catch(error) {
-            console.error("Error en validacin de paso:", error);
+            console.error("Error en validación de paso:", error);
         }
     }
 
@@ -2002,7 +2000,6 @@ try {
         const panelDerecho = document.getElementById("panel-vista-previa");
         if (!panelDerecho) return;
         
-        console.log("==> updatePanelLayout(), pasoActual:", state.pasoActual);
 
         if (state.pasoActual === 1) {
             panelDerecho.style.display = "none";
@@ -2114,7 +2111,7 @@ try {
                     if (tipo === "distintivos" || tipo === "parches") mostrar = false;
                 }
 
-                // Ocultar distintivos en todas las secciones para Armada (excepto en guerreras). Para Gaula, solo permitir en gorras. Para EjÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â©rcito, permitir en guerreras.
+                // Ocultar distintivos en todas las secciones para Armada (excepto en guerreras). Para Gaula, solo permitir en gorras. Para Ejército, permitir en guerreras.
                 if (producto === "guerrera" && tipo === "distintivos") {
                     mostrar = false;
                 } else if (identidad === "armada" && tipo === "distintivos" && producto !== "guerrera") {
@@ -2138,7 +2135,7 @@ try {
                         if (tipo === "escudos") imgFolderUrl = `url('/static/img/estampados/ejercito/buso tactico/escudo/Escudo_Ejercito_Nacional_de_Colombia.svg.png')`;
                         else if (tipo === "nombres") imgFolderUrl = `url('/static/img/estampados/ejercito/${carpetaTipo}/nombre.png')`; // Ajusta el nombre si difiere
                         else if (tipo === "distintivos") {
-                            // Mostrar la misma portada que en la policÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â­a
+                            // Mostrar la misma portada que en la policía
                             imgFolderUrl = `url('/static/img/estampados/policia/gorra/Distintivos/distintivo.png')`;
                         }
                         else if (tipo === "parches") imgFolderUrl = `url('/static/img/estampados/ejercito/buso tactico/parches/Parche_Ejercito.png')`;
@@ -2163,7 +2160,7 @@ try {
                         if (tipo === "escudos") imgFolderUrl = `url('/static/img/estampados/Policia/guerrera/escudos/policia.png')`;
                         else if (tipo === "nombres") imgFolderUrl = `url('/static/img/estampados/Policia/guerrera/nombres/nombre.png')`;
                         else if (tipo === "distintivos") {
-                            // Para distintivos de la policÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â­a, usar la carÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¡tula con barras y laureles dorados
+                            // Para distintivos de la policía, usar la carátula con barras y laureles dorados
                             imgFolderUrl = `url('/static/img/estampados/policia/gorra/Distintivos/distintivo.png')`; 
                         }
                         else if (tipo === "parches") imgFolderUrl = `url('/static/img/estampados/Policia/guerrera/Parches/parche_policia.png')`;
@@ -2180,7 +2177,7 @@ try {
             }
         });
         
-        // Manejar opciones especÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â­ficas de distintivos segÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Âºn identidad y producto.
+        // Manejar opciones específicas de distintivos según identidad y producto.
         const btnDistintivos = document.querySelector('[data-estampado="distintivos"]');
         const distintivosVisible = !!btnDistintivos && window.getComputedStyle(btnDistintivos).display !== "none";
         const selectDistintivo = document.getElementById("select-distintivo");
@@ -2610,7 +2607,7 @@ try {
             btnCantidadMas.addEventListener("click", () => setCantidadPrendas(getOrderQuantity() + 1));
         }
         
-        // Desabilitar el botn inicialmente
+        // Deshabilitar el botón inicialmente
         if (btnSiguientePaso1) {
             btnSiguientePaso1.style.opacity = "0.5";
             btnSiguientePaso1.style.cursor = 'pointer';
@@ -2640,7 +2637,7 @@ try {
                 const inputTalla = document.getElementById("input-talla");
                 if (!state.talla && inputTalla && inputTalla.value) state.talla = inputTalla.value;
                 
-                // Forzar la validaciÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â³n aquÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â­.
+                // Forzar la validación aquí.
                 if (!state.identidad || !state.tecnica) {
                     showUserToast("Asegúrate de seleccionar una entidad y una técnica.", "warning", { durationMs: 7000 });
                     return;
@@ -2650,7 +2647,7 @@ try {
             });
         }
 
-        // Manejar seleccin de identidad pblica
+        // Manejar selección de identidad pública
         document.querySelectorAll("[data-opcion]").forEach((button) => {
             button.addEventListener("click", () => {
                 state.identidad = button.dataset.opcion;
@@ -2738,7 +2735,7 @@ try {
                     window.aplicarColorPrenda(state.color);
                 }
 
-                // If currently on paÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â±oleta and escudos are shown, update options
+                // Si actualmente está en pañoleta y se muestran escudos, actualizar opciones
                 if (['pañoleta', 'panoleta', 'paoleta'].includes((state.producto || '').toLowerCase()) && state.estampado.startsWith("escudos")) {
                     const selectEscudo = document.getElementById("select-escudo");
                     if (selectEscudo) {
@@ -2781,7 +2778,7 @@ try {
                             updateSummary();
                         } else if (state.identidad === "armada") {
                             // En armada ocultamos los sub-estilos ya que el escImgSrc 
-                            // Lo armamos segÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Âºn el color ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Âºnicamente (verde o negro).
+                            // Lo armamos según el color únicamente (verde o negro).
                             if (dropdownEscudosContainer) dropdownEscudosContainer.style.display = "none";
                             state.estampado = "escudos";
                             updateSummary();
@@ -2839,7 +2836,7 @@ try {
             showUserToast("La configuración quedó lista. El siguiente paso será conectarla al flujo real de carrito.", "info", { durationMs: 7000 });
         });
 
-        // Botones de navegacin Siguiente/Atrs
+        // Botones de navegación Siguiente/Atrás
         document.getElementById("btn-siguiente-paso2")?.addEventListener("click", () => {
             if (validarPaso(2)) {
                 // Verificar si hay prendas que acaban en paso 2 directamente. (no especificado, va a 3 default)
@@ -2849,7 +2846,7 @@ try {
             }
         });
 
-        // Deshabilitar botn Atrs en paso 1 (es el primer paso)
+        // Deshabilitar botón Atrás en paso 1 (es el primer paso)
         const btnAtrasPaso1 = document.getElementById("btn-atras-paso1");
         if (btnAtrasPaso1) {
             btnAtrasPaso1.disabled = true;
@@ -3031,7 +3028,7 @@ try {
             document.querySelector(".indicadores-pasos")?.scrollIntoView({ behavior: "smooth", block: "start" });
         }
 
-        // BotÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â³n AtrÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¡s en el panel derecho
+        // Botón Atrás en el panel derecho
         document.getElementById("btn-atras-panel")?.addEventListener("click", () => {
             if (state.pasoActual > 1) {
                 changeStep(state.pasoActual - 1);
@@ -3040,7 +3037,7 @@ try {
             }
         });
 
-        // BotÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â³n Agregar al Carrito
+        // Botón Agregar al Carrito
         document.getElementById("btn-agregar-carrito")?.addEventListener("click", () => {
             if (validarPaso(4)) {
                 const producto = productLabels[state.producto] || formatLabel(state.producto);
@@ -3056,7 +3053,7 @@ try {
             }
         });
 
-        // Deshabilitar navegacin por pasos si no se han completado los requeridos
+        // Deshabilitar navegación por pasos si no se han completado los requeridos
         for (let i = 1; i <= 4; i++) {
             const stepHeader = document.getElementById(`paso${i}-header`);
             if (stepHeader) {
@@ -3120,7 +3117,7 @@ try {
                 if (tipoEstampado === "distintivos") {
                     if (dropdownContainer) dropdownContainer.style.display = "block";
                     if (dropdownEscudosContainer) dropdownEscudosContainer.style.display = "none";
-                    // Guardar solo "distintivos" por ahora; se actualizarÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¡ si elige una opciÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â³n del select.
+                    // Guardar solo "distintivos" por ahora; se actualizará si elige una opción del select.
                     state.estampado = "distintivos";
                 } else if (tipoEstampado === "escudos" && ['pañoleta', 'panoleta', 'paoleta'].includes((state.producto || '').toLowerCase())) {
                     if (dropdownEscudosContainer) dropdownEscudosContainer.style.display = "block";
@@ -3143,7 +3140,7 @@ try {
                             if (optC3) optC3.style.display = "none";
                             
                             // Si es armada, ocultamos todo el contenedor dropdown para no dejar escoger estilo
-                            // y asÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â­ usar un solo diseÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â±o mapeado automÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¡ticamente.
+                            // y así usar un solo diseño mapeado automáticamente.
                             if (state.identidad === "armada") {
                                 if (dropdownEscudosContainer) dropdownEscudosContainer.style.display = "none";
                                 state.estampado = "escudos";
