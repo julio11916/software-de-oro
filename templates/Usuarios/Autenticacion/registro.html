@@ -60,6 +60,17 @@
                 Este código será válido por {{ registro_code_minutes }} minutos.
             </p>
 
+            {% with identity_terms_summary='Ver términos de validación de identidad y tratamiento de datos' %}
+                {% include 'Usuarios/partials/_identity_terms.html' %}
+            {% endwith %}
+
+            <div class="auth-terms-check form-check mb-3">
+                <input type="checkbox" class="form-check-input" name="acepta_terminos_identidad" id="acepta_terminos_identidad" required>
+                <label class="form-check-label" for="acepta_terminos_identidad">
+                    He leído y acepto los términos de validación de identidad y tratamiento de datos personales.
+                </label>
+            </div>
+
             <div class="d-grid gap-2 d-md-flex">
                 <button type="submit" class="btn btn-dark flex-fill" id="btnRegistrar">Registrarme</button>
                 <a href="{{ url_for('home') }}" class="btn btn-dark flex-fill">Cancelar</a>

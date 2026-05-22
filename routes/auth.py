@@ -27,6 +27,11 @@ def register_auth_legacy_routes(app, legacy):
         usuarios = legacy.cargar_usuarios_df()  # leer cada vez
         email = legacy.normalizar_email(request.form.get("email", ""))
         password = request.form.get("password", "")
+        acepta_terminos = request.form.get("acepta_terminos_identidad") == "on"
+
+        if not acepta_terminos:
+            flash("Debes aceptar los términos de validación de identidad y tratamiento de datos personales para iniciar sesión.", "warning")
+            return render_template("Usuarios/Autenticacion/login_form.html"), 400
 
         usuarios["email"] = usuarios["email"].astype(str).str.strip()
         candidatos = usuarios[usuarios["email"].str.lower() == email]
@@ -42,8 +47,17 @@ def register_auth_legacy_routes(app, legacy):
             return render_template("Usuarios/Autenticacion/login_form.html"), 401
 
         password_guardado = str(usuario.get("password_hash", "") or "")
+        debe_guardar_usuario = False
         if not legacy.password_esta_hasheado(password_guardado):
             usuarios.at[idx_usuario, "password_hash"] = legacy.crear_hash_password(password)
+            debe_guardar_usuario = True
+
+        if "terminos_identidad_aceptados" in usuarios.columns:
+            usuarios.at[idx_usuario, "terminos_identidad_aceptados"] = True
+            usuarios.at[idx_usuario, "terminos_identidad_fecha"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            debe_guardar_usuario = True
+
+        if debe_guardar_usuario:
             legacy.guardar_usuarios_df(usuarios)
 
         estado = str(usuario.get("estado", "activo")).strip().lower()
@@ -180,9 +194,14 @@ def register_auth_legacy_routes(app, legacy):
             email = legacy.normalizar_email(request.form.get("email", ""))
             password = request.form.get("password", "")
             confirm_password = request.form.get("confirm_password", "")
+            acepta_terminos = request.form.get("acepta_terminos_identidad") == "on"
 
             if not nombre or not email or not password or not confirm_password:
                 flash("Debes completar todos los campos del formulario.", "danger")
+                return _render_registro(nombre, email), 400
+
+            if not acepta_terminos:
+                flash("Debes aceptar los términos de validación de identidad y tratamiento de datos personales para crear la cuenta.", "danger")
                 return _render_registro(nombre, email), 400
 
             if not legacy.email_es_valido(email):
@@ -391,6 +410,8 @@ def register_auth_legacy_routes(app, legacy):
                 "verification_code_expiry": "",
                 "reset_token": "",
                 "reset_token_expiry": "",
+                "terminos_identidad_aceptados": True,
+                "terminos_identidad_fecha": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             }
 
             usuarios = pd.concat([usuarios, pd.DataFrame([nuevo_usuario])], ignore_index=True)

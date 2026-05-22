@@ -232,6 +232,17 @@
                                             {% if orden.modelo_presilla %}<span>Presilla: {{ orden.modelo_presilla }}</span>{% endif %}
                                         </div>
                                         {% endif %}
+
+                                        <div class="custom-order-validation">
+                                            {% if orden.documento_identidad_url %}
+                                            <a href="{{ orden.documento_identidad_url }}" target="_blank" rel="noopener">
+                                                <i class="fas fa-id-card"></i>
+                                                Documento de validaci&oacute;n: {{ orden.documento_identidad_nombre or 'ver archivo' }}
+                                            </a>
+                                            {% else %}
+                                            <span><i class="fas fa-triangle-exclamation"></i> Sin documento de validaci&oacute;n adjunto</span>
+                                            {% endif %}
+                                        </div>
                                     </div>
                                 </div>
 
@@ -283,20 +294,44 @@
                             <div>
                                 <p class="stage-kicker">Catálogo personalizado</p>
                                 <h5>Precios base</h5>
+                                <small>Estos valores alimentan el precio que ve el cliente en prendas personalizadas.</small>
                             </div>
                         </div>
 
-                        <div class="custom-price-list custom-price-list--compact">
+                        <div class="custom-price-list custom-price-list--product-cards">
+                            {% set categoria_actual = namespace(valor='') %}
                             {% for precio in precios_personalizados %}
-                            <form method="POST" class="custom-price-row custom-price-row--compact">
+                            {% if categoria_actual.valor != precio.categoria %}
+                            {% set categoria_actual.valor = precio.categoria %}
+                            <div class="custom-price-group-title">
+                                <span>{{ precio.categoria }}</span>
+                            </div>
+                            {% endif %}
+                            <form method="POST" class="custom-price-card">
                                 <input type="hidden" name="producto" value="{{ precio.producto }}">
-                                <div>
-                                    <strong>{{ precio.nombre }}</strong>
-                                    <span>{{ precio.producto }}</span>
+                                <figure class="custom-price-card__media">
+                                    {% if precio.imagen %}
+                                    <img src="{{ url_for('static', filename=precio.imagen) }}" alt="{{ precio.nombre }}">
+                                    {% else %}
+                                    <i class="fas {{ precio.icono or 'fa-tag' }}"></i>
+                                    {% endif %}
+                                </figure>
+                                <div class="custom-price-card__body">
+                                    <div class="custom-price-card__title">
+                                        <strong>{{ precio.nombre }}</strong>
+                                        <span>{{ precio.producto }}</span>
+                                    </div>
+                                    <p>{{ precio.descripcion }}</p>
+                                    <label class="custom-price-card__field">
+                                        <span>Precio configurado</span>
+                                        <input type="number" name="precio" value="{{ '%.0f'|format(precio.precio) }}"
+                                            min="0" step="1000" class="form-control" aria-label="Precio de {{ precio.nombre }}">
+                                    </label>
+                                    <div class="custom-price-card__actions">
+                                        <strong>{{ precio.precio|cop }}</strong>
+                                        <button type="submit" class="btn btn-primary">Guardar precio</button>
+                                    </div>
                                 </div>
-                                <input type="number" name="precio" value="{{ '%.0f'|format(precio.precio) }}"
-                                    min="0" step="1000" class="form-control" aria-label="Precio de {{ precio.nombre }}">
-                                <button type="submit" class="btn btn-primary">Guardar</button>
                             </form>
                             {% endfor %}
                         </div>

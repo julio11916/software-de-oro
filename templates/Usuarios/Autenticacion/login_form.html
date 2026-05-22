@@ -50,6 +50,19 @@
                         </div>
                     {% endfor %}
                 {% endif %}
+
+                {% with identity_terms_summary='Ver términos de validación de identidad y tratamiento de datos' %}
+                    {% include 'Usuarios/partials/_identity_terms.html' %}
+                {% endwith %}
+
+                <div class="auth-terms-check form-check mb-3">
+                    <input type="checkbox" class="form-check-input" name="acepta_terminos_identidad" id="acepta_terminos_identidad" required>
+                    <label class="form-check-label" for="acepta_terminos_identidad">
+                        He leído y acepto los términos de validación de identidad y tratamiento de datos personales.
+                    </label>
+                    <div id="termsAlert" class="inline-alert d-none" role="alert"></div>
+                </div>
+
                 <div class="d-grid gap-2 d-md-flex">
                     <button type="submit" class="btn btn-dark flex-fill">Ingresar</button>
                     <a href="{{ url_for('home') }}" class="btn btn-dark flex-fill">Cancelar</a>
@@ -78,8 +91,10 @@
         const loginForm = document.getElementById('loginForm');
         const emailInput = document.getElementById('email');
         const passwordInput = document.getElementById('password');
+        const termsInput = document.getElementById('acepta_terminos_identidad');
         const emailAlert = document.getElementById('emailAlert');
         const passwordAlert = document.getElementById('passwordAlert');
+        const termsAlert = document.getElementById('termsAlert');
 
         const showInlineAlert = (el, message) => {
             if (!el) return;
@@ -91,7 +106,7 @@
             }, 3000);
         };
 
-        if (loginForm && emailInput && passwordInput) {
+        if (loginForm && emailInput && passwordInput && termsInput) {
             loginForm.addEventListener('submit', (event) => {
                 let hasError = false;
 
@@ -113,6 +128,14 @@
                     hasError = true;
                 } else {
                     passwordInput.classList.remove('is-invalid');
+                }
+
+                if (!termsInput.checked) {
+                    showInlineAlert(termsAlert, 'Debes aceptar los términos de validación de identidad y tratamiento de datos.');
+                    termsInput.classList.add('is-invalid');
+                    hasError = true;
+                } else {
+                    termsInput.classList.remove('is-invalid');
                 }
 
                 if (hasError) {

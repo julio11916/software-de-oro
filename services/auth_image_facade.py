@@ -116,6 +116,13 @@ def build_auth_image_legacy_bindings(
             prefijo=prefijo,
         )
 
+    def guardar_documento_identidad_personalizada_desde_data_url(data_url, usuario_email=""):
+        return app_image_service.guardar_documento_identidad_personalizada_desde_data_url(
+            data_url,
+            max_image_size_bytes=max_image_size_bytes,
+            usuario_email=usuario_email,
+        )
+
     def ruta_imagen_producto_absoluta(ruta_relativa):
         return app_image_service.ruta_imagen_producto_absoluta(ruta_relativa)
 
@@ -138,6 +145,17 @@ def build_auth_image_legacy_bindings(
             id_producto,
             allowed_image_extensions=allowed_image_extensions,
             fuerza=fuerza,
+        )
+
+    def resolver_imagen_catalogo_existente(ruta_relativa):
+        return app_image_service.resolver_imagen_catalogo_existente(
+            ruta_relativa,
+            allowed_image_extensions=allowed_image_extensions,
+        )
+
+    def listar_imagenes_catalogo_disponibles():
+        return app_image_service.listar_imagenes_catalogo_disponibles(
+            allowed_image_extensions=allowed_image_extensions,
         )
 
     def guardar_galeria_producto(id_producto, imagenes, reemplazar=True, fuerza="", intendencia=""):
@@ -182,10 +200,13 @@ def build_auth_image_legacy_bindings(
         "validar_archivo_imagen": validar_archivo_imagen,
         "guardar_comprobante_transferencia": guardar_comprobante_transferencia,
         "guardar_preview_personalizado_desde_data_url": guardar_preview_personalizado_desde_data_url,
+        "guardar_documento_identidad_personalizada_desde_data_url": guardar_documento_identidad_personalizada_desde_data_url,
         "ruta_imagen_producto_absoluta": ruta_imagen_producto_absoluta,
         "listar_archivos_galeria_producto": listar_archivos_galeria_producto,
         "migrar_legacy_a_galeria": migrar_legacy_a_galeria,
         "limpiar_imagenes_producto": limpiar_imagenes_producto,
+        "resolver_imagen_catalogo_existente": resolver_imagen_catalogo_existente,
+        "listar_imagenes_catalogo_disponibles": listar_imagenes_catalogo_disponibles,
         "guardar_galeria_producto": guardar_galeria_producto,
         "obtener_galeria_producto": obtener_galeria_producto,
     }

@@ -417,13 +417,21 @@
                                         <form method="POST" id="modalReplaceImagesForm" enctype="multipart/form-data" class="modal-tool-card">
                                             <h6>Reemplazar galería</h6>
                                             <p class="mb-2">Cambia todas las imágenes actuales por una nueva selección.</p>
+                                            <label class="form-label">Usar imagen existente del catálogo</label>
+                                            <select name="imagen_existente" class="form-select js-modal-existing-image-select">
+                                                <option value="">Selecciona una imagen existente</option>
+                                                {% for imagen in imagenes_catalogo %}
+                                                <option value="{{ imagen.ruta }}">{{ imagen.carpeta }} / {{ imagen.nombre }}</option>
+                                                {% endfor %}
+                                            </select>
+                                            <small class="modal-existing-help">Si eliges una imagen existente, se usará su ruta original y no se creará una copia.</small>
+                                            <div class="modal-image-separator">o sube una imagen nueva</div>
                                             <input
                                                 type="file"
                                                 name="imagenes"
                                                 class="form-control"
                                                 accept=".jpg,.jpeg,.png,.gif,.webp"
                                                 multiple
-                                                required
                                             >
                                             <button type="submit" class="btn btn-outline-secondary w-100 mt-3">Reemplazar galería</button>
                                         </form>

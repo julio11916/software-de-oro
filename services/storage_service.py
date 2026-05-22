@@ -13,6 +13,12 @@ from models.constants import *
 from services import image_service as app_image_service
 
 
+def asegurar_columnas_usuarios():
+    with engine.begin() as conn:
+        conn.execute(sa.text("ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS terminos_identidad_aceptados BOOLEAN NOT NULL DEFAULT FALSE"))
+        conn.execute(sa.text("ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS terminos_identidad_fecha TIMESTAMPTZ"))
+
+
 def normalizar_intendencia(valor):
     texto = str(valor or "").strip().lower()
     return re.sub(r"\s+", " ", texto)
@@ -21,6 +27,7 @@ def producto_requiere_talla(intendencia):
     return normalizar_intendencia(intendencia) not in INTENDENCIAS_SIN_TALLA
 
 def cargar_usuarios_df():
+    asegurar_columnas_usuarios()
     usuarios = read_table_df('usuarios')
     if usuarios.empty:
         usuarios = pd.DataFrame(columns=USUARIO_COLUMNS)
@@ -29,7 +36,7 @@ def cargar_usuarios_df():
         if col not in usuarios.columns:
             if col == 'estado':
                 usuarios[col] = 'activo'
-            elif col == 'email_verified':
+            elif col in {'email_verified', 'terminos_identidad_aceptados'}:
                 usuarios[col] = False
             else:
                 usuarios[col] = ''
@@ -49,6 +56,10 @@ def cargar_usuarios_df():
         usuarios['password_change_code_expiry'] = usuarios['password_change_code_expiry'].fillna('').astype(str)
     if 'email_verified' in usuarios.columns:
         usuarios['email_verified'] = usuarios['email_verified'].fillna(False).astype(bool)
+    if 'terminos_identidad_aceptados' in usuarios.columns:
+        usuarios['terminos_identidad_aceptados'] = usuarios['terminos_identidad_aceptados'].fillna(False).astype(bool)
+    if 'terminos_identidad_fecha' in usuarios.columns:
+        usuarios['terminos_identidad_fecha'] = usuarios['terminos_identidad_fecha'].fillna('').astype(str)
     
     usuarios['estado'] = usuarios['estado'].fillna('activo').astype(str).str.strip().str.lower()
     usuarios.loc[~usuarios['estado'].isin(['activo', 'inactivo']), 'estado'] = 'activo'
@@ -59,6 +70,7 @@ def guardar_usuarios_df(usuarios):
     Persiste el DataFrame de usuarios en PostgreSQL manteniendo tipos correctos
     para fechas y booleanos, y normalizando los tokens a texto.
     """
+    asegurar_columnas_usuarios()
     df = usuarios.copy()
 
     # Normalizar columnas de texto
@@ -67,7 +79,7 @@ def guardar_usuarios_df(usuarios):
             df[col] = df[col].fillna('').astype(str)
 
     # Convertir columnas de fecha/hora a datetime o None
-    for col in ['fecha_registro', 'verification_code_expiry', 'reset_token_expiry', 'password_change_code_expiry']:
+    for col in ['fecha_registro', 'verification_code_expiry', 'reset_token_expiry', 'password_change_code_expiry', 'terminos_identidad_fecha']:
         if col in df.columns:
             col_series = df[col].replace('', pd.NA)
             parsed = pd.to_datetime(col_series, errors='coerce')
@@ -76,6 +88,8 @@ def guardar_usuarios_df(usuarios):
     # Asegurar booleanos
     if 'email_verified' in df.columns:
         df['email_verified'] = df['email_verified'].fillna(False).astype(bool)
+    if 'terminos_identidad_aceptados' in df.columns:
+        df['terminos_identidad_aceptados'] = df['terminos_identidad_aceptados'].fillna(False).astype(bool)
 
     replace_table_df('usuarios', df[USUARIO_COLUMNS])
 
@@ -247,6 +261,8 @@ def actualizar_precio_orden_personalizada(producto, precio):
         producto_personalizado_canonico(item['producto']): item['nombre']
         for item in ORDEN_PERSONALIZADA_PRECIOS_DEFAULT
     }
+    if producto_key not in precios_ref:
+        return False
     nombre = precios_ref.get(producto_key, producto_key.replace('_', ' ').title())
     asegurar_tablas_orden_personalizada()
     with engine.begin() as conn:
