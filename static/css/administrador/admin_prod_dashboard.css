@@ -640,6 +640,34 @@
     line-height: 1.4;
 }
 
+.modal-existing-help {
+    display: block;
+    margin-top: 7px;
+    color: #6b8097;
+    font-size: 0.78rem;
+    line-height: 1.35;
+}
+
+.modal-image-separator {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 13px 0 10px;
+    color: #7990aa;
+    font-size: 0.76rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.modal-image-separator::before,
+.modal-image-separator::after {
+    content: "";
+    height: 1px;
+    flex: 1 1 auto;
+    background: #dbe7f6;
+}
+
 .modal-cancel-btn {
     border-color: #dbe6f4;
     color: #36506f;

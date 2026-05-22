@@ -251,7 +251,7 @@ def register_checkout_legacy_routes(app, legacy):
                 cliente_direccion=contacto_cliente["direccion"],
                 transfer_support_email=legacy.app.config.get("TRANSFER_SUPPORT_EMAIL", ""),
                 transfer_support_whatsapp=legacy.app.config.get("TRANSFER_SUPPORT_WHATSAPP", ""),
-                transfer_qr_image=legacy.app.config.get("TRANSFER_QR_IMAGE", "img/qr/qr.jpeg"),
+                transfer_qr_image=legacy.app.config.get("TRANSFER_QR_IMAGE", "img/Pagina/qr.jpeg"),
             )
         return "Acceso denegado"
 

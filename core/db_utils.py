@@ -84,7 +84,9 @@ def ensure_tables():
         reset_token TEXT,
         reset_token_expiry TIMESTAMPTZ,
         password_change_code TEXT,
-        password_change_code_expiry TIMESTAMPTZ
+        password_change_code_expiry TIMESTAMPTZ,
+        terminos_identidad_aceptados BOOLEAN NOT NULL DEFAULT FALSE,
+        terminos_identidad_fecha TIMESTAMPTZ
     );
     CREATE TABLE IF NOT EXISTS registros (
         id_registro BIGSERIAL PRIMARY KEY,
@@ -178,6 +180,8 @@ def ensure_tables():
         conn.execute(sa.text("ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS password_change_code_expiry TIMESTAMPTZ"))
         conn.execute(sa.text("ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS telefono TEXT"))
         conn.execute(sa.text("ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS direccion TEXT"))
+        conn.execute(sa.text("ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS terminos_identidad_aceptados BOOLEAN NOT NULL DEFAULT FALSE"))
+        conn.execute(sa.text("ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS terminos_identidad_fecha TIMESTAMPTZ"))
         conn.execute(sa.text("ALTER TABLE producto ADD COLUMN IF NOT EXISTS fuerza TEXT"))
         conn.execute(sa.text("ALTER TABLE producto ADD COLUMN IF NOT EXISTS intendencia TEXT"))
         conn.execute(sa.text("ALTER TABLE producto ADD COLUMN IF NOT EXISTS destacado_dashboard BOOLEAN DEFAULT FALSE"))

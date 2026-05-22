@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
 from io import BytesIO
+import json
 import os
 import re
 
@@ -528,24 +529,32 @@ def register_admin_legacy_routes(app, legacy):
             imagen_unica = request.files.get("imagen")
             if imagen_unica and str(getattr(imagen_unica, "filename", "")).strip():
                 imagenes = [imagen_unica]
+        imagen_existente = request.form.get("imagen_existente", "").strip()
+        ruta_imagen_existente = legacy.resolver_imagen_catalogo_existente(imagen_existente) if imagen_existente else ""
+        if imagen_existente and not ruta_imagen_existente:
+            flash("Selecciona una imagen existente válida del catálogo.", "danger")
+            return redirect(url_for("admin_productos"))
 
         if len(imagenes) > legacy.MAX_IMAGES_PER_PRODUCT:
             flash(f"Solo puedes subir hasta {legacy.MAX_IMAGES_PER_PRODUCT} imagenes por producto.", "danger")
             return redirect(url_for("admin_productos"))
 
-        for imagen in imagenes:
-            error_validacion = legacy.validar_archivo_imagen(imagen)
-            if error_validacion:
-                flash(error_validacion, "danger")
-                return redirect(url_for("admin_productos"))
+        if ruta_imagen_existente:
+            galeria_guardada = [ruta_imagen_existente]
+        else:
+            for imagen in imagenes:
+                error_validacion = legacy.validar_archivo_imagen(imagen)
+                if error_validacion:
+                    flash(error_validacion, "danger")
+                    return redirect(url_for("admin_productos"))
 
-        galeria_guardada = legacy.guardar_galeria_producto(
-            nuevo_id,
-            imagenes,
-            reemplazar=True,
-            fuerza=fuerza,
-            intendencia=intendencia,
-        )
+            galeria_guardada = legacy.guardar_galeria_producto(
+                nuevo_id,
+                imagenes,
+                reemplazar=True,
+                fuerza=fuerza,
+                intendencia=intendencia,
+            )
         imagen_url = galeria_guardada[0] if galeria_guardada else ""
 
         nuevo_producto = {
@@ -602,7 +611,13 @@ def register_admin_legacy_routes(app, legacy):
             imagen_unica = request.files.get("imagen")
             if imagen_unica and str(getattr(imagen_unica, "filename", "")).strip():
                 imagenes = [imagen_unica]
-        if not imagenes:
+        imagen_existente = request.form.get("imagen_existente", "").strip()
+        ruta_imagen_existente = legacy.resolver_imagen_catalogo_existente(imagen_existente) if imagen_existente else ""
+        if imagen_existente and not ruta_imagen_existente:
+            flash("Selecciona una imagen existente válida del catálogo.", "danger")
+            return redirect(url_for("admin_productos"))
+
+        if not imagenes and not ruta_imagen_existente:
             flash("No se selecciono ninguna imagen.")
             return redirect(url_for("admin_productos"))
 
@@ -610,27 +625,32 @@ def register_admin_legacy_routes(app, legacy):
             flash(f"Solo puedes subir hasta {legacy.MAX_IMAGES_PER_PRODUCT} imagenes por producto.", "danger")
             return redirect(url_for("admin_productos"))
 
-        for imagen in imagenes:
-            error_validacion = legacy.validar_archivo_imagen(imagen)
-            if error_validacion:
-                flash(error_validacion, "danger")
-                return redirect(url_for("admin_productos"))
+        if not ruta_imagen_existente:
+            for imagen in imagenes:
+                error_validacion = legacy.validar_archivo_imagen(imagen)
+                if error_validacion:
+                    flash(error_validacion, "danger")
+                    return redirect(url_for("admin_productos"))
 
         productos = legacy.cargar_productos_df()
         idx = productos[productos["id_producto"] == id_producto].index
         if not idx.empty:
             fuerza = str(productos.at[idx[0], "fuerza"]) if "fuerza" in productos.columns else ""
             intendencia = str(productos.at[idx[0], "intendencia"]) if "intendencia" in productos.columns else ""
-            galeria_guardada = legacy.guardar_galeria_producto(
-                id_producto,
-                imagenes,
-                reemplazar=True,
-                fuerza=fuerza,
-                intendencia=intendencia,
-            )
+            if ruta_imagen_existente:
+                legacy.limpiar_imagenes_producto(id_producto, fuerza=fuerza)
+                galeria_guardada = [ruta_imagen_existente]
+            else:
+                galeria_guardada = legacy.guardar_galeria_producto(
+                    id_producto,
+                    imagenes,
+                    reemplazar=True,
+                    fuerza=fuerza,
+                    intendencia=intendencia,
+                )
             productos.at[idx[0], "imagen_url"] = galeria_guardada[0] if galeria_guardada else ""
             legacy.guardar_productos_df(productos)
-            flash(f"Galeria reemplazada ({len(galeria_guardada)} imagenes).", "success")
+            flash(f"Galería reemplazada ({len(galeria_guardada)} imagen(es)).", "success")
         else:
             flash("Producto no encontrado.", "danger")
         return redirect(url_for("admin_productos"))
@@ -1081,7 +1101,102 @@ def register_admin_legacy_routes(app, legacy):
             ordenes_df = ordenes_df[~ordenes_df["estado"].astype(str).str.strip().str.lower().eq("pendiente_pago")].copy()
         if not ordenes_df.empty:
             ordenes_df = ordenes_df.sort_values(by="id_orden_personalizada", ascending=False, na_position="last")
-        precios_df = legacy.cargar_precios_orden_personalizada_df().sort_values(by="nombre", ascending=True)
+            ordenes_df["documento_identidad_nombre"] = ""
+            ordenes_df["documento_identidad_url"] = ""
+            for idx, orden in ordenes_df.iterrows():
+                try:
+                    datos = json.loads(str(orden.get("datos_json", "") or "{}"))
+                except (TypeError, ValueError, json.JSONDecodeError):
+                    datos = {}
+                validacion = datos.get("validacion_identidad") if isinstance(datos, dict) else {}
+                if not isinstance(validacion, dict) or not validacion.get("documento_path"):
+                    continue
+                orden_id = pd.to_numeric(orden.get("id_orden_personalizada"), errors="coerce")
+                if pd.isna(orden_id):
+                    continue
+                ordenes_df.at[idx, "documento_identidad_nombre"] = (
+                    validacion.get("documento_nombre_original")
+                    or validacion.get("documento_guardado")
+                    or "Documento de validación"
+                )
+                ordenes_df.at[idx, "documento_identidad_url"] = url_for(
+                    "admin_orden_personalizada_documento",
+                    id_orden=int(orden_id),
+                )
+        precios_df = legacy.cargar_precios_orden_personalizada_df()
+        precio_meta = {
+            "guerrera": {
+                "orden": 10,
+                "categoria": "Prendas base",
+                "descripcion": "Prenda principal para trabajo completo con escudo, parches, RH y presillas.",
+                "imagen": "img/prendas/Policia/guerrera/guerrera-frente.png",
+                "icono": "fa-shirt",
+            },
+            "buso_tactico": {
+                "orden": 20,
+                "categoria": "Prendas base",
+                "descripcion": "Bordado sobre buso táctico según entidad y acabados disponibles.",
+                "imagen": "img/prendas/Policia/buso_tactico/frente-poli.png",
+                "icono": "fa-vest",
+            },
+            "gorra": {
+                "orden": 50,
+                "categoria": "Prendas base",
+                "descripcion": "Gorra con distintivo cuando aplica por entidad.",
+                "imagen": "img/prendas/Policia/gorras/gorra-frente.png",
+                "icono": "fa-hat-cowboy",
+            },
+            "pañoleta": {
+                "orden": 60,
+                "categoria": "Prendas base",
+                "descripcion": "Pañoleta con escudo y color institucional.",
+                "imagen": "img/prendas/Policia/pañoletas/frente.png",
+                "icono": "fa-bandage",
+            },
+            "gafete del nombre o apellido": {
+                "orden": 70,
+                "categoria": "Prendas base",
+                "descripcion": "Gafete individual con nombre, apellido o rango del cliente.",
+                "imagen": "img/prendas/Policia/gafete del nombre o apellido/frente-gafete.png",
+                "icono": "fa-id-badge",
+            },
+            "escudos": {
+                "orden": 90,
+                "categoria": "Complementos de guerrera",
+                "descripcion": "Valor adicional cuando el cliente agrega escudo a una guerrera.",
+                "imagen": "img/estampados/policia/guerrera/escudos/policia.png",
+                "icono": "fa-shield-halved",
+            },
+            "parches": {
+                "orden": 100,
+                "categoria": "Complementos de guerrera",
+                "descripcion": "Valor adicional cuando el cliente agrega parche a una guerrera.",
+                "imagen": "img/estampados/policia/guerrera/Parches/parche_policia.png",
+                "icono": "fa-certificate",
+            },
+            "rh": {
+                "orden": 110,
+                "categoria": "Complementos de guerrera",
+                "descripcion": "Valor adicional cuando el cliente agrega RH a una guerrera.",
+                "imagen": "img/prendas/Policia/Rh/rh-defrente.png",
+                "icono": "fa-droplet",
+            },
+            "presillas": {
+                "orden": 120,
+                "categoria": "Complementos de guerrera",
+                "descripcion": "Valor adicional cuando el cliente agrega presillas a una guerrera.",
+                "imagen": "img/prendas/Policia/presillas/presilla_policia.png",
+                "icono": "fa-certificate",
+            },
+        }
+        if not precios_df.empty:
+            precios_df = precios_df.copy()
+            precios_df["orden"] = precios_df["producto"].map(lambda producto: precio_meta.get(producto, {}).get("orden", 999))
+            precios_df["categoria"] = precios_df["producto"].map(lambda producto: precio_meta.get(producto, {}).get("categoria", "Otros"))
+            precios_df["descripcion"] = precios_df["producto"].map(lambda producto: precio_meta.get(producto, {}).get("descripcion", "Precio usado en el configurador de prendas personalizadas."))
+            precios_df["imagen"] = precios_df["producto"].map(lambda producto: precio_meta.get(producto, {}).get("imagen", "img/Pagina/logo_transparente.png"))
+            precios_df["icono"] = precios_df["producto"].map(lambda producto: precio_meta.get(producto, {}).get("icono", "fa-tag"))
+            precios_df = precios_df.sort_values(by=["orden", "nombre"], ascending=True)
         nombres_producto = {row["producto"]: row["nombre"] for _, row in precios_df.iterrows()}
         if not ordenes_df.empty:
             ordenes_df = ordenes_df.copy()
@@ -1120,6 +1235,33 @@ def register_admin_legacy_routes(app, legacy):
         legacy.registrar_actividad(f"Actualizo solicitud personalizada #{id_orden} a {estado}")
         flash("Estado de la solicitud actualizado.", "success")
         return redirect(url_for("admin_ajustes"))
+
+    def admin_orden_personalizada_documento(id_orden):
+        if session.get("rol") != "admin":
+            return "Acceso denegado"
+
+        legacy.asegurar_tablas_orden_personalizada()
+        ordenes = legacy.cargar_ordenes_personalizadas_df()
+        candidatos = ordenes[pd.to_numeric(ordenes["id_orden_personalizada"], errors="coerce") == int(id_orden)]
+        if candidatos.empty:
+            return "Documento no encontrado", 404
+
+        try:
+            datos = json.loads(str(candidatos.iloc[0].get("datos_json", "") or "{}"))
+        except (TypeError, ValueError, json.JSONDecodeError):
+            datos = {}
+
+        validacion = datos.get("validacion_identidad") if isinstance(datos, dict) else {}
+        documento_path = str((validacion or {}).get("documento_path", "")).strip()
+        if not documento_path:
+            return "Documento no encontrado", 404
+
+        base_dir = os.path.abspath(os.path.join(app.instance_path, "validaciones_identidad"))
+        ruta_documento = os.path.abspath(os.path.join(app.instance_path, documento_path.replace("/", os.sep)))
+        if os.path.commonpath([base_dir, ruta_documento]) != base_dir or not os.path.isfile(ruta_documento):
+            return "Documento no encontrado", 404
+
+        return send_file(ruta_documento, as_attachment=False)
 
     def admin_informes():
         if session.get("rol") != "admin":
@@ -1500,6 +1642,7 @@ def register_admin_legacy_routes(app, legacy):
             total_productos=contexto["total_productos"],
             total_eliminados=contexto["total_eliminados"],
             max_images_per_product=legacy.MAX_IMAGES_PER_PRODUCT,
+            imagenes_catalogo=legacy.listar_imagenes_catalogo_disponibles(),
         )
 
     def admin_pos_checkout():
@@ -1710,6 +1853,11 @@ def register_admin_legacy_routes(app, legacy):
         endpoint="admin_orden_personalizada_estado",
         view_func=admin_orden_personalizada_estado,
         methods=["POST"],
+    )
+    app.add_url_rule(
+        "/admin/ajustes/orden-personalizada/<int:id_orden>/documento-identidad",
+        endpoint="admin_orden_personalizada_documento",
+        view_func=admin_orden_personalizada_documento,
     )
     app.add_url_rule("/admin/informes", endpoint="admin_informes", view_func=admin_informes)
     app.add_url_rule("/admin/pos", endpoint="admin_pos", view_func=admin_pos)

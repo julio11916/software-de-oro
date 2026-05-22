@@ -20,6 +20,8 @@ USUARIO_COLUMNS = [
     'reset_token_expiry',
     'password_change_code',
     'password_change_code_expiry',
+    'terminos_identidad_aceptados',
+    'terminos_identidad_fecha',
 ]
 REGISTRO_COLUMNS = ['id_registro', 'id_usuario', 'accion', 'fecha_accion']
 PRODUCTO_COLUMNS = [
@@ -40,20 +42,20 @@ ORDEN_PERSONALIZADA_COLUMNS = [
 ORDEN_PERSONALIZADA_PRECIO_COLUMNS = ['producto', 'nombre', 'precio']
 ORDEN_PERSONALIZADA_PRECIOS_DEFAULT = [
     {'producto': 'guerrera', 'nombre': 'Guerrera', 'precio': 160000},
-    {'producto': 'buso_tactico', 'nombre': 'Buso tactico', 'precio': 95000},
-    {'producto': 'buso', 'nombre': 'Buso', 'precio': 78000},
+    {'producto': 'buso_tactico', 'nombre': 'Buso táctico', 'precio': 95000},
     {'producto': 'gorra', 'nombre': 'Gorra', 'precio': 35000},
     {'producto': 'pa\u00f1oleta', 'nombre': 'Pa\u00f1oleta', 'precio': 28000},
-    {'producto': 'buso-manga-larga', 'nombre': 'Buso manga larga', 'precio': 85000},
     {'producto': 'presillas', 'nombre': 'Presillas', 'precio': 15000},
     {'producto': 'rh', 'nombre': 'RH', 'precio': 12000},
+    {'producto': 'escudos', 'nombre': 'Escudos', 'precio': 0},
+    {'producto': 'parches', 'nombre': 'Parches', 'precio': 0},
     {'producto': 'gafete del nombre o apellido', 'nombre': 'Gafete de nombre o apellido', 'precio': 12000},
 ]
 ORDEN_PERSONALIZADA_PRODUCTO_ALIAS = {
     'buso tactico': 'buso_tactico',
+    'buso táctico': 'buso_tactico',
     'buso-tactico': 'buso_tactico',
-    'buso manga larga': 'buso-manga-larga',
-    'buso_manga_larga': 'buso-manga-larga',
+    'buso-táctico': 'buso_tactico',
     'pa\u00f1oleta': 'pa\u00f1oleta',
     'paoleta': 'pa\u00f1oleta',
     'panoleta': 'pa\u00f1oleta',

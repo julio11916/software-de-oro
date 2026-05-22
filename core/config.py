@@ -37,7 +37,7 @@ class BaseConfig:
     MAIL_DEFAULT_SENDER = os.getenv("MAIL_DEFAULT_SENDER", MAIL_DEFAULT_SENDER_DEFAULT)
 
     PROJECT_NAME = os.getenv("PROJECT_NAME", "NACHOHERS").strip() or "NACHOHERS"
-    TRANSFER_QR_IMAGE = os.getenv("TRANSFER_QR_IMAGE", "img/qr/qr.jpeg").strip() or "img/qr/qr.jpeg"
+    TRANSFER_QR_IMAGE = os.getenv("TRANSFER_QR_IMAGE", "img/Pagina/qr.jpeg").strip() or "img/Pagina/qr.jpeg"
     TRANSFER_SUPPORT_EMAIL = os.getenv("TRANSFER_SUPPORT_EMAIL", MAIL_DEFAULT_SENDER).strip()
     TRANSFER_SUPPORT_WHATSAPP = os.getenv("TRANSFER_SUPPORT_WHATSAPP", "").strip()
 

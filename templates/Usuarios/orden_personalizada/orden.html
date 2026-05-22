@@ -130,6 +130,20 @@
                                     </select>
                                 </div>
 
+                                <div class="identity-document-field">
+                                    <label for="input-documento-identidad" class="label-opcion">Documento de validación institucional</label>
+                                    <input type="file" id="input-documento-identidad" class="form-control"
+                                        accept="image/jpeg,image/png,image/webp,image/gif" required>
+                                    <small class="orden-field-help">
+                                        Adjunta una foto legible de tu libreta militar, tarjeta militar, cédula o carné institucional. Máximo 3MB.
+                                    </small>
+                                    <div id="documento-identidad-status" class="identity-document-status" aria-live="polite"></div>
+                                </div>
+
+                                {% with identity_terms_summary='Ver términos de validación de identidad y tratamiento de datos', identity_terms_extra_class='identity-terms-panel--orden' %}
+                                    {% include 'Usuarios/partials/_identity_terms.html' %}
+                                {% endwith %}
+
                             </form>
                         </div>
 
@@ -179,10 +193,6 @@
                             <div class="icono-producto"><i class="fas fa-vest"></i></div>
                             <div class="nombre-producto">Buso táctico</div>
                         </div>
-                        <div class="tarjeta-producto" data-producto="buso">
-                            <div class="icono-producto"><i class="fas fa-shirt"></i></div>
-                            <div class="nombre-producto">Buso</div>
-                        </div>
                         <div class="tarjeta-producto" data-producto="gorra">
                             <div class="icono-producto"><i class="fas fa-hat-cowboy"></i></div>
                             <div class="nombre-producto">Gorra</div>
@@ -190,18 +200,6 @@
                         <div class="tarjeta-producto" data-producto="pañoleta">
                             <div class="icono-producto"><i class="fas fa-bandage"></i></div>
                             <div class="nombre-producto">Pañoleta</div>
-                        </div>
-                        <div class="tarjeta-producto" data-producto="buso-manga-larga">
-                            <div class="icono-producto"><i class="fas fa-user-tie"></i></div>
-                            <div class="nombre-producto">Buso manga larga</div>
-                        </div>
-                        <div class="tarjeta-producto" data-producto="presillas">
-                            <div class="icono-producto"><i class="fas fa-certificate"></i></div>
-                            <div class="nombre-producto">Presillas</div>
-                        </div>
-                        <div class="tarjeta-producto" data-producto="Rh">
-                            <div class="icono-producto"><i class="fas fa-droplet"></i></div>
-                            <div class="nombre-producto">Rh</div>
                         </div>
                         <div class="tarjeta-producto" data-producto="gafete del nombre o apellido">
                             <div class="icono-producto"><i class="fas fa-id-badge"></i></div>
@@ -346,6 +344,77 @@
                             <div class="nombre-color">Sin Estampado</div>
                         </div>
                     </div>
+
+                    <section class="guerrera-addons-panel" id="guerrera-addons-panel" hidden>
+                        <div class="guerrera-addons-panel__head">
+                            <span>Complementos de guerrera</span>
+                            <strong>Escudo, parches, RH y presillas</strong>
+                            <p>Estas opciones se suman al precio de la guerrera y se muestran en la vista previa según el color seleccionado.</p>
+                        </div>
+                        <div class="guerrera-addons-grid">
+                            <label class="guerrera-addon-field" for="select-guerrera-rh">
+                                <span><i class="fas fa-droplet"></i> RH</span>
+                                <select id="select-guerrera-rh" class="form-control">
+                                    <option value="">Sin RH</option>
+                                    <option value="O+">O+</option>
+                                    <option value="O-">O-</option>
+                                    <option value="A+">A+</option>
+                                    <option value="A-">A-</option>
+                                    <option value="B+">B+</option>
+                                    <option value="B-">B-</option>
+                                    <option value="AB+">AB+</option>
+                                    <option value="AB-">AB-</option>
+                                </select>
+                                <small id="guerrera-rh-help">Se mostrará con el color disponible para la entidad.</small>
+                            </label>
+
+                            <label class="guerrera-addon-field" for="select-guerrera-presilla">
+                                <span><i class="fas fa-certificate"></i> Presilla</span>
+                                <select id="select-guerrera-presilla" class="form-control">
+                                    <option value="">Sin presilla</option>
+                                    <option value="General">General</option>
+                                    <option value="Mayor General">Mayor General</option>
+                                    <option value="Brigadier General">Brigadier General</option>
+                                    <option value="Coronel">Coronel</option>
+                                    <option value="Teniente Coronel">Teniente Coronel</option>
+                                    <option value="Mayor">Mayor</option>
+                                    <option value="Capitan">Capitán</option>
+                                    <option value="Teniente">Teniente</option>
+                                    <option value="Subteniente">Subteniente</option>
+                                </select>
+                                <small id="guerrera-presilla-help">El tono se ajusta al color de la guerrera.</small>
+                            </label>
+                        </div>
+
+                        <div class="guerrera-piece-preview" id="guerrera-piece-preview" hidden>
+                            <div class="guerrera-piece-preview__head">
+                                <span>Piezas seleccionadas</span>
+                                <small>Vista individual antes de armar la guerrera completa.</small>
+                            </div>
+                            <div class="guerrera-piece-preview__grid">
+                                <article class="guerrera-piece-card" data-piece-preview="escudos" hidden>
+                                    <img src="" alt="">
+                                    <strong>Escudo</strong>
+                                    <span>Escudo seleccionado</span>
+                                </article>
+                                <article class="guerrera-piece-card" data-piece-preview="parches" hidden>
+                                    <img src="" alt="">
+                                    <strong>Parche</strong>
+                                    <span>Parche seleccionado</span>
+                                </article>
+                                <article class="guerrera-piece-card" data-piece-preview="rh" hidden>
+                                    <img src="" alt="">
+                                    <strong>RH</strong>
+                                    <span>RH seleccionado</span>
+                                </article>
+                                <article class="guerrera-piece-card" data-piece-preview="presillas" hidden>
+                                    <img src="" alt="">
+                                    <strong>Presilla</strong>
+                                    <span>Presilla seleccionada</span>
+                                </article>
+                            </div>
+                        </div>
+                    </section>
                     <div class="botones-navegacion">
                         <button class="btn-navegacion btn-navegacion--secondary" id="btn-atras-paso4"><i class="fas fa-arrow-left"></i> Atrás</button>
                         <button type="button" class="btn-navegacion" id="btn-siguiente-paso4"><i class="fas fa-check"></i> Finalizar</button>
@@ -400,6 +469,10 @@
                     <div class="info-item">
                         <span class="info-label">Estampado:</span>
                         <span class="info-valor" id="preview-estampado">-</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Complementos:</span>
+                        <span class="info-valor" id="preview-complementos">-</span>
                     </div>
                     <div class="info-item">
                         <span class="info-label">Talla:</span>

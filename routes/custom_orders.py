@@ -1,3 +1,4 @@
+from datetime import datetime
 import json
 import re
 
@@ -25,14 +26,28 @@ def register_custom_orders_legacy_routes(app, legacy):
         correo = str(cliente.get("correo", "")).strip().lower()
         telefono = re.sub(r"\D", "", str(cliente.get("telefono", "")))[:10]
         direccion = str(cliente.get("direccion", "")).strip()
+        validacion_identidad = payload.get("validacion_identidad") or {}
+        documento_identidad_data_url = str(validacion_identidad.get("documento_imagen", "")).strip()
         producto = legacy.producto_personalizado_canonico(detalle.get("producto", ""))
         identidad = str(detalle.get("identidad", "")).strip()
+        precios = legacy.precios_orden_personalizada_mapa()
+        productos_base_permitidos = set(precios.keys()) - {"rh", "presillas", "escudos", "parches"}
         try:
             cantidad = int(detalle.get("cantidad", 1) or 1)
         except (TypeError, ValueError):
             cantidad = 1
         cantidad = max(1, min(cantidad, 99))
         imagen_url = str(detalle.get("imagen_url", "")).strip()
+
+        if not nombre or not correo or not telefono or not direccion or not producto or not identidad:
+            return jsonify({"success": False, "message": "Faltan datos obligatorios para enviar la solicitud."}), 400
+        if not re.fullmatch(r"[^@\s]+@[^@\s]+\.[^@\s]+", correo):
+            return jsonify({"success": False, "message": "El correo electrónico no es válido."}), 400
+        if not re.fullmatch(r"[0-9]{10}", telefono):
+            return jsonify({"success": False, "message": "El teléfono debe tener 10 dígitos."}), 400
+        if producto not in productos_base_permitidos:
+            return jsonify({"success": False, "message": "El producto seleccionado ya no está disponible en prendas personalizadas."}), 400
+
         if imagen_url.startswith("data:image/"):
             imagen_guardada, error_imagen = legacy.guardar_preview_personalizado_desde_data_url(
                 imagen_url,
@@ -44,17 +59,59 @@ def register_custom_orders_legacy_routes(app, legacy):
         elif imagen_url and not imagen_url.startswith("/static/img/"):
             imagen_url = ""
 
-        if not nombre or not correo or not telefono or not direccion or not producto or not identidad:
-            return jsonify({"success": False, "message": "Faltan datos obligatorios para enviar la solicitud."}), 400
-        if not re.fullmatch(r"[^@\s]+@[^@\s]+\.[^@\s]+", correo):
-            return jsonify({"success": False, "message": "El correo electrónico no es válido."}), 400
-        if not re.fullmatch(r"[0-9]{10}", telefono):
-            return jsonify({"success": False, "message": "El teléfono debe tener 10 dígitos."}), 400
+        if not documento_identidad_data_url:
+            return jsonify({"success": False, "message": "Debes adjuntar una foto legible de tu libreta militar, carné o documento institucional."}), 400
 
-        precios = legacy.precios_orden_personalizada_mapa()
+        documento_guardado, error_documento = legacy.guardar_documento_identidad_personalizada_desde_data_url(
+            documento_identidad_data_url,
+            usuario_email=session.get("usuario", ""),
+        )
+        if error_documento:
+            return jsonify({"success": False, "message": error_documento}), 400
+
+        payload["validacion_identidad"] = {
+            "documento_nombre_original": str(validacion_identidad.get("documento_nombre", "")).strip(),
+            "documento_tipo": str(validacion_identidad.get("documento_tipo", "")).strip(),
+            "documento_tamano": documento_guardado.get("size", 0),
+            "documento_path": documento_guardado.get("path", ""),
+            "documento_guardado": documento_guardado.get("filename", ""),
+            "terminos_aceptados": True,
+            "fecha_validacion": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        }
+
+        modelo_rh = str(detalle.get("modelo_rh", "")).strip()
+        modelo_presilla = str(detalle.get("modelo_presilla", "")).strip()
+        acabados_guerrera = detalle.get("acabados_guerrera") or []
+        if isinstance(acabados_guerrera, str):
+            acabados_guerrera = [
+                item.strip()
+                for item in re.split(r"[,+|/]", acabados_guerrera)
+                if item.strip()
+            ]
+        elif not isinstance(acabados_guerrera, (list, tuple, set)):
+            acabados_guerrera = []
+        acabados_set = {
+            legacy.producto_personalizado_canonico(item)
+            for item in acabados_guerrera
+            if str(item or "").strip()
+        }
+        estampado_texto = str(detalle.get("estampado", "")).strip().lower()
+        if "escudo" in estampado_texto:
+            acabados_set.add("escudos")
+        if "parche" in estampado_texto:
+            acabados_set.add("parches")
         precio_unitario = float(precios.get(producto, 0) or 0)
         if precio_unitario <= 0:
             precio_unitario = 45000.0
+        if producto == "guerrera":
+            if "escudos" in acabados_set:
+                precio_unitario += float(precios.get("escudos", 0) or 0)
+            if "parches" in acabados_set:
+                precio_unitario += float(precios.get("parches", 0) or 0)
+            if modelo_rh:
+                precio_unitario += float(precios.get("rh", 0) or 0)
+            if modelo_presilla:
+                precio_unitario += float(precios.get("presillas", 0) or 0)
         precio = precio_unitario * cantidad
 
         legacy.asegurar_tablas_orden_personalizada()
@@ -92,8 +149,8 @@ def register_custom_orders_legacy_routes(app, legacy):
                     "color": str(detalle.get("color", "")).strip(),
                     "estampado": str(detalle.get("estampado", "")).strip(),
                     "talla": str(detalle.get("talla", "")).strip(),
-                    "modelo_rh": str(detalle.get("modelo_rh", "")).strip(),
-                    "modelo_presilla": str(detalle.get("modelo_presilla", "")).strip(),
+                    "modelo_rh": modelo_rh,
+                    "modelo_presilla": modelo_presilla,
                     "cantidad": cantidad,
                     "imagen_url": imagen_url,
                     "precio": precio,
@@ -109,6 +166,9 @@ def register_custom_orders_legacy_routes(app, legacy):
                 f"Color: {str(detalle.get('color', '')).strip()}",
                 f"Técnica: {str(detalle.get('tecnica', '')).strip()}",
                 f"Estampado: {str(detalle.get('estampado', '')).strip()}",
+                f"Acabados guerrera: {', '.join(sorted(acabados_set))}" if producto == "guerrera" and acabados_set else "",
+                f"RH: {modelo_rh}",
+                f"Presilla: {modelo_presilla}",
                 f"Rango: {str(cliente.get('rango', '')).strip()}",
                 f"Fecha contingencia: {str(cliente.get('fecha_contingencia', '')).strip()}",
             ]
