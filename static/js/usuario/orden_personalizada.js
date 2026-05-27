@@ -147,7 +147,7 @@ try {
     const CONTINGENCIA_MIN_DATE = "1940-01-01";
     const IDENTITY_DOCUMENT_MAX_SIZE_BYTES = 3 * 1024 * 1024;
     const IDENTITY_DOCUMENT_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "image/gif"]);
-    const ORDER_DRAFT_STORAGE_KEY = "nachohers_orden_personalizada_draft_v1";
+    const ORDER_DRAFT_STORAGE_KEY_BASE = "nachohers_orden_personalizada_draft_v1";
     const PERSISTED_STATE_KEYS = [
         "nombre",
         "rango",
@@ -171,6 +171,28 @@ try {
         "vistaPrenda"
     ];
 
+    function getCurrentUserDraftKey() {
+        const defaults = window.USUARIO_ORDEN_PERSONALIZADA || {};
+        const email = String(defaults.correo || "").trim().toLowerCase();
+        if (!email) {
+            return `${ORDER_DRAFT_STORAGE_KEY_BASE}:anonimo`;
+        }
+
+        const userKey = email
+            .normalize("NFKD")
+            .replace(/[\u0300-\u036f]/g, "")
+            .replace(/[^a-z0-9@._-]+/g, "_");
+        return `${ORDER_DRAFT_STORAGE_KEY_BASE}:${userKey}`;
+    }
+
+    function cleanupLegacySharedDraft() {
+        try {
+            localStorage.removeItem(ORDER_DRAFT_STORAGE_KEY_BASE);
+        } catch (error) {
+            console.warn("No se pudo limpiar el borrador compartido anterior:", error);
+        }
+    }
+
     function normalizeProductKey(value) {
         return String(value || "").trim().toLowerCase().replace(/\s+/g, " ");
     }
@@ -187,6 +209,19 @@ try {
 
     function isGuerreraProduct(producto) {
         return normalizeProductKey(producto) === "guerrera";
+    }
+
+    function isBusoTacticoProduct(producto) {
+        return ["buso_tactico", "buso tactico", "buso táctico", "buso-tactico", "buso-táctico"].includes(normalizeProductKey(producto));
+    }
+
+    function productRequiresTalla(producto) {
+        return isGuerreraProduct(producto) || isBusoTacticoProduct(producto);
+    }
+
+    function normalizeTallaValue(value) {
+        const talla = String(value || "").trim().toUpperCase();
+        return talla === "2XL" ? "XXL" : talla;
     }
 
     function isUnavailablePresilla(value) {
@@ -322,6 +357,7 @@ try {
 
         const shouldShow = state.pasoActual === 4 || (state.pasoActual === 3 && productEndsAtStep3());
         cantidadContainer.classList.toggle("seccion-hidden", !shouldShow);
+        updateTallaVisibility();
 
         if (shouldShow) {
             const activeStep = document.getElementById(`paso${state.pasoActual}`);
@@ -334,7 +370,29 @@ try {
         }
     }
 
+    function validarTallaFinal(mostrarAlerta = true) {
+        const inputTalla = document.getElementById("input-talla");
+        if (!productRequiresTalla(state.producto)) {
+            state.talla = null;
+            if (inputTalla) inputTalla.value = "";
+            return true;
+        }
+
+        const talla = normalizeTallaValue(inputTalla?.value || state.talla);
+        if (!talla) {
+            if (mostrarAlerta) {
+                showUserToast("Selecciona una talla para la prenda antes de continuar.", "warning", { durationMs: 6500 });
+            }
+            return false;
+        }
+
+        state.talla = talla;
+        if (inputTalla) inputTalla.value = talla;
+        return true;
+    }
+
     function validarCantidadFinal() {
+        if (!validarTallaFinal()) return false;
         const inputCantidad = document.getElementById("input-cantidad-prendas");
         const cantidad = Number.parseInt(inputCantidad?.value || state.cantidad, 10);
         if (!Number.isFinite(cantidad) || cantidad < 1 || cantidad > 99) {
@@ -469,7 +527,7 @@ try {
             state.fechaContingencia = inputFechaContingencia.value;
             state.anoContingencia = formatDateForDisplay(inputFechaContingencia.value);
         }
-        if (inputTalla && inputTalla.value) state.talla = inputTalla.value;
+        if (inputTalla && inputTalla.value) state.talla = normalizeTallaValue(inputTalla.value);
         if (inputCantidad) {
             state.cantidad = Math.min(99, Math.max(1, Number.parseInt(inputCantidad.value, 10) || 1));
             inputCantidad.value = state.cantidad;
@@ -483,7 +541,8 @@ try {
             PERSISTED_STATE_KEYS.forEach((key) => {
                 draft[key] = state[key] ?? "";
             });
-            localStorage.setItem(ORDER_DRAFT_STORAGE_KEY, JSON.stringify(draft));
+            draft.usuario = String((window.USUARIO_ORDEN_PERSONALIZADA || {}).correo || "").trim().toLowerCase();
+            localStorage.setItem(getCurrentUserDraftKey(), JSON.stringify(draft));
         } catch (error) {
             console.warn("No se pudo guardar el borrador de la orden personalizada:", error);
         }
@@ -491,10 +550,18 @@ try {
 
     function restoreOrderDraft() {
         try {
-            const rawDraft = localStorage.getItem(ORDER_DRAFT_STORAGE_KEY);
+            cleanupLegacySharedDraft();
+            const rawDraft = localStorage.getItem(getCurrentUserDraftKey());
             if (!rawDraft) return;
             const draft = JSON.parse(rawDraft);
             if (!draft || typeof draft !== "object") return;
+
+            const currentUser = String((window.USUARIO_ORDEN_PERSONALIZADA || {}).correo || "").trim().toLowerCase();
+            const draftUser = String(draft.usuario || "").trim().toLowerCase();
+            if (currentUser && draftUser && draftUser !== currentUser) {
+                localStorage.removeItem(getCurrentUserDraftKey());
+                return;
+            }
 
             PERSISTED_STATE_KEYS.forEach((key) => {
                 if (Object.prototype.hasOwnProperty.call(draft, key)) {
@@ -531,6 +598,7 @@ try {
                 state.fechaContingencia = "";
                 state.anoContingencia = "";
             }
+            state.talla = normalizeTallaValue(state.talla) || null;
 
             const inputNombre = document.getElementById("input-nombre");
             const inputRango = document.getElementById("input-rango");
@@ -569,6 +637,38 @@ try {
             restoreEstampadoSelection();
         } catch (error) {
             console.warn("No se pudo restaurar el borrador de la orden personalizada:", error);
+        }
+    }
+
+    function applyUserProfileDefaults() {
+        const defaults = window.USUARIO_ORDEN_PERSONALIZADA || {};
+        if (!defaults || typeof defaults !== "object") return;
+
+        const inputNombre = document.getElementById("input-nombre");
+        const inputDireccion = document.getElementById("input-direccion");
+        const inputCorreo = document.getElementById("input-correo");
+        const inputTelefono = document.getElementById("input-telefono");
+
+        const nombre = String(defaults.nombre || "").trim();
+        const direccion = String(defaults.direccion || "").trim();
+        const correo = String(defaults.correo || "").trim();
+        const telefono = sanitizePhone(defaults.telefono || "");
+
+        if (inputNombre && !inputNombre.value.trim() && nombre) {
+            inputNombre.value = nombre;
+            state.nombre = nombre;
+        }
+        if (inputDireccion && !inputDireccion.value.trim() && direccion) {
+            inputDireccion.value = direccion;
+            state.direccion = direccion;
+        }
+        if (inputCorreo && !inputCorreo.value.trim() && correo) {
+            inputCorreo.value = correo;
+            state.correo = correo;
+        }
+        if (inputTelefono && !sanitizePhone(inputTelefono.value) && telefono) {
+            inputTelefono.value = telefono;
+            state.telefono = telefono;
         }
     }
 
@@ -1542,6 +1642,7 @@ try {
         const productoKey = normalizeProductKey(state.producto);
         const isEspecial = ["rh", "presillas", "gafete", "gafete del nombre o apellido", "gorra"].includes(productoKey) || isPanoletaProduct(productoKey);
         const esBusoTactico = ["buso_tactico", "buso tactico", "buso táctico", "buso-tactico", "buso-táctico"].includes(productoKey);
+        const requiereTalla = productRequiresTalla(state.producto);
         
         let descripcionCompleta = `${identidad}`;
         
@@ -1553,7 +1654,7 @@ try {
         
         descripcionCompleta += ` | ${producto}${modeloTxt} | Color: ${color}`;
         
-        if (!isEspecial) {
+        if (requiereTalla) {
             descripcionCompleta += ` | Talla: ${talla}`;
         }
         
@@ -1568,7 +1669,7 @@ try {
         // Ocultar Talla, Contingencia y Estampado del panel derecho si no aplican 
         let pTal = document.getElementById("preview-talla");
         if (pTal && pTal.parentElement) {
-            pTal.parentElement.style.display = isEspecial ? "none" : "flex";
+            pTal.parentElement.style.display = requiereTalla ? "flex" : "none";
         }
 
         let pTecnica = document.getElementById("preview-tecnica");
@@ -1623,11 +1724,11 @@ try {
         updateGuerreraPiecePreviews();
         
         if (tallaInfoPreview) {
-            tallaInfoPreview.textContent = isEspecial ? "No aplica" : (state.talla || "Pendiente");
+            tallaInfoPreview.textContent = requiereTalla ? (state.talla || "Pendiente") : "No aplica";
             const filaTalla = tallaInfoPreview.parentElement;
             if (filaTalla && filaTalla.classList.contains('info-item')) {
-                // Ocultar si es especial, o si la talla no ha sido seleccionada aún (talla vacía o null)
-                filaTalla.style.display = (isEspecial || !state.talla) ? 'none' : 'flex';
+                // Ocultar si esta prenda no maneja talla o si aún no fue seleccionada.
+                filaTalla.style.display = (requiereTalla && state.talla) ? 'flex' : 'none';
             }
         }
         if (cantidadInfoPreview) cantidadInfoPreview.textContent = getOrderQuantity();
@@ -2249,6 +2350,9 @@ try {
                     showUserToast("Por favor selecciona un estampado.", "warning", { durationMs: 6500 });
                     return false;
                 }
+                if (!validarTallaFinal()) {
+                    return false;
+                }
                 break;
         }
         return true;
@@ -2457,6 +2561,22 @@ try {
     }
 
     function updateTallaVisibility() {
+        const containerTalla = document.getElementById("container-talla-final");
+        const inputTalla = document.getElementById("input-talla");
+        const requiereTalla = productRequiresTalla(state.producto);
+
+        if (!requiereTalla) {
+            state.talla = null;
+            if (inputTalla) inputTalla.value = "";
+        }
+        if (inputTalla) {
+            inputTalla.disabled = !requiereTalla;
+            inputTalla.required = requiereTalla;
+        }
+        if (containerTalla) {
+            containerTalla.classList.toggle("seccion-hidden", !requiereTalla);
+        }
+
         const btnSiguiente = document.getElementById("btn-siguiente-paso4");
         // En este caso, el paso 4 es el último y va hacia la confirmación.
         if (btnSiguiente) btnSiguiente.style.display = "inline-block";
@@ -2942,7 +3062,6 @@ try {
         const inputCorreo = document.getElementById("input-correo");
         const inputTelefono = document.getElementById("input-telefono");
         const inputFechaContingencia = document.getElementById("input-fecha-contingencia");
-        const inputTalla = document.getElementById("input-talla");
         const btnSiguiente = document.getElementById("btn-siguiente-paso1");
         let valid = true;
         const lineasAlerta = [];
@@ -2971,8 +3090,6 @@ try {
             valid = false;
             lineasAlerta.push("- Foto de libreta militar, carné o documento institucional.");
         }
-        const tallaValida2 = inputTalla && inputTalla.value.trim().length > 0;
-        if (!tallaValida2 && !state.talla) { valid = false; lineasAlerta.push("- Selección de talla."); }
         if (!state.identidad) { valid = false; lineasAlerta.push("- Seleccionar una entidad (Ej: Policía, Ejército)."); }
         if (!state.tecnica) { valid = false; lineasAlerta.push("- Seleccionar una técnica (Ej: Bordado)."); }
         if (btnSiguiente) {
@@ -3013,11 +3130,12 @@ try {
     function validarPaso4Realtime() {
         const btnSiguiente = document.getElementById("btn-siguiente-paso4");
         syncGuerreraEstampadoState();
-        const camposCompletos = state.estampado;
+        const tallaCompleta = validarTallaFinal(false);
+        const camposCompletos = Boolean(state.estampado) && tallaCompleta;
         
         if (btnSiguiente) {
             btnSiguiente.style.opacity = camposCompletos ? "1" : "0.5";
-            btnSiguiente.style.cursor = 'pointer';
+            btnSiguiente.style.cursor = camposCompletos ? 'pointer' : 'not-allowed';
         }
     }
 
@@ -3080,9 +3198,10 @@ try {
         }
         if (inputTalla) {
             inputTalla.addEventListener("change", () => {
-                state.talla = inputTalla.value;
+                state.talla = normalizeTallaValue(inputTalla.value) || null;
+                inputTalla.value = state.talla || "";
                 updateSummary();
-                validarPaso1Realtime();
+                validarPaso4Realtime();
                 saveOrderDraft();
             });
         }
@@ -3091,7 +3210,7 @@ try {
             state.cantidad = cantidad;
             if (inputCantidad) inputCantidad.value = cantidad;
             updateSummary();
-            validarPaso1Realtime();
+            validarPaso4Realtime();
             saveOrderDraft();
         };
         if (inputCantidad) {
@@ -3131,9 +3250,6 @@ try {
                 
                 const tecnicaActiva = document.querySelector("[data-tecnica].activo");
                 if (!state.tecnica && tecnicaActiva) state.tecnica = tecnicaActiva.dataset.tecnica;
-                
-                const inputTalla = document.getElementById("input-talla");
-                if (!state.talla && inputTalla && inputTalla.value) state.talla = inputTalla.value;
                 
                 // Forzar la validación aquí.
                 if (!state.identidad || !state.tecnica) {
@@ -3181,6 +3297,11 @@ try {
                     state.estampadosGuerrera = [];
                     state.modeloRh = null;
                     state.modeloPresilla = null;
+                    if (!productRequiresTalla(state.producto)) {
+                        state.talla = null;
+                        const inputTallaProducto = document.getElementById("input-talla");
+                        if (inputTallaProducto) inputTallaProducto.value = "";
+                    }
                     syncGuerreraAddonControls();
                     document.querySelectorAll("[data-estampado]").forEach(el => el.classList.remove("seleccionada", "seleccion-multiple"));
                 }
@@ -3329,14 +3450,14 @@ try {
 
         document.querySelectorAll("[data-talla]").forEach((button) => {
             button.addEventListener("click", () => {
-                state.talla = button.dataset.talla;
+                state.talla = normalizeTallaValue(button.dataset.talla) || null;
                 setActiveClass(
                     document.querySelectorAll("[data-talla]"),
                     (element) => element === button,
                     "activo"
                 );
                 updateSummary();
-                validarPaso1Realtime();
+                validarPaso4Realtime();
             });
         });
 
@@ -3438,6 +3559,11 @@ try {
                 changeStep(1);
                 return;
             }
+            if (!validarTallaFinal()) {
+                changeStep(4);
+                return;
+            }
+            const tallaPayload = productRequiresTalla(state.producto) ? state.talla : "";
             
             // Organizar y mostrar el resumen de la personalización.
             let summaryText = "¡Personalización completada!\n\n";
@@ -3465,8 +3591,8 @@ try {
             if (state.color) {
                 summaryText += "Color: " + formatLabel(state.color) + "\n";
             }
-            if (state.talla) {
-                summaryText += "Talla: " + state.talla + "\n";
+            if (tallaPayload) {
+                summaryText += "Talla: " + tallaPayload + "\n";
             }
             if (state.tecnica) {
                 summaryText += "Técnica: " + (state.tecnica === "bordado" ? "Bordado" : "Impresión") + "\n";
@@ -3500,7 +3626,7 @@ try {
                     tecnica: state.tecnica === "bordado" ? "Bordado" : "Impresión",
                     color: formatLabel(state.color),
                     estampado: state.estampado ? formatLabel(state.estampado) : "Ninguno",
-                    talla: state.talla || "Sin talla",
+                    talla: tallaPayload,
                     modelo_rh: state.modeloRh || "",
                     modelo_presilla: state.modeloPresilla || "",
                     acabados_guerrera: isGuerreraProduct(state.producto)
@@ -3535,7 +3661,7 @@ try {
                     throw new Error(data.message || "No fue posible agregar la prenda personalizada al carrito.");
                 }
 
-                localStorage.removeItem(ORDER_DRAFT_STORAGE_KEY);
+                localStorage.removeItem(getCurrentUserDraftKey());
                 showUserToast(
                     `La prenda personalizada se agregó al carrito (código #${data.id_orden}). Serás redirigido al carrito en unos segundos.`,
                     "success",
@@ -3607,7 +3733,7 @@ try {
                 const tecnica = state.tecnica === "bordado" ? "Bordado" : "Impresión";
                 const color = formatLabel(state.color);
                 const estampado = state.estampado ? formatLabel(state.estampado) : "Ninguno";
-                const talla = state.talla || "Sin talla";
+                const talla = productRequiresTalla(state.producto) ? (state.talla || "Sin talla") : "No aplica";
                 
                 showUserToast(`Producto preparado para carrito:\n${producto}\n${identidad} - ${tecnica}\nColor: ${color}\nEstampado: ${estampado}\nTalla: ${talla}\nCantidad: ${getOrderQuantity()}\nPrecio total: ${getOrderPriceLabel()}`, "success", { title: "Producto agregado", durationMs: 8500 });
             } else {
@@ -3832,6 +3958,7 @@ try {
 
     setupContingencyDateLimit();
     restoreOrderDraft();
+    applyUserProfileDefaults();
     bindSelections();
     bindNavigation();
     bindTopbar();

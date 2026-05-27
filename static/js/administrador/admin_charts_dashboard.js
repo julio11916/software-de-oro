@@ -30,6 +30,78 @@ function buildChartGradient(ctx, colorStart, colorEnd) {
     return gradient;
 }
 
+function hasChartLibrary() {
+    return typeof window.Chart !== 'undefined';
+}
+
+function clearChartBody(canvas) {
+    if (!canvas || !canvas.parentElement) return null;
+    const body = canvas.parentElement;
+    body.querySelectorAll('.chart-fallback, .chart-empty-state').forEach(element => element.remove());
+    canvas.hidden = false;
+    return body;
+}
+
+function showChartEmptyState(canvas, message) {
+    const body = clearChartBody(canvas);
+    if (!body) return;
+
+    canvas.hidden = true;
+    const empty = document.createElement('div');
+    empty.className = 'chart-empty-state';
+    empty.textContent = message;
+    body.appendChild(empty);
+}
+
+function renderFallbackBars(canvas, items, options = {}) {
+    const body = clearChartBody(canvas);
+    if (!body) return;
+
+    canvas.hidden = true;
+    const maxValue = Math.max(...items.map(item => Number(item.value || 0)), 1);
+    const wrapper = document.createElement('div');
+    wrapper.className = 'chart-fallback chart-fallback-bars';
+
+    items.forEach(item => {
+        const row = document.createElement('div');
+        row.className = 'chart-fallback-row';
+
+        const label = document.createElement('span');
+        label.className = 'chart-fallback-label';
+        label.textContent = item.label;
+
+        const track = document.createElement('div');
+        track.className = 'chart-fallback-track';
+
+        const bar = document.createElement('span');
+        bar.className = 'chart-fallback-bar';
+        bar.style.width = `${Math.max(4, (Number(item.value || 0) / maxValue) * 100)}%`;
+
+        const value = document.createElement('strong');
+        value.className = 'chart-fallback-value';
+        value.textContent = options.formatValue ? options.formatValue(item.value) : item.value;
+
+        track.appendChild(bar);
+        row.append(label, track, value);
+        wrapper.appendChild(row);
+    });
+
+    body.appendChild(wrapper);
+}
+
+function renderPaymentFallback(canvas, metodosPago) {
+    const items = metodosPago.map(item => ({
+        label: item.metodo_pago || 'Sin definir',
+        value: Number(item.monto || 0)
+    }));
+
+    renderFallbackBars(canvas, items, {
+        formatValue(value) {
+            return formatCurrency(value);
+        }
+    });
+}
+
 function getCommonTooltipStyle() {
     return {
         backgroundColor: 'rgba(10, 22, 43, 0.94)',
@@ -50,6 +122,22 @@ function initProductChart(ventasProducto) {
     const topProducts = [...(ventasProducto || [])]
         .sort((a, b) => Number(b.cantidad || 0) - Number(a.cantidad || 0))
         .slice(0, 10);
+
+    if (!topProducts.length) {
+        showChartEmptyState(canvas, 'No hay productos vendidos para graficar en este rango.');
+        return;
+    }
+
+    if (!hasChartLibrary()) {
+        renderFallbackBars(
+            canvas,
+            topProducts.map(item => ({
+                label: item.nombre || 'Producto sin nombre',
+                value: Number(item.cantidad || 0)
+            }))
+        );
+        return;
+    }
 
     const ctx = canvas.getContext('2d');
     const labels = topProducts.map(v => v.nombre);
@@ -136,6 +224,27 @@ function initMonthChart(ventasMes) {
     const canvas = document.getElementById('chartMeses');
     if (!canvas) return;
 
+    if (!ventasMes.length) {
+        showChartEmptyState(canvas, 'No hay ventas registradas para graficar en este rango.');
+        return;
+    }
+
+    if (!hasChartLibrary()) {
+        renderFallbackBars(
+            canvas,
+            ventasMes.map(item => ({
+                label: item.mes || 'Sin mes',
+                value: Number(item.subtotal || 0)
+            })),
+            {
+                formatValue(value) {
+                    return formatCurrency(value);
+                }
+            }
+        );
+        return;
+    }
+
     const ctx = canvas.getContext('2d');
     const labels = ventasMes.map(v => v.mes);
     const data = ventasMes.map(v => Number(v.subtotal || 0));
@@ -204,6 +313,16 @@ function initMonthChart(ventasMes) {
 function initPaymentMethodChart(metodosPago) {
     const canvas = document.getElementById('chartMetodos');
     if (!canvas) return;
+
+    if (!metodosPago.length) {
+        showChartEmptyState(canvas, 'No hay métodos de pago para graficar en este rango.');
+        return;
+    }
+
+    if (!hasChartLibrary()) {
+        renderPaymentFallback(canvas, metodosPago);
+        return;
+    }
 
     const labels = metodosPago.map(v => v.metodo_pago || 'sin definir');
     const data = metodosPago.map(v => Number(v.monto || 0));
@@ -282,13 +401,22 @@ function initRangeFilter() {
     toggleRango();
 }
 
+function parseChartDataset(chartData, key) {
+    try {
+        return JSON.parse(chartData.dataset[key] || '[]');
+    } catch (error) {
+        console.error(`No se pudieron leer los datos de ${key}:`, error);
+        return [];
+    }
+}
+
 document.addEventListener('DOMContentLoaded', function () {
     const chartData = document.getElementById('chartsData');
     if (!chartData) return;
 
-    const ventasProducto = JSON.parse(chartData.dataset.productos || '[]');
-    const ventasMes = JSON.parse(chartData.dataset.meses || '[]');
-    const metodosPago = JSON.parse(chartData.dataset.metodos || '[]');
+    const ventasProducto = parseChartDataset(chartData, 'productos');
+    const ventasMes = parseChartDataset(chartData, 'meses');
+    const metodosPago = parseChartDataset(chartData, 'metodos');
 
     initCharts(ventasProducto, ventasMes, metodosPago);
     initRangeFilter();

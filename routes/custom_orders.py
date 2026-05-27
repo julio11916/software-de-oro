@@ -12,7 +12,35 @@ def register_custom_orders_legacy_routes(app, legacy):
 
     def orden_personalizada():
         precios = legacy.precios_orden_personalizada_mapa()
-        return render_template("Usuarios/orden_personalizada/orden.html", precios_personalizados=precios)
+        usuario_prefill = {
+            "nombre": "",
+            "correo": "",
+            "telefono": "",
+            "direccion": "",
+        }
+
+        if session.get("rol") == "normal":
+            usuario_prefill["correo"] = str(session.get("usuario", "") or "").strip().lower()
+            try:
+                contacto = legacy._obtener_contacto_checkout_predeterminado()
+            except Exception:
+                contacto = {}
+            usuario_prefill["telefono"] = re.sub(r"\D", "", str(contacto.get("telefono", "") or ""))[:10]
+            usuario_prefill["direccion"] = re.sub(r"\s+", " ", str(contacto.get("direccion", "") or "")).strip()
+
+            try:
+                usuarios = legacy.cargar_usuarios_df()
+                usuario = usuarios[usuarios["email"] == usuario_prefill["correo"]]
+                if not usuario.empty:
+                    usuario_prefill["nombre"] = str(usuario.iloc[0].get("nombre", "") or "").strip()
+            except Exception:
+                usuario_prefill["nombre"] = ""
+
+        return render_template(
+            "Usuarios/orden_personalizada/orden.html",
+            precios_personalizados=precios,
+            usuario_prefill=usuario_prefill,
+        )
 
     def enviar_orden_personalizada():
         if session.get("rol") != "normal":
@@ -47,6 +75,20 @@ def register_custom_orders_legacy_routes(app, legacy):
             return jsonify({"success": False, "message": "El teléfono debe tener 10 dígitos."}), 400
         if producto not in productos_base_permitidos:
             return jsonify({"success": False, "message": "El producto seleccionado ya no está disponible en prendas personalizadas."}), 400
+
+        tallas_validas = {str(talla or "").strip().upper() for talla in getattr(legacy, "TALLAS_OPCIONES", [])}
+        if not tallas_validas:
+            tallas_validas = {"XS", "S", "M", "L", "XL", "XXL"}
+        talla = str(detalle.get("talla", "")).strip().upper()
+        if talla == "2XL":
+            talla = "XXL"
+        productos_con_talla = {"guerrera", "buso_tactico"}
+        if producto in productos_con_talla:
+            if talla not in tallas_validas:
+                return jsonify({"success": False, "message": "Selecciona una talla válida para la prenda personalizada."}), 400
+        else:
+            talla = ""
+        detalle["talla"] = talla
 
         if imagen_url.startswith("data:image/"):
             imagen_guardada, error_imagen = legacy.guardar_preview_personalizado_desde_data_url(
@@ -148,7 +190,7 @@ def register_custom_orders_legacy_routes(app, legacy):
                     "tecnica": str(detalle.get("tecnica", "")).strip(),
                     "color": str(detalle.get("color", "")).strip(),
                     "estampado": str(detalle.get("estampado", "")).strip(),
-                    "talla": str(detalle.get("talla", "")).strip(),
+                    "talla": talla,
                     "modelo_rh": modelo_rh,
                     "modelo_presilla": modelo_presilla,
                     "cantidad": cantidad,
@@ -186,7 +228,7 @@ def register_custom_orders_legacy_routes(app, legacy):
                 "cantidad": cantidad,
                 "precio": precio_unitario,
                 "subtotal": precio,
-                "talla": str(detalle.get("talla", "")).strip(),
+                "talla": talla,
                 "imagen_url": imagen_carrito,
             }
         )

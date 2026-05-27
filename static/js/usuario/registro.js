@@ -1,8 +1,15 @@
 document.addEventListener("DOMContentLoaded", () => {
+    document.querySelectorAll(".auth-toast").forEach((toast) => {
+        setTimeout(() => {
+            toast.classList.add("auth-toast--hide");
+            setTimeout(() => toast.remove(), 220);
+        }, 3000);
+    });
+
     const form = document.getElementById("registroForm");
     const passwordInput = document.getElementById("password");
     const confirmInput = document.getElementById("confirm_password");
-    const showPasswords = document.getElementById("showPasswords");
+    const passwordToggleButtons = document.querySelectorAll("[data-password-toggle]");
     const emailInput = document.getElementById("email");
     const emailStatus = document.getElementById("emailStatus");
     const ruleLength = document.getElementById("rule-length");
@@ -12,7 +19,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const ruleSymbol = document.getElementById("rule-symbol");
     const ruleList = document.querySelector(".password-rules");
 
-    if (!form || !passwordInput || !confirmInput || !showPasswords || !emailInput || !emailStatus) {
+    if (!form || !passwordInput || !confirmInput || !emailInput || !emailStatus) {
         return;
     }
 
@@ -143,10 +150,24 @@ document.addEventListener("DOMContentLoaded", () => {
     validarPassword();
     confirmInput.addEventListener("input", validarConfirmacion);
 
-    showPasswords.addEventListener("change", () => {
-        const tipo = showPasswords.checked ? "text" : "password";
-        passwordInput.type = tipo;
-        confirmInput.type = tipo;
+    passwordToggleButtons.forEach((button) => {
+        const target = document.getElementById(button.dataset.target || "");
+        if (!target) {
+            return;
+        }
+
+        button.addEventListener("click", () => {
+            const visible = target.type === "text";
+            target.type = visible ? "password" : "text";
+            button.setAttribute("aria-label", visible ? "Mostrar contraseña" : "Ocultar contraseña");
+            button.setAttribute("title", visible ? "Mostrar contraseña" : "Ocultar contraseña");
+            const icon = button.querySelector("i");
+            if (icon) {
+                icon.classList.toggle("fa-eye", visible);
+                icon.classList.toggle("fa-eye-slash", !visible);
+            }
+            target.focus();
+        });
     });
 
     emailInput.addEventListener("input", () => {

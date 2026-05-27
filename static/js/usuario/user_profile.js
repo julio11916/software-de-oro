@@ -329,36 +329,56 @@ function setupCodigoInput() {
     codigoInput.addEventListener("keypress", handleCodigoKeypress);
 }
 
-document.addEventListener("DOMContentLoaded", function () {
-    const addressForm = document.querySelector("#modalDirecciones form");
-    const addressInput = document.querySelector("#modalDirecciones #direccion");
-    const addressAlert = document.querySelector("#modalDirecciones #direccionAlert");
+function setupProfileAccountForm() {
+    const form = document.querySelector(".profile-account-form");
+    if (!form) return;
 
-    if (addressForm && addressInput && addressAlert) {
-        addressForm.addEventListener("submit", (event) => {
-            const value = addressInput.value.trim();
-            if (!value) {
-                event.preventDefault();
-                addressAlert.classList.remove("d-none");
-                addressAlert.classList.add("show");
-                addressInput.classList.add("is-invalid");
-                addressInput.focus();
-                return;
-            }
-            addressAlert.classList.add("d-none");
-            addressAlert.classList.remove("show");
-            addressInput.classList.remove("is-invalid");
-        });
+    const nameInput = form.querySelector("#nombre");
+    const phoneInput = form.querySelector("#telefono");
+    const addressInput = form.querySelector("#direccion");
 
-        addressInput.addEventListener("input", () => {
-            if (addressInput.value.trim()) {
-                addressAlert.classList.add("d-none");
-                addressAlert.classList.remove("show");
-                addressInput.classList.remove("is-invalid");
-            }
+    if (phoneInput) {
+        phoneInput.addEventListener("input", () => {
+            phoneInput.value = phoneInput.value.replace(/\D/g, "").slice(0, 10);
+            phoneInput.setCustomValidity("");
         });
     }
 
+    [nameInput, addressInput].forEach((input) => {
+        if (!input) return;
+        input.addEventListener("input", () => {
+            input.setCustomValidity("");
+        });
+    });
+
+    form.addEventListener("submit", (event) => {
+        const nameValue = nameInput ? nameInput.value.trim() : "";
+        const phoneValue = phoneInput ? phoneInput.value.replace(/\D/g, "") : "";
+        const addressValue = addressInput ? addressInput.value.trim() : "";
+
+        if (nameInput && !nameValue) {
+            nameInput.setCustomValidity("El nombre es obligatorio.");
+        }
+        if (phoneInput && !/^\d{10}$/.test(phoneValue)) {
+            phoneInput.setCustomValidity("El celular debe tener exactamente 10 números.");
+        }
+        if (addressInput && !addressValue) {
+            addressInput.setCustomValidity("La dirección es obligatoria.");
+        }
+
+        if (!form.checkValidity()) {
+            event.preventDefault();
+            form.reportValidity();
+            return;
+        }
+
+        if (nameInput) nameInput.value = nameValue;
+        if (phoneInput) phoneInput.value = phoneValue;
+        if (addressInput) addressInput.value = addressValue;
+    });
+}
+
+document.addEventListener("DOMContentLoaded", function () {
     document.querySelectorAll(".profile-alert .btn-close").forEach((closeBtn) => {
         setTimeout(() => {
             closeBtn.click();
@@ -430,24 +450,21 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     const focusTarget = new URLSearchParams(window.location.search).get("focus");
-    if (typeof bootstrap !== "undefined" && focusTarget) {
-        let modalElement = null;
+    if (focusTarget) {
+        const targetInput = focusTarget === "delivery"
+            ? document.getElementById("direccion")
+            : document.getElementById("telefono");
 
-        if (focusTarget === "contacto") {
-            modalElement = document.getElementById("modalInformacion");
-        } else if (focusTarget === "delivery") {
-            modalElement = document.getElementById("modalDirecciones");
-        }
-
-        if (modalElement) {
+        if (targetInput) {
             setTimeout(() => {
-                const modalInstance = bootstrap.Modal.getOrCreateInstance(modalElement);
-                modalInstance.show();
+                targetInput.scrollIntoView({ behavior: "smooth", block: "center" });
+                targetInput.focus();
             }, 250);
         }
     }
 
     setupCodigoInput();
     setupPasswordChangeSection();
+    setupProfileAccountForm();
     setPasswordChangeStep("request");
 });

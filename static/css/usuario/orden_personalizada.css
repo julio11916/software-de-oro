@@ -1987,18 +1987,33 @@ body {
     line-height: 1.35;
 }
 
-.orden-quantity-field {
+.orden-final-controls {
     min-width: 0;
-}
-
-.orden-final-quantity {
     margin-top: 1.15rem;
     padding: 1rem;
     border: 1px solid rgba(29, 80, 146, 0.14);
     border-radius: 18px;
     background: #f8fbff;
+    display: grid;
+    grid-template-columns: minmax(170px, 0.38fr) minmax(220px, 0.62fr);
+    gap: 0.9rem;
+    align-items: end;
 }
 
+.orden-final-controls.seccion-hidden {
+    display: none;
+}
+
+.orden-final-size,
+.orden-quantity-field {
+    min-width: 0;
+}
+
+.orden-final-quantity {
+    margin-top: 0;
+}
+
+.orden-final-size .label-opcion,
 .orden-final-quantity .label-opcion {
     display: block;
     margin-bottom: 0.65rem;
@@ -2034,6 +2049,12 @@ body {
 .quantity-stepper input {
     text-align: center;
     font-weight: 900;
+}
+
+@media (max-width: 720px) {
+    .orden-final-controls {
+        grid-template-columns: 1fr;
+    }
 }
 
 .grid-opciones[data-layout="vertical"] {

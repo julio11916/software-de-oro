@@ -38,3 +38,7 @@ recibo_pos_*/
 # Configuración sensible (credenciales de email)
 config_email.py
 .env
+
+# Archivos privados y generados por usuarios
+instance/
+static/img/personalizadas/

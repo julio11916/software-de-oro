@@ -37,18 +37,35 @@
                 </div>
                 <div class="mb-2">
                     <label for="password" class="form-label">Contraseña</label>
-                    <input type="password" class="form-control auth-input {% if ns.password_error %}is-invalid{% endif %}" name="password" id="password" required>
+                    <div class="auth-password-field">
+                        <input type="password" class="form-control auth-input {% if ns.password_error %}is-invalid{% endif %}" name="password" id="password" required>
+                        <button
+                            type="button"
+                            class="auth-password-toggle"
+                            data-password-toggle
+                            data-target="password"
+                            aria-label="Mostrar contraseña"
+                            title="Mostrar contraseña"
+                        >
+                            <i class="fa-regular fa-eye"></i>
+                        </button>
+                    </div>
                     <div id="passwordAlert" class="inline-alert d-none" role="alert"></div>
                 </div>
                 <div class="text-end mb-3">
                     <a href="{{ url_for('forgot_password') }}" class="small text-decoration-none">Olvidé mi contraseña</a>
                 </div>
                 {% if ns.alert_messages %}
+                    <div class="auth-toast-stack" role="status" aria-live="polite">
                     {% for message in ns.alert_messages %}
-                        <div class="alert alert-danger py-2 login-alert" role="alert">
+                        <div class="auth-toast auth-toast--danger login-alert" role="alert">
+                            <i class="fa-solid fa-circle-exclamation"></i>
+                            <span>
                             {{ message }}
+                            </span>
                         </div>
                     {% endfor %}
+                    </div>
                 {% endif %}
 
                 {% with identity_terms_summary='Ver términos de validación de identidad y tratamiento de datos' %}
@@ -83,7 +100,8 @@
         if (alerts.length) {
             setTimeout(() => {
                 alerts.forEach((alertEl) => {
-                    alertEl.classList.add('d-none');
+                    alertEl.classList.add('auth-toast--hide');
+                    setTimeout(() => alertEl.remove(), 220);
                 });
             }, 3000);
         }
@@ -95,14 +113,37 @@
         const emailAlert = document.getElementById('emailAlert');
         const passwordAlert = document.getElementById('passwordAlert');
         const termsAlert = document.getElementById('termsAlert');
+        const passwordToggleButtons = document.querySelectorAll('[data-password-toggle]');
+
+        const getToastStack = () => {
+            let stack = document.querySelector('.auth-toast-stack');
+            if (!stack) {
+                stack = document.createElement('div');
+                stack.className = 'auth-toast-stack';
+                stack.setAttribute('role', 'status');
+                stack.setAttribute('aria-live', 'polite');
+                document.body.appendChild(stack);
+            }
+            return stack;
+        };
 
         const showInlineAlert = (el, message) => {
-            if (!el) return;
-            el.textContent = message;
-            el.classList.remove('d-none');
-            setTimeout(() => {
-                el.classList.add('d-none');
+            if (el) {
                 el.textContent = '';
+                el.classList.add('d-none');
+            }
+            const toast = document.createElement('div');
+            toast.className = 'auth-toast auth-toast--danger';
+            toast.setAttribute('role', 'alert');
+            const icon = document.createElement('i');
+            icon.className = 'fa-solid fa-circle-exclamation';
+            const text = document.createElement('span');
+            text.textContent = message;
+            toast.append(icon, text);
+            getToastStack().appendChild(toast);
+            setTimeout(() => {
+                toast.classList.add('auth-toast--hide');
+                setTimeout(() => toast.remove(), 220);
             }, 3000);
         };
 
@@ -143,6 +184,24 @@
                 }
             });
         }
+
+        passwordToggleButtons.forEach((button) => {
+            const target = document.getElementById(button.dataset.target || '');
+            if (!target) return;
+
+            button.addEventListener('click', () => {
+                const visible = target.type === 'text';
+                target.type = visible ? 'password' : 'text';
+                button.setAttribute('aria-label', visible ? 'Mostrar contraseña' : 'Ocultar contraseña');
+                button.setAttribute('title', visible ? 'Mostrar contraseña' : 'Ocultar contraseña');
+                const icon = button.querySelector('i');
+                if (icon) {
+                    icon.classList.toggle('fa-eye', visible);
+                    icon.classList.toggle('fa-eye-slash', !visible);
+                }
+                target.focus();
+            });
+        });
     </script>
 </body>
 </html>
