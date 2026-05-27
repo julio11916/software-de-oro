@@ -82,6 +82,9 @@ def register_user_legacy_routes(app, legacy):
             usuario_dict["telefono"] = ""
         if "direccion" not in usuario_dict:
             usuario_dict["direccion"] = ""
+        for campo in ("telefono", "direccion"):
+            valor = "" if pd.isna(usuario_dict.get(campo, "")) else str(usuario_dict.get(campo, "") or "").strip()
+            usuario_dict[campo] = "" if valor.lower() == "nan" else valor
         if "email_verified" not in usuario_dict:
             usuario_dict["email_verified"] = False
 
@@ -120,9 +123,19 @@ def register_user_legacy_routes(app, legacy):
             flash("Acceso denegado", "danger")
             return redirect(url_for("home"))
 
-        nombre = request.form.get("nombre")
-        telefono = request.form.get("telefono", "")
-        direccion = request.form.get("direccion", "")
+        nombre = re.sub(r"\s+", " ", str(request.form.get("nombre", "") or "")).strip()
+        telefono = re.sub(r"\D", "", str(request.form.get("telefono", "") or ""))
+        direccion = re.sub(r"\s+", " ", str(request.form.get("direccion", "") or "")).strip()
+
+        if not nombre:
+            flash("El nombre es obligatorio.", "danger")
+            return redirect(url_for("user_profile"))
+        if not telefono or not direccion:
+            flash("El teléfono y la dirección son obligatorios para poder comprar.", "danger")
+            return redirect(url_for("user_profile"))
+        if len(telefono) != 10:
+            flash("El teléfono debe contener solo números y tener exactamente 10 dígitos.", "danger")
+            return redirect(url_for("user_profile"))
 
         usuarios = legacy.cargar_usuarios_df()
         usuario_email = session.get("usuario")

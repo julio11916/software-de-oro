@@ -293,7 +293,7 @@ def guardar_documento_identidad_personalizada_desde_data_url(data_url, max_image
         return {}, "La imagen del documento de validación supera el tamaño permitido (3MB)."
 
     usuario_slug = _slug_carpeta(str(usuario_email or "usuario").split("@", 1)[0])
-    carpeta_relativa = Path("validaciones_identidad") / usuario_slug
+    carpeta_relativa = Path("img") / "validaciones_identidad" / usuario_slug
     carpeta_destino = Path("instance") / carpeta_relativa
     carpeta_destino.mkdir(parents=True, exist_ok=True)
 

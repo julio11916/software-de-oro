@@ -117,19 +117,6 @@
                                     <small class="orden-field-help">Selecciona una fecha entre 1940 y el año actual.</small>
                                 </div>
 
-                                <div id="container-talla">
-                                    <label for="input-talla" class="label-opcion">Talla</label>
-                                    <select id="input-talla" class="form-control">
-                                        <option value="" disabled selected>Seleccione una talla</option>
-                                        <option value="XS">XS</option>
-                                        <option value="S">S</option>
-                                        <option value="M">M</option>
-                                        <option value="L">L</option>
-                                        <option value="XL">XL</option>
-                                        <option value="2XL">2XL</option>
-                                    </select>
-                                </div>
-
                                 <div class="identity-document-field">
                                     <label for="input-documento-identidad" class="label-opcion">Documento de validación institucional</label>
                                     <input type="file" id="input-documento-identidad" class="form-control"
@@ -488,17 +475,31 @@
                     </div>
                 </div>
 
-                <div class="orden-quantity-field orden-final-quantity seccion-hidden" id="cantidad-final-container">
-                    <span class="label-opcion">Cantidad de prendas</span>
-                    <div class="quantity-stepper" role="group" aria-label="Cantidad de prendas personalizadas">
-                        <button type="button" class="quantity-stepper__btn" id="btn-cantidad-menos" aria-label="Disminuir cantidad">
-                            <i class="fas fa-minus"></i>
-                        </button>
-                        <input type="number" id="input-cantidad-prendas" class="form-control"
-                            min="1" max="99" step="1" value="1" inputmode="numeric" required>
-                        <button type="button" class="quantity-stepper__btn" id="btn-cantidad-mas" aria-label="Aumentar cantidad">
-                            <i class="fas fa-plus"></i>
-                        </button>
+                <div class="orden-final-controls seccion-hidden" id="cantidad-final-container">
+                    <div class="orden-final-size seccion-hidden" id="container-talla-final">
+                        <label for="input-talla" class="label-opcion">Talla</label>
+                        <select id="input-talla" class="form-control" disabled>
+                            <option value="" disabled selected>Seleccione una talla</option>
+                            <option value="XS">XS</option>
+                            <option value="S">S</option>
+                            <option value="M">M</option>
+                            <option value="L">L</option>
+                            <option value="XL">XL</option>
+                            <option value="XXL">XXL</option>
+                        </select>
+                    </div>
+                    <div class="orden-quantity-field orden-final-quantity">
+                        <span class="label-opcion">Cantidad de prendas</span>
+                        <div class="quantity-stepper" role="group" aria-label="Cantidad de prendas personalizadas">
+                            <button type="button" class="quantity-stepper__btn" id="btn-cantidad-menos" aria-label="Disminuir cantidad">
+                                <i class="fas fa-minus"></i>
+                            </button>
+                            <input type="number" id="input-cantidad-prendas" class="form-control"
+                                min="1" max="99" step="1" value="1" inputmode="numeric" required>
+                            <button type="button" class="quantity-stepper__btn" id="btn-cantidad-mas" aria-label="Aumentar cantidad">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -509,6 +510,7 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         window.PRECIOS_ORDEN_PERSONALIZADA = {{ precios_personalizados|tojson }};
+        window.USUARIO_ORDEN_PERSONALIZADA = {{ usuario_prefill|tojson }};
     </script>
     <script src="{{ url_for('static', filename='js/usuario/orden_personalizada.js') }}?v=639118770367342687"></script>
 </body>

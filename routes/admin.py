@@ -1100,7 +1100,8 @@ def register_admin_legacy_routes(app, legacy):
         if not ordenes_df.empty and "estado" in ordenes_df.columns:
             ordenes_df = ordenes_df[~ordenes_df["estado"].astype(str).str.strip().str.lower().eq("pendiente_pago")].copy()
         if not ordenes_df.empty:
-            ordenes_df = ordenes_df.sort_values(by="id_orden_personalizada", ascending=False, na_position="last")
+            ordenes_df["_orden_num"] = pd.to_numeric(ordenes_df["id_orden_personalizada"], errors="coerce")
+            ordenes_df = ordenes_df.sort_values(by="_orden_num", ascending=False, na_position="last").drop(columns=["_orden_num"])
             ordenes_df["documento_identidad_nombre"] = ""
             ordenes_df["documento_identidad_url"] = ""
             for idx, orden in ordenes_df.iterrows():
@@ -1256,12 +1257,26 @@ def register_admin_legacy_routes(app, legacy):
         if not documento_path:
             return "Documento no encontrado", 404
 
-        base_dir = os.path.abspath(os.path.join(app.instance_path, "validaciones_identidad"))
-        ruta_documento = os.path.abspath(os.path.join(app.instance_path, documento_path.replace("/", os.sep)))
-        if os.path.commonpath([base_dir, ruta_documento]) != base_dir or not os.path.isfile(ruta_documento):
+        documento_path = documento_path.replace("\\", "/").lstrip("/")
+        base_actual = os.path.abspath(os.path.join(app.instance_path, "img", "validaciones_identidad"))
+        base_legacy = os.path.abspath(os.path.join(app.instance_path, "validaciones_identidad"))
+        rutas_candidatas = []
+
+        if documento_path.startswith("img/validaciones_identidad/"):
+            rutas_candidatas.append(os.path.abspath(os.path.join(app.instance_path, documento_path.replace("/", os.sep))))
+        elif documento_path.startswith("validaciones_identidad/"):
+            rutas_candidatas.append(os.path.abspath(os.path.join(app.instance_path, "img", documento_path.replace("/", os.sep))))
+            rutas_candidatas.append(os.path.abspath(os.path.join(app.instance_path, documento_path.replace("/", os.sep))))
+        else:
             return "Documento no encontrado", 404
 
-        return send_file(ruta_documento, as_attachment=False)
+        for ruta_documento in rutas_candidatas:
+            esta_en_base_actual = os.path.commonpath([base_actual, ruta_documento]) == base_actual
+            esta_en_base_legacy = os.path.commonpath([base_legacy, ruta_documento]) == base_legacy
+            if (esta_en_base_actual or esta_en_base_legacy) and os.path.isfile(ruta_documento):
+                return send_file(ruta_documento, as_attachment=False)
+
+        return "Documento no encontrado", 404
 
     def admin_informes():
         if session.get("rol") != "admin":
