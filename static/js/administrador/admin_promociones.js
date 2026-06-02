@@ -68,6 +68,29 @@ function formatPromoPrice(value) {
     }).format(numericValue);
 }
 
+function todayIsoDate() {
+    const today = new Date();
+    today.setMinutes(today.getMinutes() - today.getTimezoneOffset());
+    return today.toISOString().slice(0, 10);
+}
+
+function syncPromoDateLimits() {
+    const { refs } = promoModalState;
+    if (!refs.fechaInicio || !refs.fechaFin) {
+        return;
+    }
+
+    const today = todayIsoDate();
+    refs.fechaInicio.min = today;
+    if (!refs.fechaInicio.value || refs.fechaInicio.value < today) {
+        refs.fechaInicio.value = today;
+    }
+    refs.fechaFin.min = refs.fechaInicio.value || today;
+    if (!refs.fechaFin.value || refs.fechaFin.value < refs.fechaFin.min) {
+        refs.fechaFin.value = refs.fechaFin.min;
+    }
+}
+
 function fillPromoModal(product) {
     const { refs } = promoModalState;
     if (!refs.form) {
@@ -82,9 +105,13 @@ function fillPromoModal(product) {
     refs.tipo.value = 'porcentaje';
     refs.valor.value = '';
     refs.valor.min = '0.01';
+    refs.valor.step = '0.01';
     refs.valor.removeAttribute('max');
-    refs.fechaInicio.value = '';
-    refs.fechaFin.value = '';
+    const today = todayIsoDate();
+    refs.fechaInicio.min = today;
+    refs.fechaInicio.value = today;
+    refs.fechaFin.min = today;
+    refs.fechaFin.value = today;
     refs.codigo.value = '';
     refs.activo.checked = true;
 
@@ -105,6 +132,7 @@ function fillPromoModal(product) {
     }
 
     updateDiscountLimits();
+    syncPromoDateLimits();
 }
 
 function updateDiscountLimits() {
@@ -114,13 +142,20 @@ function updateDiscountLimits() {
     }
 
     const productPrice = Number.parseFloat(refs.form.dataset.productPrice || '0') || 0;
-    refs.valor.min = '0.01';
+    const isFixedValue = refs.tipo.value === 'valor_fijo';
+    refs.valor.min = isFixedValue ? '100' : '0.01';
+    refs.valor.step = isFixedValue ? '100' : '0.01';
     refs.valor.setCustomValidity('');
 
-    if (refs.tipo.value === 'porcentaje') {
+    if (!isFixedValue) {
         refs.valor.max = '100';
     } else if (productPrice > 0) {
-        refs.valor.max = String(Math.max(0.01, productPrice - 0.01));
+        const maxFixedDiscount = Math.max(0, productPrice - 100);
+        if (maxFixedDiscount > 0) {
+            refs.valor.max = String(maxFixedDiscount);
+        } else {
+            refs.valor.removeAttribute('max');
+        }
     } else {
         refs.valor.removeAttribute('max');
     }
@@ -142,12 +177,15 @@ function validatePromoForm(event) {
     const discountValue = Number.parseFloat(refs.valor.value || '0');
     const startDate = refs.fechaInicio.value;
     const endDate = refs.fechaFin.value;
+    const today = todayIsoDate();
     const code = (refs.codigo.value || '').trim();
 
     if (!refs.productId.value) {
         refs.productId.setCustomValidity('Selecciona un producto para crear la promoción.');
     } else if (!discountValue || discountValue <= 0) {
         refs.valor.setCustomValidity('El descuento debe ser mayor a cero.');
+    } else if (refs.tipo.value === 'valor_fijo' && discountValue < 100) {
+        refs.valor.setCustomValidity('El descuento fijo mínimo es de COP 100.');
     } else if (refs.tipo.value === 'porcentaje' && discountValue > 100) {
         refs.valor.setCustomValidity('El porcentaje no puede superar el 100%.');
     } else if (refs.tipo.value === 'valor_fijo' && productPrice > 0 && discountValue >= productPrice) {
@@ -156,6 +194,10 @@ function validatePromoForm(event) {
         refs.fechaInicio.setCustomValidity('La fecha de inicio es obligatoria.');
     } else if (!endDate) {
         refs.fechaFin.setCustomValidity('La fecha de finalización es obligatoria.');
+    } else if (startDate < today) {
+        refs.fechaInicio.setCustomValidity('La fecha de inicio no puede ser anterior al día de hoy.');
+    } else if (endDate < today) {
+        refs.fechaFin.setCustomValidity('La fecha de fin no puede ser anterior al día de hoy.');
     } else if (startDate > endDate) {
         refs.fechaFin.setCustomValidity('La fecha de fin no puede ser anterior al inicio.');
     } else if (code && !/^[A-Z0-9_-]{3,30}$/i.test(code)) {
@@ -318,6 +360,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (promoModalState.refs.tipo) {
             promoModalState.refs.tipo.addEventListener('change', updateDiscountLimits);
+        }
+        if (promoModalState.refs.fechaInicio) {
+            promoModalState.refs.fechaInicio.addEventListener('change', syncPromoDateLimits);
+        }
+        if (promoModalState.refs.fechaFin) {
+            promoModalState.refs.fechaFin.addEventListener('change', syncPromoDateLimits);
         }
         if (promoModalState.refs.form) {
             promoModalState.refs.form.addEventListener('submit', validatePromoForm);

@@ -94,11 +94,13 @@ function applyFilters() {
 function renderCatalog() {
     if (!filteredCatalog.length) {
         catalogGrid.innerHTML = '';
+        catalogGrid.classList.remove('catalog-grid--scrollable');
         catalogEmpty.classList.remove('d-none');
         return;
     }
 
     catalogEmpty.classList.add('d-none');
+    catalogGrid.classList.toggle('catalog-grid--scrollable', filteredCatalog.length > 9);
     catalogGrid.innerHTML = filteredCatalog.map((product) => {
         const stock = Number(product.stock || 0);
         const basePrice = Number(product.precio_original ?? product.precio ?? 0);

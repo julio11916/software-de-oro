@@ -13,18 +13,15 @@
 
 <body>
     {% set estado_labels = {
-        'pendiente_pago': 'Pendiente de pago',
         'pendiente': 'Pendiente',
         'en_revision': 'En revisión',
-        'cotizada': 'Cotizada',
-        'completada': 'Completada',
-        'cancelada': 'Cancelada'
+        'completada': 'Aprobado',
+        'cancelada': 'Rechazado'
     } %}
     {% set ns = namespace(en_revision=0, cotizadas=0, completadas=0, canceladas=0) %}
     {% for orden in ordenes_personalizadas %}
         {% set estado_tmp = (orden.estado or 'pendiente')|lower %}
         {% if estado_tmp == 'en_revision' %}{% set ns.en_revision = ns.en_revision + 1 %}{% endif %}
-        {% if estado_tmp == 'cotizada' %}{% set ns.cotizadas = ns.cotizadas + 1 %}{% endif %}
         {% if estado_tmp == 'completada' %}{% set ns.completadas = ns.completadas + 1 %}{% endif %}
         {% if estado_tmp == 'cancelada' %}{% set ns.canceladas = ns.canceladas + 1 %}{% endif %}
     {% endfor %}
@@ -97,7 +94,7 @@
                         <strong class="summary-value">{{ ns.en_revision }}</strong>
                     </article>
                     <article class="summary-card personalized-metric personalized-metric--done">
-                        <span class="summary-label">Completadas</span>
+                        <span class="summary-label">Aprobadas</span>
                         <strong class="summary-value">{{ ns.completadas }}</strong>
                     </article>
                 </section>
@@ -112,7 +109,7 @@
                             <div class="custom-status-legend">
                                 <span><i class="legend-dot legend-dot--pending"></i>Pendiente</span>
                                 <span><i class="legend-dot legend-dot--review"></i>En revisi&oacute;n</span>
-                                <span><i class="legend-dot legend-dot--done"></i>Completada</span>
+                                <span><i class="legend-dot legend-dot--done"></i>Aprobado</span>
                             </div>
                         </div>
 

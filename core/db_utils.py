@@ -118,7 +118,8 @@ def ensure_tables():
         fecha_pedido TIMESTAMPTZ DEFAULT NOW(),
         estado TEXT,
         cliente_telefono TEXT,
-        cliente_direccion TEXT
+        cliente_direccion TEXT,
+        documento_validacion_json TEXT NOT NULL DEFAULT ''
     );
     CREATE TABLE IF NOT EXISTS detalle_pedido (
         id_detalle BIGSERIAL PRIMARY KEY,
@@ -187,6 +188,7 @@ def ensure_tables():
         conn.execute(sa.text("ALTER TABLE producto ADD COLUMN IF NOT EXISTS destacado_dashboard BOOLEAN DEFAULT FALSE"))
         conn.execute(sa.text("ALTER TABLE pedidos ADD COLUMN IF NOT EXISTS cliente_telefono TEXT"))
         conn.execute(sa.text("ALTER TABLE pedidos ADD COLUMN IF NOT EXISTS cliente_direccion TEXT"))
+        conn.execute(sa.text("ALTER TABLE pedidos ADD COLUMN IF NOT EXISTS documento_validacion_json TEXT NOT NULL DEFAULT ''"))
         conn.execute(sa.text("ALTER TABLE detalle_pedido ADD COLUMN IF NOT EXISTS talla TEXT"))
         conn.execute(sa.text("ALTER TABLE pagos ADD COLUMN IF NOT EXISTS comprobante_url TEXT"))
         conn.execute(sa.text("ALTER TABLE promociones ADD COLUMN IF NOT EXISTS id_producto BIGINT"))

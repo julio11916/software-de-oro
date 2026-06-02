@@ -141,7 +141,6 @@
                         {% if total_descuento %}
                         <small class="summary-discount">Ahorraste {{ total_descuento|cop }} en promociones activas.</small>
                         {% endif %}
-                        <small>Incluye impuestos y envío sin costo adicional</small>
                     </div>
 
                     <div class="summary-details">
@@ -169,35 +168,11 @@
                         </div>
                     </div>
 
-                    <div class="summary-items-inline">
-                        <span class="summary-items-inline__title">Incluye</span>
-                        <div class="summary-items-inline__list">
-                            {% for item in carrito %}
-                            <span>{{ item.nombre }}{% if item.talla %} · {{ item.talla }}{% endif %} x{{ item.cantidad }}</span>
-                            {% endfor %}
-                        </div>
-                    </div>
-
-                    <form method="POST" action="{{ url_for('checkout_select') }}" class="payment-form" novalidate>
+                    <form method="POST" action="{{ url_for('checkout_select') }}" class="payment-form" enctype="multipart/form-data" novalidate>
                         <input type="hidden" name="cliente_telefono" value="{{ cliente_telefono or '' }}">
                         <input type="hidden" name="cliente_direccion" value="{{ cliente_direccion or '' }}">
 
-                        {% if contacto_cliente_completo %}
-                        <section class="checkout-profile-card checkout-profile-card--ready">
-                            <div class="checkout-profile-card__icon">
-                                <i class="fas fa-circle-check"></i>
-                            </div>
-                            <div class="checkout-profile-card__body">
-                                <span class="checkout-profile-card__eyebrow">Perfil listo para comprar</span>
-                                <h4>Datos de entrega confirmados</h4>
-                                <div class="checkout-profile-card__data">
-                                    <span><i class="fas fa-phone"></i> {{ cliente_telefono }}</span>
-                                    <span><i class="fas fa-location-dot"></i> {{ cliente_direccion }}</span>
-                                </div>
-                            </div>
-                            <a href="{{ url_for('user_profile') }}" class="checkout-profile-card__action">Actualizar</a>
-                        </section>
-                        {% else %}
+                        {% if not contacto_cliente_completo %}
                         <section class="checkout-profile-card checkout-profile-card--pending">
                             <div class="checkout-profile-card__icon">
                                 <i class="fas fa-circle-info"></i>
@@ -226,6 +201,29 @@
                                 maxlength="30"
                                 value="{{ selected_codigo_promo or '' }}">
                         </div>
+
+                        {% if requiere_documento_institucional %}
+                        <div class="form-group form-group--identity-doc">
+                            <label class="form-label" for="documento_validacion_institucional">
+                                <i class="fas fa-id-card"></i> Documento de validaci&oacute;n institucional
+                            </label>
+                            <input
+                                id="documento_validacion_institucional"
+                                type="file"
+                                name="documento_validacion_institucional"
+                                class="form-control"
+                                accept=".jpg,.jpeg,.png,.gif,.webp,image/*"
+                                {% if not documento_institucional_cargado %}required{% endif %}>
+                            <small class="identity-doc-hint">
+                                Adjunta una foto legible de tu libreta militar, carn&eacute; o documento institucional. JPG, PNG, GIF o WEBP, m&aacute;ximo 3MB.
+                            </small>
+                            {% if documento_institucional_cargado %}
+                            <small class="identity-doc-ready">
+                                <i class="fas fa-check-circle"></i> Documento cargado para este checkout. Puedes adjuntar otro si necesitas reemplazarlo.
+                            </small>
+                            {% endif %}
+                        </div>
+                        {% endif %}
 
                         <section class="payment-method-selector" aria-labelledby="payment-method-title">
                             <div class="payment-method-selector__head">

@@ -93,7 +93,7 @@ def register_custom_orders_legacy_routes(app, legacy):
         if imagen_url.startswith("data:image/"):
             imagen_guardada, error_imagen = legacy.guardar_preview_personalizado_desde_data_url(
                 imagen_url,
-                prefijo="gafete_preview",
+                prefijo=f"{producto}_preview",
             )
             if error_imagen:
                 return jsonify({"success": False, "message": error_imagen}), 400

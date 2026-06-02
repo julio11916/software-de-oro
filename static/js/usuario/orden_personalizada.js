@@ -96,6 +96,7 @@ try {
         talla: null,
         modeloRh: null,
         modeloPresilla: null,
+        lastGuerreraPreviewAddon: null,
         cantidad: 1,
         pasoActual: 1,
         vistaPrenda: "delantera",
@@ -166,6 +167,7 @@ try {
         "talla",
         "modeloRh",
         "modeloPresilla",
+        "lastGuerreraPreviewAddon",
         "cantidad",
         "pasoActual",
         "vistaPrenda"
@@ -1227,7 +1229,91 @@ try {
             }
         }
 
+        const guerreraPoliciaColor = getPoliciaGuerreraAddonPreviewImage();
+        if (guerreraPoliciaColor) {
+            imagen = guerreraPoliciaColor;
+        }
+
         return imagen || "";
+    }
+
+    function getPoliciaGuerreraAddonPreviewImage() {
+        const producto = normalizeProductKey(state.producto || "");
+        const identidad = normalizeProductKey(state.identidad || "");
+        const color = normalizeProductKey(state.color || "");
+        const isGreen = color === "verde-claro" || color === "verde";
+        const isBlue = color === "azul-noche" || color === "azul noche" || color === "azul";
+        if (producto !== "guerrera" || identidad !== "policia" || (!isGreen && !isBlue) || state.vistaPrenda === "trasera") {
+            return "";
+        }
+
+        const selected = getGuerreraFinishList().filter((item) => item === "escudos" || item === "parches");
+        if (state.modeloRh) selected.push("rh");
+        if (state.modeloPresilla) selected.push("presillas");
+
+        let lastSelected = state.lastGuerreraPreviewAddon || "";
+        if (!selected.includes(lastSelected)) {
+            lastSelected = selected[selected.length - 1] || "";
+        }
+
+        if (lastSelected === "rh" && state.modeloRh) {
+            const rhFilename = String(state.modeloRh).trim();
+            const greenRhMap = {
+                "A+": "gerrara_verde_con_rh_a+.jpeg",
+                "A-": "gerrara_verde_con_rh_a-.png",
+                "AB+": "gerrara_verde_con_rh_ab+.png",
+                "AB-": "gerrara_verde_con_rh_ab-.png",
+                "B+": "gerrara_verde_con_rh_b+.png",
+                "B-": "gerrara_verde_con_rh_b-.png",
+                "O+": "gerrara_verde_con_rh_o+.png",
+                "O-": "gerrara_verde_con_rh_o-.png",
+            };
+            const rhFolder = isBlue ? "gerrera_RH_azul" : "gerreras_RH_verde";
+            const rhImage = isBlue ? `${rhFilename}.png` : greenRhMap[rhFilename];
+            return rhImage
+                ? `/static/img/prendas/Policia/guerrera/${rhFolder}/${rhImage}`
+                : "";
+        }
+
+        if (lastSelected === "presillas" && state.modeloPresilla) {
+            const presillaMaps = {
+                verde: {
+                    "General": "gerrera_presilla_general.png",
+                    "Mayor General": "gerrera_presilla_Mayor_General.png",
+                    "Brigadier General": "gerrera_presilla_Brigadier_General.png",
+                    "Coronel": "gerrera_presilla_Coronel.png",
+                    "Teniente Coronel": "gerrera_presilla_Teniente_Coronel.png",
+                    "Mayor": "gerrera_Presilla_Mayor.png",
+                    "Capitan": "gerrera_presilla_Capitán.png",
+                    "Teniente": "gerrara_presilla_Teniente.png",
+                    "Subteniente": "gerrera_presilla_Subteniente.png",
+                },
+                azul: {
+                    "General": "gerrera_azul_presilla_general.png",
+                    "Mayor General": "gerrera_azul_presilla_Mayor_General.png",
+                    "Brigadier General": "gerrera_azul_presilla_Brigadier_General.png",
+                    "Coronel": "gerrera_azul_presilla_Coronel.png",
+                    "Teniente Coronel": "gerrera_azul_presilla_Teniente_Coronel.png",
+                    "Mayor": "gerrera_azul_Presilla_Mayor.png",
+                    "Capitan": "gerrera_azul_presilla_Capitán.png",
+                    "Teniente": "gerrara_azul_presilla_Teniente.png",
+                    "Subteniente": "gerrera_azul_presilla_Subteniente.png",
+                },
+            };
+            const presillaColor = isBlue ? "azul" : "verde";
+            const presillaFolder = isBlue ? "gerrera_presilla_azul" : "gerrera_presilla_verde";
+            const presillaImage = presillaMaps[presillaColor][state.modeloPresilla];
+            return presillaImage
+                ? `/static/img/prendas/Policia/guerrera/${presillaFolder}/${presillaImage}`
+                : "";
+        }
+
+        const colorPrefix = isBlue ? "azul" : "verde";
+        const previewMap = {
+            escudos: `/static/img/prendas/Policia/guerrera/gerrara_${colorPrefix}_con_escudo.png`,
+            parches: `/static/img/prendas/Policia/guerrera/gerrara_${colorPrefix}_con_estampado.png`,
+        };
+        return previewMap[lastSelected] || "";
     }
 
     function getPoliciaGuerreraStampImage(tipo) {
@@ -1590,7 +1676,9 @@ try {
 
     async function obtenerImagenPreviewParaPayload() {
         const imagenBase = getCurrentPreviewImage();
-        if (!esProductoGafete()) return imagenBase;
+        const producto = normalizeProductKey(state.producto);
+        const requierePreviewRenderizado = esProductoGafete() || (producto === "gorra" && state.estampado && state.estampado !== "Ninguno");
+        if (!requierePreviewRenderizado) return imagenBase;
         const dataUrl = await exportarPreviewPersonalizadoDataUrl();
         return dataUrl || imagenBase;
     }
@@ -2643,11 +2731,27 @@ try {
         setGuerreraFinishList([]);
         state.modeloRh = null;
         state.modeloPresilla = null;
+        state.lastGuerreraPreviewAddon = null;
         syncGuerreraAddonControls();
         document.querySelectorAll("[data-estampado]").forEach((element) => {
             element.classList.remove("seleccionada", "seleccion-multiple");
         });
         updateGuerreraPiecePreviews();
+    }
+
+    function syncLastGuerreraPreviewAddon(preferredAddon = "") {
+        const availableAddons = getGuerreraFinishList().filter((item) => item === "escudos" || item === "parches");
+        if (state.modeloRh) availableAddons.push("rh");
+        if (state.modeloPresilla) availableAddons.push("presillas");
+
+        if (preferredAddon && availableAddons.includes(preferredAddon)) {
+            state.lastGuerreraPreviewAddon = preferredAddon;
+            return;
+        }
+
+        if (!availableAddons.includes(state.lastGuerreraPreviewAddon)) {
+            state.lastGuerreraPreviewAddon = availableAddons[availableAddons.length - 1] || null;
+        }
     }
 
     function handleGuerreraFinishClick(button, tipoEstampado) {
@@ -2667,6 +2771,7 @@ try {
             const current = getGuerreraFinishList().filter((item) => item !== "ninguno");
             const exists = current.includes(tipoEstampado);
             setGuerreraFinishList(exists ? current.filter((item) => item !== tipoEstampado) : [...current, tipoEstampado]);
+            syncLastGuerreraPreviewAddon(exists ? "" : tipoEstampado);
             document.querySelector('[data-estampado="ninguno"]')?.classList.remove("seleccionada");
             button.classList.toggle("seleccionada", !exists);
             button.classList.toggle("seleccion-multiple", !exists);
@@ -3418,6 +3523,7 @@ try {
         if (selectGuerreraRh) {
             selectGuerreraRh.addEventListener("change", (event) => {
                 state.modeloRh = event.target.value || null;
+                syncLastGuerreraPreviewAddon(state.modeloRh ? "rh" : "");
                 setGuerreraFinishList(getGuerreraFinishList().filter((item) => item !== "ninguno"));
                 document.querySelector('[data-estampado="ninguno"]')?.classList.remove("seleccionada");
                 syncGuerreraEstampadoState();
@@ -3433,12 +3539,14 @@ try {
                 if (isUnavailablePresilla(event.target.value)) {
                     event.target.value = "";
                     state.modeloPresilla = null;
+                    syncLastGuerreraPreviewAddon();
                     updateSummary();
                     validarPaso4Realtime();
                     saveOrderDraft();
                     return;
                 }
                 state.modeloPresilla = event.target.value || null;
+                syncLastGuerreraPreviewAddon(state.modeloPresilla ? "presillas" : "");
                 setGuerreraFinishList(getGuerreraFinishList().filter((item) => item !== "ninguno"));
                 document.querySelector('[data-estampado="ninguno"]')?.classList.remove("seleccionada");
                 syncGuerreraEstampadoState();

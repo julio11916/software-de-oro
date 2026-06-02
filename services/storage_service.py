@@ -318,7 +318,7 @@ def cargar_productos_df():
     productos = app_image_service.normalizar_imagenes_productos(productos)
     productos['id_producto'] = pd.to_numeric(productos['id_producto'], errors='coerce')
     productos['precio'] = pd.to_numeric(productos['precio'], errors='coerce').fillna(0.0).astype(float)
-    productos['stock'] = pd.to_numeric(productos['stock'], errors='coerce').fillna(0).astype(int)
+    productos['stock'] = pd.to_numeric(productos['stock'], errors='coerce').fillna(0).clip(lower=0).astype(int)
     productos['id_categoria'] = pd.to_numeric(productos['id_categoria'], errors='coerce').fillna(0).astype(int)
     # Normalizar bandera eliminado aun si viene como texto ('t','f','true','false') o nulos.
     def _to_bool(valor: Any) -> bool:
@@ -367,20 +367,21 @@ def cargar_pedidos_df():
     pedidos = read_table_df('pedidos')
     for column in PEDIDO_COLUMNS:
         if column not in pedidos.columns:
-            pedidos[column] = '' if column in {'id_usuario', 'fecha_pedido', 'estado', 'cliente_telefono', 'cliente_direccion'} else 0
+            pedidos[column] = '' if column in {'id_usuario', 'fecha_pedido', 'estado', 'cliente_telefono', 'cliente_direccion', 'documento_validacion_json'} else 0
     pedidos['id_pedido'] = pd.to_numeric(pedidos['id_pedido'], errors='coerce')
     pedidos['id_usuario'] = pedidos['id_usuario'].fillna('')
     pedidos['fecha_pedido'] = pedidos['fecha_pedido'].fillna('')
     pedidos['estado'] = pedidos['estado'].fillna('confirmado')
     pedidos['cliente_telefono'] = pedidos['cliente_telefono'].fillna('').astype(str)
     pedidos['cliente_direccion'] = pedidos['cliente_direccion'].fillna('').astype(str)
+    pedidos['documento_validacion_json'] = pedidos['documento_validacion_json'].fillna('').astype(str)
     return pedidos[PEDIDO_COLUMNS]
 
 def guardar_pedidos_df(pedidos):
     pedidos = pedidos.copy()
     for column in PEDIDO_COLUMNS:
         if column not in pedidos.columns:
-            pedidos[column] = '' if column in {'id_usuario', 'fecha_pedido', 'estado', 'cliente_telefono', 'cliente_direccion'} else 0
+            pedidos[column] = '' if column in {'id_usuario', 'fecha_pedido', 'estado', 'cliente_telefono', 'cliente_direccion', 'documento_validacion_json'} else 0
     replace_table_df('pedidos', pedidos[PEDIDO_COLUMNS])
 
 def cargar_detalle_pedido_df():

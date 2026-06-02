@@ -38,6 +38,9 @@ def register_admin_legacy_routes(app, legacy):
             if tipo_descuento == "porcentaje" and valor_descuento > 100:
                 flash("El porcentaje de descuento no puede superar el 100%.", "warning")
                 return redirect(url_for("admin_promo"))
+            if tipo_descuento == "valor_fijo" and valor_descuento < 100:
+                flash("El descuento fijo mínimo es de COP 100.", "warning")
+                return redirect(url_for("admin_promo"))
 
             codigo = request.form.get("codigo", "").strip().upper()
             fecha_inicio = request.form.get("fecha_inicio", "")
@@ -45,8 +48,15 @@ def register_admin_legacy_routes(app, legacy):
             activo = request.form.get("activo") == "on"
             inicio_date = legacy.parsear_fecha_promocion(fecha_inicio)
             fin_date = legacy.parsear_fecha_promocion(fecha_fin)
+            hoy_date = datetime.now().date()
             if not inicio_date or not fin_date:
                 flash("La fecha de inicio y la fecha de finalización son obligatorias.", "warning")
+                return redirect(url_for("admin_promo"))
+            if inicio_date < hoy_date:
+                flash("La fecha de inicio de la promoción no puede ser anterior al día de hoy.", "warning")
+                return redirect(url_for("admin_promo"))
+            if fin_date < hoy_date:
+                flash("La fecha de finalización de la promoción no puede ser anterior al día de hoy.", "warning")
                 return redirect(url_for("admin_promo"))
             if inicio_date > fin_date:
                 flash("La fecha de inicio no puede ser mayor que la fecha de fin.", "warning")
@@ -109,6 +119,7 @@ def register_admin_legacy_routes(app, legacy):
             return redirect(url_for("admin_promo"))
 
         promos = legacy.cargar_promociones_df()
+        pagina_promos = legacy._parse_positive_int(request.args.get("page", 1), default=1)
         hoy = datetime.now().date()
         productos = legacy.cargar_productos_activos_df()
         productos["id_producto"] = pd.to_numeric(productos.get("id_producto", 0), errors="coerce").fillna(0).astype(int)
@@ -161,30 +172,34 @@ def register_admin_legacy_routes(app, legacy):
         nombre_producto = {int(row["id_producto"]): str(row.get("nombre", "Producto")) for _, row in productos.iterrows()}
         for promo in lista_promos:
             promo["producto_nombre"] = nombre_producto.get(promo["id_producto"], "Producto no encontrado")
+        promos_vista, paginacion_promos = legacy._paginar_lista(lista_promos, pagina_promos, per_page=10)
         return render_template(
             "Administrador/Promociones/adim_promo.html",
-            promos=lista_promos,
+            promos=promos_vista,
             productos=lista_productos,
             productos_por_fuerza=productos_por_fuerza,
             fuerzas=legacy.FUERZAS_OPCIONES,
+            hoy=hoy,
+            paginacion_promos=paginacion_promos,
         )
 
     def admin_promo_toggle(id_promo):
         if session.get("rol") != "admin":
             return "Acceso denegado"
         promos = legacy.cargar_promociones_df()
+        pagina_promos = legacy._parse_positive_int(request.form.get("page", 1), default=1)
         idx = promos[promos["id_promo"] == id_promo].index
         if not idx.empty:
             promo_actual = promos.loc[idx[0]].to_dict()
             if legacy.estado_vigencia_promocion(promo_actual, datetime.now().date()) == "vencida":
                 flash("La promoción está vencida y no se puede reactivar ni cambiar de estado.", "warning")
-                return redirect(url_for("admin_promo"))
+                return redirect(url_for("admin_promo", page=pagina_promos))
             promos.loc[idx, "activo"] = ~promos.loc[idx, "activo"]
             legacy.guardar_promociones_df(promos)
             legacy.registrar_actividad(
                 f"Promoción {'activada' if promos.loc[idx, 'activo'].iloc[0] else 'desactivada'}: {promos.loc[idx, 'nombre'].iloc[0]}"
             )
-        return redirect(url_for("admin_promo"))
+        return redirect(url_for("admin_promo", page=pagina_promos))
 
     def obtener_datos_charts(periodo, fecha_desde_raw, fecha_hasta_raw):
         detalle = legacy.cargar_detalle_pedido_df()
@@ -516,12 +531,80 @@ def register_admin_legacy_routes(app, legacy):
         if session.get("rol") != "admin":
             return "Acceso denegado"
 
+        def _normalizar_texto_producto(valor):
+            return re.sub(r"\s+", " ", str(valor or "").strip().lower())
+
+        def _ruta_static_segura(ruta_relativa):
+            ruta = legacy.normalizar_imagen_url(ruta_relativa)
+            if not ruta:
+                return ""
+            ruta_abs = os.path.abspath(os.path.join("static", ruta.replace("/", os.sep)))
+            static_root = os.path.abspath("static")
+            try:
+                if os.path.commonpath([static_root, ruta_abs]) != static_root:
+                    return ""
+            except ValueError:
+                return ""
+            return ruta_abs if os.path.isfile(ruta_abs) else ""
+
+        def _imagenes_iguales(ruta_a, ruta_b):
+            ruta_a_norm = legacy.normalizar_imagen_url(ruta_a)
+            ruta_b_norm = legacy.normalizar_imagen_url(ruta_b)
+            if not ruta_a_norm or not ruta_b_norm:
+                return False
+            if ruta_a_norm == ruta_b_norm:
+                return True
+
+            ruta_a_abs = _ruta_static_segura(ruta_a_norm)
+            ruta_b_abs = _ruta_static_segura(ruta_b_norm)
+            if not ruta_a_abs or not ruta_b_abs:
+                return False
+            try:
+                if os.path.getsize(ruta_a_abs) != os.path.getsize(ruta_b_abs):
+                    return False
+                with open(ruta_a_abs, "rb") as archivo_a, open(ruta_b_abs, "rb") as archivo_b:
+                    return archivo_a.read() == archivo_b.read()
+            except OSError:
+                return False
+
+        def _limpiar_galeria_generada_si_no_se_usa(rutas, id_producto_generado):
+            prefijo_generado = f"producto_{int(id_producto_generado)}_".lower()
+            for ruta in rutas or []:
+                ruta_norm = legacy.normalizar_imagen_url(ruta)
+                if not ruta_norm.startswith("img/catalogo/"):
+                    continue
+                if not os.path.basename(ruta_norm).lower().startswith(prefijo_generado):
+                    continue
+                ruta_abs = _ruta_static_segura(ruta_norm)
+                if not ruta_abs:
+                    continue
+                try:
+                    os.remove(ruta_abs)
+                except OSError:
+                    pass
+
         productos = legacy.cargar_productos_df()
         nuevo_id = legacy.next_id("producto", "id_producto")
         fuerza = request.form.get("fuerza", "").strip()
         intendencia = request.form.get("intendencia", "").strip()
         if fuerza not in legacy.FUERZAS_OPCIONES or intendencia not in legacy.INTENDENCIAS_OPCIONES:
             flash("Selecciona una fuerza e intendencia validas.", "danger")
+            return redirect(url_for("admin_productos"))
+
+        nombre = re.sub(r"\s+", " ", request.form.get("nombre", "")).strip()
+        descripcion = re.sub(r"\s+", " ", request.form.get("descripcion", "")).strip()
+        try:
+            precio = float(request.form.get("precio", ""))
+            stock_nuevo = int(float(request.form.get("stock", "")))
+        except (TypeError, ValueError):
+            flash("Ingresa precio y stock validos.", "danger")
+            return redirect(url_for("admin_productos"))
+
+        if not nombre or not descripcion:
+            flash("Nombre y descripcion son obligatorios.", "danger")
+            return redirect(url_for("admin_productos"))
+        if precio < 0 or stock_nuevo < 0:
+            flash("Precio y stock no pueden ser negativos.", "danger")
             return redirect(url_for("admin_productos"))
 
         imagenes = [a for a in request.files.getlist("imagenes") if a and str(getattr(a, "filename", "")).strip()]
@@ -557,12 +640,49 @@ def register_admin_legacy_routes(app, legacy):
             )
         imagen_url = galeria_guardada[0] if galeria_guardada else ""
 
+        productos_busqueda = productos.copy()
+        if "eliminado" in productos_busqueda.columns:
+            productos_busqueda = productos_busqueda[productos_busqueda["eliminado"] == False]
+        productos_busqueda["precio_num"] = pd.to_numeric(productos_busqueda.get("precio", 0), errors="coerce").fillna(0.0)
+
+        duplicados = productos_busqueda[
+            (productos_busqueda.get("nombre", "").astype(str).apply(_normalizar_texto_producto) == _normalizar_texto_producto(nombre))
+            & (productos_busqueda.get("fuerza", "").astype(str).str.strip() == fuerza)
+            & (productos_busqueda.get("intendencia", "").astype(str).str.strip() == intendencia)
+            & (productos_busqueda["precio_num"].round(2) == round(float(precio), 2))
+        ]
+        idx_duplicado = None
+        for idx_candidato, producto_candidato in duplicados.iterrows():
+            if _imagenes_iguales(producto_candidato.get("imagen_url", ""), imagen_url):
+                idx_duplicado = idx_candidato
+                break
+
+        if idx_duplicado is not None:
+            stock_actual = pd.to_numeric(productos.at[idx_duplicado, "stock"], errors="coerce")
+            stock_actual = int(stock_actual) if pd.notna(stock_actual) else 0
+            productos.at[idx_duplicado, "stock"] = stock_actual + stock_nuevo
+            legacy.guardar_productos_df(productos)
+            _limpiar_galeria_generada_si_no_se_usa(galeria_guardada, nuevo_id)
+            id_existente_raw = pd.to_numeric(productos.at[idx_duplicado, "id_producto"], errors="coerce")
+            id_existente = int(id_existente_raw) if pd.notna(id_existente_raw) else 0
+            legacy.registrar_actividad(
+                f"Actualizo stock de producto existente '{productos.at[idx_duplicado, 'nombre']}' (ID {id_existente})\n"
+                f"- stock anterior: {stock_actual}\n"
+                f"- stock agregado: {stock_nuevo}\n"
+                f"- stock final: {stock_actual + stock_nuevo}"
+            )
+            flash(
+                f"El producto ya existia. Se sumaron {stock_nuevo} unidad(es) al stock del producto ID {id_existente}.",
+                "success",
+            )
+            return redirect(url_for("admin_productos"))
+
         nuevo_producto = {
             "id_producto": nuevo_id,
-            "nombre": request.form["nombre"],
-            "descripcion": request.form["descripcion"],
-            "precio": float(request.form["precio"]),
-            "stock": int(request.form["stock"]),
+            "nombre": nombre,
+            "descripcion": descripcion,
+            "precio": precio,
+            "stock": stock_nuevo,
             "id_categoria": 1,
             "fuerza": fuerza,
             "intendencia": intendencia,
@@ -573,9 +693,9 @@ def register_admin_legacy_routes(app, legacy):
         productos = pd.concat([productos, pd.DataFrame([nuevo_producto])], ignore_index=True)
         legacy.guardar_productos_df(productos)
         legacy.registrar_actividad(
-            f"Creo producto '{request.form['nombre']}' (ID {nuevo_id})\n"
-            f"- precio: {legacy.formatear_cop(float(request.form['precio']))}\n"
-            f"- stock: {int(request.form['stock'])}\n"
+            f"Creo producto '{nombre}' (ID {nuevo_id})\n"
+            f"- precio: {legacy.formatear_cop(precio)}\n"
+            f"- stock: {stock_nuevo}\n"
             f"- fuerza: {fuerza}\n"
             f"- intendencia: {intendencia}\n"
             f"- imagenes: {len(galeria_guardada)}"
@@ -750,13 +870,7 @@ def register_admin_legacy_routes(app, legacy):
     def eliminar_definitivo(id_producto):
         if session.get("rol") != "admin":
             return "Acceso denegado"
-        productos = legacy.cargar_productos_df()
-        idx = productos[productos["id_producto"] == id_producto].index
-        if not idx.empty:
-            nombre = productos.at[idx[0], "nombre"]
-            productos = productos.drop(index=idx)
-            legacy.guardar_productos_df(productos)
-            legacy.registrar_actividad(f"Elimino definitivamente el producto: {nombre} (ID {id_producto})")
+        flash("La eliminación definitiva está desactivada. Puedes restaurar el producto desde la papelera.", "warning")
         return redirect(url_for("admin_papelera"))
 
     def restaurar_producto(id_producto):
@@ -939,10 +1053,32 @@ def register_admin_legacy_routes(app, legacy):
             flash("Ese email ya esta registrado por otro usuario.", "danger")
             return redirect(url_for("admin_usuarios", **retorno_kwargs))
 
+        def supera_limite_admins_activos(usuarios_df, rol_propuesto, estado_propuesto, usuario_editado=None):
+            if rol_propuesto != "admin" or estado_propuesto != "activo":
+                return False
+
+            usuarios_base = usuarios_df.copy()
+            usuarios_base["id_usuario"] = pd.to_numeric(usuarios_base["id_usuario"], errors="coerce")
+            if usuario_editado is not None:
+                usuarios_base = usuarios_base[usuarios_base["id_usuario"] != usuario_editado]
+
+            admins_activos = usuarios_base[
+                (usuarios_base["rol"].astype(str).str.strip().str.lower() == "admin")
+                & (usuarios_base["estado"].astype(str).str.strip().str.lower() == "activo")
+            ]
+            return len(admins_activos) >= 3
+
         if edit_id is not None:
             idx = usuarios[usuarios["id_usuario"] == edit_id].index
             if idx.empty:
                 flash("Usuario no encontrado para edicion.", "danger")
+                return redirect(url_for("admin_usuarios", **retorno_kwargs))
+
+            if supera_limite_admins_activos(usuarios, rol, estado, usuario_editado=edit_id):
+                flash(
+                    "Solo puede haber máximo 3 administradores activos. Inactiva uno o cambia su rol antes de activar otro administrador.",
+                    "warning",
+                )
                 return redirect(url_for("admin_usuarios", **retorno_kwargs))
 
             usuarios.at[idx[0], "nombre"] = nombre
@@ -964,6 +1100,13 @@ def register_admin_legacy_routes(app, legacy):
         else:
             ultimo_id = pd.to_numeric(usuarios["id_usuario"], errors="coerce").max()
             nuevo_id = int(ultimo_id + 1) if pd.notna(ultimo_id) else 1
+
+            if supera_limite_admins_activos(usuarios, rol, estado):
+                flash(
+                    "Solo puede haber máximo 3 administradores activos. Inactiva uno o cambia su rol antes de crear otro administrador.",
+                    "warning",
+                )
+                return redirect(url_for("admin_usuarios", **retorno_kwargs))
 
             nuevo_usuario = {
                 "id_usuario": nuevo_id,
@@ -1015,6 +1158,22 @@ def register_admin_legacy_routes(app, legacy):
 
         estado_actual = str(usuarios.at[idx[0], "estado"]).strip().lower()
         nuevo_estado = "inactivo" if estado_actual == "activo" else "activo"
+        rol_usuario = str(usuarios.at[idx[0], "rol"]).strip().lower()
+        if rol_usuario == "admin" and nuevo_estado == "activo":
+            usuarios_base = usuarios.copy()
+            usuarios_base["id_usuario"] = pd.to_numeric(usuarios_base["id_usuario"], errors="coerce")
+            usuarios_base = usuarios_base[usuarios_base["id_usuario"] != id_usuario]
+            admins_activos = usuarios_base[
+                (usuarios_base["rol"].astype(str).str.strip().str.lower() == "admin")
+                & (usuarios_base["estado"].astype(str).str.strip().str.lower() == "activo")
+            ]
+            if len(admins_activos) >= 3:
+                flash(
+                    "Solo puede haber máximo 3 administradores activos. Inactiva uno o cambia su rol antes de activar otro administrador.",
+                    "warning",
+                )
+                return redirect(url_for("admin_usuarios", buscar=buscar, rol=rol, estado=estado_filtro, orden=orden, page=pagina_actual))
+
         usuarios.at[idx[0], "estado"] = nuevo_estado
         legacy.guardar_usuarios_df(usuarios[legacy.USUARIO_COLUMNS])
         legacy.registrar_actividad(f"Cambio de estado para usuario {usuario_email} (ID {id_usuario}) -> {nuevo_estado}")
@@ -1101,7 +1260,12 @@ def register_admin_legacy_routes(app, legacy):
             ordenes_df = ordenes_df[~ordenes_df["estado"].astype(str).str.strip().str.lower().eq("pendiente_pago")].copy()
         if not ordenes_df.empty:
             ordenes_df["_orden_num"] = pd.to_numeric(ordenes_df["id_orden_personalizada"], errors="coerce")
-            ordenes_df = ordenes_df.sort_values(by="_orden_num", ascending=False, na_position="last").drop(columns=["_orden_num"])
+            ordenes_df["_fecha_orden"] = pd.to_datetime(ordenes_df.get("fecha_creacion", ""), errors="coerce", utc=True)
+            ordenes_df = ordenes_df.sort_values(
+                by=["_fecha_orden", "_orden_num"],
+                ascending=[False, False],
+                na_position="last",
+            ).drop(columns=["_fecha_orden", "_orden_num"])
             ordenes_df["documento_identidad_nombre"] = ""
             ordenes_df["documento_identidad_url"] = ""
             for idx, orden in ordenes_df.iterrows():
@@ -1165,7 +1329,7 @@ def register_admin_legacy_routes(app, legacy):
                 "orden": 90,
                 "categoria": "Complementos de guerrera",
                 "descripcion": "Valor adicional cuando el cliente agrega escudo a una guerrera.",
-                "imagen": "img/estampados/policia/guerrera/escudos/policia.png",
+                "imagen": "img/estampados/policia/guerrera/escudos/escudo_principal.png",
                 "icono": "fa-shield-halved",
             },
             "parches": {
@@ -1222,6 +1386,18 @@ def register_admin_legacy_routes(app, legacy):
             flash("Estado no valido para la solicitud personalizada.", "warning")
             return redirect(url_for("admin_ajustes"))
         legacy.asegurar_tablas_orden_personalizada()
+        ordenes = legacy.cargar_ordenes_personalizadas_df()
+        orden_actual = {}
+        id_pedido_vinculado = None
+        if not ordenes.empty and "id_orden_personalizada" in ordenes.columns:
+            ordenes["id_orden_num"] = pd.to_numeric(ordenes["id_orden_personalizada"], errors="coerce")
+            candidatos = ordenes[ordenes["id_orden_num"] == int(id_orden)]
+            if not candidatos.empty:
+                orden_actual = candidatos.iloc[0].to_dict()
+                datos_orden = _datos_json_orden_personalizada(orden_actual)
+                id_pedido_raw = pd.to_numeric(datos_orden.get("id_pedido"), errors="coerce")
+                if pd.notna(id_pedido_raw):
+                    id_pedido_vinculado = int(id_pedido_raw)
         with legacy.engine.begin() as conn:
             conn.execute(
                 legacy.sa.text(
@@ -1234,6 +1410,13 @@ def register_admin_legacy_routes(app, legacy):
                 {"estado": estado, "id_orden": int(id_orden)},
             )
         legacy.registrar_actividad(f"Actualizo solicitud personalizada #{id_orden} a {estado}")
+        if estado == "cancelada" and id_pedido_vinculado:
+            _rechazar_pedido_por_orden_personalizada(id_pedido_vinculado)
+            flash(
+                f"Solicitud personalizada #{id_orden} rechazada. El pedido #{id_pedido_vinculado} quedo cancelado y el pago rechazado.",
+                "warning",
+            )
+            return redirect(url_for("admin_ajustes"))
         flash("Estado de la solicitud actualizado.", "success")
         return redirect(url_for("admin_ajustes"))
 
@@ -1275,6 +1458,27 @@ def register_admin_legacy_routes(app, legacy):
             esta_en_base_legacy = os.path.commonpath([base_legacy, ruta_documento]) == base_legacy
             if (esta_en_base_actual or esta_en_base_legacy) and os.path.isfile(ruta_documento):
                 return send_file(ruta_documento, as_attachment=False)
+
+        return "Documento no encontrado", 404
+
+    def admin_pedido_documento_validacion(id_pedido):
+        if session.get("rol") != "admin":
+            return "Acceso denegado"
+
+        pedidos = legacy.cargar_pedidos_df()
+        if pedidos.empty or "id_pedido" not in pedidos.columns:
+            return "Documento no encontrado", 404
+
+        pedidos = pedidos.copy()
+        pedidos["id_pedido_num"] = pd.to_numeric(pedidos["id_pedido"], errors="coerce")
+        candidatos = pedidos[pedidos["id_pedido_num"] == int(id_pedido)]
+        if candidatos.empty:
+            return "Documento no encontrado", 404
+
+        documento = _datos_json_pedido(candidatos.iloc[0].to_dict())
+        ruta_documento = _resolver_ruta_documento_validacion(documento.get("path", ""))
+        if ruta_documento:
+            return send_file(ruta_documento, as_attachment=False)
 
         return "Documento no encontrado", 404
 
@@ -1376,6 +1580,184 @@ def register_admin_legacy_routes(app, legacy):
         except Exception as exc:
             return Response(f"No se pudo generar la vista del recibo. {str(exc)}", status=500, mimetype="text/plain; charset=utf-8")
 
+    def _datos_json_orden_personalizada(orden):
+        try:
+            datos = json.loads(str(orden.get("datos_json", "") or "{}"))
+        except (TypeError, ValueError, json.JSONDecodeError):
+            datos = {}
+        return datos if isinstance(datos, dict) else {}
+
+    def _datos_json_pedido(pedido):
+        try:
+            datos = json.loads(str(pedido.get("documento_validacion_json", "") or "{}"))
+        except (TypeError, ValueError, json.JSONDecodeError):
+            datos = {}
+        return datos if isinstance(datos, dict) else {}
+
+    def _resolver_ruta_documento_validacion(documento_path):
+        documento_path = str(documento_path or "").replace("\\", "/").lstrip("/")
+        if not documento_path:
+            return None
+
+        base_actual = os.path.abspath(os.path.join(app.instance_path, "img", "validaciones_identidad"))
+        base_legacy = os.path.abspath(os.path.join(app.instance_path, "validaciones_identidad"))
+        rutas_candidatas = []
+
+        if documento_path.startswith("img/validaciones_identidad/"):
+            rutas_candidatas.append(os.path.abspath(os.path.join(app.instance_path, documento_path.replace("/", os.sep))))
+        elif documento_path.startswith("validaciones_identidad/"):
+            rutas_candidatas.append(os.path.abspath(os.path.join(app.instance_path, "img", documento_path.replace("/", os.sep))))
+            rutas_candidatas.append(os.path.abspath(os.path.join(app.instance_path, documento_path.replace("/", os.sep))))
+        else:
+            return None
+
+        for ruta_documento in rutas_candidatas:
+            esta_en_base_actual = os.path.commonpath([base_actual, ruta_documento]) == base_actual
+            esta_en_base_legacy = os.path.commonpath([base_legacy, ruta_documento]) == base_legacy
+            if (esta_en_base_actual or esta_en_base_legacy) and os.path.isfile(ruta_documento):
+                return ruta_documento
+
+        return None
+
+    def _ordenes_personalizadas_por_pedido(id_pedido, ordenes_cache=None):
+        ordenes = ordenes_cache if ordenes_cache is not None else legacy.cargar_ordenes_personalizadas_df()
+        if ordenes.empty or "datos_json" not in ordenes.columns:
+            return []
+
+        relacionadas = []
+        for _, orden in ordenes.iterrows():
+            datos = _datos_json_orden_personalizada(orden)
+            id_vinculado = pd.to_numeric(datos.get("id_pedido"), errors="coerce")
+            if pd.notna(id_vinculado) and int(id_vinculado) == int(id_pedido):
+                relacionadas.append(orden.to_dict())
+        return relacionadas
+
+    def _estado_personalizadas_pedido(id_pedido, ordenes_cache=None):
+        ordenes = _ordenes_personalizadas_por_pedido(id_pedido, ordenes_cache=ordenes_cache)
+        if not ordenes:
+            return {
+                "tiene_personalizadas": False,
+                "bloqueado": False,
+                "cancelado": False,
+                "estado_label": "",
+                "detalle": "",
+            }
+
+        estados = [str(orden.get("estado", "pendiente")).strip().lower() or "pendiente" for orden in ordenes]
+        cancelado = any(estado == "cancelada" for estado in estados)
+        aprobadas = all(estado == "completada" for estado in estados)
+        bloqueado = not aprobadas
+        if cancelado:
+            estado_label = "Rechazado"
+            detalle = "La solicitud personalizada fue rechazada. El pedido debe quedar cancelado."
+        elif aprobadas:
+            estado_label = "Aprobado"
+            detalle = "La solicitud personalizada esta aprobada."
+        else:
+            estado_label = "Pendiente de aprobacion"
+            detalle = "Aprueba la solicitud personalizada antes de actualizar este pedido."
+
+        return {
+            "tiene_personalizadas": True,
+            "bloqueado": bloqueado,
+            "cancelado": cancelado,
+            "estado_label": estado_label,
+            "detalle": detalle,
+        }
+
+    def _enriquecer_pedidos_con_estado_personalizado(lista_pedidos):
+        ordenes_cache = legacy.cargar_ordenes_personalizadas_df()
+        for pedido in lista_pedidos:
+            id_pedido_raw = pd.to_numeric(pedido.get("id_pedido"), errors="coerce")
+            estado_personalizado = (
+                _estado_personalizadas_pedido(int(id_pedido_raw), ordenes_cache=ordenes_cache)
+                if pd.notna(id_pedido_raw)
+                else _estado_personalizadas_pedido(0, ordenes_cache=ordenes_cache)
+            )
+            pedido["personalizada_tiene"] = estado_personalizado["tiene_personalizadas"]
+            pedido["personalizada_bloqueada"] = estado_personalizado["bloqueado"]
+            pedido["personalizada_cancelada"] = estado_personalizado["cancelado"]
+            pedido["personalizada_estado_label"] = estado_personalizado["estado_label"]
+            pedido["personalizada_detalle"] = estado_personalizado["detalle"]
+            documento = _datos_json_pedido(pedido)
+            documento_path = str(documento.get("path", "")).strip()
+            pedido["documento_validacion_tiene"] = bool(documento_path)
+            pedido["documento_validacion_nombre"] = (
+                documento.get("documento_nombre_original")
+                or documento.get("filename")
+                or "Documento institucional"
+            )
+        return lista_pedidos
+
+    def _bloquear_actualizacion_pedido_si_personalizada_pendiente(id_pedido):
+        estado_personalizado = _estado_personalizadas_pedido(id_pedido)
+        if not estado_personalizado["bloqueado"]:
+            return False
+
+        if estado_personalizado["cancelado"]:
+            flash(
+                f"El pedido #{id_pedido} tiene una prenda personalizada rechazada. Actualiza el flujo desde Prendas personalizadas.",
+                "warning",
+            )
+        else:
+            flash(
+                f"El pedido #{id_pedido} tiene una prenda personalizada pendiente. Primero debe quedar aprobada en Prendas personalizadas.",
+                "warning",
+            )
+        return True
+
+    def _rechazar_pedido_por_orden_personalizada(id_pedido):
+        pedidos = legacy.cargar_pedidos_df()
+        pagos = legacy.cargar_pagos_df()
+        id_usuario_pedido = ""
+        pedido_actualizado = False
+        pago_actualizado = False
+
+        if not pedidos.empty and "id_pedido" in pedidos.columns:
+            pedidos = pedidos.copy()
+            pedidos["id_pedido_num"] = pd.to_numeric(pedidos["id_pedido"], errors="coerce")
+            idx_pedido = pedidos[pedidos["id_pedido_num"] == int(id_pedido)].index
+            if not idx_pedido.empty:
+                idx_pedido = idx_pedido[0]
+                id_usuario_pedido = pedidos.at[idx_pedido, "id_usuario"] if "id_usuario" in pedidos.columns else ""
+                estado_anterior = str(pedidos.at[idx_pedido, "estado"]).strip().lower()
+                if estado_anterior != "cancelado":
+                    pedidos.at[idx_pedido, "estado"] = "cancelado"
+                    pedido_actualizado = True
+                pedidos = pedidos.drop(columns=["id_pedido_num"])
+                if pedido_actualizado:
+                    legacy.guardar_pedidos_df(pedidos)
+
+        if not pagos.empty and "id_pedido" in pagos.columns:
+            pagos = pagos.copy()
+            pagos["id_pedido_num"] = pd.to_numeric(pagos["id_pedido"], errors="coerce")
+            pagos["id_pago_num"] = pd.to_numeric(pagos.get("id_pago", 0), errors="coerce")
+            idx_pago = pagos[pagos["id_pedido_num"] == int(id_pedido)].sort_values(
+                by="id_pago_num", ascending=False, na_position="last"
+            ).index
+            if not idx_pago.empty:
+                idx_pago = idx_pago[0]
+                estado_pago_anterior = str(pagos.at[idx_pago, "estado_pago"]).strip().lower()
+                if estado_pago_anterior != "rechazado":
+                    pagos.at[idx_pago, "estado_pago"] = "rechazado"
+                    pago_actualizado = True
+            pagos = pagos.drop(columns=[col for col in ["id_pedido_num", "id_pago_num"] if col in pagos.columns])
+            if pago_actualizado:
+                legacy.guardar_pagos_df(pagos)
+
+        if pedido_actualizado or pago_actualizado:
+            legacy.registrar_actividad(
+                f"Pedido #{id_pedido} marcado como cancelado/rechazado por solicitud personalizada rechazada"
+            )
+            resultado_notificacion = legacy._notificar_actualizacion_pedido_cliente(
+                id_pedido=id_pedido,
+                id_usuario=id_usuario_pedido,
+                estado_pedido="cancelado",
+                estado_pago="rechazado",
+                tipo_actualizacion="pago",
+            )
+            legacy._flash_resultado_notificacion_pedido(resultado_notificacion, id_pedido)
+
     def admin_pedidos():
         if session.get("rol") != "admin":
             return "Acceso denegado"
@@ -1399,6 +1781,7 @@ def register_admin_legacy_routes(app, legacy):
                 )
             )
         )
+        lista_pedidos_base = _enriquecer_pedidos_con_estado_personalizado(lista_pedidos_base)
         pedidos_activos = [pedido for pedido in lista_pedidos_base if pedido.get("estado_activo")]
         pedidos_activos_vista, paginacion_curso = legacy._paginar_lista(pedidos_activos, pagina_curso_actual, per_page=6)
         resumen_estados = {
@@ -1408,6 +1791,7 @@ def register_admin_legacy_routes(app, legacy):
             "enviados": sum(1 for pedido in pedidos_activos if pedido.get("estado_ui") == "enviado"),
         }
         lista_pedidos = legacy._enriquecer_pedidos_con_tracking(legacy._serializar_pedidos_admin(pedidos_view))
+        lista_pedidos = _enriquecer_pedidos_con_estado_personalizado(lista_pedidos)
 
         return render_template(
             "Administrador/Gestion pedidos/admin_orders.html",
@@ -1449,6 +1833,8 @@ def register_admin_legacy_routes(app, legacy):
         estados_validos = {clave for clave, _ in legacy.PEDIDO_STATUS_FLOW} | {"cancelado"}
         if estado_nuevo not in estados_validos:
             flash("Estado de pedido invalido.", "danger")
+            return legacy._redirigir_admin_pedidos_por_origen(origen, filtros, pago_filtros, ajustes_page, curso_page)
+        if _bloquear_actualizacion_pedido_si_personalizada_pendiente(id_pedido):
             return legacy._redirigir_admin_pedidos_por_origen(origen, filtros, pago_filtros, ajustes_page, curso_page)
 
         pedidos = legacy.cargar_pedidos_df()
@@ -1513,6 +1899,8 @@ def register_admin_legacy_routes(app, legacy):
         estado_pago_nuevo = mapa_acciones.get(accion, "")
         if not estado_pago_nuevo:
             flash("Accion de pago invalida.", "danger")
+            return legacy._redirigir_admin_pedidos_por_origen(origen, filtros, pago_filtros, ajustes_page, curso_page)
+        if _bloquear_actualizacion_pedido_si_personalizada_pendiente(id_pedido):
             return legacy._redirigir_admin_pedidos_por_origen(origen, filtros, pago_filtros, ajustes_page, curso_page)
 
         pagos = legacy.cargar_pagos_df()
@@ -1879,6 +2267,11 @@ def register_admin_legacy_routes(app, legacy):
     app.add_url_rule("/admin/pos/recibo/<int:id_pedido>.pdf", endpoint="admin_pos_recibo_pdf", view_func=admin_pos_recibo_pdf)
     app.add_url_rule("/admin/pos/recibo/<int:id_pedido>/html", endpoint="admin_pos_recibo_html", view_func=admin_pos_recibo_html)
     app.add_url_rule("/admin/pedidos", endpoint="admin_pedidos", view_func=admin_pedidos)
+    app.add_url_rule(
+        "/admin/pedidos/<int:id_pedido>/documento-validacion",
+        endpoint="admin_pedido_documento_validacion",
+        view_func=admin_pedido_documento_validacion,
+    )
     app.add_url_rule("/admin/pedidos/estado/<int:id_pedido>", endpoint="admin_pedidos_estado", view_func=admin_pedidos_estado, methods=["POST"])
     app.add_url_rule("/admin/pedidos/pago/<int:id_pedido>", endpoint="admin_pedidos_pago", view_func=admin_pedidos_pago, methods=["POST"])
     app.add_url_rule("/admin", endpoint="admin_dashboard", view_func=admin_dashboard)

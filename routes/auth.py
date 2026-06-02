@@ -62,7 +62,8 @@ def register_auth_legacy_routes(app, legacy):
 
         estado = str(usuario.get("estado", "activo")).strip().lower()
         if estado != "activo":
-            return "Tu usuario está inactivo. Contacta al administrador."
+            flash("Tu usuario está inactivo. Contacta al administrador para recuperar el acceso.", "warning")
+            return render_template("Usuarios/Autenticacion/login_form.html"), 403
 
         rol = usuario["rol"]
         id_usuario = usuario["id_usuario"]

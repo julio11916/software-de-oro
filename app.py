@@ -2,7 +2,8 @@ import os
 import sys
 from functools import partial
 
-from flask import Flask, render_template, request, session
+import pandas as pd
+from flask import Flask, flash, jsonify, redirect, render_template, request, session, url_for
 import sqlalchemy as sa
 from werkzeug.security import generate_password_hash, check_password_hash
 
@@ -191,6 +192,62 @@ register_user_legacy_routes(app, legacy=sys.modules[__name__])
 register_admin_legacy_routes(app, legacy=sys.modules[__name__])
 register_checkout_legacy_routes(app, legacy=sys.modules[__name__])
 register_custom_orders_legacy_routes(app, legacy=sys.modules[__name__])
+
+
+@app.before_request
+def bloquear_usuario_inactivo_en_sesion():
+    if session.get("rol") != "normal":
+        return None
+
+    endpoints_permitidos = {
+        "static",
+        "healthcheck",
+        "home",
+        "login",
+        "logout",
+        "registro",
+        "registro_check_email",
+        "registro_send_code",
+        "registro_verificacion",
+        "forgot_password",
+        "reset_password",
+    }
+    if request.endpoint in endpoints_permitidos:
+        return None
+
+    usuarios = cargar_usuarios_df()
+    if usuarios.empty:
+        usuario_actual = None
+    else:
+        usuarios = usuarios.copy()
+        usuarios["email_normalizado"] = usuarios["email"].astype(str).map(normalizar_email)
+        usuarios["id_usuario_num"] = pd.to_numeric(usuarios.get("id_usuario"), errors="coerce")
+
+        id_sesion = pd.to_numeric(session.get("id_usuario"), errors="coerce")
+        email_sesion = normalizar_email(session.get("usuario", ""))
+        if pd.notna(id_sesion):
+            candidatos = usuarios[usuarios["id_usuario_num"] == int(id_sesion)]
+        else:
+            candidatos = usuarios[usuarios["email_normalizado"] == email_sesion]
+
+        usuario_actual = None if candidatos.empty else candidatos.iloc[0]
+
+    estado_usuario = str(usuario_actual.get("estado", "inactivo") if usuario_actual is not None else "inactivo").strip().lower()
+    if estado_usuario == "activo":
+        return None
+
+    email_sesion = session.get("usuario", "")
+    carrito_sesion = _obtener_carrito_sesion_usuario()
+    if email_sesion and carrito_sesion:
+        _guardar_carrito_guardado_usuario(email_sesion, carrito_sesion)
+
+    session.clear()
+    mensaje = "Tu usuario fue inactivado. Contacta al administrador para recuperar el acceso."
+    if request.is_json or request.headers.get("X-Requested-With") == "XMLHttpRequest":
+        return jsonify({"success": False, "message": mensaje}), 403
+
+    flash(mensaje, "warning")
+    return redirect(url_for("login"))
 
 globals().update(
     build_workflow_legacy_bindings(

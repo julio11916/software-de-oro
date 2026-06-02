@@ -1,3 +1,5 @@
+import base64
+import json
 from datetime import datetime
 
 import pandas as pd
@@ -8,6 +10,106 @@ checkout_bp = Blueprint("checkout", __name__, url_prefix="/checkout")
 
 def register_checkout_legacy_routes(app, legacy):
     """Registro incremental de rutas legacy de carrito y checkout."""
+
+    def _carrito_requiere_documento_institucional(carrito):
+        return any(not item.get("personalizado") for item in carrito or [] if isinstance(item, dict))
+
+    def _documento_institucional_sesion():
+        documento = session.get("checkout_documento_validacion")
+        return documento if isinstance(documento, dict) and documento.get("path") else {}
+
+    def _guardar_documento_institucional_checkout(archivo):
+        if not archivo or not str(getattr(archivo, "filename", "") or "").strip():
+            return {}, "Debes adjuntar una foto legible de tu libreta militar, carné o documento institucional."
+
+        error_validacion = legacy.validar_archivo_imagen(archivo)
+        if error_validacion:
+            return {}, error_validacion
+
+        extension = legacy.extension_imagen(getattr(archivo, "filename", "")) or "jpg"
+        contenido = archivo.read()
+        archivo.seek(0)
+        mime = f"image/{'jpeg' if extension in {'jpg', 'jpeg'} else extension}"
+        data_url = f"data:{mime};base64,{base64.b64encode(contenido).decode('ascii')}"
+        documento_guardado, error_documento = legacy.guardar_documento_identidad_personalizada_desde_data_url(
+            data_url,
+            usuario_email=session.get("usuario", ""),
+        )
+        if error_documento:
+            return {}, error_documento
+
+        documento_guardado["documento_nombre_original"] = str(getattr(archivo, "filename", "") or "").strip()
+        return documento_guardado, ""
+
+    def _resolver_documento_institucional_checkout(carrito):
+        if not _carrito_requiere_documento_institucional(carrito):
+            return {}, ""
+
+        documento_existente = _documento_institucional_sesion()
+        archivo = request.files.get("documento_validacion_institucional")
+        if archivo and str(getattr(archivo, "filename", "") or "").strip():
+            documento_guardado, error_documento = _guardar_documento_institucional_checkout(archivo)
+            if error_documento:
+                return {}, error_documento
+            session["checkout_documento_validacion"] = documento_guardado
+            session.modified = True
+            return documento_guardado, ""
+
+        if documento_existente:
+            return documento_existente, ""
+
+        return {}, "Debes adjuntar el documento de validación institucional antes de continuar con el pago."
+
+    def _documento_institucional_json():
+        documento = _documento_institucional_sesion()
+        return json.dumps(documento, ensure_ascii=False) if documento else ""
+
+    def _ids_ordenes_personalizadas_carrito(carrito):
+        ids_orden = []
+        for item in carrito or []:
+            if not isinstance(item, dict) or not item.get("personalizado"):
+                continue
+            id_orden = pd.to_numeric(item.get("id_orden_personalizada"), errors="coerce")
+            if pd.notna(id_orden):
+                ids_orden.append(int(id_orden))
+        return ids_orden
+
+    def _vincular_ordenes_personalizadas_a_pedido(carrito, id_pedido):
+        ids_orden = _ids_ordenes_personalizadas_carrito(carrito)
+        if not ids_orden:
+            return
+
+        legacy.asegurar_tablas_orden_personalizada()
+        with legacy.engine.begin() as conn:
+            stmt = legacy.sa.text(
+                """
+                SELECT id_orden_personalizada, datos_json
+                FROM orden_personalizada
+                WHERE id_orden_personalizada IN :ids_orden
+                """
+            ).bindparams(legacy.sa.bindparam("ids_orden", expanding=True))
+            filas = conn.execute(stmt, {"ids_orden": ids_orden}).mappings().all()
+            for fila in filas:
+                try:
+                    datos = json.loads(str(fila.get("datos_json", "") or "{}"))
+                except (TypeError, ValueError, json.JSONDecodeError):
+                    datos = {}
+                if not isinstance(datos, dict):
+                    datos = {}
+                datos["id_pedido"] = int(id_pedido)
+                conn.execute(
+                    legacy.sa.text(
+                        """
+                        UPDATE orden_personalizada
+                        SET datos_json = :datos_json
+                        WHERE id_orden_personalizada = :id_orden
+                        """
+                    ),
+                    {
+                        "datos_json": json.dumps(datos, ensure_ascii=False),
+                        "id_orden": int(fila["id_orden_personalizada"]),
+                    },
+                )
 
     def product_detail(id_producto):
         if session.get("rol") == "normal":
@@ -97,6 +199,21 @@ def register_checkout_legacy_routes(app, legacy):
         else:
             talla = ""
 
+        cantidad_actual_producto = sum(
+            int(item.get("cantidad", 0) or 0)
+            for item in carrito
+            if not item.get("personalizado") and int(item.get("id_producto", 0) or 0) == int(id_producto)
+        )
+        cantidad_total_producto = cantidad_actual_producto + cantidad
+        if cantidad_total_producto > stock_actual:
+            disponible = max(0, stock_actual - cantidad_actual_producto)
+            flash(
+                f'Solo puedes agregar {disponible} unidad(es) más de "{producto["nombre"]}". '
+                f'Ya tienes {cantidad_actual_producto} en el carrito y el stock total es {stock_actual}.',
+                "warning",
+            )
+            return redirect(url_for("cart"))
+
         galeria_producto = legacy.obtener_galeria_producto(id_producto, producto.get("imagen_url", ""))
         imagen_principal = legacy.normalizar_imagen_url(galeria_producto[0]) if galeria_producto else ""
 
@@ -111,9 +228,6 @@ def register_checkout_legacy_routes(app, legacy):
         )
         if item_existente:
             nueva_cantidad = int(item_existente.get("cantidad", 0)) + cantidad
-            if nueva_cantidad > stock_actual:
-                flash(f'No puedes agregar más de {stock_actual} unidad(es) de "{producto["nombre"]}".', "warning")
-                return redirect(url_for("cart"))
             item_existente["cantidad"] = nueva_cantidad
             item_existente["subtotal"] = float(item_existente["precio"]) * nueva_cantidad
             if not str(item_existente.get("imagen_url", "") or "").strip() and imagen_principal:
@@ -187,6 +301,8 @@ def register_checkout_legacy_routes(app, legacy):
             telefono_cliente = str(contacto_cliente.get("telefono", "") or "").strip()
             direccion_cliente = str(contacto_cliente.get("direccion", "") or "").strip()
             contacto_cliente_completo = bool(telefono_cliente and direccion_cliente)
+            requiere_documento_institucional = _carrito_requiere_documento_institucional(carrito_enriquecido)
+            documento_institucional_cargado = bool(_documento_institucional_sesion())
             return render_template(
                 "Usuarios/Carrito/cart.html",
                 carrito=carrito_enriquecido,
@@ -198,6 +314,8 @@ def register_checkout_legacy_routes(app, legacy):
                 cliente_telefono=telefono_cliente,
                 cliente_direccion=direccion_cliente,
                 contacto_cliente_completo=contacto_cliente_completo,
+                requiere_documento_institucional=requiere_documento_institucional,
+                documento_institucional_cargado=documento_institucional_cargado,
             )
         return "Acceso denegado"
 
@@ -286,6 +404,11 @@ def register_checkout_legacy_routes(app, legacy):
             flash(error_cliente[0], error_cliente[1])
             return redirect(url_for("cart", metodo_pago=metodo_pago, codigo_promo=codigo_promo))
 
+        documento_checkout, error_documento = _resolver_documento_institucional_checkout(carrito)
+        if error_documento:
+            flash(error_documento, "warning")
+            return redirect(url_for("cart", metodo_pago=metodo_pago, codigo_promo=codigo_promo))
+
         session["checkout_metodo_preferido"] = metodo_pago
         session["checkout_codigo_promo"] = codigo_promo
         session["checkout_cliente_telefono"] = cliente_telefono
@@ -351,6 +474,10 @@ def register_checkout_legacy_routes(app, legacy):
         if error_cliente:
             flash(error_cliente[0], error_cliente[1])
             return redirect(url_for("checkout", metodo_pago="transferencia", codigo_promo=codigo_promo))
+        documento_checkout, error_documento = _resolver_documento_institucional_checkout(carrito)
+        if error_documento:
+            flash(error_documento, "warning")
+            return redirect(url_for("cart", metodo_pago=metodo_pago, codigo_promo=codigo_promo))
         session["checkout_cliente_telefono"] = cliente_telefono
         session["checkout_cliente_direccion"] = cliente_direccion
         legacy._guardar_contacto_checkout_usuario(cliente_telefono, cliente_direccion)
@@ -411,7 +538,9 @@ def register_checkout_legacy_routes(app, legacy):
             estado_pedido="pago_en_revision" if metodo_pago == "transferencia" else "confirmado",
             cliente_telefono=cliente_telefono,
             cliente_direccion=cliente_direccion,
+            documento_validacion_json=_documento_institucional_json(),
         )
+        _vincular_ordenes_personalizadas_a_pedido(carrito_calculado, nuevo_id_pedido)
         legacy.actualizar_estado_ordenes_personalizadas_carrito(
             carrito_calculado,
             "en_revision" if metodo_pago == "transferencia" else "pendiente",
@@ -463,6 +592,7 @@ def register_checkout_legacy_routes(app, legacy):
                 )
 
         session["carrito"] = []
+        session.pop("checkout_documento_validacion", None)
         session.modified = True
         legacy._sincronizar_carrito_usuario_desde_sesion()
 
@@ -608,8 +738,10 @@ def register_checkout_legacy_routes(app, legacy):
             estado_pedido=estado_pedido,
             cliente_telefono=cliente_telefono,
             cliente_direccion=cliente_direccion,
+            documento_validacion_json=_documento_institucional_json(),
         )
         legacy._stripe_checkout_marcar_estado(session_id, "pagado", nuevo_id_pedido)
+        _vincular_ordenes_personalizadas_a_pedido(carrito_checkout, nuevo_id_pedido)
         legacy.actualizar_estado_ordenes_personalizadas_carrito(carrito_checkout, "pendiente")
         notificacion_personalizado_ok = legacy._notificar_pago_personalizado_admin(
             id_pedido=nuevo_id_pedido,
@@ -631,6 +763,7 @@ def register_checkout_legacy_routes(app, legacy):
             legacy.registrar_actividad("Stock agotado por pedido: " + ", ".join(agotados_en_compra))
 
         session["carrito"] = []
+        session.pop("checkout_documento_validacion", None)
         session.modified = True
         legacy._sincronizar_carrito_usuario_desde_sesion()
 

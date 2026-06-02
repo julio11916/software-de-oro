@@ -178,7 +178,7 @@
                 <section class="promo-panel">
                     <div class="panel-header gradient-section-title d-flex justify-content-between align-items-center">
                         <h5 class="mb-0">Promociones registradas</h5>
-                        <span class="badge bg-light text-dark">Total: {{ promos|length }}</span>
+                        <span class="badge bg-light text-dark">Total: {{ paginacion_promos.total if paginacion_promos else promos|length }}</span>
                     </div>
                     <div class="panel-body">
                         {% if promos %}
@@ -235,6 +235,7 @@
                                             </button>
                                             {% else %}
                                             <form method="POST" action="{{ url_for('admin_promo_toggle', id_promo=p.id_promo) }}">
+                                                <input type="hidden" name="page" value="{{ paginacion_promos.page if paginacion_promos else 1 }}">
                                                 <button type="submit"
                                                     class="btn btn-sm btn-{{ 'warning' if p.activo else 'success' }}">
                                                     {{ 'Desactivar' if p.activo else 'Activar' }}
@@ -247,6 +248,45 @@
                                 </tbody>
                             </table>
                         </div>
+                        {% if paginacion_promos and paginacion_promos.total > 0 %}
+                        <div class="promo-pagination">
+                            <small class="text-muted">Mostrando {{ paginacion_promos.desde }} - {{ paginacion_promos.hasta }} de {{ paginacion_promos.total }} promociones</small>
+                            {% if paginacion_promos.total_paginas > 1 %}
+                            <div class="pagination-controls">
+                                {% set prev_page = paginacion_promos.page - 1 %}
+                                {% set next_page = paginacion_promos.page + 1 %}
+
+                                {% if paginacion_promos.page > 1 %}
+                                <a class="btn btn-sm btn-outline-primary page-arrow"
+                                    href="{{ url_for('admin_promo', page=prev_page) }}"
+                                    title="Página anterior" aria-label="Página anterior">&larr;</a>
+                                {% else %}
+                                <span class="btn btn-sm btn-outline-secondary page-arrow disabled" title="Página anterior">&larr;</span>
+                                {% endif %}
+
+                                <nav class="page-numbers" aria-label="Paginación de promociones">
+                                    {% for b in paginacion_promos.botones %}
+                                    {% if b == '...' %}
+                                    <span class="page-ellipsis">...</span>
+                                    {% elif b == paginacion_promos.page %}
+                                    <span class="page-number active">{{ b }}</span>
+                                    {% else %}
+                                    <a class="page-number" href="{{ url_for('admin_promo', page=b) }}">{{ b }}</a>
+                                    {% endif %}
+                                    {% endfor %}
+                                </nav>
+
+                                {% if paginacion_promos.page < paginacion_promos.total_paginas %}
+                                <a class="btn btn-sm btn-outline-primary page-arrow"
+                                    href="{{ url_for('admin_promo', page=next_page) }}"
+                                    title="Página siguiente" aria-label="Página siguiente">&rarr;</a>
+                                {% else %}
+                                <span class="btn btn-sm btn-outline-secondary page-arrow disabled" title="Página siguiente">&rarr;</span>
+                                {% endif %}
+                            </div>
+                            {% endif %}
+                        </div>
+                        {% endif %}
                         {% else %}
                         <div class="empty-state">
                             <h6 class="mb-1">No hay promociones registradas</h6>
@@ -329,11 +369,13 @@
                                         </div>
                                         <div class="col-sm-6">
                                             <label for="promoInicioInput" class="form-label">Inicio</label>
-                                            <input type="date" id="promoInicioInput" name="fecha_inicio" class="form-control" required>
+                                            <input type="date" id="promoInicioInput" name="fecha_inicio" class="form-control"
+                                                min="{{ hoy.isoformat() }}" value="{{ hoy.isoformat() }}" required>
                                         </div>
                                         <div class="col-sm-6">
                                             <label for="promoFinInput" class="form-label">Fin</label>
-                                            <input type="date" id="promoFinInput" name="fecha_fin" class="form-control" required>
+                                            <input type="date" id="promoFinInput" name="fecha_fin" class="form-control"
+                                                min="{{ hoy.isoformat() }}" value="{{ hoy.isoformat() }}" required>
                                         </div>
                                     </div>
                                 </div>
