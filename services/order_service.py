@@ -210,25 +210,31 @@ def guardar_contacto_checkout_usuario(telefono, direccion, normalizar_email, car
 
 
 def validar_stock_checkout(productos, carrito):
+    cantidades_por_producto = {}
+    nombres_por_producto = {}
     for item in carrito:
         if item.get("personalizado"):
             continue
         id_producto = int(item.get("id_producto", 0))
         cantidad = int(item.get("cantidad", 0))
+        cantidades_por_producto[id_producto] = cantidades_por_producto.get(id_producto, 0) + cantidad
+        nombres_por_producto[id_producto] = item.get("nombre", id_producto)
+
+    for id_producto, cantidad_total in cantidades_por_producto.items():
         fila = productos[(productos["id_producto"] == id_producto) & (productos["eliminado"] == False)]
         if fila.empty:
             return (
-                f'El producto "{item.get("nombre", id_producto)}" ya no esta disponible o fue retirado del catalogo.',
+                f'El producto "{nombres_por_producto.get(id_producto, id_producto)}" ya no esta disponible o fue retirado del catalogo.',
                 "warning",
             )
         stock_actual = int(fila.iloc[0].get("stock", 0))
         if stock_actual <= 0:
-            nombre = str(fila.iloc[0].get("nombre", item.get("nombre", id_producto)))
+            nombre = str(fila.iloc[0].get("nombre", nombres_por_producto.get(id_producto, id_producto)))
             return (f'El producto "{nombre}" esta agotado y no se puede procesar el pedido.', "warning")
-        if cantidad > stock_actual:
-            nombre = str(fila.iloc[0].get("nombre", item.get("nombre", id_producto)))
+        if cantidad_total > stock_actual:
+            nombre = str(fila.iloc[0].get("nombre", nombres_por_producto.get(id_producto, id_producto)))
             return (
-                f'Stock insuficiente para "{nombre}". Disponible: {stock_actual}. Ajusta la cantidad para continuar.',
+                f'Stock insuficiente para "{nombre}". Disponible: {stock_actual}. En tu carrito hay {cantidad_total} unidad(es) de este producto entre todas las tallas.',
                 "warning",
             )
     return None
@@ -236,14 +242,18 @@ def validar_stock_checkout(productos, carrito):
 
 def descontar_stock_checkout(productos, carrito):
     agotados_en_compra = []
+    cantidades_por_producto = {}
     for item in carrito:
         if item.get("personalizado"):
             continue
         id_producto = int(item.get("id_producto", 0))
         cantidad = int(item.get("cantidad", 0))
+        cantidades_por_producto[id_producto] = cantidades_por_producto.get(id_producto, 0) + cantidad
+
+    for id_producto, cantidad in cantidades_por_producto.items():
         idx = productos[productos["id_producto"] == id_producto].index[0]
         stock_anterior = int(productos.at[idx, "stock"])
-        nuevo_stock = stock_anterior - cantidad
+        nuevo_stock = max(0, stock_anterior - cantidad)
         productos.at[idx, "stock"] = nuevo_stock
         if stock_anterior > 0 and nuevo_stock == 0:
             agotados_en_compra.append(str(productos.at[idx, "nombre"]))
@@ -266,6 +276,7 @@ def registrar_compra_checkout_usuario(
     estado_pedido="confirmado",
     cliente_telefono="",
     cliente_direccion="",
+    documento_validacion_json="",
 ):
     items_detalle = construir_items_detalle_desde_carrito(carrito)
     nuevo_id_pedido = crear_pedido_y_detalle(
@@ -276,6 +287,7 @@ def registrar_compra_checkout_usuario(
         items_detalle=items_detalle,
         cliente_telefono=cliente_telefono,
         cliente_direccion=cliente_direccion,
+        documento_validacion_json=documento_validacion_json,
     )
 
     resumen_promos = resumen_promocion_desde_promo_aplicada(promo_aplicada)
@@ -351,12 +363,30 @@ def obtener_productos_agotados(productos):
     if productos.empty:
         return []
 
-    agotados = productos[(productos["eliminado"] == False) & (productos["stock"] <= 0)].copy()
-    if agotados.empty:
+    productos_alerta = productos.copy()
+    productos_alerta["stock"] = pd.to_numeric(productos_alerta["stock"], errors="coerce").fillna(0).clip(lower=0).astype(int)
+    productos_alerta = productos_alerta[
+        (productos_alerta["eliminado"] == False)
+        & (productos_alerta["stock"] <= 5)
+    ].copy()
+    if productos_alerta.empty:
         return []
 
-    agotados = agotados.sort_values(by="nombre", na_position="last")
-    return agotados[["id_producto", "nombre", "stock"]].to_dict(orient="records")
+    for columna in ("fuerza", "intendencia"):
+        if columna not in productos_alerta.columns:
+            productos_alerta[columna] = ""
+
+    productos_alerta["estado_inventario"] = productos_alerta["stock"].apply(
+        lambda stock: "agotado" if int(stock) <= 0 else "por_agotarse"
+    )
+    productos_alerta = productos_alerta.sort_values(
+        by=["estado_inventario", "fuerza", "intendencia", "nombre"],
+        ascending=[True, True, True, True],
+        na_position="last",
+    )
+    return productos_alerta[
+        ["id_producto", "nombre", "stock", "fuerza", "intendencia", "estado_inventario"]
+    ].to_dict(orient="records")
 
 
 def normalizar_carrito_por_stock(carrito, cargar_productos_df_fn):
@@ -1339,7 +1369,7 @@ def validar_y_preparar_carrito_pos(
         total_descuento += subtotal_descuento
         total += subtotal_final
 
-        productos.at[row_idx, "stock"] = stock_actual - cantidad
+        productos.at[row_idx, "stock"] = max(0, stock_actual - cantidad)
         carrito_validado.append(
             {
                 "id_producto": id_producto,
@@ -1435,6 +1465,7 @@ def crear_pedido_y_detalle(
     guardar_detalle_pedido_df_fn,
     cliente_telefono="",
     cliente_direccion="",
+    documento_validacion_json="",
 ):
     nuevo_id_pedido = next_id_fn("pedidos", "id_pedido")
     nuevo_pedido = {
@@ -1444,6 +1475,7 @@ def crear_pedido_y_detalle(
         "estado": estado_pedido,
         "cliente_telefono": str(cliente_telefono or "").strip(),
         "cliente_direccion": str(cliente_direccion or "").strip(),
+        "documento_validacion_json": str(documento_validacion_json or "").strip(),
     }
     pedidos = pd.concat([pedidos, pd.DataFrame([nuevo_pedido])], ignore_index=True)
     guardar_pedidos_df_fn(pedidos)

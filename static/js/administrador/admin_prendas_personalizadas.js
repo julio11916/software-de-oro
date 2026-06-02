@@ -19,7 +19,7 @@
     if (!searchInput || !stateFilter || !sortFilter || cards.length === 0) return;
 
     const ITEMS_PER_PAGE = 4;
-    const PAGINATION_THRESHOLD = 5;
+    const PAGINATION_THRESHOLD = ITEMS_PER_PAGE + 1;
     let currentPage = 1;
 
     const normalize = (value) =>
@@ -42,10 +42,10 @@
             const totalA = toNumber(a.dataset.orderTotal);
             const totalB = toNumber(b.dataset.orderTotal);
 
-            if (mode === "oldest") return indexA - indexB;
+            if (mode === "oldest") return indexB - indexA;
             if (mode === "total_desc") return totalB - totalA;
             if (mode === "total_asc") return totalA - totalB;
-            return indexB - indexA;
+            return indexA - indexB;
         });
     };
 

@@ -449,6 +449,39 @@
     line-height: 1.5;
 }
 
+.stage-custom-lock {
+    padding: 13px 15px;
+    border-radius: 15px;
+    border: 1px solid #f0c66b;
+    background: #fff9ea;
+    margin-bottom: 16px;
+}
+
+.stage-custom-lock strong {
+    display: block;
+    color: #8d6106;
+    margin-bottom: 4px;
+}
+
+.stage-custom-lock p {
+    margin: 0;
+    color: #6f5a2b;
+    line-height: 1.45;
+}
+
+.stage-custom-lock--rejected {
+    border-color: #f3b3b8;
+    background: #fff3f4;
+}
+
+.stage-custom-lock--rejected strong {
+    color: #b42318;
+}
+
+.stage-custom-lock--rejected p {
+    color: #7a2e33;
+}
+
 .stage-proof-link {
     display: inline-flex;
     align-items: center;
@@ -472,12 +505,18 @@
 
 .stage-payment-actions form {
     margin: 0;
+    flex: 1 1 180px;
 }
 
 .stage-payment-actions .btn {
-    min-width: 180px;
+    width: 100%;
+    min-height: 42px;
     border-radius: 12px;
+    font-size: 0.92rem;
     font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .stage-review-placeholder {
@@ -492,6 +531,11 @@
     display: block;
     margin-bottom: 6px;
     color: #143d76;
+}
+
+.stage-review-placeholder--custom {
+    border-color: #f0c66b;
+    background: #fffaf0;
 }
 .main-content {
     background-color: #f4f7fb;

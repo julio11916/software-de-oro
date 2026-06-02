@@ -75,6 +75,11 @@
     position: relative;
 }
 
+.chart-filter-body {
+    min-height: 0;
+    padding: 26px 18px 22px;
+}
+
 .chart-body canvas {
     width: 100% !important;
     height: 320px !important;

@@ -392,17 +392,64 @@ body {
     padding: 0;
     display: grid;
     gap: 10px;
+    max-height: 380px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding-right: 6px;
+    scrollbar-width: thin;
+    scrollbar-color: #7fa6c2 #edf4fb;
+}
+
+.alerts-list::-webkit-scrollbar {
+    width: 8px;
+}
+
+.alerts-list::-webkit-scrollbar-track {
+    background: #edf4fb;
+    border-radius: 999px;
+}
+
+.alerts-list::-webkit-scrollbar-thumb {
+    background: #7fa6c2;
+    border-radius: 999px;
 }
 
 .alerts-list li {
     display: flex;
     gap: 10px;
     align-items: center;
+    justify-content: space-between;
     flex-wrap: wrap;
     border: 1px solid #eef2f7;
     background: #f9fbff;
     border-radius: 10px;
     padding: 10px 12px;
+}
+
+.alerts-list li.inventory-alert--soldout {
+    border-color: #f3c4cc;
+    background: #fff7f8;
+}
+
+.alerts-list li.inventory-alert--low {
+    border-color: #f4dda6;
+    background: #fffaf0;
+}
+
+.inventory-alert-copy {
+    display: grid;
+    gap: 4px;
+    min-width: 0;
+    flex: 1 1 260px;
+}
+
+.inventory-alert-copy strong {
+    color: #102542;
+    line-height: 1.35;
+}
+
+.inventory-alert-copy small {
+    color: #5c6f82;
 }
 
 .flash-toast-stack {

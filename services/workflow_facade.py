@@ -290,6 +290,7 @@ def build_workflow_legacy_bindings(
         items_detalle,
         cliente_telefono='',
         cliente_direccion='',
+        documento_validacion_json='',
     ):
         return order_service.crear_pedido_y_detalle(
             pedidos=pedidos,
@@ -302,6 +303,7 @@ def build_workflow_legacy_bindings(
             guardar_detalle_pedido_df_fn=guardar_detalle_pedido_df_fn,
             cliente_telefono=cliente_telefono,
             cliente_direccion=cliente_direccion,
+            documento_validacion_json=documento_validacion_json,
         )
 
     def _crear_pago_para_pedido(
@@ -396,6 +398,7 @@ def build_workflow_legacy_bindings(
         estado_pedido='confirmado',
         cliente_telefono='',
         cliente_direccion='',
+        documento_validacion_json='',
     ):
         return order_service.registrar_compra_checkout_usuario(
             carrito=carrito,
@@ -413,6 +416,7 @@ def build_workflow_legacy_bindings(
             estado_pedido=estado_pedido,
             cliente_telefono=cliente_telefono,
             cliente_direccion=cliente_direccion,
+            documento_validacion_json=documento_validacion_json,
         )
 
     def _iniciar_pago_stripe_desde_carrito(carrito, codigo_promo, total_final):

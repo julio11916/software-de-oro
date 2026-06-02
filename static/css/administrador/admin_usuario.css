@@ -81,6 +81,10 @@
     padding: 26px 24px;
 }
 
+.panel-body-compact {
+    padding: 18px 20px 20px;
+}
+
 .panel-chip {
     display: inline-flex;
     align-items: center;
@@ -95,7 +99,7 @@
 
 .user-form-grid {
     display: grid;
-    gap: 24px;
+    gap: 14px;
 }
 
 .user-form-section {
@@ -103,6 +107,28 @@
     border-radius: 20px;
     border: 1px solid #dce7fb;
     background: #f9fbfe;
+}
+
+.user-form-panel-compact {
+    width: 100%;
+}
+
+.user-form-section-compact {
+    padding: 16px;
+    border-radius: 14px;
+    background: #fbfdff;
+}
+
+.user-form-section-compact .form-label {
+    margin-bottom: 5px;
+    font-size: 0.88rem;
+}
+
+.user-form-section-compact .form-control,
+.user-form-section-compact .form-select {
+    min-height: 42px;
+    border-radius: 10px;
+    font-size: 0.94rem;
 }
 
 .section-head {
@@ -124,7 +150,7 @@
 
 .password-field-wrap {
     display: grid;
-    gap: 12px;
+    gap: 8px;
 }
 
 .password-actions {
@@ -156,9 +182,9 @@
 
 .field-help {
     display: block;
-    margin-top: 10px;
+    margin-top: 6px;
     color: #6c8199;
-    font-size: 0.84rem;
+    font-size: 0.8rem;
     line-height: 1.45;
 }
 
@@ -177,6 +203,14 @@
     display: flex;
     gap: 10px;
     flex-wrap: wrap;
+}
+
+.user-form-panel-compact .form-actions {
+    justify-content: flex-end;
+}
+
+.user-form-panel-compact .form-actions .btn {
+    min-width: 150px;
 }
 
 .users-filters-grid .form-label,

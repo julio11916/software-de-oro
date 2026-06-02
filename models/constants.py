@@ -29,7 +29,7 @@ PRODUCTO_COLUMNS = [
     'id_categoria', 'fuerza', 'intendencia', 'imagen_url',
     'eliminado', 'destacado_dashboard'
 ]
-PEDIDO_COLUMNS = ['id_pedido', 'id_usuario', 'fecha_pedido', 'estado', 'cliente_telefono', 'cliente_direccion']
+PEDIDO_COLUMNS = ['id_pedido', 'id_usuario', 'fecha_pedido', 'estado', 'cliente_telefono', 'cliente_direccion', 'documento_validacion_json']
 DETALLE_PEDIDO_COLUMNS = ['id_detalle', 'id_pedido', 'id_producto', 'cantidad', 'subtotal', 'talla']
 PAGO_COLUMNS = ['id_pago', 'id_pedido', 'monto', 'metodo_pago', 'fecha_pago', 'estado_pago', 'comprobante_url', 'id_promo', 'codigo_promo', 'tipo_descuento', 'valor_descuento', 'monto_descuento']
 ORDEN_PERSONALIZADA_COLUMNS = [

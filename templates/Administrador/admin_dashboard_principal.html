@@ -127,18 +127,23 @@
                         </div>
                         <div class="dash-body">
                             {% if productos_agotados %}
-                            <p class="text-muted mb-3">Productos agotados (stock en 0):</p>
+                            <p class="text-muted mb-3">Productos agotados o por agotarse:</p>
                             <ul class="alerts-list mb-0">
                                 {% for p in productos_agotados %}
-                                <li>
-                                    <strong>{{ p.nombre }}</strong>
-                                    <small>ID {{ p.id_producto }}</small>
-                                    <span class="badge bg-danger">Agotado</span>
+                                {% set esta_agotado = p.estado_inventario == 'agotado' %}
+                                <li class="{{ 'inventory-alert--soldout' if esta_agotado else 'inventory-alert--low' }}">
+                                    <div class="inventory-alert-copy">
+                                        <strong>Producto {{ p.nombre }}{% if p.fuerza or p.intendencia %} de la sección {{ p.fuerza or 'Sin fuerza' }}{% if p.intendencia %} / {{ p.intendencia }}{% endif %}{% endif %} {% if esta_agotado %}está agotado.{% else %}está por agotarse.{% endif %}</strong>
+                                        <small>ID {{ p.id_producto }} &middot; Stock actual: {{ p.stock|int }}</small>
+                                    </div>
+                                    <span class="badge {{ 'bg-danger' if esta_agotado else 'bg-warning text-dark' }}">
+                                        {{ 'Agotado' if esta_agotado else 'Por agotarse' }}
+                                    </span>
                                 </li>
                                 {% endfor %}
                             </ul>
                             {% else %}
-                            <p class="mb-0 text-success">No hay productos agotados en este momento.</p>
+                            <p class="mb-0 text-success">No hay productos agotados ni por agotarse en este momento.</p>
                             {% endif %}
                         </div>
                     </div>

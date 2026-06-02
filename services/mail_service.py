@@ -8,7 +8,7 @@ import os
 from pathlib import Path
 
 import pandas as pd
-from flask import flash, session, url_for
+from flask import current_app, flash, session, url_for
 
 
 def obtener_contacto_notificacion_pedido(id_usuario, cargar_usuarios_df, normalizar_email):
@@ -59,6 +59,14 @@ def notificar_actualizacion_pedido_cliente(
     contacto = obtener_contacto_notificacion_pedido_fn(id_usuario)
     email = normalizar_email(contacto.get("email", ""))
     if not email_es_valido(email):
+        return "sin_email"
+    correos_empresa = {
+        normalizar_email(current_app.config.get("TRANSFER_SUPPORT_EMAIL", "")),
+        normalizar_email(current_app.config.get("MAIL_USERNAME", "")),
+        normalizar_email(current_app.config.get("MAIL_DEFAULT_SENDER", "")),
+    }
+    correos_empresa.discard("")
+    if email in correos_empresa:
         return "sin_email"
 
     ok = enviar_actualizacion_pedido(

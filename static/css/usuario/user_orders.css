@@ -12,6 +12,8 @@
     --orders-green: #1f9b63;
     --orders-amber: #c98716;
     --orders-red: #b42318;
+    --orders-button-hover: #d8f3f9;
+    --orders-button-hover-shadow: rgba(216, 243, 249, 0.35);
 }
 
 body.orders-page {
@@ -530,15 +532,18 @@ body.orders-page {
 
 .btn-order-detail {
     width: 100%;
-    background: linear-gradient(135deg, #153f78 0%, #1aa2c6 100%);
-    color: #fff;
-    box-shadow: 0 14px 30px rgba(21, 63, 120, 0.18);
+    background: #fff;
+    border: 1px solid #caeaf3;
+    color: var(--orders-blue);
+    box-shadow: 0 8px 14px rgba(16, 37, 66, 0.06);
 }
 
 .btn-order-detail:hover,
 .btn-start-shopping:hover {
     transform: translateY(-2px);
-    color: #fff;
+    background: var(--orders-button-hover);
+    color: #000;
+    box-shadow: 0 8px 14px var(--orders-button-hover-shadow);
 }
 
 .orders-empty-state {

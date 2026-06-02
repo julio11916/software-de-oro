@@ -214,13 +214,14 @@
                             <div class="force-track-wrap">
                                 <div class="force-track" id="force-track-{{ loop.index0 }}">
                                     {% for producto in productos_fuerza %}
+                                    {% set stock_visible = producto.stock|int if producto.stock|int > 0 else 0 %}
                                     {% set imagenes_producto = producto.imagenes if producto.imagenes is defined else [] %}
                                     {% set producto_data = {
                                         'id': producto.id_producto,
                                         'nombre': producto.nombre,
                                         'descripcion': producto.descripcion,
                                         'precio': producto.precio,
-                                        'stock': producto.stock,
+                                        'stock': stock_visible,
                                         'fuerza': producto.fuerza,
                                         'intendencia': producto.intendencia,
                                         'imagenes': imagenes_producto,
@@ -275,7 +276,7 @@
                                                     </div>
                                                     <div class="product-stat">
                                                         <span>Stock</span>
-                                                        <strong>{{ producto.stock }}</strong>
+                                                        <strong>{{ stock_visible }}</strong>
                                                     </div>
                                                     <div class="product-stat">
                                                         <span>Galería</span>

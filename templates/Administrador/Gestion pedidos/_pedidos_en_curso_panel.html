@@ -41,6 +41,13 @@
                         <span><strong>Pago:</strong> {{ pedido.metodo_pago_label if pedido.metodo_pago_label else 'Sin registrar' }}</span>
                     </div>
 
+                    {% if pedido.personalizada_tiene and pedido.personalizada_bloqueada %}
+                    <div class="stage-custom-lock {% if pedido.personalizada_cancelada %}stage-custom-lock--rejected{% endif %}">
+                        <strong>Prenda personalizada: {{ pedido.personalizada_estado_label }}</strong>
+                        <p>{{ pedido.personalizada_detalle }}</p>
+                    </div>
+                    {% endif %}
+
                     {% if pedido.estado_pago_label and pedido.metodo_pago == 'transferencia' %}
                     <div class="stage-payment-review stage-payment-review-{{ pedido.estado_pago_ui if pedido.estado_pago_ui else 'sin_estado' }}">
                         <div class="stage-payment-review-head">
@@ -71,7 +78,7 @@
                                 <input type="hidden" name="f_fecha_hasta" value="{{ filtros.fecha_hasta if filtros else '' }}">
                                 <input type="hidden" name="f_page" value="{{ paginacion.page if paginacion else 1 }}">
                                 <input type="hidden" name="accion_pago" value="revision">
-                                <button type="submit" class="btn btn-outline-info">Marcar en revision</button>
+                                <button type="submit" class="btn btn-outline-info" {% if pedido.personalizada_bloqueada %}disabled title="Primero aprueba o rechaza la prenda personalizada"{% endif %}>En revision</button>
                             </form>
                             <form method="POST" action="{{ url_for('admin_pedidos_pago', id_pedido=pedido.id_pedido) }}">
                                 <input type="hidden" name="origen" value="pedidos">
@@ -83,7 +90,7 @@
                                 <input type="hidden" name="f_fecha_hasta" value="{{ filtros.fecha_hasta if filtros else '' }}">
                                 <input type="hidden" name="f_page" value="{{ paginacion.page if paginacion else 1 }}">
                                 <input type="hidden" name="accion_pago" value="aprobar">
-                                <button type="submit" class="btn btn-success" {% if not pedido.comprobante_url %}disabled title="Primero debe existir un comprobante adjunto"{% endif %}>Aprobar comprobante</button>
+                                <button type="submit" class="btn btn-outline-success" {% if pedido.personalizada_bloqueada or not pedido.comprobante_url %}disabled title="{% if pedido.personalizada_bloqueada %}Primero aprueba o rechaza la prenda personalizada{% else %}Primero debe existir un comprobante adjunto{% endif %}"{% endif %}>Aprobar comprobante</button>
                             </form>
                             <form method="POST" action="{{ url_for('admin_pedidos_pago', id_pedido=pedido.id_pedido) }}">
                                 <input type="hidden" name="origen" value="pedidos">
@@ -95,7 +102,7 @@
                                 <input type="hidden" name="f_fecha_hasta" value="{{ filtros.fecha_hasta if filtros else '' }}">
                                 <input type="hidden" name="f_page" value="{{ paginacion.page if paginacion else 1 }}">
                                 <input type="hidden" name="accion_pago" value="rechazar">
-                                <button type="submit" class="btn btn-outline-danger">Rechazar transferencia</button>
+                                <button type="submit" class="btn btn-outline-danger" {% if pedido.personalizada_bloqueada %}disabled title="Primero aprueba o rechaza la prenda personalizada"{% endif %}>Rechazar</button>
                             </form>
                         </div>
                         {% endif %}
@@ -113,9 +120,19 @@
                             <span><strong>Telefono:</strong> {{ pedido.cliente_telefono if pedido.cliente_telefono else 'Sin registrar' }}</span>
                             <span><strong>Direccion:</strong> {{ pedido.cliente_direccion if pedido.cliente_direccion else 'Sin registrar' }}</span>
                         </div>
+                        {% if pedido.documento_validacion_tiene %}
+                        <a href="{{ url_for('admin_pedido_documento_validacion', id_pedido=pedido.id_pedido) }}" target="_blank" rel="noopener noreferrer" class="stage-proof-link stage-proof-link--document">
+                            <i class="fas fa-id-card"></i> Ver documento institucional
+                        </a>
+                        {% endif %}
                     </div>
 
-                    {% if pedido.metodo_pago == 'transferencia' and pedido.estado_pago_ui != 'aprobado' %}
+                    {% if pedido.personalizada_tiene and pedido.personalizada_bloqueada %}
+                    <div class="stage-review-placeholder stage-review-placeholder--custom">
+                        <strong>Esperando validacion de prenda personalizada</strong>
+                        <p>Este pedido no se puede mover desde Pagos y pedidos hasta que la solicitud personalizada quede aprobada o rechazada.</p>
+                    </div>
+                    {% elif pedido.metodo_pago == 'transferencia' and pedido.estado_pago_ui != 'aprobado' %}
                     <div class="stage-review-placeholder">
                         <strong>Esperando validacion manual</strong>
                         <p>Cuando apruebes el comprobante, el pedido pasara automaticamente a confirmado y podras continuar con el seguimiento normal.</p>
@@ -126,7 +143,7 @@
                     {% endwith %}
                     {% endif %}
 
-                    {% if not (pedido.metodo_pago == 'transferencia' and pedido.estado_pago_ui != 'aprobado') %}
+                    {% if not pedido.personalizada_bloqueada and not (pedido.metodo_pago == 'transferencia' and pedido.estado_pago_ui != 'aprobado') %}
                     <form method="POST" action="{{ url_for('admin_pedidos_estado', id_pedido=pedido.id_pedido) }}" class="stage-form">
                         <input type="hidden" name="origen" value="pedidos">
                         <input type="hidden" name="curso_page" value="{{ paginacion_curso.page if paginacion_curso else 1 }}">
