@@ -72,7 +72,7 @@
                         <h5 class="mb-0">Agregar nuevo producto</h5>
                     </div>
                     <div class="panel-body">
-                        <form method="POST" action="{{ url_for('agregar_producto') }}" enctype="multipart/form-data">
+                        <form method="POST" action="{{ url_for('agregar_producto') }}" enctype="multipart/form-data" data-product-limit-form>
                             <div class="row g-3">
                                 <div class="col-md-4">
                                     <label class="form-label">Nombre</label>
@@ -84,11 +84,11 @@
                                 </div>
                                 <div class="col-md-2">
                                     <label class="form-label">Precio</label>
-                                    <input type="number" name="precio" class="form-control" min="0" step="0.01" required>
+                                    <input type="number" name="precio" class="form-control" min="0" max="1000000" step="0.01" required>
                                 </div>
                                 <div class="col-md-2">
                                     <label class="form-label">Stock</label>
-                                    <input type="number" name="stock" class="form-control" min="0" required>
+                                    <input type="number" name="stock" class="form-control" min="0" max="100000" required>
                                 </div>
                                 <div class="col-md-3">
                                     <label class="form-label">Fuerza</label>
@@ -347,7 +347,7 @@
                 >
                     <div class="row g-4">
                         <div class="col-lg-5">
-                            <form method="POST" id="modalProductEditForm" class="modal-section-card modal-section-card-fill">
+                            <form method="POST" id="modalProductEditForm" class="modal-section-card modal-section-card-fill" data-product-limit-form>
                                 <div class="modal-section-heading">
                                     <h6 class="mb-1">Información principal</h6>
                                     <p class="mb-0">Actualiza los datos visibles del producto sin saturar la tarjeta principal.</p>
@@ -366,11 +366,11 @@
                                 <div class="row g-3 mb-3">
                                     <div class="col-sm-6">
                                         <label for="modalProductPrice" class="form-label">Precio</label>
-                                        <input type="number" id="modalProductPrice" name="precio" class="form-control" min="0" step="0.01" required>
+                                        <input type="number" id="modalProductPrice" name="precio" class="form-control" min="0" max="1000000" step="0.01" required>
                                     </div>
                                     <div class="col-sm-6">
                                         <label for="modalProductStock" class="form-label">Stock</label>
-                                        <input type="number" id="modalProductStock" name="stock" class="form-control" min="0" required>
+                                        <input type="number" id="modalProductStock" name="stock" class="form-control" min="0" max="100000" required>
                                     </div>
                                 </div>
 

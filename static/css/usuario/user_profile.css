@@ -22,6 +22,10 @@ body.profile-page {
     padding-top: 98px;
 }
 
+body.profile-page .whatsapp-float {
+    display: none;
+}
+
 .profile-shell {
     width: min(1520px, calc(100% - 48px));
     margin: 1.4rem auto 4rem;
@@ -384,11 +388,12 @@ body.profile-page {
     align-content: space-between;
     overflow: hidden;
     position: relative;
-    color: #fff;
+    color: #0b1320;
     background:
-        linear-gradient(135deg, rgba(14, 40, 77, 0.96), rgba(27, 77, 138, 0.95) 45%, rgba(31, 158, 197, 0.86)),
-        linear-gradient(180deg, rgba(255, 255, 255, 0.12), transparent);
-    box-shadow: 0 16px 34px rgba(12, 34, 66, 0.1);
+        radial-gradient(circle at top right, rgba(255, 255, 255, 0.82), transparent 34%),
+        linear-gradient(135deg, #eefcff 0%, #d8f3f9 100%);
+    border: 1px solid rgba(202, 234, 243, 0.9);
+    box-shadow: 0 14px 30px rgba(31, 158, 197, 0.12);
 }
 
 .saved-card::after {
@@ -396,8 +401,8 @@ body.profile-page {
     position: absolute;
     inset: 0;
     background:
-        radial-gradient(circle at top right, rgba(255, 255, 255, 0.22), transparent 24%),
-        radial-gradient(circle at bottom left, rgba(255, 255, 255, 0.14), transparent 28%);
+        radial-gradient(circle at top left, rgba(216, 243, 249, 0.76), transparent 34%),
+        radial-gradient(circle at bottom left, rgba(255, 255, 255, 0.44), transparent 32%);
     pointer-events: none;
 }
 
@@ -410,7 +415,9 @@ body.profile-page {
     width: 46px;
     height: 34px;
     border-radius: 9px;
-    background: linear-gradient(135deg, #f5d782, #b88d2e);
+    background: rgba(255, 255, 255, 0.82);
+    border: 1px solid rgba(202, 234, 243, 0.95);
+    box-shadow: 0 10px 24px rgba(31, 158, 197, 0.1);
 }
 
 .saved-card span,
@@ -422,13 +429,21 @@ body.profile-page {
 
 .saved-card span,
 .saved-card small {
-    color: rgba(255, 255, 255, 0.78);
+    color: #607080;
+}
+
+.saved-card span {
+    color: #1f9ec5;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    font-size: 0.8rem;
+    font-weight: 800;
 }
 
 .saved-card strong {
     display: block;
     margin: 0.35rem 0;
-    color: #fff;
+    color: #0b1320;
     font-size: 1.2rem;
     font-weight: 900;
 }

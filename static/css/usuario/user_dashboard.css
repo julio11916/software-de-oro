@@ -69,6 +69,7 @@
 
 .featured-card-link {
     display: block;
+    position: relative;
 }
 
 .producto-image-destacado {
@@ -109,6 +110,61 @@
 .producto-price-destacado {
     font-size: 0.85rem;
     color: #2e2e2e;
+    font-weight: 600;
+}
+
+.featured-promo-badge {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    max-width: calc(100% - 24px);
+    padding: 6px 10px;
+    border-radius: 999px;
+    background: #d8f3f9;
+    color: #0f5f7a;
+    font-size: 0.78rem;
+    font-weight: 800;
+    box-shadow: 0 8px 14px rgba(15, 95, 122, 0.16);
+    z-index: 2;
+}
+
+.featured-price-stack {
+    display: grid;
+    gap: 2px;
+    margin-bottom: 6px;
+}
+
+.featured-old-price {
+    color: #7b8794;
+    font-size: 0.78rem;
+    font-weight: 600;
+    text-decoration: line-through;
+}
+
+.featured-new-price {
+    color: #0f8f5b;
+    font-size: 0.94rem;
+    font-weight: 800;
+}
+
+.featured-promo-live {
+    margin: 0;
+    padding: 7px 9px;
+    border-radius: 10px;
+    background: rgba(216, 243, 249, 0.54);
+    color: #245269;
+    font-size: 0.74rem;
+    font-weight: 700;
+    line-height: 1.25;
+}
+
+.featured-promo-live span {
+    display: block;
+    margin-top: 2px;
+    color: #557085;
     font-weight: 600;
 }
 

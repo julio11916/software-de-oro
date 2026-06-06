@@ -11,10 +11,24 @@
                 <article class="producto-card-destacado featured-card">
                     <a class="featured-card-link" href="{% if is_public_featured %}{{ url_for('login') }}{% else %}{{ url_for('product_detail', id_producto=destacado.id_producto) }}{% endif %}">
                         <img src="{{ url_for('static', filename=destacado.imagen_url) }}" class="producto-image-destacado" alt="{{ destacado.nombre }}">
+                        {% if destacado.promo_activa %}
+                        <span class="featured-promo-badge">{{ destacado.promo_etiqueta }}</span>
+                        {% endif %}
                     </a>
                     <div class="producto-info-destacado">
                         <h5 class="producto-title-destacado">{{ destacado.nombre }}</h5>
+                        {% if destacado.promo_activa %}
+                        <p class="producto-price-destacado featured-price-stack">
+                            <span class="featured-old-price">{{ destacado.precio_original|cop }}</span>
+                            <strong class="featured-new-price">{{ destacado.precio_con_descuento|cop }}</strong>
+                        </p>
+                        <p class="featured-promo-live">
+                            Promoción activa{% if destacado.promo_nombre %}: {{ destacado.promo_nombre }}{% endif %}
+                            {% if destacado.promo_fecha_fin %}<span>Vigente hasta {{ destacado.promo_fecha_fin }}</span>{% endif %}
+                        </p>
+                        {% else %}
                         <p class="producto-price-destacado">{{ destacado.precio|cop }}</p>
+                        {% endif %}
                     </div>
                 </article>
                 {% endfor %}

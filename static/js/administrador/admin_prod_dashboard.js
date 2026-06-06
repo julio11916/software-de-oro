@@ -55,6 +55,46 @@ const productEditModalState = {
     refs: {},
 };
 
+const productLimits = {
+    precio: {
+        max: 1000000,
+        message: 'El precio del producto no puede superar COP 1.000.000.',
+    },
+    stock: {
+        max: 100000,
+        message: 'El stock del producto no puede superar 100.000 unidades.',
+    },
+};
+
+function validateProductLimitInput(input) {
+    if (!input || !input.name || !productLimits[input.name]) {
+        return true;
+    }
+
+    const limit = productLimits[input.name];
+    const value = Number.parseFloat(input.value);
+    const isValid = input.value === '' || Number.isNaN(value) || value <= limit.max;
+    input.setCustomValidity(isValid ? '' : limit.message);
+    return isValid;
+}
+
+function bindProductLimitValidation() {
+    document.querySelectorAll('[data-product-limit-form]').forEach((form) => {
+        const limitInputs = form.querySelectorAll('input[name="precio"], input[name="stock"]');
+        limitInputs.forEach((input) => {
+            input.addEventListener('input', () => validateProductLimitInput(input));
+        });
+
+        form.addEventListener('submit', (event) => {
+            const isValid = Array.from(limitInputs).every((input) => validateProductLimitInput(input));
+            if (!isValid) {
+                event.preventDefault();
+                form.reportValidity();
+            }
+        });
+    });
+}
+
 function clearPendingFilePreviews() {
     productEditModalState.pendingPreviewUrls.forEach((url) => {
         URL.revokeObjectURL(url);
@@ -415,6 +455,8 @@ document.addEventListener('click', (event) => {
 });
 
 document.addEventListener('DOMContentLoaded', () => {
+    bindProductLimitValidation();
+
     const tracks = Array.from(document.querySelectorAll('.force-track'));
     tracks.forEach((track) => {
         track.addEventListener('scroll', scheduleForceArrowUpdate, { passive: true });
