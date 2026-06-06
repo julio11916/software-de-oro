@@ -15,7 +15,69 @@ def register_user_legacy_routes(app, legacy):
             return "Acceso denegado"
 
         lista_pedidos = legacy._obtener_pedidos_usuario_actual()
-        return render_template("Usuarios/Carrito/user_orders.html", pedidos=lista_pedidos)
+        filtros = {
+            "fecha_desde": str(request.args.get("fecha_desde", "") or "").strip(),
+            "fecha_hasta": str(request.args.get("fecha_hasta", "") or "").strip(),
+            "metodo": str(request.args.get("metodo", "todos") or "todos").strip().lower(),
+            "estado": str(request.args.get("estado", "todos") or "todos").strip().lower(),
+        }
+
+        metodos_pago = []
+        estados_pedido = []
+        for pedido in lista_pedidos:
+            metodo = str(pedido.get("metodo_pago", "") or "").strip().lower()
+            estado = str(pedido.get("estado_ui", "") or "").strip().lower()
+            if metodo and not any(item["value"] == metodo for item in metodos_pago):
+                metodos_pago.append({"value": metodo, "label": pedido.get("metodo_pago_label") or metodo.title()})
+            if estado and not any(item["value"] == estado for item in estados_pedido):
+                estados_pedido.append({"value": estado, "label": pedido.get("estado_label") or estado.replace("_", " ").title()})
+
+        metodos_validos = {item["value"] for item in metodos_pago}
+        estados_validos = {item["value"] for item in estados_pedido}
+        if filtros["metodo"] != "todos" and filtros["metodo"] not in metodos_validos:
+            filtros["metodo"] = "todos"
+        if filtros["estado"] != "todos" and filtros["estado"] not in estados_validos:
+            filtros["estado"] = "todos"
+
+        fecha_desde_dt = pd.to_datetime(filtros["fecha_desde"], errors="coerce")
+        if pd.isna(fecha_desde_dt):
+            filtros["fecha_desde"] = ""
+        fecha_hasta_dt = pd.to_datetime(filtros["fecha_hasta"], errors="coerce")
+        if pd.isna(fecha_hasta_dt):
+            filtros["fecha_hasta"] = ""
+
+        hay_filtros_activos = bool(
+            filtros["fecha_desde"]
+            or filtros["fecha_hasta"]
+            or filtros["metodo"] != "todos"
+            or filtros["estado"] != "todos"
+        )
+
+        pedidos_filtrados = []
+        for pedido in lista_pedidos:
+            if filtros["metodo"] != "todos" and str(pedido.get("metodo_pago", "") or "").strip().lower() != filtros["metodo"]:
+                continue
+            if filtros["estado"] != "todos" and str(pedido.get("estado_ui", "") or "").strip().lower() != filtros["estado"]:
+                continue
+
+            fecha_pedido_dt = pd.to_datetime(pedido.get("fecha_pedido", ""), errors="coerce")
+            if filtros["fecha_desde"] and (pd.isna(fecha_pedido_dt) or fecha_pedido_dt.date() < fecha_desde_dt.date()):
+                continue
+            if filtros["fecha_hasta"] and (pd.isna(fecha_pedido_dt) or fecha_pedido_dt.date() > fecha_hasta_dt.date()):
+                continue
+
+            pedidos_filtrados.append(pedido)
+
+        return render_template(
+            "Usuarios/Carrito/user_orders.html",
+            pedidos=pedidos_filtrados,
+            pedidos_total=len(lista_pedidos),
+            ultimo_pedido=lista_pedidos[0] if lista_pedidos else None,
+            filtros=filtros,
+            metodos_pago=metodos_pago,
+            estados_pedido=estados_pedido,
+            hay_filtros_activos=hay_filtros_activos,
+        )
 
     def user_order_details(id_pedido):
         if session.get("rol") != "normal":

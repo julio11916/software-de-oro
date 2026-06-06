@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 
 <head>
@@ -16,154 +16,174 @@
     {% include 'Usuarios/partials/_flash_toasts.html' %}
 
     <main class="orders-shell">
-        {% if pedidos %}
+        {% if ultimo_pedido %}
         <section class="orders-hero">
             <div class="orders-hero__copy">
-                <span class="orders-eyebrow">Centro de pedidos</span>
-                <h1>Haz seguimiento a cada compra</h1>
-                <p>Aquí ves el estado del pago, el avance del pedido y el acceso directo al detalle completo de cada compra.</p>
+                <span class="orders-eyebrow">Último historial de compra</span>
+                <h1>Pedido {{ ultimo_pedido.numero_pedido_usuario }} · {{ ultimo_pedido.estado_label }}</h1>
+                <p>El seguimiento se actualiza con los cambios que realiza administración y solo aparece en tu cuenta.</p>
                 <div class="orders-hero__chips">
-                    <span><i class="fas fa-credit-card"></i> Pago y pedido en un solo lugar</span>
-                    <span><i class="fas fa-truck"></i> Seguimiento claro por etapas</span>
-                    <span><i class="fas fa-receipt"></i> Transferencias bajo revisión manual</span>
+                    <span><i class="fas fa-calendar-days"></i> {{ ultimo_pedido.fecha_pedido }}</span>
+                    <span><i class="fas fa-wallet"></i> {{ ultimo_pedido.metodo_pago_label if ultimo_pedido.metodo_pago_label else 'Sin método registrado' }}</span>
+                    {% if ultimo_pedido.estado_pago_label %}
+                    <span><i class="fas fa-credit-card"></i> Pago: {{ ultimo_pedido.estado_pago_label }}</span>
+                    {% endif %}
                 </div>
             </div>
             <aside class="orders-hero__aside">
                 <div class="hero-stat-card">
-                    <span>Total de pedidos</span>
-                    <strong>{{ pedidos|length }}</strong>
-                    <small>Disponible solo en tu cuenta</small>
+                    <span>Estado actual</span>
+                    <strong>{{ ultimo_pedido.estado_label }}</strong>
+                    <small>Pedido {{ ultimo_pedido.numero_pedido_usuario }} · {{ ultimo_pedido.monto|cop if ultimo_pedido.monto else 'Monto pendiente' }}</small>
                 </div>
-                <div class="hero-stat-card hero-stat-card--soft">
-                    <span>Ultimo movimiento</span>
-                    <strong>{{ pedidos[0].estado_label if pedidos else 'Sin pedidos' }}</strong>
-                    <small>{{ pedidos[0].fecha_pedido if pedidos else 'Aún no compras' }}</small>
+                <div class="hero-stat-card hero-stat-card--tracking">
+                    <span>Seguimiento</span>
+                    {% if ultimo_pedido.tracking_steps %}
+                    {% with tracking_steps=ultimo_pedido.tracking_steps %}
+                    {% include 'Usuarios/partials/_order_tracking_steps.html' %}
+                    {% endwith %}
+                    {% else %}
+                    <strong>{{ ultimo_pedido.estado_label }}</strong>
+                    <small>Este estado no requiere etapas de seguimiento.</small>
+                    {% endif %}
                 </div>
             </aside>
         </section>
 
-        <section class="orders-metrics">
-            <article class="orders-metric-card">
-                <span class="orders-metric-label">Pedidos totales</span>
-                <strong class="orders-metric-value">{{ pedidos|length }}</strong>
-                <small>Todos tus registros en la tienda</small>
-            </article>
-            <article class="orders-metric-card">
-                <span class="orders-metric-label">Transferencias</span>
-                <strong class="orders-metric-value">{{ pedidos|selectattr('metodo_pago', 'equalto', 'transferencia')|list|length }}</strong>
-                <small>Pagos que pasan por revisión manual</small>
-            </article>
-            <article class="orders-metric-card">
-                <span class="orders-metric-label">Entregados</span>
-                <strong class="orders-metric-value">{{ pedidos|selectattr('estado_ui', 'equalto', 'entregado')|list|length }}</strong>
-                <small>Pedidos finalizados correctamente</small>
-            </article>
-            <article class="orders-metric-card">
-                <span class="orders-metric-label">En revisión</span>
-                <strong class="orders-metric-value">{{ pedidos|selectattr('estado_pago_ui', 'equalto', 'en_revision')|list|length }}</strong>
-                <small>Transferencias que estamos validando</small>
-            </article>
-        </section>
+        <section class="orders-panel">
+            <div class="orders-panel__head">
+                <div>
+                    <span class="orders-eyebrow">Historial</span>
+                    <h2>Pedidos realizados</h2>
+                    <p>Filtra por fecha, método de pago o estado del pedido.</p>
+                </div>
+                <span class="orders-count">{{ pedidos|length }} de {{ pedidos_total }} pedido(s)</span>
+            </div>
 
-        <section class="orders-grid">
-            {% for pedido in pedidos %}
-            <article class="order-card-premium">
-                <header class="order-card-premium__header">
-                    <div>
-                        <span class="order-card-kicker">Pedido {{ pedido.numero_pedido_usuario }}</span>
-                        <h2>{{ pedido.fecha_pedido }}</h2>
-                    </div>
-                    <div class="order-status-bundle">
-                        <span class="status-pill status-pill-{{ pedido.estado_ui }}">{{ pedido.estado_label }}</span>
-                        {% if pedido.estado_pago_label %}
-                        <span class="payment-pill payment-pill-{{ pedido.estado_pago_ui }}">{{ pedido.estado_pago_label }}</span>
-                        {% endif %}
-                    </div>
-                </header>
-
-                <div class="order-card-premium__body">
-                    <div class="order-topline">
-                        <div class="order-topline__amount">
-                            <span>Monto total</span>
-                            <strong>{{ pedido.monto|cop if pedido.monto else 'N/A' }}</strong>
-                        </div>
-                        <div class="order-topline__method">
-                            <span>Metodo de pago</span>
-                            <strong>{{ pedido.metodo_pago_label if pedido.metodo_pago_label else 'Sin registrar' }}</strong>
-                        </div>
-                    </div>
-
-                    <section class="order-meta-panel">
-                        <article class="order-meta-row">
-                            <div class="order-meta-row__icon">
-                                <i class="fas fa-calendar-days"></i>
-                            </div>
-                            <div class="order-meta-row__copy">
-                                <span>Fecha</span>
-                                <strong>{{ pedido.fecha_pedido }}</strong>
-                            </div>
-                        </article>
-                        <article class="order-meta-row">
-                            <div class="order-meta-row__icon">
-                                <i class="fas fa-box-archive"></i>
-                            </div>
-                            <div class="order-meta-row__copy">
-                                <span>Estado del pedido</span>
-                                <strong>{{ pedido.estado_label }}</strong>
-                            </div>
-                        </article>
-                        <article class="order-meta-row">
-                            <div class="order-meta-row__icon">
-                                <i class="fas fa-wallet"></i>
-                            </div>
-                            <div class="order-meta-row__copy">
-                                <span>Estado del pago</span>
-                                <strong>{{ pedido.estado_pago_label if pedido.estado_pago_label else 'Sin registrar' }}</strong>
-                            </div>
-                        </article>
-                    </section>
-
-                    {% if pedido.metodo_pago == 'transferencia' and pedido.estado_pago_ui != 'aprobado' %}
-                    <section class="order-review-banner order-review-banner-{{ pedido.estado_pago_ui if pedido.estado_pago_ui else 'pendiente_comprobante' }}">
-                        <div class="order-review-banner__icon">
-                            <i class="fas fa-receipt"></i>
-                        </div>
-                        <div>
-                            <h3>Transferencia en validación</h3>
-                            <p>
-                                {% if pedido.estado_pago_ui == 'rechazado' %}
-                                Tu comprobante fue rechazado. Contáctanos para coordinar cómo completar nuevamente el pago.
-                                {% elif pedido.estado_pago_ui == 'en_revision' %}
-                                Ya recibimos tu comprobante y el equipo está revisando manualmente la transferencia.
-                                {% else %}
-                                El pedido ya fue registrado. Solo falta aprobar el comprobante adjunto desde la web.
-                                {% endif %}
-                            </p>
-                        </div>
-                    </section>
-                    {% endif %}
-
-                    {% if pedido.tracking_steps %}
-                    <section class="order-tracking-card">
-                        <div class="order-tracking-card__head">
-                            <span class="orders-eyebrow">Seguimiento</span>
-                            <strong>Estado actual del pedido</strong>
-                        </div>
-                        {% with tracking_steps=pedido.tracking_steps %}
-                        {% include 'Usuarios/partials/_order_tracking_steps.html' %}
-                        {% endwith %}
-                    </section>
+            <form class="orders-filters" method="GET" action="{{ url_for('user_orders') }}">
+                <label>
+                    <span>Desde</span>
+                    <input type="date" name="fecha_desde" value="{{ filtros.fecha_desde }}">
+                </label>
+                <label>
+                    <span>Hasta</span>
+                    <input type="date" name="fecha_hasta" value="{{ filtros.fecha_hasta }}">
+                </label>
+                <label>
+                    <span>Método de pago</span>
+                    <select name="metodo">
+                        <option value="todos" {% if filtros.metodo == 'todos' %}selected{% endif %}>Todos</option>
+                        {% for metodo in metodos_pago %}
+                        <option value="{{ metodo.value }}" {% if filtros.metodo == metodo.value %}selected{% endif %}>{{ metodo.label }}</option>
+                        {% endfor %}
+                    </select>
+                </label>
+                <label>
+                    <span>Estado del pedido</span>
+                    <select name="estado">
+                        <option value="todos" {% if filtros.estado == 'todos' %}selected{% endif %}>Todos</option>
+                        {% for estado in estados_pedido %}
+                        <option value="{{ estado.value }}" {% if filtros.estado == estado.value %}selected{% endif %}>{{ estado.label }}</option>
+                        {% endfor %}
+                    </select>
+                </label>
+                <div class="orders-filters__actions">
+                    <button type="submit"><i class="fas fa-filter"></i> Filtrar</button>
+                    {% if hay_filtros_activos %}
+                    <a href="{{ url_for('user_orders') }}">Limpiar</a>
                     {% endif %}
                 </div>
+            </form>
 
-                <footer class="order-card-premium__footer">
-                    <a href="{{ url_for('user_order_details', id_pedido=pedido.id_pedido) }}" class="btn-order-detail">
-                        <i class="fas fa-eye"></i>
-                        Ver detalle completo
-                    </a>
-                </footer>
-            </article>
-            {% endfor %}
+            <div class="orders-table-wrap">
+                <table class="orders-table">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Pedido</th>
+                            <th>Fecha y hora</th>
+                            <th>Monto y método de pago</th>
+                            <th>Estado del pedido</th>
+                            <th>Estado del pago</th>
+                            <th>Seguimiento</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% if pedidos %}
+                        {% for pedido in pedidos %}
+                        <tr>
+                            <td class="orders-table__index">{{ loop.index }}</td>
+                            <td>
+                                <div class="order-cell-main">
+                                    <span class="order-card-kicker">Pedido {{ pedido.numero_pedido_usuario }}</span>
+                                    <div class="order-status-bundle">
+                                        <span class="status-pill status-pill-{{ pedido.estado_ui }}">{{ pedido.estado_label }}</span>
+                                        {% if pedido.estado_pago_label %}
+                                        <span class="payment-pill payment-pill-{{ pedido.estado_pago_ui }}">{{ pedido.estado_pago_label }}</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="order-date-cell">
+                                    <i class="fas fa-calendar-days"></i>
+                                    <strong>{{ pedido.fecha_pedido }}</strong>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="order-payment-cell">
+                                    <span>Monto total</span>
+                                    <strong>{{ pedido.monto|cop if pedido.monto else 'N/A' }}</strong>
+                                    <span>Método de pago</span>
+                                    <em>{{ pedido.metodo_pago_label if pedido.metodo_pago_label else 'Sin registrar' }}</em>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="order-state-cell">
+                                    <i class="fas fa-box-archive"></i>
+                                    <strong>{{ pedido.estado_label }}</strong>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="order-state-cell">
+                                    <i class="fas fa-wallet"></i>
+                                    <strong>{{ pedido.estado_pago_label if pedido.estado_pago_label else 'Sin registrar' }}</strong>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="order-table-tracking">
+                                    {% if pedido.tracking_steps %}
+                                    {% with tracking_steps=pedido.tracking_steps %}
+                                    {% include 'Usuarios/partials/_order_tracking_steps.html' %}
+                                    {% endwith %}
+                                    {% else %}
+                                    <span class="tracking-empty">{{ pedido.estado_label }}</span>
+                                    {% endif %}
+                                </div>
+                            </td>
+                            <td>
+                                <a href="{{ url_for('user_order_details', id_pedido=pedido.id_pedido) }}" class="btn-order-detail">
+                                    <i class="fas fa-eye"></i>
+                                    Ver detalle completo
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                        {% else %}
+                        <tr>
+                            <td colspan="8">
+                                <div class="orders-no-results">
+                                    <i class="fas fa-magnifying-glass"></i>
+                                    <strong>No hay pedidos con esos filtros.</strong>
+                                    <a href="{{ url_for('user_orders') }}">Limpiar filtros</a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
         </section>
 
         {% else %}

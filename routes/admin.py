@@ -14,10 +14,37 @@ admin_bp = Blueprint("admin", __name__, url_prefix="/admin")
 
 def register_admin_legacy_routes(app, legacy):
     """Registro incremental de rutas legacy del area administrativa."""
+    PRODUCT_PRICE_MAX = 1000000
+    PRODUCT_STOCK_MAX = 100000
+
+    def _validar_limites_producto(precio, stock):
+        if precio > PRODUCT_PRICE_MAX:
+            flash("El precio del producto no puede superar COP 1.000.000.", "warning")
+            return False
+        if stock > PRODUCT_STOCK_MAX:
+            flash("El stock del producto no puede superar 100.000 unidades.", "warning")
+            return False
+        return True
 
     def admin_promo():
         if session.get("rol") != "admin":
             return "Acceso denegado"
+
+        def _promo_bool(valor):
+            if isinstance(valor, bool):
+                return valor
+            return str(valor or "").strip().lower() in {"true", "1", "si", "sí", "on", "activo"}
+
+        def _promocion_no_vencida(promo, fecha_ref):
+            return legacy.estado_vigencia_promocion(promo, fecha_ref) != "vencida"
+
+        def _es_promocion_del_producto_no_vencida(promo, fecha_ref, id_producto_actual):
+            if not _promocion_no_vencida(promo, fecha_ref):
+                return False
+            id_producto_promo = pd.to_numeric(promo.get("id_producto"), errors="coerce")
+            if pd.isna(id_producto_promo):
+                return False
+            return int(id_producto_promo) == int(id_producto_actual)
 
         if request.method == "POST":
             id_producto = pd.to_numeric(request.form.get("id_producto", ""), errors="coerce")
@@ -86,13 +113,29 @@ def register_admin_legacy_routes(app, legacy):
                 if not re.fullmatch(r"[A-Z0-9_-]{3,30}", codigo):
                     flash("El código promocional debe tener entre 3 y 30 caracteres: letras, números, guion o guion bajo.", "warning")
                     return redirect(url_for("admin_promo"))
-                existe_codigo = promos[promos["codigo"].astype(str).str.upper() == codigo]
+                existe_codigo = promos[promos["codigo"].astype(str).str.strip().str.upper() == codigo]
+                if not existe_codigo.empty:
+                    existe_codigo = existe_codigo[
+                        existe_codigo.apply(lambda row: _promocion_no_vencida(row.to_dict(), hoy_date), axis=1)
+                    ]
                 if not existe_codigo.empty:
                     flash("El código promocional ya existe. Usa otro.", "warning")
                     return redirect(url_for("admin_promo"))
             next_id = int(pd.to_numeric(promos["id_promo"], errors="coerce").max() + 1) if not promos.empty else 1
             if not nombre:
                 nombre = f"Promoción {producto_ref.get('nombre', 'producto')}"
+            if not promos.empty:
+                existe_promo_producto = promos.apply(
+                    lambda row: _es_promocion_del_producto_no_vencida(row.to_dict(), hoy_date, int(id_producto)),
+                    axis=1,
+                )
+                if bool(existe_promo_producto.any()):
+                    mensaje_promo_existente = (
+                        "Ya existe una promoción vigente o programada para este producto. "
+                        "Espera a que finalice su vigencia antes de crear una nueva."
+                    )
+                    flash(mensaje_promo_existente, "warning")
+                    return redirect(url_for("admin_promo"))
             nuevo = {
                 "id_promo": next_id,
                 "nombre": nombre,
@@ -120,6 +163,20 @@ def register_admin_legacy_routes(app, legacy):
 
         promos = legacy.cargar_promociones_df()
         pagina_promos = legacy._parse_positive_int(request.args.get("page", 1), default=1)
+        filtros_promos = {
+            "vigencia": request.args.get("vigencia", "todos").strip().lower(),
+            "estado": request.args.get("estado", "todos").strip().lower(),
+            "activacion": request.args.get("activacion", "todos").strip().lower(),
+            "orden": request.args.get("orden", "recientes").strip().lower(),
+        }
+        if filtros_promos["vigencia"] not in {"todos", "vigente", "programada", "vencida"}:
+            filtros_promos["vigencia"] = "todos"
+        if filtros_promos["estado"] not in {"todos", "aplicable", "no_aplicable"}:
+            filtros_promos["estado"] = "todos"
+        if filtros_promos["activacion"] not in {"todos", "activa", "desactivada"}:
+            filtros_promos["activacion"] = "todos"
+        if filtros_promos["orden"] not in {"recientes", "vigencia", "estado", "activacion", "fecha_fin"}:
+            filtros_promos["orden"] = "recientes"
         hoy = datetime.now().date()
         productos = legacy.cargar_productos_activos_df()
         productos["id_producto"] = pd.to_numeric(productos.get("id_producto", 0), errors="coerce").fillna(0).astype(int)
@@ -163,6 +220,7 @@ def register_admin_legacy_routes(app, legacy):
             }
         for promo in lista_promos:
             promo["estado_vigencia"] = legacy.estado_vigencia_promocion(promo, hoy)
+            promo["activo"] = _promo_bool(promo.get("activo", False))
             promo["es_aplicable"] = legacy.promocion_esta_aplicable(promo, hoy)
             promo["id_producto"] = int(pd.to_numeric(promo.get("id_producto"), errors="coerce") or 0)
             key = int(pd.to_numeric(promo.get("id_promo"), errors="coerce") or 0)
@@ -172,6 +230,36 @@ def register_admin_legacy_routes(app, legacy):
         nombre_producto = {int(row["id_producto"]): str(row.get("nombre", "Producto")) for _, row in productos.iterrows()}
         for promo in lista_promos:
             promo["producto_nombre"] = nombre_producto.get(promo["id_producto"], "Producto no encontrado")
+        if filtros_promos["vigencia"] != "todos":
+            lista_promos = [promo for promo in lista_promos if promo["estado_vigencia"] == filtros_promos["vigencia"]]
+        if filtros_promos["estado"] == "aplicable":
+            lista_promos = [promo for promo in lista_promos if promo["es_aplicable"]]
+        elif filtros_promos["estado"] == "no_aplicable":
+            lista_promos = [promo for promo in lista_promos if not promo["es_aplicable"]]
+        if filtros_promos["activacion"] == "activa":
+            lista_promos = [promo for promo in lista_promos if promo["activo"]]
+        elif filtros_promos["activacion"] == "desactivada":
+            lista_promos = [promo for promo in lista_promos if not promo["activo"]]
+
+        orden_vigencia = {"vigente": 0, "programada": 1, "vencida": 2}
+        if filtros_promos["orden"] == "vigencia":
+            lista_promos.sort(key=lambda promo: (orden_vigencia.get(promo["estado_vigencia"], 9), str(promo.get("fecha_fin", ""))))
+        elif filtros_promos["orden"] == "estado":
+            lista_promos.sort(key=lambda promo: (not promo["es_aplicable"], orden_vigencia.get(promo["estado_vigencia"], 9)))
+        elif filtros_promos["orden"] == "activacion":
+            lista_promos.sort(key=lambda promo: (not promo["activo"], orden_vigencia.get(promo["estado_vigencia"], 9)))
+        elif filtros_promos["orden"] == "fecha_fin":
+            lista_promos.sort(key=lambda promo: str(promo.get("fecha_fin", "")))
+        else:
+            lista_promos.sort(
+                key=lambda promo: int(pd.to_numeric(promo.get("id_promo"), errors="coerce") or 0),
+                reverse=True,
+            )
+
+        hay_filtros_promos = any(
+            filtros_promos[key] != "todos"
+            for key in ["vigencia", "estado", "activacion"]
+        ) or filtros_promos["orden"] != "recientes"
         promos_vista, paginacion_promos = legacy._paginar_lista(lista_promos, pagina_promos, per_page=10)
         return render_template(
             "Administrador/Promociones/adim_promo.html",
@@ -181,6 +269,8 @@ def register_admin_legacy_routes(app, legacy):
             fuerzas=legacy.FUERZAS_OPCIONES,
             hoy=hoy,
             paginacion_promos=paginacion_promos,
+            filtros_promos=filtros_promos,
+            hay_filtros_promos=hay_filtros_promos,
         )
 
     def admin_promo_toggle(id_promo):
@@ -188,18 +278,25 @@ def register_admin_legacy_routes(app, legacy):
             return "Acceso denegado"
         promos = legacy.cargar_promociones_df()
         pagina_promos = legacy._parse_positive_int(request.form.get("page", 1), default=1)
+        filtros_redirect = {
+            "page": pagina_promos,
+            "vigencia": request.form.get("vigencia", "todos"),
+            "estado": request.form.get("estado", "todos"),
+            "activacion": request.form.get("activacion", "todos"),
+            "orden": request.form.get("orden", "recientes"),
+        }
         idx = promos[promos["id_promo"] == id_promo].index
         if not idx.empty:
             promo_actual = promos.loc[idx[0]].to_dict()
             if legacy.estado_vigencia_promocion(promo_actual, datetime.now().date()) == "vencida":
                 flash("La promoción está vencida y no se puede reactivar ni cambiar de estado.", "warning")
-                return redirect(url_for("admin_promo", page=pagina_promos))
+                return redirect(url_for("admin_promo", **filtros_redirect))
             promos.loc[idx, "activo"] = ~promos.loc[idx, "activo"]
             legacy.guardar_promociones_df(promos)
             legacy.registrar_actividad(
                 f"Promoción {'activada' if promos.loc[idx, 'activo'].iloc[0] else 'desactivada'}: {promos.loc[idx, 'nombre'].iloc[0]}"
             )
-        return redirect(url_for("admin_promo", page=pagina_promos))
+        return redirect(url_for("admin_promo", **filtros_redirect))
 
     def obtener_datos_charts(periodo, fecha_desde_raw, fecha_hasta_raw):
         detalle = legacy.cargar_detalle_pedido_df()
@@ -606,6 +703,8 @@ def register_admin_legacy_routes(app, legacy):
         if precio < 0 or stock_nuevo < 0:
             flash("Precio y stock no pueden ser negativos.", "danger")
             return redirect(url_for("admin_productos"))
+        if not _validar_limites_producto(precio, stock_nuevo):
+            return redirect(url_for("admin_productos"))
 
         imagenes = [a for a in request.files.getlist("imagenes") if a and str(getattr(a, "filename", "")).strip()]
         if not imagenes:
@@ -660,7 +759,10 @@ def register_admin_legacy_routes(app, legacy):
         if idx_duplicado is not None:
             stock_actual = pd.to_numeric(productos.at[idx_duplicado, "stock"], errors="coerce")
             stock_actual = int(stock_actual) if pd.notna(stock_actual) else 0
-            productos.at[idx_duplicado, "stock"] = stock_actual + stock_nuevo
+            stock_final = stock_actual + stock_nuevo
+            if not _validar_limites_producto(precio, stock_final):
+                return redirect(url_for("admin_productos"))
+            productos.at[idx_duplicado, "stock"] = stock_final
             legacy.guardar_productos_df(productos)
             _limpiar_galeria_generada_si_no_se_usa(galeria_guardada, nuevo_id)
             id_existente_raw = pd.to_numeric(productos.at[idx_duplicado, "id_producto"], errors="coerce")
@@ -669,7 +771,7 @@ def register_admin_legacy_routes(app, legacy):
                 f"Actualizo stock de producto existente '{productos.at[idx_duplicado, 'nombre']}' (ID {id_existente})\n"
                 f"- stock anterior: {stock_actual}\n"
                 f"- stock agregado: {stock_nuevo}\n"
-                f"- stock final: {stock_actual + stock_nuevo}"
+                f"- stock final: {stock_final}"
             )
             flash(
                 f"El producto ya existia. Se sumaron {stock_nuevo} unidad(es) al stock del producto ID {id_existente}.",
@@ -2148,8 +2250,17 @@ def register_admin_legacy_routes(app, legacy):
 
             nuevo_nombre = request.form["nombre"].strip()
             nueva_descripcion = request.form["descripcion"].strip()
-            nuevo_precio = float(request.form["precio"])
-            nuevo_stock = int(request.form["stock"])
+            try:
+                nuevo_precio = float(request.form["precio"])
+                nuevo_stock = int(float(request.form["stock"]))
+            except (TypeError, ValueError):
+                flash("Ingresa precio y stock validos.", "danger")
+                return redirect(url_for("admin_productos"))
+            if nuevo_precio < 0 or nuevo_stock < 0:
+                flash("Precio y stock no pueden ser negativos.", "danger")
+                return redirect(url_for("admin_productos"))
+            if not _validar_limites_producto(nuevo_precio, nuevo_stock):
+                return redirect(url_for("admin_productos"))
             nueva_fuerza = request.form.get("fuerza", anterior["fuerza"]).strip()
             nueva_intendencia = request.form.get("intendencia", anterior["intendencia"]).strip()
             if nueva_fuerza not in legacy.FUERZAS_OPCIONES or nueva_intendencia not in legacy.INTENDENCIAS_OPCIONES:

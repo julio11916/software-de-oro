@@ -29,6 +29,7 @@ def construir_contexto_home(
             producto["precio_con_descuento"] = max(0.0, precio_base - descuento)
             producto["promo_activa"] = True
             producto["promo_nombre"] = promo.get("nombre", "")
+            producto["promo_fecha_fin"] = str(promo.get("fecha_fin", "") or "").strip()
             if promo.get("tipo_descuento") == "valor_fijo":
                 producto["promo_etiqueta"] = f"-{formatear_cop_fn(promo.get('valor_descuento', 0))}"
             else:
@@ -40,6 +41,7 @@ def construir_contexto_home(
             producto["promo_activa"] = False
             producto["promo_nombre"] = ""
             producto["promo_etiqueta"] = ""
+            producto["promo_fecha_fin"] = ""
 
         galeria = obtener_galeria_producto_fn(
             int(producto.get("id_producto", 0)),

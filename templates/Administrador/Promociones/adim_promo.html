@@ -181,6 +181,50 @@
                         <span class="badge bg-light text-dark">Total: {{ paginacion_promos.total if paginacion_promos else promos|length }}</span>
                     </div>
                     <div class="panel-body">
+                        <form method="GET" action="{{ url_for('admin_promo') }}" class="promo-filter-bar">
+                            <div class="promo-filter-field">
+                                <label class="form-label" for="promoVigenciaFilter">Vigencia</label>
+                                <select id="promoVigenciaFilter" name="vigencia" class="form-select">
+                                    <option value="todos" {% if filtros_promos.vigencia == 'todos' %}selected{% endif %}>Todas</option>
+                                    <option value="vigente" {% if filtros_promos.vigencia == 'vigente' %}selected{% endif %}>Vigentes</option>
+                                    <option value="programada" {% if filtros_promos.vigencia == 'programada' %}selected{% endif %}>Programadas</option>
+                                    <option value="vencida" {% if filtros_promos.vigencia == 'vencida' %}selected{% endif %}>Vencidas</option>
+                                </select>
+                            </div>
+                            <div class="promo-filter-field">
+                                <label class="form-label" for="promoEstadoFilter">Estado</label>
+                                <select id="promoEstadoFilter" name="estado" class="form-select">
+                                    <option value="todos" {% if filtros_promos.estado == 'todos' %}selected{% endif %}>Todos</option>
+                                    <option value="aplicable" {% if filtros_promos.estado == 'aplicable' %}selected{% endif %}>Aplicables</option>
+                                    <option value="no_aplicable" {% if filtros_promos.estado == 'no_aplicable' %}selected{% endif %}>No aplicables</option>
+                                </select>
+                            </div>
+                            <div class="promo-filter-field">
+                                <label class="form-label" for="promoActivacionFilter">Activación</label>
+                                <select id="promoActivacionFilter" name="activacion" class="form-select">
+                                    <option value="todos" {% if filtros_promos.activacion == 'todos' %}selected{% endif %}>Todas</option>
+                                    <option value="activa" {% if filtros_promos.activacion == 'activa' %}selected{% endif %}>Activas</option>
+                                    <option value="desactivada" {% if filtros_promos.activacion == 'desactivada' %}selected{% endif %}>Desactivadas</option>
+                                </select>
+                            </div>
+                            <div class="promo-filter-field">
+                                <label class="form-label" for="promoOrdenFilter">Ordenar por</label>
+                                <select id="promoOrdenFilter" name="orden" class="form-select">
+                                    <option value="recientes" {% if filtros_promos.orden == 'recientes' %}selected{% endif %}>Más recientes</option>
+                                    <option value="vigencia" {% if filtros_promos.orden == 'vigencia' %}selected{% endif %}>Vigencia</option>
+                                    <option value="estado" {% if filtros_promos.orden == 'estado' %}selected{% endif %}>Estado</option>
+                                    <option value="activacion" {% if filtros_promos.orden == 'activacion' %}selected{% endif %}>Activa/desactivada</option>
+                                    <option value="fecha_fin" {% if filtros_promos.orden == 'fecha_fin' %}selected{% endif %}>Fecha de fin</option>
+                                </select>
+                            </div>
+                            <div class="promo-filter-actions">
+                                <button type="submit" class="btn btn-primary">Filtrar</button>
+                                {% if hay_filtros_promos %}
+                                <a href="{{ url_for('admin_promo') }}" class="btn btn-outline-secondary">Limpiar</a>
+                                {% endif %}
+                            </div>
+                        </form>
+
                         {% if promos %}
                         <div class="table-responsive">
                             <table class="table table-hover align-middle promo-table">
@@ -223,6 +267,15 @@
                                             {% else %}
                                             <span class="badge bg-secondary">Vencida</span>
                                             {% endif %}
+                                            <br>
+                                            {% if p.activo %}
+                                            <span class="badge promo-active-badge">Activa</span>
+                                            {% else %}
+                                            <span class="badge promo-disabled-badge">Desactivada</span>
+                                            {% endif %}
+                                            {% if p.es_aplicable %}
+                                            <span class="badge promo-applicable-badge">Aplicable</span>
+                                            {% endif %}
                                         </td>
                                         <td>
                                             <small>Usos: <strong>{{ p.usos }}</strong></small><br>
@@ -236,6 +289,10 @@
                                             {% else %}
                                             <form method="POST" action="{{ url_for('admin_promo_toggle', id_promo=p.id_promo) }}">
                                                 <input type="hidden" name="page" value="{{ paginacion_promos.page if paginacion_promos else 1 }}">
+                                                <input type="hidden" name="vigencia" value="{{ filtros_promos.vigencia }}">
+                                                <input type="hidden" name="estado" value="{{ filtros_promos.estado }}">
+                                                <input type="hidden" name="activacion" value="{{ filtros_promos.activacion }}">
+                                                <input type="hidden" name="orden" value="{{ filtros_promos.orden }}">
                                                 <button type="submit"
                                                     class="btn btn-sm btn-{{ 'warning' if p.activo else 'success' }}">
                                                     {{ 'Desactivar' if p.activo else 'Activar' }}
@@ -258,7 +315,7 @@
 
                                 {% if paginacion_promos.page > 1 %}
                                 <a class="btn btn-sm btn-outline-primary page-arrow"
-                                    href="{{ url_for('admin_promo', page=prev_page) }}"
+                                    href="{{ url_for('admin_promo', page=prev_page, vigencia=filtros_promos.vigencia, estado=filtros_promos.estado, activacion=filtros_promos.activacion, orden=filtros_promos.orden) }}"
                                     title="Página anterior" aria-label="Página anterior">&larr;</a>
                                 {% else %}
                                 <span class="btn btn-sm btn-outline-secondary page-arrow disabled" title="Página anterior">&larr;</span>
@@ -271,14 +328,14 @@
                                     {% elif b == paginacion_promos.page %}
                                     <span class="page-number active">{{ b }}</span>
                                     {% else %}
-                                    <a class="page-number" href="{{ url_for('admin_promo', page=b) }}">{{ b }}</a>
+                                    <a class="page-number" href="{{ url_for('admin_promo', page=b, vigencia=filtros_promos.vigencia, estado=filtros_promos.estado, activacion=filtros_promos.activacion, orden=filtros_promos.orden) }}">{{ b }}</a>
                                     {% endif %}
                                     {% endfor %}
                                 </nav>
 
                                 {% if paginacion_promos.page < paginacion_promos.total_paginas %}
                                 <a class="btn btn-sm btn-outline-primary page-arrow"
-                                    href="{{ url_for('admin_promo', page=next_page) }}"
+                                    href="{{ url_for('admin_promo', page=next_page, vigencia=filtros_promos.vigencia, estado=filtros_promos.estado, activacion=filtros_promos.activacion, orden=filtros_promos.orden) }}"
                                     title="Página siguiente" aria-label="Página siguiente">&rarr;</a>
                                 {% else %}
                                 <span class="btn btn-sm btn-outline-secondary page-arrow disabled" title="Página siguiente">&rarr;</span>
