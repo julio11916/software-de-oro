@@ -37,6 +37,45 @@
                 <small id="emailStatus" class="d-block mt-1"></small>
             </div>
             <div class="mb-3">
+                <label for="email_alternativo" class="form-label">Correo electrónico alternativo <span class="text-muted">(opcional)</span></label>
+                <input type="email" class="form-control auth-input" name="email_alternativo" id="email_alternativo" value="{{ email_alternativo_registro or '' }}" autocomplete="email">
+                <small class="text-muted">Te servirá para recuperar tu contraseña si pierdes acceso al correo principal.</small>
+            </div>
+            <div class="mb-3">
+                <label for="cedula" class="form-label">Cédula</label>
+                <input
+                    type="text"
+                    class="form-control auth-input"
+                    name="cedula"
+                    id="cedula"
+                    value="{{ cedula_registro or '' }}"
+                    inputmode="numeric"
+                    minlength="6"
+                    maxlength="12"
+                    pattern="[0-9]{6,12}"
+                    autocomplete="off"
+                    required
+                >
+                <small class="text-muted">Solo números, entre 6 y 12 dígitos.</small>
+            </div>
+            <div class="mb-3">
+                <label for="telefono" class="form-label">Celular</label>
+                <input
+                    type="tel"
+                    class="form-control auth-input"
+                    name="telefono"
+                    id="telefono"
+                    value="{{ telefono_registro or '' }}"
+                    inputmode="numeric"
+                    minlength="10"
+                    maxlength="10"
+                    pattern="[0-9]{10}"
+                    autocomplete="tel"
+                    required
+                >
+                <small class="text-muted">Debe tener exactamente 10 dígitos.</small>
+            </div>
+            <div class="mb-3">
                 <label for="password" class="form-label">Contraseña</label>
                 <div class="auth-password-field">
                     <input

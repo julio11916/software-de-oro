@@ -82,6 +82,10 @@
                     <i class="fas fa-house"></i>
                     <span>Home</span>
                 </a>
+                <a class="offcanvas-link active" href="{{ url_for('sobre_nosotros') }}">
+                    <i class="fas fa-user-gear"></i>
+                    <span>Sobre nosotros</span>
+                </a>
                 <a class="offcanvas-link active">
                     <i class="fas fa-shirt"></i>
                     <span>Cat&aacute;logo</span>
@@ -108,10 +112,6 @@
                     <i class="fas fa-clipboard-list"></i>
                     <span>Orden personalizada</span>
                 </a>
-                <a class="offcanvas-link active" href="{{ url_for('sobre_nosotros') }}">
-                    <i class="fas fa-user-gear"></i>
-                    <span>Sobre nosotros</span>
-                </a>
             </nav>
         </div>
     </div>
@@ -131,13 +131,27 @@
                     <h1><i class="fas fa-users"></i> Sobre Nosotros</h1>
                     <p>Conoce nuestra empresa, nuestros valores y objetivos</p>
                 </div>
+                 <div class="info-card">
+                    <div class="info-card-header">
+                        <div class="info-card-icon">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        <h2 class="info-card-title">Quiénes somos</h2>
+                    </div>
+                    <div class="info-card-content">
+                        <p>Somos una empresa dedicada a la confección y comercialización de prendas, uniformes y accesorios diseñados
+                            especialmente para el personal de las fuerzas armadas de Colombia, incluyendo armada, ejército, policía
+                            y gaula. Nos enfocamos en ofrecer productos de alta calidad, comodidad y resistencia, adaptados a las
+                            necesidades y exigencias del servicio.</p>
+                    </div>
+                </div>
 
                 <div class="info-card">
                     <div class="info-card-header">
                         <div class="info-card-icon">
                             <i class="fas fa-bullseye"></i>
                         </div>
-                        <h2 class="info-card-title">Misi&oacute;n</h2>
+                        <h2 class="info-card-title">Misión</h2>
                     </div>
                     <div class="info-card-content">
                         <p>Producir y ofrecer prendas de alta calidad mediante procesos de dise&ntilde;o, estampado, corte,
@@ -152,7 +166,7 @@
                         <div class="info-card-icon">
                             <i class="fas fa-eye"></i>
                         </div>
-                        <h2 class="info-card-title">Visi&oacute;n</h2>
+                        <h2 class="info-card-title">Visión</h2>
                     </div>
                     <div class="info-card-content">
                         <p>Ser una empresa reconocida a nivel regional y nacional en la producci&oacute;n y personalizaci&oacute;n de

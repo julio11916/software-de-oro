@@ -334,8 +334,17 @@ function setupProfileAccountForm() {
     if (!form) return;
 
     const nameInput = form.querySelector("#nombre");
+    const alternateEmailInput = form.querySelector("#email_alternativo");
+    const cedulaInput = form.querySelector("#cedula");
     const phoneInput = form.querySelector("#telefono");
     const addressInput = form.querySelector("#direccion");
+
+    if (cedulaInput) {
+        cedulaInput.addEventListener("input", () => {
+            cedulaInput.value = cedulaInput.value.replace(/\D/g, "").slice(0, 12);
+            cedulaInput.setCustomValidity("");
+        });
+    }
 
     if (phoneInput) {
         phoneInput.addEventListener("input", () => {
@@ -344,7 +353,7 @@ function setupProfileAccountForm() {
         });
     }
 
-    [nameInput, addressInput].forEach((input) => {
+    [nameInput, alternateEmailInput, addressInput].forEach((input) => {
         if (!input) return;
         input.addEventListener("input", () => {
             input.setCustomValidity("");
@@ -353,11 +362,19 @@ function setupProfileAccountForm() {
 
     form.addEventListener("submit", (event) => {
         const nameValue = nameInput ? nameInput.value.trim() : "";
+        const alternateEmailValue = alternateEmailInput ? alternateEmailInput.value.trim().toLowerCase() : "";
+        const cedulaValue = cedulaInput ? cedulaInput.value.replace(/\D/g, "") : "";
         const phoneValue = phoneInput ? phoneInput.value.replace(/\D/g, "") : "";
         const addressValue = addressInput ? addressInput.value.trim() : "";
 
         if (nameInput && !nameValue) {
             nameInput.setCustomValidity("El nombre es obligatorio.");
+        }
+        if (alternateEmailInput && alternateEmailValue && !alternateEmailInput.checkValidity()) {
+            alternateEmailInput.setCustomValidity("Ingresa un correo alternativo válido.");
+        }
+        if (cedulaInput && !/^\d{6,12}$/.test(cedulaValue)) {
+            cedulaInput.setCustomValidity("La cédula debe tener entre 6 y 12 números.");
         }
         if (phoneInput && !/^\d{10}$/.test(phoneValue)) {
             phoneInput.setCustomValidity("El celular debe tener exactamente 10 números.");
@@ -373,6 +390,8 @@ function setupProfileAccountForm() {
         }
 
         if (nameInput) nameInput.value = nameValue;
+        if (alternateEmailInput) alternateEmailInput.value = alternateEmailValue;
+        if (cedulaInput) cedulaInput.value = cedulaValue;
         if (phoneInput) phoneInput.value = phoneValue;
         if (addressInput) addressInput.value = addressValue;
     });

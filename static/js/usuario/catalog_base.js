@@ -17,3 +17,18 @@ window.addEventListener("click", function (e) {
         dropdown.classList.remove("show");
     }
 });
+
+document.addEventListener("DOMContentLoaded", () => {
+    document.querySelectorAll(".flash-toast[data-toast-duration]").forEach((toast) => {
+        const duration = Number.parseInt(toast.dataset.toastDuration || "0", 10);
+        if (!duration || duration < 1) return;
+
+        window.setTimeout(() => {
+            toast.remove();
+            const stack = document.querySelector(".flash-toast-stack");
+            if (stack && !stack.querySelector(".flash-toast")) {
+                stack.remove();
+            }
+        }, duration);
+    });
+});

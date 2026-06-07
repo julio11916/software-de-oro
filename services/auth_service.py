@@ -30,13 +30,26 @@ def obtener_registro_pendiente(email, pending_registrations):
     return pending_registrations.get(normalizar_email(email))
 
 
-def guardar_registro_pendiente(email, codigo, pending_registrations, register_code_exp_minutes, nombre="", password=""):
+def guardar_registro_pendiente(
+    email,
+    codigo,
+    pending_registrations,
+    register_code_exp_minutes,
+    nombre="",
+    password="",
+    email_alternativo="",
+    cedula="",
+    telefono="",
+):
     expiry_at = datetime.now() + timedelta(minutes=register_code_exp_minutes)
     pending_registrations[normalizar_email(email)] = {
         "code": str(codigo).strip(),
         "expiry_at": expiry_at,
         "nombre": str(nombre).strip(),
         "password": str(password),
+        "email_alternativo": normalizar_email(email_alternativo),
+        "cedula": re.sub(r"\D", "", str(cedula or "")),
+        "telefono": re.sub(r"\D", "", str(telefono or "")),
     }
     return expiry_at
 

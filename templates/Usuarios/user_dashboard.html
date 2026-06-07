@@ -36,10 +36,10 @@
                         </button>
                         <div class="dropdown-menu-custom" id="userDropdown">
                             <a href="{{ url_for('user_profile') }}">
-                                <i class="fas fa-user-circle me-2"></i> Mi Perfil
+                                <i class="fas fa-user-circle me-2"></i> Mi perfil
                             </a>
                             <a href="{{ url_for('user_orders') }}">
-                                <i class="fas fa-box me-2"></i> Mis Pedidos
+                                <i class="fas fa-box me-2"></i> Mis pedidos
                             </a>
                             <a href="{{ url_for('logout') }}">
                                 <i class="fas fa-sign-out-alt me-2"></i> Cerrar sesión
@@ -65,6 +65,10 @@
                     <i class="fas fa-house"></i>
                     <span>Home</span>
                 </a>
+                <a class="offcanvas-link active" href="{{ url_for('sobre_nosotros') }}">
+                    <i class="fas fa-user-gear"></i>
+                    <span>Sobre nosotros</span>
+                </a>
                 <a class="offcanvas-link active">
                     <i class="fas fa-shirt"></i>
                     <span>Catálogo</span>
@@ -86,10 +90,6 @@
                 <a class="offcanvas-link active" href="{{ url_for('orden_personalizada') }}">
                     <i class="fas fa-clipboard-list"></i>
                     <span>Orden personalizada</span>
-                </a>
-                <a class="offcanvas-link active" href="{{ url_for('sobre_nosotros') }}">
-                    <i class="fas fa-user-gear"></i>
-                    <span>Sobre nosotros</span>
                 </a>
             </nav>
         </div>

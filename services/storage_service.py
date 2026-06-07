@@ -15,6 +15,10 @@ from services import image_service as app_image_service
 
 def asegurar_columnas_usuarios():
     with engine.begin() as conn:
+        conn.execute(sa.text("ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS email_alternativo TEXT"))
+        conn.execute(sa.text("ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS cedula TEXT"))
+        conn.execute(sa.text("ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS telefono TEXT"))
+        conn.execute(sa.text("ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS direccion TEXT"))
         conn.execute(sa.text("ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS terminos_identidad_aceptados BOOLEAN NOT NULL DEFAULT FALSE"))
         conn.execute(sa.text("ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS terminos_identidad_fecha TIMESTAMPTZ"))
 
@@ -74,7 +78,7 @@ def guardar_usuarios_df(usuarios):
     df = usuarios.copy()
 
     # Normalizar columnas de texto
-    for col in ['verification_code', 'reset_token', 'password_change_code']:
+    for col in ['email_alternativo', 'cedula', 'telefono', 'direccion', 'verification_code', 'reset_token', 'password_change_code']:
         if col in df.columns:
             df[col] = df[col].fillna('').astype(str)
 

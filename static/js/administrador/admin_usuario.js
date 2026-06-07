@@ -98,4 +98,19 @@ document.addEventListener('DOMContentLoaded', () => {
         input.addEventListener('blur', normalizePhone);
         normalizePhone();
     });
+
+    document.querySelectorAll('.js-id-input').forEach((input) => {
+        const normalizeId = () => {
+            input.value = input.value.replace(/\D/g, '').slice(0, 12);
+            if (input.value.length === 0 || (input.value.length >= 6 && input.value.length <= 12)) {
+                input.setCustomValidity('');
+            } else {
+                input.setCustomValidity('La cedula debe tener entre 6 y 12 numeros.');
+            }
+        };
+
+        input.addEventListener('input', normalizeId);
+        input.addEventListener('blur', normalizeId);
+        normalizeId();
+    });
 });

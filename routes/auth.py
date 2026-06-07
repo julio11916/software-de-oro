@@ -21,51 +21,39 @@ def register_auth_legacy_routes(app, legacy):
         session.clear()
         return redirect(url_for("home"))
 
-    def login():
-        if request.method == "GET":
-            return render_template("Usuarios/Autenticacion/login_form.html")
-        usuarios = legacy.cargar_usuarios_df()  # leer cada vez
+    def _autenticar_usuario_por_rol(template, rol_permitido, login_endpoint, destino_ok, mensaje_rol_invalido):
+        usuarios = legacy.cargar_usuarios_df()
         email = legacy.normalizar_email(request.form.get("email", ""))
         password = request.form.get("password", "")
-        acepta_terminos = request.form.get("acepta_terminos_identidad") == "on"
-
-        if not acepta_terminos:
-            flash("Debes aceptar los términos de validación de identidad y tratamiento de datos personales para iniciar sesión.", "warning")
-            return render_template("Usuarios/Autenticacion/login_form.html"), 400
 
         usuarios["email"] = usuarios["email"].astype(str).str.strip()
         candidatos = usuarios[usuarios["email"].str.lower() == email]
         if candidatos.empty:
             flash("Correo equivocado.", "email_error")
-            return render_template("Usuarios/Autenticacion/login_form.html"), 401
+            return render_template(template), 401
 
         idx_usuario = candidatos.index[0]
         usuario = candidatos.loc[idx_usuario]
 
         if not legacy.password_coincide(usuario.get("password_hash", ""), password):
             flash("Contraseña incorrecta.", "password_error")
-            return render_template("Usuarios/Autenticacion/login_form.html"), 401
+            return render_template(template), 401
 
         password_guardado = str(usuario.get("password_hash", "") or "")
-        debe_guardar_usuario = False
         if not legacy.password_esta_hasheado(password_guardado):
             usuarios.at[idx_usuario, "password_hash"] = legacy.crear_hash_password(password)
-            debe_guardar_usuario = True
-
-        if "terminos_identidad_aceptados" in usuarios.columns:
-            usuarios.at[idx_usuario, "terminos_identidad_aceptados"] = True
-            usuarios.at[idx_usuario, "terminos_identidad_fecha"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            debe_guardar_usuario = True
-
-        if debe_guardar_usuario:
             legacy.guardar_usuarios_df(usuarios)
 
         estado = str(usuario.get("estado", "activo")).strip().lower()
         if estado != "activo":
             flash("Tu usuario está inactivo. Contacta al administrador para recuperar el acceso.", "warning")
-            return render_template("Usuarios/Autenticacion/login_form.html"), 403
+            return render_template(template), 403
 
-        rol = usuario["rol"]
+        rol = str(usuario.get("rol", "")).strip().lower()
+        if rol != rol_permitido:
+            flash(mensaje_rol_invalido, "warning")
+            return redirect(url_for(login_endpoint))
+
         id_usuario = usuario["id_usuario"]
         nombre = str(usuario.get("nombre", "")).strip()
         email_sesion = str(usuario.get("email", email)).strip() or email
@@ -82,10 +70,29 @@ def register_auth_legacy_routes(app, legacy):
             session.pop("carrito", None)
 
         legacy.registrar_actividad("Inicio de sesión exitoso")
+        return redirect(url_for(destino_ok))
 
-        if rol == "admin":
-            return redirect(url_for("admin_dashboard"))
-        return redirect(url_for("user_dashboard"))
+    def login():
+        if request.method == "GET":
+            return render_template("Usuarios/Autenticacion/login_form.html")
+        return _autenticar_usuario_por_rol(
+            template="Usuarios/Autenticacion/login_form.html",
+            rol_permitido="normal",
+            login_endpoint="login",
+            destino_ok="user_dashboard",
+            mensaje_rol_invalido="Las cuentas administrativas ingresan desde el panel administrativo.",
+        )
+
+    def admin_login():
+        if request.method == "GET":
+            return render_template("Administrador/Autenticacion/admin_login.html")
+        return _autenticar_usuario_por_rol(
+            template="Administrador/Autenticacion/admin_login.html",
+            rol_permitido="admin",
+            login_endpoint="admin_login",
+            destino_ok="admin_dashboard",
+            mensaje_rol_invalido="Esta entrada es solo para administradores.",
+        )
 
     def forgot_password():
         if request.method == "GET":
@@ -95,19 +102,41 @@ def register_auth_legacy_routes(app, legacy):
             )
 
         email = legacy.normalizar_email(request.form.get("email", ""))
+        metodo = str(request.form.get("metodo_recuperacion", "principal") or "principal").strip().lower()
+
         if not legacy.email_es_valido(email):
-            flash("Debes ingresar un correo electrónico válido.", "danger")
+            flash("Debes ingresar un correo electrónico válido para el método seleccionado.", "danger")
             return render_template(
                 "Usuarios/Autenticacion/forgot_password.html",
                 reset_minutes=legacy.PASSWORD_RESET_EXP_MINUTES,
             ), 400
 
+        if metodo == "telefono":
+            flash("La recuperación por número de teléfono todavía no está disponible. Usa tu correo principal o alternativo.", "warning")
+            return redirect(url_for("forgot_password"))
+
         usuarios = legacy.cargar_usuarios_df()
         usuarios["email"] = usuarios["email"].astype(str).str.strip().str.lower()
-        candidatos = usuarios[usuarios["email"] == email]
+        if "email_alternativo" not in usuarios.columns:
+            usuarios["email_alternativo"] = ""
+        usuarios["email_alternativo_normalizado"] = usuarios["email_alternativo"].fillna("").astype(str).map(legacy.normalizar_email)
+        candidatos = usuarios[usuarios["email_alternativo_normalizado"] == email] if metodo == "alternativo" else usuarios[usuarios["email"] == email]
 
         if not candidatos.empty:
             idx_usuario = candidatos.index[0]
+            usuario = candidatos.loc[idx_usuario]
+            email_destino = email
+
+            if metodo == "alternativo":
+                email_alternativo = legacy.normalizar_email(usuario.get("email_alternativo", ""))
+                if not email_alternativo:
+                    flash("Este usuario no tiene un correo electrónico alternativo registrado. Ingresa a tu perfil y agrégalo para futuras recuperaciones.", "warning")
+                    return redirect(url_for("forgot_password"))
+                if not legacy.email_es_valido(email_alternativo):
+                    flash("El correo alternativo registrado no es válido. Usa el correo principal o actualízalo desde tu perfil.", "danger")
+                    return redirect(url_for("forgot_password"))
+                email_destino = email_alternativo
+
             token = legacy.generar_token_recuperacion()
             expiry_at = datetime.now() + timedelta(minutes=legacy.PASSWORD_RESET_EXP_MINUTES)
 
@@ -117,20 +146,20 @@ def register_auth_legacy_routes(app, legacy):
 
             enlace = url_for("reset_password", token=token, _external=True)
             envio_ok = legacy.enviar_recuperacion_password(
-                email=email,
+                email=email_destino,
                 enlace_recuperacion=enlace,
                 minutos_expiracion=legacy.PASSWORD_RESET_EXP_MINUTES,
             )
 
             if envio_ok:
-                legacy.registrar_actividad(f"Enlace de recuperación enviado a {email}")
+                legacy.registrar_actividad(f"Enlace de recuperación enviado por método {metodo} para {email}")
             else:
                 legacy.limpiar_token_recuperacion(usuarios, idx_usuario)
                 legacy.guardar_usuarios_df(usuarios)
-                app.logger.warning("No fue posible enviar el correo de recuperación para: %s", email)
+                app.logger.warning("No fue posible enviar el correo de recuperación para: %s", email_destino)
 
         flash(
-            "Si el correo existe en el sistema, te enviamos un enlace para restablecer tu contraseña.",
+            "Si los datos coinciden con una cuenta, enviaremos un enlace de recuperación al método seleccionado.",
             "info",
         )
         return redirect(url_for("forgot_password"))
@@ -182,46 +211,69 @@ def register_auth_legacy_routes(app, legacy):
         return redirect(url_for("login"))
 
     def registro():
-        def _render_registro(nombre="", email=""):
+        def _render_registro(nombre="", email="", email_alternativo="", cedula="", telefono=""):
             return render_template(
                 "Usuarios/Autenticacion/registro.html",
                 nombre_registro=nombre,
                 email_registro=email,
+                email_alternativo_registro=email_alternativo,
+                cedula_registro=cedula,
+                telefono_registro=telefono,
                 registro_code_minutes=legacy.REGISTER_CODE_EXP_MINUTES,
             )
 
         if request.method == "POST":
             nombre = request.form.get("nombre", "").strip()
             email = legacy.normalizar_email(request.form.get("email", ""))
+            email_alternativo = legacy.normalizar_email(request.form.get("email_alternativo", ""))
+            cedula = "".join(ch for ch in request.form.get("cedula", "") if ch.isdigit())
+            telefono = "".join(ch for ch in request.form.get("telefono", "") if ch.isdigit())
             password = request.form.get("password", "")
             confirm_password = request.form.get("confirm_password", "")
             acepta_terminos = request.form.get("acepta_terminos_identidad") == "on"
 
-            if not nombre or not email or not password or not confirm_password:
+            if not nombre or not email or not cedula or not telefono or not password or not confirm_password:
                 flash("Debes completar todos los campos del formulario.", "danger")
-                return _render_registro(nombre, email), 400
+                return _render_registro(nombre, email, email_alternativo, cedula, telefono), 400
 
             if not acepta_terminos:
                 flash("Debes aceptar los términos de validación de identidad y tratamiento de datos personales para crear la cuenta.", "danger")
-                return _render_registro(nombre, email), 400
+                return _render_registro(nombre, email, email_alternativo, cedula, telefono), 400
 
             if not legacy.email_es_valido(email):
                 flash("Debes ingresar un correo electrónico válido.", "danger")
-                return _render_registro(nombre, email), 400
+                return _render_registro(nombre, email, email_alternativo, cedula, telefono), 400
+
+            if email_alternativo:
+                if not legacy.email_es_valido(email_alternativo):
+                    flash("El correo electrónico alternativo no es válido.", "danger")
+                    return _render_registro(nombre, email, email_alternativo, cedula, telefono), 400
+                if email_alternativo == email:
+                    flash("El correo alternativo debe ser diferente al correo principal.", "warning")
+                    return _render_registro(nombre, email, email_alternativo, cedula, telefono), 400
+
+            if not (6 <= len(cedula) <= 12):
+                flash("La cédula debe contener solo números y tener entre 6 y 12 dígitos.", "danger")
+                return _render_registro(nombre, email, email_alternativo, cedula, telefono), 400
+
+            if len(telefono) != 10:
+                flash("El celular debe contener solo números y tener exactamente 10 dígitos.", "danger")
+                return _render_registro(nombre, email, email_alternativo, cedula, telefono), 400
 
             if password != confirm_password:
                 flash("Las contraseñas no coinciden.", "danger")
-                return _render_registro(nombre, email), 400
+                return _render_registro(nombre, email, email_alternativo, cedula, telefono), 400
 
             if not legacy.password_cumple_estandares(password):
                 flash(
                     "La contraseña debe tener mínimo 8 caracteres, mayúscula, minúscula, número y carácter especial.",
                     "danger",
                 )
-                return _render_registro(nombre, email), 400
+                return _render_registro(nombre, email, email_alternativo, cedula, telefono), 400
 
             usuarios = legacy.cargar_usuarios_df()
             usuarios["email"] = usuarios["email"].astype(str).str.strip().str.lower()
+            usuarios["cedula"] = usuarios["cedula"].fillna("").astype(str).str.replace(r"\D", "", regex=True)
 
             if email in usuarios["email"].values:
                 flash(
@@ -229,11 +281,23 @@ def register_auth_legacy_routes(app, legacy):
                     "Por favor, utiliza otro correo electrónico válido.",
                     "warning",
                 )
-                return _render_registro(nombre, email), 409
+                return _render_registro(nombre, email, email_alternativo, cedula, telefono), 409
+
+            if cedula in usuarios["cedula"].values:
+                flash("La cédula ya está registrada con otra cuenta.", "warning")
+                return _render_registro(nombre, email, email_alternativo, cedula, telefono), 409
 
             codigo = legacy.generar_codigo_verificacion()
             password_hash = legacy.crear_hash_password(password)
-            legacy.guardar_registro_pendiente(email, codigo, nombre=nombre, password=password_hash)
+            legacy.guardar_registro_pendiente(
+                email,
+                codigo,
+                nombre=nombre,
+                password=password_hash,
+                email_alternativo=email_alternativo,
+                cedula=cedula,
+                telefono=telefono,
+            )
             session["registro_pendiente_email"] = email
 
             envio_ok, mensaje_envio = legacy.enviar_codigo_registro(email, codigo)
@@ -241,7 +305,7 @@ def register_auth_legacy_routes(app, legacy):
                 legacy.PENDING_REGISTRATIONS.pop(email, None)
                 session.pop("registro_pendiente_email", None)
                 flash(mensaje_envio, "danger")
-                return _render_registro(nombre, email), 500
+                return _render_registro(nombre, email, email_alternativo, cedula, telefono), 500
 
             flash(mensaje_envio, "success")
             flash("Ingresa el código de verificación para activar tu cuenta.", "info")
@@ -308,9 +372,20 @@ def register_auth_legacy_routes(app, legacy):
             pendiente_actual = legacy.obtener_registro_pendiente(email) or {}
             nombre = str(pendiente_actual.get("nombre", "")).strip()
             password = str(pendiente_actual.get("password", ""))
+            email_alternativo = str(pendiente_actual.get("email_alternativo", "")).strip()
+            cedula = str(pendiente_actual.get("cedula", "")).strip()
+            telefono = str(pendiente_actual.get("telefono", "")).strip()
 
             codigo = legacy.generar_codigo_verificacion()
-            legacy.guardar_registro_pendiente(email, codigo, nombre=nombre, password=password)
+            legacy.guardar_registro_pendiente(
+                email,
+                codigo,
+                nombre=nombre,
+                password=password,
+                email_alternativo=email_alternativo,
+                cedula=cedula,
+                telefono=telefono,
+            )
             envio_ok, mensaje_envio = legacy.enviar_codigo_registro(email, codigo)
 
             if not envio_ok:
@@ -349,7 +424,18 @@ def register_auth_legacy_routes(app, legacy):
                 codigo_nuevo = legacy.generar_codigo_verificacion()
                 nombre = str(registro_pendiente.get("nombre", "")).strip()
                 password = str(registro_pendiente.get("password", ""))
-                legacy.guardar_registro_pendiente(email, codigo_nuevo, nombre=nombre, password=password)
+                email_alternativo = str(registro_pendiente.get("email_alternativo", "")).strip()
+                cedula = str(registro_pendiente.get("cedula", "")).strip()
+                telefono = str(registro_pendiente.get("telefono", "")).strip()
+                legacy.guardar_registro_pendiente(
+                    email,
+                    codigo_nuevo,
+                    nombre=nombre,
+                    password=password,
+                    email_alternativo=email_alternativo,
+                    cedula=cedula,
+                    telefono=telefono,
+                )
                 envio_ok, mensaje_envio = legacy.enviar_codigo_registro(email, codigo_nuevo)
                 flash(mensaje_envio, "success" if envio_ok else "danger")
                 if not envio_ok:
@@ -375,6 +461,7 @@ def register_auth_legacy_routes(app, legacy):
 
             usuarios = legacy.cargar_usuarios_df()
             usuarios["email"] = usuarios["email"].astype(str).str.strip().str.lower()
+            usuarios["cedula"] = usuarios["cedula"].fillna("").astype(str).str.replace(r"\D", "", regex=True)
             if email in usuarios["email"].values:
                 legacy.PENDING_REGISTRATIONS.pop(email, None)
                 session.pop("registro_pendiente_email", None)
@@ -387,10 +474,19 @@ def register_auth_legacy_routes(app, legacy):
 
             nombre = str(registro_pendiente.get("nombre", "")).strip()
             password_guardado = str(registro_pendiente.get("password", ""))
-            if not nombre or not password_guardado:
+            email_alternativo = str(registro_pendiente.get("email_alternativo", "")).strip()
+            cedula = str(registro_pendiente.get("cedula", "")).strip()
+            telefono = str(registro_pendiente.get("telefono", "")).strip()
+            if not nombre or not password_guardado or not cedula or not telefono:
                 legacy.PENDING_REGISTRATIONS.pop(email, None)
                 session.pop("registro_pendiente_email", None)
                 flash("No se encontraron los datos del registro pendiente. Intenta nuevamente.", "warning")
+                return redirect(url_for("registro"))
+
+            if cedula in usuarios["cedula"].values:
+                legacy.PENDING_REGISTRATIONS.pop(email, None)
+                session.pop("registro_pendiente_email", None)
+                flash("La cédula ya está registrada con otra cuenta.", "warning")
                 return redirect(url_for("registro"))
 
             if not legacy.password_esta_hasheado(password_guardado):
@@ -402,15 +498,21 @@ def register_auth_legacy_routes(app, legacy):
                 "id_usuario": nuevo_id,
                 "nombre": nombre,
                 "email": email,
+                "email_alternativo": email_alternativo,
                 "password_hash": password_guardado,
                 "rol": "normal",
                 "estado": "activo",
                 "fecha_registro": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                "cedula": cedula,
+                "telefono": telefono,
+                "direccion": "",
                 "email_verified": True,
                 "verification_code": "",
                 "verification_code_expiry": "",
                 "reset_token": "",
                 "reset_token_expiry": "",
+                "password_change_code": "",
+                "password_change_code_expiry": "",
                 "terminos_identidad_aceptados": True,
                 "terminos_identidad_fecha": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             }
@@ -426,11 +528,14 @@ def register_auth_legacy_routes(app, legacy):
             session["rol"] = "normal"
             session["nombre"] = nombre
             flash("Cuenta creada correctamente. Correo verificado.", "success")
+            if not email_alternativo:
+                flash("No olvides agregar un correo electrónico alternativo para recuperar tu contraseña si pierdes acceso al correo principal.", "profile_hint_30s")
             return redirect(url_for("user_dashboard"))
 
         return _render_verificacion(email)
 
     app.add_url_rule("/login", endpoint="login", view_func=login, methods=["GET", "POST"])
+    app.add_url_rule("/admin/login", endpoint="admin_login", view_func=admin_login, methods=["GET", "POST"])
     app.add_url_rule(
         "/forgot-password",
         endpoint="forgot_password",

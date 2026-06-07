@@ -16,12 +16,13 @@
     {% include 'Usuarios/partials/header_offcanvas.html' %}
     {% include 'Usuarios/partials/_flash_toasts.html' %}
 
+    {% set cedula_ok = usuario.cedula if usuario.cedula else '' %}
     {% set telefono_ok = usuario.telefono if usuario.telefono else '' %}
     {% set direccion_ok = usuario.direccion if usuario.direccion else '' %}
     {% set nombres = usuario.nombre.split() if usuario.nombre else [] %}
     {% set inicial = (usuario.nombre[0:1] if usuario.nombre else usuario.email[0:1])|upper %}
     {% set nombre_corto = nombres[0] if nombres else usuario.nombre %}
-    {% set cuenta_completa = telefono_ok and direccion_ok %}
+    {% set cuenta_completa = cedula_ok and telefono_ok and direccion_ok %}
 
     <main class="profile-shell">
         <aside class="profile-sidebar">
@@ -88,6 +89,18 @@
                             <input type="email" id="email" value="{{ usuario.email }}" readonly>
                             <i class="fas fa-lock" title="El correo no se edita desde este formulario"></i>
                         </div>
+                    </div>
+
+                    <div class="profile-field">
+                        <label for="email_alternativo">Correo alternativo</label>
+                        <input type="email" id="email_alternativo" name="email_alternativo" value="{{ usuario.email_alternativo if usuario.email_alternativo else '' }}" placeholder="Correo de respaldo para recuperar tu contraseña" autocomplete="email">
+                        <small>Opcional. Debe ser diferente al correo principal.</small>
+                    </div>
+
+                    <div class="profile-field">
+                        <label for="cedula">Cédula <strong>*</strong></label>
+                        <input type="text" id="cedula" name="cedula" value="{{ usuario.cedula if usuario.cedula else '' }}" inputmode="numeric" minlength="6" maxlength="12" pattern="[0-9]{6,12}" placeholder="Ingresa tu número de cédula" autocomplete="off" required>
+                        <small>Solo números, entre 6 y 12 dígitos.</small>
                     </div>
 
                     <div class="profile-field">

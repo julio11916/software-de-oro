@@ -1001,6 +1001,7 @@ def register_admin_legacy_routes(app, legacy):
         usuarios = legacy.cargar_usuarios_df()
         pedidos = legacy.cargar_pedidos_df()
         usuarios["id_usuario"] = pd.to_numeric(usuarios["id_usuario"], errors="coerce")
+        usuarios["cedula"] = usuarios["cedula"].fillna("").astype(str)
         usuarios["telefono"] = usuarios["telefono"].fillna("").astype(str)
         usuarios["direccion"] = usuarios["direccion"].fillna("").astype(str)
         usuarios["email_verified"] = usuarios["email_verified"].fillna(False).astype(bool)
@@ -1039,6 +1040,7 @@ def register_admin_legacy_routes(app, legacy):
                 if pd.notna(usuario_editar.get("id_usuario")):
                     usuario_editar["id_usuario"] = int(usuario_editar["id_usuario"])
                 usuario_editar["estado"] = str(usuario_editar.get("estado", "activo")).strip().lower()
+                usuario_editar["cedula"] = str(usuario_editar.get("cedula", "") or "").strip()
                 usuario_editar["telefono"] = str(usuario_editar.get("telefono", "") or "").strip()
                 usuario_editar["direccion"] = str(usuario_editar.get("direccion", "") or "").strip()
                 usuario_editar["email_verified"] = bool(usuario_editar.get("email_verified", False))
@@ -1058,6 +1060,7 @@ def register_admin_legacy_routes(app, legacy):
             if usuario.get("id_usuario") != "":
                 usuario["id_usuario"] = int(usuario["id_usuario"])
             usuario["estado"] = str(usuario.get("estado", "activo")).strip().lower()
+            usuario["cedula"] = str(usuario.get("cedula", "") or "").strip()
             usuario["telefono"] = str(usuario.get("telefono", "") or "").strip()
             usuario["direccion"] = str(usuario.get("direccion", "") or "").strip()
             usuario["email_verified"] = bool(usuario.get("email_verified", False))
@@ -1095,6 +1098,7 @@ def register_admin_legacy_routes(app, legacy):
         nombre = request.form.get("nombre", "").strip()
         email = legacy.normalizar_email(request.form.get("email", ""))
         password = request.form.get("password", "").strip()
+        cedula = re.sub(r"\D", "", request.form.get("cedula", ""))
         telefono = re.sub(r"\D", "", request.form.get("telefono", ""))
         direccion = re.sub(r"\s+", " ", request.form.get("direccion", "")).strip()
         rol = request.form.get("rol", "normal").strip().lower()
@@ -1124,10 +1128,14 @@ def register_admin_legacy_routes(app, legacy):
         if telefono and len(telefono) != 10:
             flash("El telefono debe contener solo numeros y tener exactamente 10 digitos.", "danger")
             return redirect(url_for("admin_usuarios", **retorno_kwargs))
+        if cedula and not (6 <= len(cedula) <= 12):
+            flash("La cedula debe contener solo numeros y tener entre 6 y 12 digitos.", "danger")
+            return redirect(url_for("admin_usuarios", **retorno_kwargs))
 
         usuarios = legacy.cargar_usuarios_df()
         usuarios["id_usuario"] = pd.to_numeric(usuarios["id_usuario"], errors="coerce")
         usuarios["email"] = usuarios["email"].astype(str)
+        usuarios["cedula"] = usuarios["cedula"].fillna("").astype(str).str.replace(r"\D", "", regex=True)
 
         edit_id = None
         if id_usuario_raw:
@@ -1154,6 +1162,14 @@ def register_admin_legacy_routes(app, legacy):
         if not existe_email.empty:
             flash("Ese email ya esta registrado por otro usuario.", "danger")
             return redirect(url_for("admin_usuarios", **retorno_kwargs))
+
+        if cedula:
+            existe_cedula = usuarios[usuarios["cedula"] == cedula]
+            if edit_id is not None:
+                existe_cedula = existe_cedula[existe_cedula["id_usuario"] != edit_id]
+            if not existe_cedula.empty:
+                flash("Esa cedula ya esta registrada por otro usuario.", "danger")
+                return redirect(url_for("admin_usuarios", **retorno_kwargs))
 
         def supera_limite_admins_activos(usuarios_df, rol_propuesto, estado_propuesto, usuario_editado=None):
             if rol_propuesto != "admin" or estado_propuesto != "activo":
@@ -1187,6 +1203,7 @@ def register_admin_legacy_routes(app, legacy):
             usuarios.at[idx[0], "email"] = email
             usuarios.at[idx[0], "rol"] = rol
             usuarios.at[idx[0], "estado"] = estado
+            usuarios.at[idx[0], "cedula"] = cedula
             usuarios.at[idx[0], "telefono"] = telefono
             usuarios.at[idx[0], "direccion"] = direccion
             if password:
@@ -1218,6 +1235,7 @@ def register_admin_legacy_routes(app, legacy):
                 "rol": rol,
                 "estado": estado,
                 "fecha_registro": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                "cedula": cedula,
                 "telefono": telefono,
                 "direccion": direccion,
                 "email_verified": False,

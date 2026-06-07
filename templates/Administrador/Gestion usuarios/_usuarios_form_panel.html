@@ -65,6 +65,13 @@
                         </select>
                     </div>
                     <div class="col-md-5">
+                        <label class="form-label">Cédula</label>
+                        <input class="form-control js-id-input" type="text" name="cedula"
+                            inputmode="numeric" maxlength="12" pattern="[0-9]{6,12}"
+                            value="{{ usuario_editar.cedula if usuario_editar else '' }}"
+                            placeholder="Solo números, 6 a 12 dígitos">
+                    </div>
+                    <div class="col-md-5">
                         <label class="form-label">Teléfono</label>
                         <input class="form-control js-phone-input" type="text" name="telefono"
                             inputmode="numeric" autocomplete="tel" maxlength="10" pattern="[0-9]{10}"

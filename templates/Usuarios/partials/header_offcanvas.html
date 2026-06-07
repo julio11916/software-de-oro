@@ -35,10 +35,10 @@
                     <div class="dropdown-menu-custom" id="userDropdown">
                         {% if session.get('rol') == 'normal' %}
                         <a href="{{ url_for('user_profile') }}">
-                            <i class="fas fa-user-circle me-2"></i> Mi Perfil
+                            <i class="fas fa-user-circle me-2"></i> Mi perfil
                         </a>
                         <a href="{{ url_for('user_orders') }}">
-                            <i class="fas fa-box me-2"></i> Mis Pedidos
+                            <i class="fas fa-box me-2"></i> Mis pedidos
                         </a>
                         <a href="{{ url_for('logout') }}">
                             <i class="fas fa-sign-out-alt me-2"></i> Cerrar sesi&oacute;n
