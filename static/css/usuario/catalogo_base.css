@@ -70,14 +70,15 @@ body {
     width: 42px;
     height: 42px;
     border-radius: 50%;
-    border: 1px solid rgba(20, 20, 20, 0.18);
-    background: #fff;
+    border: 1px solid rgb(20, 20, 20);
+    background: rgba(255, 255, 255, 0.98);
     color: var(--ink-900);
     display: inline-flex;
     align-items: center;
     justify-content: center;
     text-decoration: none;
-    transition: all 0.2s ease;
+    box-shadow: none;
+    transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease, transform 0.2s ease;
 }
 
 .store-header .icon-btn-dark,
@@ -86,7 +87,8 @@ body {
 }
 
 .icon-btn-dark:hover {
-    border-color: var(--ink-900);
+    border-color: rgba(20, 20, 20, 0.36);
+    background: rgba(255, 255, 255, 0.98);
     color: var(--ink-900);
     transform: translateY(-1px);
 }
