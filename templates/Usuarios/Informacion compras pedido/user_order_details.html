@@ -44,7 +44,7 @@
                 <div class="detail-card__head">
                     <div>
                         <span class="detail-eyebrow">Resumen</span>
-                        <h2>Informacion del pedido</h2>
+                        <h2>Información del pedido</h2>
                     </div>
                     <div class="detail-badges">
                         <span class="detail-status detail-status-{{ pedido.estado_ui }}">{{ pedido.estado_label }}</span>
@@ -58,7 +58,7 @@
                     <article class="detail-info-card">
                         <i class="fas fa-hashtag"></i>
                         <div>
-                            <span>Numero de pedido</span>
+                            <span>Número de pedido</span>
                             <strong>Pedido {{ pedido.numero_pedido_usuario }}</strong>
                         </div>
                     </article>
@@ -72,7 +72,7 @@
                     <article class="detail-info-card">
                         <i class="fas fa-credit-card"></i>
                         <div>
-                            <span>Metodo de pago</span>
+                            <span>Método de pago</span>
                             <strong>{{ pedido.metodo_pago_label if pedido.metodo_pago_label else 'Sin registrar' }}</strong>
                         </div>
                     </article>
@@ -91,7 +91,7 @@
                 <section class="detail-tracking-card">
                     <div class="detail-tracking-card__head">
                         <span class="detail-eyebrow">Seguimiento</span>
-                        <strong>Asi va tu pedido</strong>
+                        <strong>Así va tu pedido</strong>
                     </div>
                     {% with tracking_steps=pedido.tracking_steps %}
                     {% include 'Usuarios/partials/_order_tracking_steps.html' %}
@@ -126,7 +126,7 @@
                         <i class="fas fa-receipt"></i>
                     </div>
                     <div>
-                        <h3>Revision de transferencia</h3>
+                        <h3>Revisión de transferencia</h3>
                         <p>
                             {% if pedido.estado_pago_ui == 'rechazado' %}
                             El comprobante fue rechazado. Revisa las indicaciones del equipo y vuelve a comunicarte para completar la compra.
@@ -184,7 +184,7 @@
             {% else %}
             <div class="detail-empty-products">
                 <i class="fas fa-box-open"></i>
-                <p>No hay informacion disponible sobre los productos de este pedido.</p>
+                <p>No hay información disponible sobre los productos de este pedido.</p>
             </div>
             {% endif %}
         </section>

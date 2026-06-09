@@ -140,11 +140,15 @@ def register_user_legacy_routes(app, legacy):
             return "Usuario no encontrado"
 
         usuario_dict = usuario.iloc[0].to_dict()
+        if "email_alternativo" not in usuario_dict:
+            usuario_dict["email_alternativo"] = ""
+        if "cedula" not in usuario_dict:
+            usuario_dict["cedula"] = ""
         if "telefono" not in usuario_dict:
             usuario_dict["telefono"] = ""
         if "direccion" not in usuario_dict:
             usuario_dict["direccion"] = ""
-        for campo in ("telefono", "direccion"):
+        for campo in ("email_alternativo", "cedula", "telefono", "direccion"):
             valor = "" if pd.isna(usuario_dict.get(campo, "")) else str(usuario_dict.get(campo, "") or "").strip()
             usuario_dict[campo] = "" if valor.lower() == "nan" else valor
         if "email_verified" not in usuario_dict:
@@ -186,11 +190,26 @@ def register_user_legacy_routes(app, legacy):
             return redirect(url_for("home"))
 
         nombre = re.sub(r"\s+", " ", str(request.form.get("nombre", "") or "")).strip()
+        email_alternativo = legacy.normalizar_email(request.form.get("email_alternativo", ""))
+        cedula = re.sub(r"\D", "", str(request.form.get("cedula", "") or ""))
         telefono = re.sub(r"\D", "", str(request.form.get("telefono", "") or ""))
         direccion = re.sub(r"\s+", " ", str(request.form.get("direccion", "") or "")).strip()
 
         if not nombre:
             flash("El nombre es obligatorio.", "danger")
+            return redirect(url_for("user_profile"))
+        if email_alternativo:
+            if not legacy.email_es_valido(email_alternativo):
+                flash("El correo electrónico alternativo no es válido.", "danger")
+                return redirect(url_for("user_profile"))
+            if email_alternativo == legacy.normalizar_email(session.get("usuario", "")):
+                flash("El correo alternativo debe ser diferente al correo principal.", "warning")
+                return redirect(url_for("user_profile"))
+        if not cedula:
+            flash("La cédula es obligatoria.", "danger")
+            return redirect(url_for("user_profile"))
+        if not (6 <= len(cedula) <= 12):
+            flash("La cédula debe contener solo números y tener entre 6 y 12 dígitos.", "danger")
             return redirect(url_for("user_profile"))
         if not telefono or not direccion:
             flash("El teléfono y la dirección son obligatorios para poder comprar.", "danger")
@@ -201,6 +220,10 @@ def register_user_legacy_routes(app, legacy):
 
         usuarios = legacy.cargar_usuarios_df()
         usuario_email = session.get("usuario")
+        if "email_alternativo" not in usuarios.columns:
+            usuarios["email_alternativo"] = ""
+        if "cedula" not in usuarios.columns:
+            usuarios["cedula"] = ""
         if "telefono" not in usuarios.columns:
             usuarios["telefono"] = ""
         if "direccion" not in usuarios.columns:
@@ -208,7 +231,24 @@ def register_user_legacy_routes(app, legacy):
 
         idx = usuarios[usuarios["email"] == usuario_email].index
         if not idx.empty:
+            cedulas_normalizadas = usuarios["cedula"].fillna("").astype(str).str.replace(r"\D", "", regex=True)
+            cedula_repetida = usuarios[(cedulas_normalizadas == cedula) & (usuarios.index != idx[0])]
+            if not cedula_repetida.empty:
+                flash("La cédula ya está registrada en otra cuenta.", "danger")
+                return redirect(url_for("user_profile"))
+
+            if email_alternativo:
+                correos_principales = usuarios["email"].fillna("").astype(str).map(legacy.normalizar_email)
+                correo_alternativo_en_otra_cuenta = usuarios[
+                    (correos_principales == email_alternativo) & (usuarios.index != idx[0])
+                ]
+                if not correo_alternativo_en_otra_cuenta.empty:
+                    flash("El correo alternativo no puede ser el correo principal de otra cuenta.", "warning")
+                    return redirect(url_for("user_profile"))
+
             usuarios.loc[idx, "nombre"] = nombre
+            usuarios.loc[idx, "email_alternativo"] = email_alternativo
+            usuarios.loc[idx, "cedula"] = cedula
             usuarios.loc[idx, "telefono"] = telefono
             usuarios.loc[idx, "direccion"] = direccion
             legacy.guardar_usuarios_df(usuarios)
@@ -617,6 +657,32 @@ def register_user_legacy_routes(app, legacy):
     def sobre_nosotros():
         return render_template("Usuarios/Informacion empresa/sobre_nosotros.html")
 
+    def contactanos():
+        usuario_contacto = {
+            "nombre": "",
+            "email": "",
+            "telefono": "",
+        }
+        puede_contactar = session.get("rol") == "normal"
+        if puede_contactar:
+            usuario_email = legacy.normalizar_email(session.get("usuario", ""))
+            usuarios = legacy.cargar_usuarios_df()
+            if not usuarios.empty and "email" in usuarios.columns:
+                usuarios["email"] = usuarios["email"].fillna("").astype(str).map(legacy.normalizar_email)
+                coincidencias = usuarios[usuarios["email"] == usuario_email]
+                if not coincidencias.empty:
+                    usuario = coincidencias.iloc[0]
+                    usuario_contacto = {
+                        "nombre": str(usuario.get("nombre", "") or "").strip(),
+                        "email": usuario_email,
+                        "telefono": str(usuario.get("telefono", "") or "").strip(),
+                    }
+        return render_template(
+            "Usuarios/Informacion empresa/contactanos.html",
+            puede_contactar=puede_contactar,
+            usuario_contacto=usuario_contacto,
+        )
+
     def home():
         contexto = legacy._construir_contexto_home()
         return render_template(
@@ -681,3 +747,4 @@ def register_user_legacy_routes(app, legacy):
     app.add_url_rule("/producto/<int:id_producto>", endpoint="producto_detalle", view_func=producto_detalle)
     app.add_url_rule("/accesorios", endpoint="accesorios", view_func=accesorios)
     app.add_url_rule("/sobre-nosotros", endpoint="sobre_nosotros", view_func=sobre_nosotros)
+    app.add_url_rule("/contactanos", endpoint="contactanos", view_func=contactanos)

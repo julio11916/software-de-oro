@@ -67,6 +67,7 @@ body {
 }
 
 .icon-btn-dark {
+    position: relative;
     width: 42px;
     height: 42px;
     border-radius: 50%;
@@ -79,6 +80,48 @@ body {
     text-decoration: none;
     box-shadow: none;
     transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease, transform 0.2s ease;
+}
+
+.icon-btn-dark[data-tooltip]::after,
+.btn-close-custom[data-tooltip]::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    left: 50%;
+    top: calc(100% + 10px);
+    z-index: 1500;
+    width: max-content;
+    max-width: 180px;
+    padding: 7px 10px;
+    border-radius: 999px;
+    background: rgba(16, 24, 32, 0.94);
+    color: #fff;
+    font-size: 0.78rem;
+    font-weight: 700;
+    line-height: 1.2;
+    text-align: center;
+    pointer-events: none;
+    opacity: 0;
+    transform: translate(-50%, -4px);
+    transition: opacity 0.18s ease, transform 0.18s ease;
+}
+
+.icon-btn-dark[data-tooltip]:hover::after,
+.icon-btn-dark[data-tooltip]:focus-visible::after,
+.btn-close-custom[data-tooltip]:hover::after,
+.btn-close-custom[data-tooltip]:focus-visible::after {
+    opacity: 1;
+    transform: translate(-50%, 0);
+}
+
+.header-actions .icon-btn-dark[data-tooltip]::after {
+    left: auto;
+    right: 0;
+    transform: translate(0, -4px);
+}
+
+.header-actions .icon-btn-dark[data-tooltip]:hover::after,
+.header-actions .icon-btn-dark[data-tooltip]:focus-visible::after {
+    transform: translate(0, 0);
 }
 
 .store-header .icon-btn-dark,
@@ -94,14 +137,14 @@ body {
 }
 
 .menu-canvas {
-    width: min(360px, 88vw);
+    width: min(420px, 92vw);
     background: var(--paper);
 }
 
 .menu-canvas .offcanvas-header {
-    padding: 16px 18px 10px;
+    padding: 20px 24px 12px;
     display: grid;
-    grid-template-columns: 32px 1fr 32px;
+    grid-template-columns: 36px 1fr 36px;
     align-items: center;
 }
 
@@ -112,6 +155,7 @@ body {
 }
 
 .btn-close-custom {
+    position: relative;
     background: transparent;
     border: 0;
     color: var(--ink-900);
@@ -120,13 +164,13 @@ body {
 }
 
 .offcanvas-body {
-    padding: 8px 16px 20px;
+    padding: 10px 24px 24px;
 }
 
 .offcanvas-nav {
     display: flex;
     flex-direction: column;
-    gap: 0;
+    gap: 4px;
 }
 
 .offcanvas-link {
@@ -136,7 +180,7 @@ body {
     line-height: 1.2;
     font-weight: 600;
     letter-spacing: -0.02em;
-    padding: 6px 0;
+    padding: 8px 0;
 }
 
 .offcanvas-link.active {
@@ -149,8 +193,14 @@ body {
     text-underline-offset: 8px;
 }
 
+.menu-normal {
+    font-size: 1rem;
+    font-weight: 500;
+    color: #4c4c4c;
+}
+
 .offcanvas-divider {
-    margin: 12px 0;
+    margin: 22px 0;
     border-top: 1px solid var(--line);
 }
 

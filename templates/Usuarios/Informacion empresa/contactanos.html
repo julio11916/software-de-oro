@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    {% include 'partials/_favicon_links.html' %}
+    <title>Contáctanos - Nachohers</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Outfit:wght@500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/usuario/catalogo_base.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/usuario/user_dashboard.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/usuario/contactanos.css') }}">
+</head>
+
+<body class="page-with-catalog-header contact-page {% if not puede_contactar %}contact-page--guest{% endif %}">
+    {% include 'Usuarios/partials/header_offcanvas.html' %}
+
+    <main class="contact-shell">
+        <section class="contact-hero">
+            <div class="contact-hero__copy">
+                <span class="contact-eyebrow">Atención personalizada</span>
+                <h1>Contáctanos</h1>
+                <p>
+                    Escríbenos para resolver dudas sobre prendas, pedidos, tallas, pagos o solicitudes
+                    personalizadas. Te responderemos por el canal más directo.
+                </p>
+                <div class="contact-actions">
+                    {% if puede_contactar %}
+                    <a href="https://wa.me/573229393211?text=Hola%2C%20quiero%20informaci%C3%B3n%20sobre%20Nachohers."
+                        target="_blank" rel="noopener noreferrer">
+                        <i class="fab fa-whatsapp"></i>
+                        WhatsApp
+                    </a>
+                    <a href="mailto:contacto@nachoher.com">
+                        <i class="fa-regular fa-envelope"></i>
+                        Correo
+                    </a>
+                    {% else %}
+                    <a href="{{ url_for('login') }}">
+                        <i class="fas fa-sign-in-alt"></i>
+                        Iniciar sesi&oacute;n
+                    </a>
+                    <a href="{{ url_for('registro') }}">
+                        <i class="fas fa-user-plus"></i>
+                        Crear cuenta
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+
+            <aside class="contact-hero__panel" aria-label="Datos de contacto">
+                <article>
+                    <span><i class="fas fa-location-dot"></i></span>
+                    <div>
+                        <strong>Dirección</strong>
+                        <p>Urbanización Pablo Sexto, Manzana A Casa 6</p>
+                    </div>
+                </article>
+                <article>
+                    <span><i class="fas fa-phone"></i></span>
+                    <div>
+                        <strong>Línea de atención</strong>
+                        <p>+57 322 939 3211</p>
+                    </div>
+                </article>
+                <article>
+                    <span><i class="fas fa-clock"></i></span>
+                    <div>
+                        <strong>Horario</strong>
+                        <p>Lun-Vie 8:00-19:30 / Sab 8:00-14:00</p>
+                    </div>
+                </article>
+            </aside>
+        </section>
+
+        <section class="contact-content">
+            <div class="contact-info-grid">
+                <article class="contact-info-card">
+                    <i class="fas fa-shirt"></i>
+                    <h2>Ventas y catálogo</h2>
+                    <p>Consulta disponibilidad, tallas, prendas por fuerza, accesorios y productos destacados.</p>
+                </article>
+                <article class="contact-info-card">
+                    <i class="fas fa-box-open"></i>
+                    <h2>Pedidos</h2>
+                    <p>Recibe ayuda con el estado de tu compra, comprobantes, transferencias y entregas.</p>
+                </article>
+                <article class="contact-info-card">
+                    <i class="fas fa-clipboard-list"></i>
+                    <h2>Prendas personalizadas</h2>
+                    <p>Cuéntanos qué necesitas fabricar y revisaremos tu solicitud con el equipo de confección.</p>
+                </article>
+            </div>
+
+            <section class="contact-form-card" aria-labelledby="contact-form-title">
+                <div class="contact-form-card__header">
+                    <span>Escríbenos</span>
+                    {% if puede_contactar %}
+                    <h2 id="contact-form-title">Servicio oportuno para cada solicitud</h2>
+                    <p>Completa los datos y abriremos WhatsApp con tu mensaje listo para enviar.</p>
+                    {% else %}
+                    <h2 id="contact-form-title">Inicia sesi&oacute;n para enviar tu solicitud</h2>
+                    <p>Para proteger los canales de atenci&oacute;n, solo los usuarios registrados pueden enviar mensajes desde este formulario.</p>
+                    {% endif %}
+                </div>
+
+                {% if puede_contactar %}
+                <form class="contact-form" id="contactForm">
+                    <div class="contact-field">
+                        <label for="contactNombre">Nombre completo</label>
+                        <input type="text" id="contactNombre" name="nombre" value="{{ usuario_contacto.nombre }}" autocomplete="name" required>
+                    </div>
+                    <div class="contact-field">
+                        <label for="contactEmail">Correo electrónico</label>
+                        <input type="email" id="contactEmail" name="email" value="{{ usuario_contacto.email }}" autocomplete="email" required>
+                    </div>
+                    <div class="contact-field">
+                        <label for="contactTelefono">Celular</label>
+                        <input type="tel" id="contactTelefono" name="telefono" value="{{ usuario_contacto.telefono }}" inputmode="numeric" maxlength="10" autocomplete="tel" required>
+                    </div>
+                    <div class="contact-field">
+                        <label for="contactTipo">Tipo de solicitud</label>
+                        <select id="contactTipo" name="tipo" required>
+                            <option value="">Selecciona una opción</option>
+                            <option>Compra de productos</option>
+                            <option>Estado de pedido</option>
+                            <option>Prenda personalizada</option>
+                            <option>Pago o transferencia</option>
+                            <option>Otra solicitud</option>
+                        </select>
+                    </div>
+                    <div class="contact-field contact-field--full">
+                        <label for="contactMensaje">Mensaje</label>
+                        <textarea id="contactMensaje" name="mensaje" rows="5" required></textarea>
+                    </div>
+                    <button type="submit" class="contact-submit">
+                        <i class="fab fa-whatsapp"></i>
+                        Enviar mensaje
+                    </button>
+                </form>
+                {% else %}
+                <div class="contact-login-required">
+                    <span><i class="fas fa-lock"></i></span>
+                    <h3>Acceso requerido</h3>
+                    <p>Ingresa con tu cuenta para habilitar el formulario de contacto y enviar tu mensaje por WhatsApp.</p>
+                    <div>
+                        <a href="{{ url_for('login') }}" class="contact-submit">Iniciar sesi&oacute;n</a>
+                        <a href="{{ url_for('registro') }}" class="contact-secondary-action">Crear cuenta</a>
+                    </div>
+                </div>
+                {% endif %}
+            </section>
+        </section>
+    </main>
+
+    {% include 'Usuarios/partials/footer.html' %}
+
+    <script src="{{ url_for('static', filename='js/usuario/catalog_base.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/usuario/user_dashboard.js') }}"></script>
+    <script>
+        window.CONTACT_CAN_SEND = {{ 'true' if puede_contactar else 'false' }};
+    </script>
+    <script src="{{ url_for('static', filename='js/usuario/contactanos.js') }}"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+
+</html>

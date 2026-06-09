@@ -36,7 +36,7 @@ def build_auth_image_legacy_bindings(
     def obtener_registro_pendiente(email):
         return app_auth_service.obtener_registro_pendiente(email, pending_registrations)
 
-    def guardar_registro_pendiente(email, codigo, nombre="", password=""):
+    def guardar_registro_pendiente(email, codigo, nombre="", password="", email_alternativo="", cedula="", telefono=""):
         return app_auth_service.guardar_registro_pendiente(
             email,
             codigo,
@@ -44,6 +44,9 @@ def build_auth_image_legacy_bindings(
             register_code_exp_minutes,
             nombre=nombre,
             password=password,
+            email_alternativo=email_alternativo,
+            cedula=cedula,
+            telefono=telefono,
         )
 
     def password_esta_hasheado(valor):

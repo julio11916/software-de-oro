@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict Qm3IxaWA77pSxUK6ZBnYzAhXcZxpUcbNYnaMCXflM4W1QUxfrohdse23yS4AaGO
+\restrict ILK4iaJslvXV3Yf5zqAaRzQsmAJ9R02eZq6Cv2urPOvR18JPc6wAjQgLoAJrTO6
 
 -- Dumped from database version 18.3
 -- Dumped by pg_dump version 18.3
@@ -298,7 +298,9 @@ CREATE TABLE public.usuarios (
     telefono text,
     direccion text,
     terminos_identidad_aceptados boolean DEFAULT false NOT NULL,
-    terminos_identidad_fecha timestamp with time zone
+    terminos_identidad_fecha timestamp with time zone,
+    cedula text,
+    email_alternativo text
 );
 
 
@@ -327,7 +329,7 @@ persistencia.test@local.test	[{"cantidad": 2, "id_producto": 1, "nombre": "Item 
 img.test@local.test	[{"cantidad": 1, "id_producto": 1, "nombre": "Producto test", "precio": 10000.0, "subtotal": 10000.0, "imagen_url": "img/Empresa/producto_1.jpg", "descripcion": "Damn"}]	2026-04-07 14:25:41.012404-05
 img2.test@local.test	[{"cantidad": 1, "id_producto": 1, "nombre": "X", "precio": 12000.0, "subtotal": 12000.0, "imagen_url": "img/Empresa/producto_1.jpg", "descripcion": "Damn"}]	2026-04-07 15:12:59.000695-05
 test-checkout-local@example.com	[{"cantidad": 1, "id_producto": 1, "nombre": "Producto prueba", "precio": 10000.0, "subtotal": 10000.0, "talla": "M", "imagen_url": "", "subtotal_bruto": 10000.0, "monto_descuento": 0.0, "promo_id": "", "promo_codigo": "", "promo_nombre": "", "promo_tipo_descuento": "", "promo_valor_descuento": 0.0, "promo_fecha_fin": ""}]	2026-05-27 13:57:30.281365-05
-julio@gmail.com	[{"cantidad": 1, "descripcion": "Prenda superior del uniforme. Se caracteriza por su diseño estructurado, funcional y representativo, pensado para brindar una apariencia formal y profesional.", "id_producto": 17, "imagen_url": "img/catalogo/policia/guerrera_policia.png", "monto_descuento": 24000.0, "nombre": "Guerrera", "precio": 160000.0, "promo_codigo": "", "promo_fecha_fin": "2026-06-30", "promo_id": 10, "promo_nombre": "Armando Estaban Quito", "promo_tipo_descuento": "porcentaje", "promo_valor_descuento": 15.0, "subtotal": 136000.0, "subtotal_bruto": 160000.0, "talla": "M"}]	2026-06-03 16:47:34.110047-05
+julio@gmail.com	[{"cantidad": 1, "descripcion": "Prenda superior del uniforme. Se caracteriza por su diseño estructurado, funcional y representativo, pensado para brindar una apariencia formal y profesional.", "id_producto": 17, "imagen_url": "img/catalogo/policia/guerrera_policia.png", "monto_descuento": 24000.0, "nombre": "Guerrera", "precio": 160000.0, "promo_codigo": "", "promo_fecha_fin": "2026-06-30", "promo_id": 10, "promo_nombre": "Armando Estaban Quito", "promo_tipo_descuento": "porcentaje", "promo_valor_descuento": 15.0, "subtotal": 136000.0, "subtotal_bruto": 160000.0, "talla": "M"}]	2026-06-07 15:04:05.9466-05
 julio11916@gmail.com	[{"cantidad": 1, "descripcion": "Camiseta manga larga cómoda y resistente. Ideal para climas frescos y actividades diarias.", "id_producto": 11, "imagen_url": "img/Empresa/producto_11.jpg", "nombre": "Camiseta unisex manga larga sin estampado color negro", "precio": 80000.0, "subtotal": 80000.0, "talla": "XS"}]	2026-04-29 15:55:25.578723-05
 jcotalvaros@ut.edu.co	[{"cantidad": 1, "descripcion": "Prenda de uso operativo diseñada para brindar comodidad, protección y funcionalidad durante las labores policiales. Fabricado con materiales resistentes y térmicos, que permiten movilidad y adaptación a diferentes condiciones climáticas.", "id_producto": 46, "imagen_url": "img/catalogo/ejercito/buso_táctico_ejercito_color_verde2.png", "monto_descuento": 0.0, "nombre": "buso táctico para el ejecito color verde oscuro", "precio": 95000.0, "promo_codigo": "", "promo_fecha_fin": "", "promo_id": "", "promo_nombre": "", "promo_tipo_descuento": "", "promo_valor_descuento": 0.0, "subtotal": 95000.0, "subtotal_bruto": 95000.0, "talla": "M"}]	2026-06-01 16:51:18.129135-05
 catarodriguezs1401@gmail.com	[]	2026-06-01 17:04:37.726318-05
@@ -1234,6 +1236,9 @@ COPY public.registros (id_registro, id_usuario, accion, fecha_accion) FROM stdin
 576	nico@gmail.com	Promoción creada: Armando Estaban Quito\n- producto ID: 17\n- descuento: 14.98%\n- código: N/A	2026-06-03 16:51:28
 579	nico@gmail.com	Promoción creada: Armando Estaban Quito\n- producto ID: 17\n- descuento: 15.00%\n- código: N/A	2026-06-03 17:25:05
 580	nico@gmail.com	Inicio de sesión exitoso	2026-06-05 20:37:06
+581	nico@gmail.com	Inicio de sesión exitoso	2026-06-07 16:34:57
+582	nico@gmail.com	Enlace de recuperación enviado por método principal para julio11916@gmail.com	2026-06-07 17:25:57
+583	nico@gmail.com	Enlace de recuperación enviado por método principal para julio11916@gmail.com	2026-06-07 17:41:16
 \.
 
 
@@ -1282,22 +1287,22 @@ cs_test_a1kmk3HGzb3rvoTyyVtoZFFP4U41bgonZRMwIwETMJZnMmQKDEa6HblZ7I	julio@gmail.c
 -- Data for Name: usuarios; Type: TABLE DATA; Schema: public; Owner: -
 --
 
-COPY public.usuarios (id_usuario, nombre, email, password_hash, rol, estado, fecha_registro, email_verified, verification_code, verification_code_expiry, reset_token, reset_token_expiry, password_change_code, password_change_code_expiry, telefono, direccion, terminos_identidad_aceptados, terminos_identidad_fecha) FROM stdin;
-15	julio cesar otalvaro sanchez	catarodriguezs1401@gmail.com	scrypt:32768:8:1$jy05Av9FcgZgLQCd$fc16817c32cd555348737d61989b30907dd08e8944b0cf63c6c3097947514b2bd4c6453f68b121d9c966886990dacfd5e9148fa94c1d8874a8bef15cff183be0	normal	activo	2026-06-01 17:03:53	t		\N		\N		\N	\N	\N	t	\N
-5	Isabel	hola3@gmail.com	123456789	normal	inactivo	2026-02-20 15:47:36	f		\N		\N		\N	\N	\N	f	\N
-6	Tatiana Rivera	tatis@gmail.com	admin	normal	inactivo	2026-02-25 22:35:53	f		\N		\N		\N	\N	\N	f	\N
-7	Tatiana Rivera	tr3303419@gmail.com	admin	normal	activo	2026-02-26 22:54:23	f		\N		\N		\N	\N	\N	f	\N
-8	David	david@gmail.com	4321	normal	activo	2026-03-04 19:37:39	f		\N		\N		\N	\N	\N	f	\N
-9	David	rodriguezsierradavidsantiago@gmail.com	54321	normal	activo	2026-03-04 22:56:35	t	844313	2026-03-04 23:45:18		\N		\N	\N	\N	f	\N
-10	Catalina rodriguez	catar@gmail.com	Catalina1.	normal	activo	2026-03-13 15:30:56	f		\N		\N		\N	\N	\N	f	\N
-11	julio cesar otalvaro sanchez	somosdecimob2020@gmail.com	scrypt:32768:8:1$xXEaOs4nnTL7BFLU$2c58839161a345654ccc41bb69e2d88185b4082bc0f5b443e92a7b294b9c36029c515fa8f46b0d6dbced71ecafe5edc07def0dc5089c22658654c6006d70dd50	normal	activo	2026-04-02 16:50:05	t		\N		\N		\N	3102577460	diagonal7#1-28 rocio parte alta	t	\N
-12	julio cesar otalvaro sanchez	julio11916@gmail.com	scrypt:32768:8:1$gyCyGHOJIsL3kD7o$bd88fa0a8f98b2af0afee2c62c5bacbe89cec318d32fab3d1974769017c11c330e0427854170c5023db442262aedf508790a7b20dbb48cf70e8638eae9025b94	normal	activo	2026-04-02 18:52:23	t		\N		\N	906298	2026-04-08 14:38:15-05	nan	diagonal7#1-28 rocio parte alta	t	\N
-13	jilmer	c65238944@gmail.com	scrypt:32768:8:1$omQpXag2INR8SgL1$e9acff045519d2bd46f7c429390c1189e2e02abc29b7a9e6d076d20a98f667464472ed40b3d14253739785c0f955d5eb7cae9a10abfd0872a4f933ef60cbaa9a	normal	activo	2026-04-03 11:55:51	t		\N		\N		\N	\N	\N	f	\N
-1	Nico	nico@gmail.com	scrypt:32768:8:1$3oBOoha9lG4w3a2E$7b2225fd3dfb693854e6664a153332f011956c20a8c756e57a7e5aeebe20a83ee83fb67aca68c2927b54e8be91ea3574d5ed0b942afecd0518d372a17f0aec1d	admin	activo	2026-02-06 14:55:32	f		\N		\N		\N	\N	\N	t	2026-06-05 20:37:06-05
-2	Julio	julio@gmail.com	scrypt:32768:8:1$LelqMtI3TmTMyzOE$bebb09284b93879bd665d266791c9d2b8fb8ddd46c90620e350e6cfbce10695ae1bdcfbe52fae9a7cd79af1bec0e0bacea6a1dc725a5c757f07ad6d499b4e29b	normal	activo	2026-02-06 14:55:32	f	801703	2026-03-06 14:07:29		\N		\N	3135264367	diagonal7#1-28	t	\N
-3	Alvaréx Freo	alv@gmail.com	admin	normal	activo	2026-02-06 16:40:07	f		\N		\N		\N	\N	\N	f	\N
-4	jilmer	hola@gmail.com	admin	admin	activo	2026-02-20 15:47:06	f		\N		\N		\N	\N	\N	f	\N
-14	julio cesar otalvaro sanchez	jcotalvaros@ut.edu.co	scrypt:32768:8:1$2BoiOSaEUpWrLZnR$597cc163c0321190be505c93e87bb28359afa27c84848cc600e525718898ef86637edf9787a30888fc477d846ce683fa0a5d6f52ca5d6ce3a0b23cde7ef2c2ca	normal	activo	2026-05-26 18:40:38	t		\N		\N		\N	3102577460	diagonal7#1-28 rocio parte alta	t	\N
+COPY public.usuarios (id_usuario, nombre, email, password_hash, rol, estado, fecha_registro, email_verified, verification_code, verification_code_expiry, reset_token, reset_token_expiry, password_change_code, password_change_code_expiry, telefono, direccion, terminos_identidad_aceptados, terminos_identidad_fecha, cedula, email_alternativo) FROM stdin;
+15	julio cesar otalvaro sanchez	catarodriguezs1401@gmail.com	scrypt:32768:8:1$jy05Av9FcgZgLQCd$fc16817c32cd555348737d61989b30907dd08e8944b0cf63c6c3097947514b2bd4c6453f68b121d9c966886990dacfd5e9148fa94c1d8874a8bef15cff183be0	normal	activo	2026-06-01 17:03:53	t		\N		\N		\N			t	\N		
+5	Isabel	hola3@gmail.com	123456789	normal	inactivo	2026-02-20 15:47:36	f		\N		\N		\N			f	\N		
+6	Tatiana Rivera	tatis@gmail.com	admin	normal	inactivo	2026-02-25 22:35:53	f		\N		\N		\N			f	\N		
+7	Tatiana Rivera	tr3303419@gmail.com	admin	normal	activo	2026-02-26 22:54:23	f		\N		\N		\N			f	\N		
+8	David	david@gmail.com	4321	normal	activo	2026-03-04 19:37:39	f		\N		\N		\N			f	\N		
+9	David	rodriguezsierradavidsantiago@gmail.com	54321	normal	activo	2026-03-04 22:56:35	t	844313	2026-03-04 23:45:18		\N		\N			f	\N		
+10	Catalina rodriguez	catar@gmail.com	Catalina1.	normal	activo	2026-03-13 15:30:56	f		\N		\N		\N			f	\N		
+11	julio cesar otalvaro sanchez	somosdecimob2020@gmail.com	scrypt:32768:8:1$xXEaOs4nnTL7BFLU$2c58839161a345654ccc41bb69e2d88185b4082bc0f5b443e92a7b294b9c36029c515fa8f46b0d6dbced71ecafe5edc07def0dc5089c22658654c6006d70dd50	normal	activo	2026-04-02 16:50:05	t		\N		\N		\N	3102577460	diagonal7#1-28 rocio parte alta	t	\N		
+12	julio cesar otalvaro sanchez	julio11916@gmail.com	scrypt:32768:8:1$gyCyGHOJIsL3kD7o$bd88fa0a8f98b2af0afee2c62c5bacbe89cec318d32fab3d1974769017c11c330e0427854170c5023db442262aedf508790a7b20dbb48cf70e8638eae9025b94	normal	activo	2026-04-02 18:52:23	t		\N	b6XYR8dSDFYSmYay610JtnNYnDpN384vq_KMeboQQjM	2026-06-07 18:11:13	906298	2026-04-08 14:38:15-05	nan	diagonal7#1-28 rocio parte alta	t	\N		
+13	jilmer	c65238944@gmail.com	scrypt:32768:8:1$omQpXag2INR8SgL1$e9acff045519d2bd46f7c429390c1189e2e02abc29b7a9e6d076d20a98f667464472ed40b3d14253739785c0f955d5eb7cae9a10abfd0872a4f933ef60cbaa9a	normal	activo	2026-04-03 11:55:51	t		\N		\N		\N			f	\N		
+1	Nico	nico@gmail.com	scrypt:32768:8:1$3oBOoha9lG4w3a2E$7b2225fd3dfb693854e6664a153332f011956c20a8c756e57a7e5aeebe20a83ee83fb67aca68c2927b54e8be91ea3574d5ed0b942afecd0518d372a17f0aec1d	admin	activo	2026-02-06 14:55:32	f		\N		\N		\N			t	2026-06-05 20:37:06-05		
+2	Julio	julio@gmail.com	scrypt:32768:8:1$LelqMtI3TmTMyzOE$bebb09284b93879bd665d266791c9d2b8fb8ddd46c90620e350e6cfbce10695ae1bdcfbe52fae9a7cd79af1bec0e0bacea6a1dc725a5c757f07ad6d499b4e29b	normal	activo	2026-02-06 14:55:32	f	801703	2026-03-06 14:07:29		\N		\N	3135264367	diagonal7#1-28	t	\N		
+3	Alvaréx Freo	alv@gmail.com	admin	normal	activo	2026-02-06 16:40:07	f		\N		\N		\N			f	\N		
+4	jilmer	hola@gmail.com	admin	admin	activo	2026-02-20 15:47:06	f		\N		\N		\N			f	\N		
+14	julio cesar otalvaro sanchez	jcotalvaros@ut.edu.co	scrypt:32768:8:1$2BoiOSaEUpWrLZnR$597cc163c0321190be505c93e87bb28359afa27c84848cc600e525718898ef86637edf9787a30888fc477d846ce683fa0a5d6f52ca5d6ce3a0b23cde7ef2c2ca	normal	activo	2026-05-26 18:40:38	t		\N		\N		\N	3102577460	diagonal7#1-28 rocio parte alta	t	\N		
 \.
 
 
@@ -1359,5 +1364,5 @@ ALTER TABLE ONLY public.stripe_checkout
 -- PostgreSQL database dump complete
 --
 
-\unrestrict Qm3IxaWA77pSxUK6ZBnYzAhXcZxpUcbNYnaMCXflM4W1QUxfrohdse23yS4AaGO
+\unrestrict ILK4iaJslvXV3Yf5zqAaRzQsmAJ9R02eZq6Cv2urPOvR18JPc6wAjQgLoAJrTO6
 

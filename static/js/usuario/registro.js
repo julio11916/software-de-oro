@@ -11,6 +11,9 @@ document.addEventListener("DOMContentLoaded", () => {
     const confirmInput = document.getElementById("confirm_password");
     const passwordToggleButtons = document.querySelectorAll("[data-password-toggle]");
     const emailInput = document.getElementById("email");
+    const alternateEmailInput = document.getElementById("email_alternativo");
+    const cedulaInput = document.getElementById("cedula");
+    const telefonoInput = document.getElementById("telefono");
     const emailStatus = document.getElementById("emailStatus");
     const ruleLength = document.getElementById("rule-length");
     const ruleUpper = document.getElementById("rule-uppercase");
@@ -24,6 +27,13 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    const normalizarNumero = (input, maxLength) => {
+        if (!input) {
+            return;
+        }
+        input.value = input.value.replace(/\D/g, "").slice(0, maxLength);
+    };
 
     const setEmailStatus = (mensaje, tipo) => {
         emailStatus.textContent = mensaje;
@@ -174,6 +184,22 @@ document.addEventListener("DOMContentLoaded", () => {
         setEmailStatus("", "info");
     });
 
+    if (alternateEmailInput) {
+        alternateEmailInput.addEventListener("input", () => {
+            alternateEmailInput.setCustomValidity("");
+        });
+    }
+
+    if (cedulaInput) {
+        cedulaInput.addEventListener("input", () => normalizarNumero(cedulaInput, 12));
+        cedulaInput.addEventListener("blur", () => normalizarNumero(cedulaInput, 12));
+    }
+
+    if (telefonoInput) {
+        telefonoInput.addEventListener("input", () => normalizarNumero(telefonoInput, 10));
+        telefonoInput.addEventListener("blur", () => normalizarNumero(telefonoInput, 10));
+    }
+
     emailInput.addEventListener("blur", async () => {
         await verificarCorreoExistente();
     });
@@ -187,6 +213,17 @@ document.addEventListener("DOMContentLoaded", () => {
             emailInput.focus();
             emailInput.reportValidity();
             return;
+        }
+
+        if (alternateEmailInput) {
+            const principal = emailInput.value.trim().toLowerCase();
+            const alternativo = alternateEmailInput.value.trim().toLowerCase();
+            if (alternativo && alternativo === principal) {
+                alternateEmailInput.setCustomValidity("El correo alternativo debe ser diferente al principal.");
+                alternateEmailInput.reportValidity();
+                return;
+            }
+            alternateEmailInput.setCustomValidity("");
         }
 
         if (!form.checkValidity()) {

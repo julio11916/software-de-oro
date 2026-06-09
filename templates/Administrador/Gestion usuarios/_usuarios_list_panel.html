@@ -76,6 +76,7 @@
                             <div class="user-identity-copy">
                                 <strong>{{ u.nombre }}</strong>
                                 <small>ID {{ u.id_usuario }}</small>
+                                <small>{% if u.cedula %}CC {{ u.cedula }}{% else %}Sin cédula{% endif %}</small>
                             </div>
                         </div>
                     </td>
