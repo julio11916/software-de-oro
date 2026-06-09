@@ -17,7 +17,7 @@
         <div class="container-fluid px-3 px-lg-4">
             <div class="store-header-inner">
                 <button class="icon-btn-dark" type="button" data-bs-toggle="offcanvas" data-bs-target="#menuCanvas"
-                    aria-controls="menuCanvas">
+                    aria-controls="menuCanvas" aria-label="Abrir menú" title="Abrir menú" data-tooltip="Abrir menú">
                     <i class="fas fa-bars"></i>
                 </button>
 
@@ -26,12 +26,12 @@
                 </a>
 
                 <div class="header-actions">
-                    <a href="{{ url_for('cart') }}" class="icon-btn-dark">
+                    <a href="{{ url_for('cart') }}" class="icon-btn-dark" aria-label="Ver carrito" title="Ver carrito" data-tooltip="Ver carrito">
                         <i class="fas fa-bag-shopping"></i>
                     </a>
 
                     <div class="user-dropdown">
-                        <button class="icon-btn-dark" type="button" onclick="toggleUserMenu()">
+                        <button class="icon-btn-dark" type="button" onclick="toggleUserMenu()" aria-label="Abrir menú de cuenta" title="Cuenta" data-tooltip="Cuenta">
                             <i class="far fa-user"></i>
                         </button>
                         <div class="dropdown-menu-custom" id="userDropdown">
@@ -53,7 +53,7 @@
 
     <div class="offcanvas offcanvas-start menu-canvas" tabindex="-1" id="menuCanvas" aria-labelledby="menuCanvasLabel">
         <div class="offcanvas-header">
-            <button type="button" class="btn-close-custom" data-bs-dismiss="offcanvas" aria-label="Close">
+            <button type="button" class="btn-close-custom" data-bs-dismiss="offcanvas" aria-label="Cerrar menú" title="Cerrar menú" data-tooltip="Cerrar menú">
                 <i class="fas fa-xmark"></i>
             </button>
             <img src="{{ url_for('static', filename='img/Pagina/logo_header.png') }}" class="offcanvas-logo" alt="Logo">
@@ -90,6 +90,10 @@
                 <a class="offcanvas-link active" href="{{ url_for('orden_personalizada') }}">
                     <i class="fas fa-clipboard-list"></i>
                     <span>Orden personalizada</span>
+                </a>
+                <a class="offcanvas-link active" href="{{ url_for('contactanos') }}">
+                    <i class="fas fa-headset"></i>
+                    <span>Cont&aacute;ctanos</span>
                 </a>
             </nav>
         </div>

@@ -237,6 +237,15 @@ def register_user_legacy_routes(app, legacy):
                 flash("La cédula ya está registrada en otra cuenta.", "danger")
                 return redirect(url_for("user_profile"))
 
+            if email_alternativo:
+                correos_principales = usuarios["email"].fillna("").astype(str).map(legacy.normalizar_email)
+                correo_alternativo_en_otra_cuenta = usuarios[
+                    (correos_principales == email_alternativo) & (usuarios.index != idx[0])
+                ]
+                if not correo_alternativo_en_otra_cuenta.empty:
+                    flash("El correo alternativo no puede ser el correo principal de otra cuenta.", "warning")
+                    return redirect(url_for("user_profile"))
+
             usuarios.loc[idx, "nombre"] = nombre
             usuarios.loc[idx, "email_alternativo"] = email_alternativo
             usuarios.loc[idx, "cedula"] = cedula
@@ -648,6 +657,32 @@ def register_user_legacy_routes(app, legacy):
     def sobre_nosotros():
         return render_template("Usuarios/Informacion empresa/sobre_nosotros.html")
 
+    def contactanos():
+        usuario_contacto = {
+            "nombre": "",
+            "email": "",
+            "telefono": "",
+        }
+        puede_contactar = session.get("rol") == "normal"
+        if puede_contactar:
+            usuario_email = legacy.normalizar_email(session.get("usuario", ""))
+            usuarios = legacy.cargar_usuarios_df()
+            if not usuarios.empty and "email" in usuarios.columns:
+                usuarios["email"] = usuarios["email"].fillna("").astype(str).map(legacy.normalizar_email)
+                coincidencias = usuarios[usuarios["email"] == usuario_email]
+                if not coincidencias.empty:
+                    usuario = coincidencias.iloc[0]
+                    usuario_contacto = {
+                        "nombre": str(usuario.get("nombre", "") or "").strip(),
+                        "email": usuario_email,
+                        "telefono": str(usuario.get("telefono", "") or "").strip(),
+                    }
+        return render_template(
+            "Usuarios/Informacion empresa/contactanos.html",
+            puede_contactar=puede_contactar,
+            usuario_contacto=usuario_contacto,
+        )
+
     def home():
         contexto = legacy._construir_contexto_home()
         return render_template(
@@ -712,3 +747,4 @@ def register_user_legacy_routes(app, legacy):
     app.add_url_rule("/producto/<int:id_producto>", endpoint="producto_detalle", view_func=producto_detalle)
     app.add_url_rule("/accesorios", endpoint="accesorios", view_func=accesorios)
     app.add_url_rule("/sobre-nosotros", endpoint="sobre_nosotros", view_func=sobre_nosotros)
+    app.add_url_rule("/contactanos", endpoint="contactanos", view_func=contactanos)

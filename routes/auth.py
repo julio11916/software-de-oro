@@ -274,6 +274,11 @@ def register_auth_legacy_routes(app, legacy):
             usuarios = legacy.cargar_usuarios_df()
             usuarios["email"] = usuarios["email"].astype(str).str.strip().str.lower()
             usuarios["cedula"] = usuarios["cedula"].fillna("").astype(str).str.replace(r"\D", "", regex=True)
+            correos_principales = usuarios["email"].fillna("").astype(str).map(legacy.normalizar_email)
+
+            if email_alternativo and email_alternativo in correos_principales.values:
+                flash("El correo alternativo no puede ser el correo principal de otra cuenta.", "warning")
+                return _render_registro(nombre, email, email_alternativo, cedula, telefono), 409
 
             if email in usuarios["email"].values:
                 flash(
@@ -474,7 +479,7 @@ def register_auth_legacy_routes(app, legacy):
 
             nombre = str(registro_pendiente.get("nombre", "")).strip()
             password_guardado = str(registro_pendiente.get("password", ""))
-            email_alternativo = str(registro_pendiente.get("email_alternativo", "")).strip()
+            email_alternativo = legacy.normalizar_email(registro_pendiente.get("email_alternativo", ""))
             cedula = str(registro_pendiente.get("cedula", "")).strip()
             telefono = str(registro_pendiente.get("telefono", "")).strip()
             if not nombre or not password_guardado or not cedula or not telefono:
@@ -488,6 +493,14 @@ def register_auth_legacy_routes(app, legacy):
                 session.pop("registro_pendiente_email", None)
                 flash("La cédula ya está registrada con otra cuenta.", "warning")
                 return redirect(url_for("registro"))
+
+            if email_alternativo:
+                correos_principales = usuarios["email"].fillna("").astype(str).map(legacy.normalizar_email)
+                if email_alternativo in correos_principales.values:
+                    legacy.PENDING_REGISTRATIONS.pop(email, None)
+                    session.pop("registro_pendiente_email", None)
+                    flash("El correo alternativo no puede ser el correo principal de otra cuenta.", "warning")
+                    return redirect(url_for("registro"))
 
             if not legacy.password_esta_hasheado(password_guardado):
                 password_guardado = legacy.crear_hash_password(password_guardado)

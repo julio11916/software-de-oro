@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     {% include 'partials/_favicon_links.html' %}
-    <title>Sobre Nosotros - Nachohers</title>
+    <title>Sobre nosotros - Nachohers</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -21,7 +21,7 @@
         <div class="container-fluid px-3 px-lg-4">
             <div class="store-header-inner">
                 <button class="icon-btn-dark" type="button" data-bs-toggle="offcanvas" data-bs-target="#menuCanvas"
-                    aria-controls="menuCanvas">
+                    aria-controls="menuCanvas" aria-label="Abrir menú" title="Abrir menú" data-tooltip="Abrir menú">
                     <i class="fas fa-bars"></i>
                 </button>
 
@@ -35,7 +35,7 @@
 
                 <div class="header-actions">
                     <div class="user-dropdown">
-                        <button class="icon-btn-dark" type="button" onclick="toggleUserMenu()">
+                        <button class="icon-btn-dark" type="button" onclick="toggleUserMenu()" aria-label="Abrir menú de cuenta" title="Cuenta" data-tooltip="Cuenta">
                             <i class="far fa-user"></i>
                         </button>
                         <div class="dropdown-menu-custom" id="userDropdown">
@@ -66,7 +66,7 @@
 
     <div class="offcanvas offcanvas-start menu-canvas" tabindex="-1" id="menuCanvas" aria-labelledby="menuCanvasLabel">
         <div class="offcanvas-header">
-            <button type="button" class="btn-close-custom" data-bs-dismiss="offcanvas" aria-label="Close">
+            <button type="button" class="btn-close-custom" data-bs-dismiss="offcanvas" aria-label="Cerrar menú" title="Cerrar menú" data-tooltip="Cerrar menú">
                 <i class="fas fa-xmark"></i>
             </button>
             <img src="{{ url_for('static', filename='img/Pagina/logo_header.png') }}" class="offcanvas-logo" alt="Logo">
@@ -112,6 +112,10 @@
                     <i class="fas fa-clipboard-list"></i>
                     <span>Orden personalizada</span>
                 </a>
+                <a class="offcanvas-link active" href="{{ url_for('contactanos') }}">
+                    <i class="fas fa-headset"></i>
+                    <span>Cont&aacute;ctanos</span>
+                </a>
             </nav>
         </div>
     </div>
@@ -128,7 +132,7 @@
 
             <div class="sobre-nosotros-container">
                 <div class="section-header">
-                    <h1><i class="fas fa-users"></i> Sobre Nosotros</h1>
+                    <h1><i class="fas fa-users"></i> Sobre nosotros</h1>
                     <p>Conoce nuestra empresa, nuestros valores y objetivos</p>
                 </div>
                  <div class="info-card">

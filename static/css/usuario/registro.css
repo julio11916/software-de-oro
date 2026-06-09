@@ -16,13 +16,17 @@ body.auth-page {
 
 .auth-page--with-header {
     justify-content: flex-start;
-    padding-top: 120px;
+    padding-top: 194px;
 }
 
 .auth-main {
     width: 100%;
     display: flex;
     justify-content: center;
+}
+
+.auth-page--with-header > .auth-main {
+    margin-top: 84px;
 }
 
 .footer-compact {
@@ -123,6 +127,10 @@ body.auth-page {
     background: #fff;
     border-color: #111;
     transform: translateY(-1px);
+}
+
+.auth-page--with-header .auth-admin-link {
+    top: 100px;
 }
 
 .auth-panel-badge {
@@ -621,7 +629,11 @@ body.auth-page {
     }
 
     .auth-page--with-header {
-        padding-top: 104px;
+        padding-top: 148px;
+    }
+
+    .auth-page--with-header > .auth-main {
+        margin-top: 42px;
     }
 
     .auth-admin-link {

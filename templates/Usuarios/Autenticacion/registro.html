@@ -4,11 +4,20 @@
     <meta charset="UTF-8">
     {% include 'partials/_favicon_links.html' %}
     <title>Registro de usuario</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Outfit:wght@500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/usuario/catalogo_base.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/usuario/user_dashboard.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/usuario/registro.css') }}">
 </head>
-<body class="auth-page">
+<body class="auth-page auth-page--with-header">
+    {% include 'Usuarios/partials/header_offcanvas.html' %}
+
+    <main class="auth-main">
     <div class="auth-card">
         <h3 class="mb-4 text-center">Crear cuenta</h3>
 
@@ -39,7 +48,7 @@
             <div class="mb-3">
                 <label for="email_alternativo" class="form-label">Correo electrónico alternativo <span class="text-muted">(opcional)</span></label>
                 <input type="email" class="form-control auth-input" name="email_alternativo" id="email_alternativo" value="{{ email_alternativo_registro or '' }}" autocomplete="email">
-                <small class="text-muted">Te servirá para recuperar tu contraseña si pierdes acceso al correo principal.</small>
+                <small class="text-muted">Te servirá para recuperar tu contraseña si pierdes acceso al correo principal. No puede ser el correo principal de otra cuenta.</small>
             </div>
             <div class="mb-3">
                 <label for="cedula" class="form-label">Cédula</label>
@@ -146,8 +155,12 @@
             <a href="{{ url_for('login') }}" class="btn btn-dark w-100">Iniciar sesión</a>
         </div>
     </div>
+    </main>
     {% include 'Usuarios/partials/footer.html' %}
 
+    <script src="{{ url_for('static', filename='js/usuario/catalog_base.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/usuario/user_dashboard.js') }}"></script>
     <script src="{{ url_for('static', filename='js/usuario/registro.js') }}"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
