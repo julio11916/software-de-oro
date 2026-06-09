@@ -78,81 +78,70 @@
         </section>
 
         <section class="contact-content">
-            <div class="contact-info-grid">
-                <article class="contact-info-card">
-                    <i class="fas fa-shirt"></i>
-                    <h2>Ventas y catálogo</h2>
-                    <p>Consulta disponibilidad, tallas, prendas por fuerza, accesorios y productos destacados.</p>
-                </article>
-                <article class="contact-info-card">
-                    <i class="fas fa-box-open"></i>
-                    <h2>Pedidos</h2>
-                    <p>Recibe ayuda con el estado de tu compra, comprobantes, transferencias y entregas.</p>
-                </article>
-                <article class="contact-info-card">
-                    <i class="fas fa-clipboard-list"></i>
-                    <h2>Prendas personalizadas</h2>
-                    <p>Cuéntanos qué necesitas fabricar y revisaremos tu solicitud con el equipo de confección.</p>
-                </article>
-            </div>
-
             <section class="contact-form-card" aria-labelledby="contact-form-title">
-                <div class="contact-form-card__header">
-                    <span>Escríbenos</span>
+                <figure class="contact-form-card__media">
+                    <img src="{{ url_for('static', filename='img/Pagina/atencion_cliente.png') }}"
+                        alt="Asesor de atención al cliente disponible para ayudarte">
+                </figure>
+
+                <div class="contact-form-card__body">
+                    <div class="contact-form-card__header">
+                        <span>Escríbenos</span>
+                        {% if puede_contactar %}
+                        <h2 id="contact-form-title">Servicio oportuno para cada solicitud</h2>
+                        <p>Completa los datos y abriremos WhatsApp con tu mensaje listo para enviar.</p>
+                        {% else %}
+                        <h2 id="contact-form-title">Inicia sesión para enviar tu solicitud</h2>
+                        <p>Para proteger los canales de atención, solo los usuarios registrados pueden enviar mensajes desde este formulario.</p>
+                        {% endif %}
+                    </div>
+
                     {% if puede_contactar %}
-                    <h2 id="contact-form-title">Servicio oportuno para cada solicitud</h2>
-                    <p>Completa los datos y abriremos WhatsApp con tu mensaje listo para enviar.</p>
+                    <form class="contact-form" id="contactForm">
+                        <div class="contact-field">
+                            <label for="contactNombre">Nombre completo</label>
+                            <input type="text" id="contactNombre" name="nombre" value="{{ usuario_contacto.nombre }}" autocomplete="name" required>
+                        </div>
+                        <div class="contact-field">
+                            <label for="contactEmail">Correo electrónico</label>
+                            <input type="email" id="contactEmail" name="email" value="{{ usuario_contacto.email }}" autocomplete="email" required>
+                        </div>
+                        <div class="contact-field">
+                            <label for="contactTelefono">Celular</label>
+                            <input type="tel" id="contactTelefono" name="telefono" value="{{ usuario_contacto.telefono }}" inputmode="numeric" maxlength="10" autocomplete="tel" required>
+                        </div>
+                        <div class="contact-field">
+                            <label for="contactTipo">Tipo de solicitud</label>
+                            <select id="contactTipo" name="tipo" required>
+                                <option value="">Selecciona una opción</option>
+                                <option>Compra de productos</option>
+                                <option>Estado de pedido</option>
+                                <option>Prenda personalizada</option>
+                                <option>Pago o transferencia</option>
+                                <option>Otra solicitud</option>
+                            </select>
+                        </div>
+                        <div class="contact-field contact-field--full">
+                            <label for="contactMensaje">Mensaje</label>
+                            <textarea id="contactMensaje" name="mensaje" rows="5" required></textarea>
+                        </div>
+                        <button type="submit" class="contact-submit">
+                            <i class="fab fa-whatsapp"></i>
+                            Enviar mensaje
+                        </button>
+                    </form>
                     {% else %}
-                    <h2 id="contact-form-title">Inicia sesi&oacute;n para enviar tu solicitud</h2>
-                    <p>Para proteger los canales de atenci&oacute;n, solo los usuarios registrados pueden enviar mensajes desde este formulario.</p>
+                    <div class="contact-login-required">
+                        <span><i class="fas fa-lock"></i></span>
+                        <h3>Acceso requerido</h3>
+                        <p>Ingresa con tu cuenta para habilitar el formulario de contacto y enviar tu mensaje por WhatsApp.</p>
+                        <div>
+                            <a href="{{ url_for('login') }}" class="contact-submit">Iniciar sesión</a>
+                            <a href="{{ url_for('registro') }}" class="contact-secondary-action">Crear cuenta</a>
+                        </div>
+                    </div>
                     {% endif %}
                 </div>
-
-                {% if puede_contactar %}
-                <form class="contact-form" id="contactForm">
-                    <div class="contact-field">
-                        <label for="contactNombre">Nombre completo</label>
-                        <input type="text" id="contactNombre" name="nombre" value="{{ usuario_contacto.nombre }}" autocomplete="name" required>
-                    </div>
-                    <div class="contact-field">
-                        <label for="contactEmail">Correo electrónico</label>
-                        <input type="email" id="contactEmail" name="email" value="{{ usuario_contacto.email }}" autocomplete="email" required>
-                    </div>
-                    <div class="contact-field">
-                        <label for="contactTelefono">Celular</label>
-                        <input type="tel" id="contactTelefono" name="telefono" value="{{ usuario_contacto.telefono }}" inputmode="numeric" maxlength="10" autocomplete="tel" required>
-                    </div>
-                    <div class="contact-field">
-                        <label for="contactTipo">Tipo de solicitud</label>
-                        <select id="contactTipo" name="tipo" required>
-                            <option value="">Selecciona una opción</option>
-                            <option>Compra de productos</option>
-                            <option>Estado de pedido</option>
-                            <option>Prenda personalizada</option>
-                            <option>Pago o transferencia</option>
-                            <option>Otra solicitud</option>
-                        </select>
-                    </div>
-                    <div class="contact-field contact-field--full">
-                        <label for="contactMensaje">Mensaje</label>
-                        <textarea id="contactMensaje" name="mensaje" rows="5" required></textarea>
-                    </div>
-                    <button type="submit" class="contact-submit">
-                        <i class="fab fa-whatsapp"></i>
-                        Enviar mensaje
-                    </button>
-                </form>
-                {% else %}
-                <div class="contact-login-required">
-                    <span><i class="fas fa-lock"></i></span>
-                    <h3>Acceso requerido</h3>
-                    <p>Ingresa con tu cuenta para habilitar el formulario de contacto y enviar tu mensaje por WhatsApp.</p>
-                    <div>
-                        <a href="{{ url_for('login') }}" class="contact-submit">Iniciar sesi&oacute;n</a>
-                        <a href="{{ url_for('registro') }}" class="contact-secondary-action">Crear cuenta</a>
-                    </div>
-                </div>
-                {% endif %}
             </section>
         </section>
     </main>
