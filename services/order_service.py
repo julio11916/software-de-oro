@@ -149,25 +149,35 @@ def obtener_contacto_checkout_predeterminado(normalizar_email, cargar_usuarios_d
     telefono = str(session.get("checkout_cliente_telefono", "") or "").strip()
     direccion = str(session.get("checkout_cliente_direccion", "") or "").strip()
     usuario_email = normalizar_email(session.get("usuario", ""))
+    contacto = {
+        "nombre": str(session.get("nombre", "") or "").strip(),
+        "cedula": "",
+        "telefono": telefono,
+        "direccion": direccion,
+    }
 
     if not usuario_email:
-        return {"telefono": telefono, "direccion": direccion}
+        return contacto
 
     usuarios = cargar_usuarios_df()
     if usuarios.empty:
-        return {"telefono": telefono, "direccion": direccion}
+        return contacto
 
     usuario = usuarios[usuarios["email"] == usuario_email]
     if usuario.empty:
-        return {"telefono": telefono, "direccion": direccion}
+        return contacto
 
     usuario_dict = usuario.iloc[0].to_dict()
+    contacto["nombre"] = str(usuario_dict.get("nombre", "") or contacto["nombre"]).strip()
+    contacto["cedula"] = re.sub(r"\D", "", str(usuario_dict.get("cedula", "") or ""))
     if not telefono:
         telefono = str(usuario_dict.get("telefono", "") or "").strip()
     if not direccion:
         direccion = str(usuario_dict.get("direccion", "") or "").strip()
+    contacto["telefono"] = telefono
+    contacto["direccion"] = direccion
 
-    return {"telefono": telefono, "direccion": direccion}
+    return contacto
 
 
 def validar_datos_cliente_checkout(telefono, direccion):

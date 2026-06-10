@@ -83,7 +83,7 @@ body.auth-page {
     background: rgba(255, 255, 255, 0.72);
     border-radius: 12px;
     border: none;
-    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.18);
+    box-shadow: none;
     text-align: center;
 }
 
@@ -93,11 +93,7 @@ body.auth-page {
 }
 
 .auth-card--login::before {
-    content: "";
-    position: absolute;
-    inset: 0 0 auto;
-    height: 4px;
-    background: linear-gradient(90deg, #111, #b8933f);
+    content: none;
 }
 
 .auth-admin-link {
