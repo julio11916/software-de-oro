@@ -790,6 +790,96 @@ body.page-with-catalog-header {
     font-weight: 700;
 }
 
+.personalized-document-card {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 0.75rem 1rem;
+    align-items: center;
+    margin-top: 0.9rem;
+    padding: 0.85rem;
+    border: 1px solid #d6e7f5;
+    border-radius: 14px;
+    background: #f6fbff;
+}
+
+.personalized-document-card__copy {
+    display: flex;
+    gap: 0.7rem;
+    align-items: center;
+    min-width: 0;
+}
+
+.personalized-document-card__icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 42px;
+    height: 42px;
+    flex: 0 0 42px;
+    border-radius: 12px;
+    background: #e1f3f9;
+    color: #166783;
+}
+
+.personalized-document-card strong,
+.personalized-document-card p {
+    margin: 0;
+}
+
+.personalized-document-card p {
+    margin-top: 0.15rem;
+    color: #5f7288;
+    font-size: 0.84rem;
+    overflow-wrap: anywhere;
+}
+
+.personalized-document-card__view,
+.personalized-document-card__replace label,
+.personalized-document-card__replace button {
+    min-height: 40px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    padding: 0 0.85rem;
+    border: 1px solid #caeaf3;
+    border-radius: 12px;
+    background: #fff;
+    color: #1b4d8a;
+    font-weight: 800;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.personalized-document-card__replace {
+    grid-column: 1 / -1;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.65rem;
+    align-items: center;
+}
+
+.personalized-document-card__replace input[type="file"] {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    clip-path: inset(50%);
+    white-space: nowrap;
+}
+
+.personalized-document-card__replace button {
+    border-color: #1b4d8a;
+}
+
+.personalized-document-card__view:hover,
+.personalized-document-card__replace label:hover,
+.personalized-document-card__replace button:hover {
+    background: #d8f3f9;
+    color: #000;
+}
+
 .form-control,
 .payment-select {
     width: 100%;
@@ -1164,6 +1254,20 @@ body.page-with-catalog-header {
         grid-template-columns: 1fr;
         text-align: center;
         gap: 1rem;
+    }
+
+    .personalized-document-card {
+        grid-template-columns: 1fr;
+        text-align: left;
+    }
+
+    .personalized-document-card__view {
+        width: 100%;
+    }
+
+    .personalized-document-card__replace {
+        display: grid;
+        grid-template-columns: 1fr;
     }
 
     .item-info {

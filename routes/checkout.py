@@ -1,9 +1,10 @@
 import base64
 import json
+import os
 from datetime import datetime
 
 import pandas as pd
-from flask import Blueprint, flash, redirect, render_template, request, session, url_for
+from flask import Blueprint, flash, redirect, render_template, request, send_file, session, url_for
 
 checkout_bp = Blueprint("checkout", __name__, url_prefix="/checkout")
 
@@ -17,6 +18,122 @@ def register_checkout_legacy_routes(app, legacy):
     def _documento_institucional_sesion():
         documento = session.get("checkout_documento_validacion")
         return documento if isinstance(documento, dict) and documento.get("path") else {}
+
+    def _normalizar_documento_personalizado(validacion):
+        if not isinstance(validacion, dict):
+            return {}
+        path = str(validacion.get("documento_path", "") or validacion.get("path", "")).strip()
+        if not path:
+            return {}
+        size_raw = pd.to_numeric(
+            validacion.get("documento_tamano", validacion.get("size", 0)),
+            errors="coerce",
+        )
+        size = int(size_raw) if pd.notna(size_raw) else 0
+        return {
+            "path": path,
+            "filename": str(validacion.get("documento_guardado", "") or validacion.get("filename", "")).strip(),
+            "content_type": str(validacion.get("documento_tipo", "") or validacion.get("content_type", "")).strip(),
+            "size": size,
+            "documento_nombre_original": str(
+                validacion.get("documento_nombre_original", "")
+                or validacion.get("documento_nombre", "")
+            ).strip(),
+        }
+
+    def _orden_personalizada_usuario(id_orden, exigir_en_carrito=False):
+        id_orden_num = pd.to_numeric(id_orden, errors="coerce")
+        if pd.isna(id_orden_num):
+            return {}
+
+        usuario_email = legacy.normalizar_email(session.get("usuario", ""))
+        if not usuario_email:
+            return {}
+
+        if exigir_en_carrito:
+            ids_carrito = set(_ids_ordenes_personalizadas_carrito(legacy._obtener_carrito_sesion_usuario()))
+            if int(id_orden_num) not in ids_carrito:
+                return {}
+
+        legacy.asegurar_tablas_orden_personalizada()
+        with legacy.engine.connect() as conn:
+            fila = conn.execute(
+                legacy.sa.text(
+                    """
+                    SELECT id_orden_personalizada, usuario_email, estado, datos_json
+                    FROM orden_personalizada
+                    WHERE id_orden_personalizada = :id_orden
+                    LIMIT 1
+                    """
+                ),
+                {"id_orden": int(id_orden_num)},
+            ).mappings().first()
+
+        if not fila or legacy.normalizar_email(fila.get("usuario_email", "")) != usuario_email:
+            return {}
+        return dict(fila)
+
+    def _documento_orden_personalizada(fila):
+        try:
+            datos = json.loads(str((fila or {}).get("datos_json", "") or "{}"))
+        except (TypeError, ValueError, json.JSONDecodeError):
+            datos = {}
+        validacion = datos.get("validacion_identidad") if isinstance(datos, dict) else {}
+        return _normalizar_documento_personalizado(validacion), datos
+
+    def _resolver_ruta_documento_privado(documento_path):
+        documento_path = str(documento_path or "").replace("\\", "/").lstrip("/")
+        if not documento_path:
+            return ""
+
+        base_actual = os.path.abspath(os.path.join(legacy.app.instance_path, "img", "validaciones_identidad"))
+        base_legacy = os.path.abspath(os.path.join(legacy.app.instance_path, "validaciones_identidad"))
+        rutas_candidatas = []
+        if documento_path.startswith("img/validaciones_identidad/"):
+            rutas_candidatas.append(
+                os.path.abspath(os.path.join(legacy.app.instance_path, documento_path.replace("/", os.sep)))
+            )
+        elif documento_path.startswith("validaciones_identidad/"):
+            rutas_candidatas.extend(
+                [
+                    os.path.abspath(
+                        os.path.join(
+                            legacy.app.instance_path,
+                            "img",
+                            documento_path.replace("/", os.sep),
+                        )
+                    ),
+                    os.path.abspath(os.path.join(legacy.app.instance_path, documento_path.replace("/", os.sep))),
+                ]
+            )
+
+        for ruta in rutas_candidatas:
+            en_base_actual = os.path.commonpath([base_actual, ruta]) == base_actual
+            en_base_legacy = os.path.commonpath([base_legacy, ruta]) == base_legacy
+            if (en_base_actual or en_base_legacy) and os.path.isfile(ruta):
+                return ruta
+        return ""
+
+    def _documentos_personalizados_carrito(carrito):
+        documentos = {}
+        for id_orden in _ids_ordenes_personalizadas_carrito(carrito):
+            fila = _orden_personalizada_usuario(id_orden, exigir_en_carrito=True)
+            documento, _ = _documento_orden_personalizada(fila)
+            if documento:
+                documentos[id_orden] = documento
+        return documentos
+
+    def _sincronizar_documento_checkout_desde_personalizados(carrito):
+        documento_sesion = _documento_institucional_sesion()
+        if documento_sesion:
+            return documento_sesion
+        documentos = _documentos_personalizados_carrito(carrito)
+        if not documentos:
+            return {}
+        documento = next(iter(documentos.values()))
+        session["checkout_documento_validacion"] = documento
+        session.modified = True
+        return documento
 
     def _guardar_documento_institucional_checkout(archivo):
         if not archivo or not str(getattr(archivo, "filename", "") or "").strip():
@@ -43,9 +160,12 @@ def register_checkout_legacy_routes(app, legacy):
 
     def _resolver_documento_institucional_checkout(carrito):
         if not _carrito_requiere_documento_institucional(carrito):
+            _sincronizar_documento_checkout_desde_personalizados(carrito)
             return {}, ""
 
         documento_existente = _documento_institucional_sesion()
+        if not documento_existente:
+            documento_existente = _sincronizar_documento_checkout_desde_personalizados(carrito)
         archivo = request.files.get("documento_validacion_institucional")
         if archivo and str(getattr(archivo, "filename", "") or "").strip():
             documento_guardado, error_documento = _guardar_documento_institucional_checkout(archivo)
@@ -302,7 +422,24 @@ def register_checkout_legacy_routes(app, legacy):
             direccion_cliente = str(contacto_cliente.get("direccion", "") or "").strip()
             contacto_cliente_completo = bool(telefono_cliente and direccion_cliente)
             requiere_documento_institucional = _carrito_requiere_documento_institucional(carrito_enriquecido)
-            documento_institucional_cargado = bool(_documento_institucional_sesion())
+            documentos_personalizados = _documentos_personalizados_carrito(carrito_enriquecido)
+            documento_institucional_cargado = bool(
+                _documento_institucional_sesion()
+                or _sincronizar_documento_checkout_desde_personalizados(carrito_enriquecido)
+            )
+            for item in carrito_enriquecido:
+                if not isinstance(item, dict) or not item.get("personalizado"):
+                    continue
+                id_orden = pd.to_numeric(item.get("id_orden_personalizada"), errors="coerce")
+                if pd.isna(id_orden):
+                    continue
+                documento = documentos_personalizados.get(int(id_orden), {})
+                item["documento_validacion"] = documento
+                if documento:
+                    item["documento_validacion_url"] = url_for(
+                        "cart_documento_personalizado",
+                        id_orden=int(id_orden),
+                    )
             return render_template(
                 "Usuarios/Carrito/cart.html",
                 carrito=carrito_enriquecido,
@@ -319,6 +456,83 @@ def register_checkout_legacy_routes(app, legacy):
             )
         return "Acceso denegado"
 
+    def cart_documento_personalizado(id_orden):
+        if session.get("rol") != "normal":
+            return "Acceso denegado", 403
+
+        fila = _orden_personalizada_usuario(id_orden)
+        documento, _ = _documento_orden_personalizada(fila)
+        ruta_documento = _resolver_ruta_documento_privado(documento.get("path", ""))
+        if not ruta_documento:
+            return "Documento no encontrado", 404
+
+        return send_file(
+            ruta_documento,
+            mimetype=documento.get("content_type") or None,
+            as_attachment=False,
+            download_name=documento.get("documento_nombre_original") or documento.get("filename") or None,
+        )
+
+    def cart_reemplazar_documento_personalizado(id_orden):
+        if session.get("rol") != "normal":
+            return "Acceso denegado", 403
+
+        fila = _orden_personalizada_usuario(id_orden, exigir_en_carrito=True)
+        if not fila:
+            flash("No se encontró la prenda personalizada en tu carrito.", "danger")
+            return redirect(url_for("cart"))
+
+        archivo = request.files.get("documento_validacion_personalizado")
+        documento_guardado, error_documento = _guardar_documento_institucional_checkout(archivo)
+        if error_documento:
+            flash(error_documento, "warning")
+            return redirect(url_for("cart"))
+
+        documento_anterior, datos = _documento_orden_personalizada(fila)
+        validacion = datos.get("validacion_identidad")
+        if not isinstance(validacion, dict):
+            validacion = {}
+        validacion.update(
+            {
+                "documento_nombre_original": documento_guardado.get("documento_nombre_original", ""),
+                "documento_tipo": documento_guardado.get("content_type", ""),
+                "documento_tamano": documento_guardado.get("size", 0),
+                "documento_path": documento_guardado.get("path", ""),
+                "documento_guardado": documento_guardado.get("filename", ""),
+                "terminos_aceptados": True,
+                "fecha_validacion": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            }
+        )
+        datos["validacion_identidad"] = validacion
+
+        with legacy.engine.begin() as conn:
+            conn.execute(
+                legacy.sa.text(
+                    """
+                    UPDATE orden_personalizada
+                    SET datos_json = :datos_json
+                    WHERE id_orden_personalizada = :id_orden
+                      AND LOWER(usuario_email) = :usuario_email
+                    """
+                ),
+                {
+                    "datos_json": json.dumps(datos, ensure_ascii=False),
+                    "id_orden": int(id_orden),
+                    "usuario_email": legacy.normalizar_email(session.get("usuario", "")),
+                },
+            )
+
+        documento_sesion = _documento_institucional_sesion()
+        if not documento_sesion or documento_sesion.get("path") == documento_anterior.get("path"):
+            session["checkout_documento_validacion"] = documento_guardado
+            session.modified = True
+
+        legacy.registrar_actividad(
+            f"Usuario {session.get('usuario', '')} reemplazo documento de validacion de solicitud personalizada #{id_orden}"
+        )
+        flash("Documento de validación actualizado correctamente.", "success")
+        return redirect(url_for("cart"))
+
     def get_cart_count():
         carrito = legacy._obtener_carrito_sesion_usuario()
         count = len(carrito)
@@ -330,10 +544,21 @@ def register_checkout_legacy_routes(app, legacy):
             if 0 <= index < len(carrito):
                 item_removido = carrito.pop(index)
                 if item_removido.get("personalizado"):
+                    id_orden_removida = pd.to_numeric(
+                        item_removido.get("id_orden_personalizada"),
+                        errors="coerce",
+                    )
+                    documento_sesion = _documento_institucional_sesion()
+                    if pd.notna(id_orden_removida) and documento_sesion:
+                        fila = _orden_personalizada_usuario(int(id_orden_removida))
+                        documento_removido, _ = _documento_orden_personalizada(fila)
+                        if documento_sesion.get("path") == documento_removido.get("path"):
+                            session.pop("checkout_documento_validacion", None)
                     legacy.actualizar_estado_ordenes_personalizadas_carrito([item_removido], "cancelada")
                 session["carrito"] = carrito
                 session.modified = True
                 legacy._sincronizar_carrito_usuario_desde_sesion()
+                _sincronizar_documento_checkout_desde_personalizados(carrito)
         return redirect(url_for("cart"))
 
     def checkout():
@@ -365,6 +590,8 @@ def register_checkout_legacy_routes(app, legacy):
                 total=total,
                 selected_metodo_pago=metodo_pago,
                 selected_codigo_promo=codigo_promo,
+                cliente_nombre=contacto_cliente["nombre"],
+                cliente_cedula=contacto_cliente["cedula"],
                 cliente_telefono=contacto_cliente["telefono"],
                 cliente_direccion=contacto_cliente["direccion"],
                 transfer_support_email=legacy.app.config.get("TRANSFER_SUPPORT_EMAIL", ""),
@@ -795,6 +1022,17 @@ def register_checkout_legacy_routes(app, legacy):
     app.add_url_rule("/product/<int:id_producto>", endpoint="product_detail", view_func=product_detail)
     app.add_url_rule("/add_to_cart/<int:id_producto>", endpoint="add_to_cart", view_func=add_to_cart, methods=["POST"])
     app.add_url_rule("/cart", endpoint="cart", view_func=cart)
+    app.add_url_rule(
+        "/cart/personalizada/<int:id_orden>/documento",
+        endpoint="cart_documento_personalizado",
+        view_func=cart_documento_personalizado,
+    )
+    app.add_url_rule(
+        "/cart/personalizada/<int:id_orden>/documento",
+        endpoint="cart_reemplazar_documento_personalizado",
+        view_func=cart_reemplazar_documento_personalizado,
+        methods=["POST"],
+    )
     app.add_url_rule("/get_cart_count", endpoint="get_cart_count", view_func=get_cart_count)
     app.add_url_rule("/cart/remove/<int:index>", endpoint="remove_from_cart", view_func=remove_from_cart, methods=["POST"])
     app.add_url_rule("/checkout", endpoint="checkout", view_func=checkout)

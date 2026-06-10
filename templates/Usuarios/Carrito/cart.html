@@ -83,6 +83,59 @@
                                     {% if item.descripcion %}
                                     <p class="item-description">{{ item.descripcion }}</p>
                                     {% endif %}
+                                    {% if item.personalizado %}
+                                    <section class="personalized-document-card">
+                                        <div class="personalized-document-card__copy">
+                                            <span class="personalized-document-card__icon">
+                                                <i class="fas fa-id-card"></i>
+                                            </span>
+                                            <div>
+                                                <strong>Documento de validación</strong>
+                                                {% if item.documento_validacion %}
+                                                <p>
+                                                    {{ item.documento_validacion.documento_nombre_original
+                                                        or item.documento_validacion.filename
+                                                        or 'Documento institucional adjunto' }}
+                                                </p>
+                                                {% else %}
+                                                <p>No se encontró un documento asociado a esta prenda.</p>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+
+                                        {% if item.documento_validacion %}
+                                        <a
+                                            href="{{ item.documento_validacion_url }}"
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            class="personalized-document-card__view">
+                                            <i class="fas fa-eye"></i>
+                                            Ver archivo
+                                        </a>
+                                        {% endif %}
+
+                                        <form
+                                            method="POST"
+                                            action="{{ url_for('cart_reemplazar_documento_personalizado', id_orden=item.id_orden_personalizada) }}"
+                                            enctype="multipart/form-data"
+                                            class="personalized-document-card__replace">
+                                            <label for="documento-personalizado-{{ loop.index }}">
+                                                <i class="fas fa-rotate"></i>
+                                                {{ 'Reemplazar archivo' if item.documento_validacion else 'Adjuntar archivo' }}
+                                            </label>
+                                            <input
+                                                id="documento-personalizado-{{ loop.index }}"
+                                                type="file"
+                                                name="documento_validacion_personalizado"
+                                                accept=".jpg,.jpeg,.png,.gif,.webp,image/*"
+                                                required>
+                                            <button type="submit">
+                                                <i class="fas fa-floppy-disk"></i>
+                                                Guardar cambio
+                                            </button>
+                                        </form>
+                                    </section>
+                                    {% endif %}
                                 </div>
                             </div>
 
