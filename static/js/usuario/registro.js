@@ -1,9 +1,19 @@
 document.addEventListener("DOMContentLoaded", () => {
+    document.querySelectorAll(".auth-toast").forEach((toast) => {
+        setTimeout(() => {
+            toast.classList.add("auth-toast--hide");
+            setTimeout(() => toast.remove(), 220);
+        }, 3000);
+    });
+
     const form = document.getElementById("registroForm");
     const passwordInput = document.getElementById("password");
     const confirmInput = document.getElementById("confirm_password");
-    const showPasswords = document.getElementById("showPasswords");
+    const passwordToggleButtons = document.querySelectorAll("[data-password-toggle]");
     const emailInput = document.getElementById("email");
+    const alternateEmailInput = document.getElementById("email_alternativo");
+    const cedulaInput = document.getElementById("cedula");
+    const telefonoInput = document.getElementById("telefono");
     const emailStatus = document.getElementById("emailStatus");
     const ruleLength = document.getElementById("rule-length");
     const ruleUpper = document.getElementById("rule-uppercase");
@@ -12,11 +22,18 @@ document.addEventListener("DOMContentLoaded", () => {
     const ruleSymbol = document.getElementById("rule-symbol");
     const ruleList = document.querySelector(".password-rules");
 
-    if (!form || !passwordInput || !confirmInput || !showPasswords || !emailInput || !emailStatus) {
+    if (!form || !passwordInput || !confirmInput || !emailInput || !emailStatus) {
         return;
     }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    const normalizarNumero = (input, maxLength) => {
+        if (!input) {
+            return;
+        }
+        input.value = input.value.replace(/\D/g, "").slice(0, maxLength);
+    };
 
     const setEmailStatus = (mensaje, tipo) => {
         emailStatus.textContent = mensaje;
@@ -143,15 +160,45 @@ document.addEventListener("DOMContentLoaded", () => {
     validarPassword();
     confirmInput.addEventListener("input", validarConfirmacion);
 
-    showPasswords.addEventListener("change", () => {
-        const tipo = showPasswords.checked ? "text" : "password";
-        passwordInput.type = tipo;
-        confirmInput.type = tipo;
+    passwordToggleButtons.forEach((button) => {
+        const target = document.getElementById(button.dataset.target || "");
+        if (!target) {
+            return;
+        }
+
+        button.addEventListener("click", () => {
+            const visible = target.type === "text";
+            target.type = visible ? "password" : "text";
+            button.setAttribute("aria-label", visible ? "Mostrar contraseña" : "Ocultar contraseña");
+            button.setAttribute("title", visible ? "Mostrar contraseña" : "Ocultar contraseña");
+            const icon = button.querySelector("i");
+            if (icon) {
+                icon.classList.toggle("fa-eye", visible);
+                icon.classList.toggle("fa-eye-slash", !visible);
+            }
+            target.focus();
+        });
     });
 
     emailInput.addEventListener("input", () => {
         setEmailStatus("", "info");
     });
+
+    if (alternateEmailInput) {
+        alternateEmailInput.addEventListener("input", () => {
+            alternateEmailInput.setCustomValidity("");
+        });
+    }
+
+    if (cedulaInput) {
+        cedulaInput.addEventListener("input", () => normalizarNumero(cedulaInput, 12));
+        cedulaInput.addEventListener("blur", () => normalizarNumero(cedulaInput, 12));
+    }
+
+    if (telefonoInput) {
+        telefonoInput.addEventListener("input", () => normalizarNumero(telefonoInput, 10));
+        telefonoInput.addEventListener("blur", () => normalizarNumero(telefonoInput, 10));
+    }
 
     emailInput.addEventListener("blur", async () => {
         await verificarCorreoExistente();
@@ -166,6 +213,17 @@ document.addEventListener("DOMContentLoaded", () => {
             emailInput.focus();
             emailInput.reportValidity();
             return;
+        }
+
+        if (alternateEmailInput) {
+            const principal = emailInput.value.trim().toLowerCase();
+            const alternativo = alternateEmailInput.value.trim().toLowerCase();
+            if (alternativo && alternativo === principal) {
+                alternateEmailInput.setCustomValidity("El correo alternativo debe ser diferente al principal.");
+                alternateEmailInput.reportValidity();
+                return;
+            }
+            alternateEmailInput.setCustomValidity("");
         }
 
         if (!form.checkValidity()) {

@@ -4,7 +4,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ producto.nombre }} - Ropa Militar</title>
+    {% include 'partials/_favicon_links.html' %}
+    <title>{{ producto.nombre }} - Nachohers</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -78,7 +79,18 @@
                 <div class="col-md-6">
                     <div class="product-info">
                         <h1 class="product-title">{{ producto.nombre }}</h1>
+                        {% if producto.promo_activa %}
+                        <p class="product-price product-price--promo">
+                            <span class="product-price-old">{{ producto.precio_original|cop }}</span>
+                            <strong>{{ producto.precio_con_descuento|cop }}</strong>
+                            <span class="product-promo-badge">{{ producto.promo_etiqueta }}</span>
+                        </p>
+                        <p class="product-promo-live promo-live" data-promo-end="{{ producto.promo_fecha_fin }}">
+                            Promoción activa{% if producto.promo_nombre %}: {{ producto.promo_nombre }}{% endif %}. Vigente hasta {{ producto.promo_fecha_fin }}.
+                        </p>
+                        {% else %}
                         <p class="product-price">{{ producto.precio|cop }}</p>
+                        {% endif %}
                         <p class="product-description">{{ producto.descripcion }}</p>
                         <p class="stock-info">
                             <i class="fas fa-box"></i>
@@ -127,6 +139,8 @@
                                 <a href="{{ url_for('policia') }}" class="btn btn-back">
                                 {% elif origen == 'gaula' %}
                                 <a href="{{ url_for('gaula') }}" class="btn btn-back">
+                                {% elif origen == 'variado' %}
+                                <a href="{{ url_for('variado') }}" class="btn btn-back">
                                 {% elif origen == 'ejercito' %}
                                 <a href="{{ url_for('ejercito') }}" class="btn btn-back">
                                 {% elif origen == 'accesorios' %}
@@ -134,7 +148,7 @@
                                 {% else %}
                                 <a href="{{ url_for('user_dashboard') }}" class="btn btn-back">
                                 {% endif %}
-                                    <i class="fas fa-arrow-left"></i> Volver al Cat&aacute;logo
+                                    <i class="fas fa-arrow-left"></i> Volver al catálogo
                                 </a>
                             </div>
                         </form>
@@ -159,6 +173,8 @@
             </div>
         </div>
     </div>
+
+    {% include 'Usuarios/partials/footer.html' %}
 
     <script src="{{ url_for('static', filename='js/usuario/product_detail.js') }}"></script>
     <script src="{{ url_for('static', filename='js/usuario/catalog_base.js') }}"></script>

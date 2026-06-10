@@ -27,6 +27,181 @@ function showMessage(message, type) {
     }
 }
 
+function showPasswordChangeMessage(message, type) {
+    const container = document.getElementById("passwordChangeMessageContainer");
+    if (!container) return;
+
+    const alertClass = type === "success" ? "alert-success" : "alert-danger";
+    const icon = type === "success" ? "fa-check-circle" : "fa-exclamation-circle";
+
+    container.innerHTML = `
+        <div class="alert ${alertClass} alert-dismissible fade show" role="alert">
+            <i class="fas ${icon} me-2"></i>${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    `;
+}
+
+function setPasswordChangeStep(step) {
+    const stepRequest = document.getElementById("passwordStepRequest");
+    const stepVerify = document.getElementById("passwordStepVerify");
+    const stepForm = document.getElementById("changePasswordForm");
+
+    if (stepRequest) stepRequest.style.display = step === "request" ? "block" : "none";
+    if (stepVerify) stepVerify.style.display = step === "verify" ? "block" : "none";
+    if (stepForm) stepForm.style.display = step === "form" ? "block" : "none";
+}
+
+function enviarCodigoCambioPassword() {
+    const btn = document.getElementById("btnEnviarCodigoCambioPassword");
+    if (!btn) return;
+
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Enviando...';
+
+    fetch("/user/profile/send-password-change-code", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+    })
+        .then((response) => response.json())
+        .then((data) => {
+            if (data.success) {
+                showPasswordChangeMessage(data.message, "success");
+                setPasswordChangeStep("verify");
+                const codeInput = document.getElementById("password_change_code_step");
+                if (codeInput) codeInput.focus();
+            } else {
+                showPasswordChangeMessage(data.message || "No fue posible enviar el código.", "error");
+            }
+        })
+        .catch((error) => {
+            console.error("Error:", error);
+            showPasswordChangeMessage("Error al enviar el código. Intenta nuevamente.", "error");
+        })
+        .finally(() => {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-paper-plane me-2"></i>Solicitar código de seguridad';
+        });
+}
+
+function verificarCodigoCambioPassword() {
+    const codeInput = document.getElementById("password_change_code_step");
+    const btn = document.getElementById("btnValidarCodigoCambioPassword");
+    const hiddenCode = document.getElementById("password_change_code");
+    if (!codeInput || !btn || !hiddenCode) return;
+
+    const codigo = codeInput.value.replace(/\D/g, "").trim();
+    if (!/^\d{6}$/.test(codigo)) {
+        showPasswordChangeMessage("El código debe tener exactamente 6 dígitos.", "error");
+        return;
+    }
+
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Validando...';
+
+    fetch("/user/profile/verify-password-change-code", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ code: codigo }),
+    })
+        .then((response) => response.json())
+        .then((data) => {
+            if (data.success) {
+                hiddenCode.value = codigo;
+                setPasswordChangeStep("form");
+                showPasswordChangeMessage(data.message, "success");
+                const currentPassword = document.getElementById("current_password");
+                if (currentPassword) currentPassword.focus();
+                return;
+            }
+
+            showPasswordChangeMessage(data.message || "Código inválido.", "error");
+        })
+        .catch((error) => {
+            console.error("Error:", error);
+            showPasswordChangeMessage("Error validando el código. Intenta nuevamente.", "error");
+        })
+        .finally(() => {
+            btn.disabled = false;
+            btn.innerHTML = "Validar código y continuar";
+        });
+}
+
+function togglePasswordVisibility(event) {
+    const btn = event.currentTarget;
+    const targetId = btn.getAttribute("data-target");
+    const input = document.getElementById(targetId);
+    if (!input) return;
+
+    const icon = btn.querySelector("i");
+    if (input.type === "password") {
+        input.type = "text";
+        if (icon) {
+            icon.classList.remove("fa-eye");
+            icon.classList.add("fa-eye-slash");
+        }
+    } else {
+        input.type = "password";
+        if (icon) {
+            icon.classList.remove("fa-eye-slash");
+            icon.classList.add("fa-eye");
+        }
+    }
+}
+
+function setupPasswordChangeSection() {
+    const btnSendCode = document.getElementById("btnEnviarCodigoCambioPassword");
+    if (btnSendCode) {
+        btnSendCode.removeEventListener("click", enviarCodigoCambioPassword);
+        btnSendCode.addEventListener("click", enviarCodigoCambioPassword);
+    }
+
+    const btnVerifyCode = document.getElementById("btnValidarCodigoCambioPassword");
+    if (btnVerifyCode) {
+        btnVerifyCode.removeEventListener("click", verificarCodigoCambioPassword);
+        btnVerifyCode.addEventListener("click", verificarCodigoCambioPassword);
+    }
+
+    const btnResendCode = document.getElementById("btnReenviarCodigoCambioPassword");
+    if (btnResendCode) {
+        btnResendCode.removeEventListener("click", enviarCodigoCambioPassword);
+        btnResendCode.addEventListener("click", enviarCodigoCambioPassword);
+    }
+
+    const codeInput = document.getElementById("password_change_code_step");
+    if (codeInput) {
+        codeInput.addEventListener("input", (event) => {
+            event.target.value = event.target.value.replace(/\D/g, "").slice(0, 6);
+        });
+    }
+
+    const form = document.getElementById("changePasswordForm");
+    if (form && form.dataset.codeGuardBound !== "1") {
+        form.addEventListener("submit", function (event) {
+            const hiddenCode = document.getElementById("password_change_code");
+            if (!hiddenCode || !/^\d{6}$/.test((hiddenCode.value || "").trim())) {
+                event.preventDefault();
+                showPasswordChangeMessage(
+                    "Primero debes solicitar y validar el código de seguridad para continuar.",
+                    "error"
+                );
+                setPasswordChangeStep("verify");
+            }
+        });
+        form.dataset.codeGuardBound = "1";
+    }
+
+    const toggleButtons = document.querySelectorAll("[data-password-toggle]");
+    toggleButtons.forEach((btn) => {
+        btn.removeEventListener("click", togglePasswordVisibility);
+        btn.addEventListener("click", togglePasswordVisibility);
+    });
+}
+
 function enviarCodigoVerificacion() {
     const btn = document.getElementById("btnEnviarCodigo");
     if (!btn) return;
@@ -53,13 +228,13 @@ function enviarCodigoVerificacion() {
 
             showMessage(data.message, "error");
             btn.disabled = false;
-            btn.innerHTML = '<i class="fas fa-paper-plane me-2"></i>Enviar Código';
+            btn.innerHTML = '<i class="fas fa-paper-plane me-2"></i>Enviar código';
         })
         .catch((error) => {
             console.error("Error:", error);
             showMessage("Error al enviar el código. Intenta nuevamente.", "error");
             btn.disabled = false;
-            btn.innerHTML = '<i class="fas fa-paper-plane me-2"></i>Enviar Código';
+            btn.innerHTML = '<i class="fas fa-paper-plane me-2"></i>Enviar código';
         });
 }
 
@@ -154,36 +329,75 @@ function setupCodigoInput() {
     codigoInput.addEventListener("keypress", handleCodigoKeypress);
 }
 
-document.addEventListener("DOMContentLoaded", function () {
-    const addressForm = document.querySelector("#modalDirecciones form");
-    const addressInput = document.getElementById("direccion");
-    const addressAlert = document.getElementById("direccionAlert");
+function setupProfileAccountForm() {
+    const form = document.querySelector(".profile-account-form");
+    if (!form) return;
 
-    if (addressForm && addressInput && addressAlert) {
-        addressForm.addEventListener("submit", (event) => {
-            const value = addressInput.value.trim();
-            if (!value) {
-                event.preventDefault();
-                addressAlert.classList.remove("d-none");
-                addressAlert.classList.add("show");
-                addressInput.classList.add("is-invalid");
-                addressInput.focus();
-                return;
-            }
-            addressAlert.classList.add("d-none");
-            addressAlert.classList.remove("show");
-            addressInput.classList.remove("is-invalid");
-        });
+    const nameInput = form.querySelector("#nombre");
+    const alternateEmailInput = form.querySelector("#email_alternativo");
+    const cedulaInput = form.querySelector("#cedula");
+    const phoneInput = form.querySelector("#telefono");
+    const addressInput = form.querySelector("#direccion");
 
-        addressInput.addEventListener("input", () => {
-            if (addressInput.value.trim()) {
-                addressAlert.classList.add("d-none");
-                addressAlert.classList.remove("show");
-                addressInput.classList.remove("is-invalid");
-            }
+    if (cedulaInput) {
+        cedulaInput.addEventListener("input", () => {
+            cedulaInput.value = cedulaInput.value.replace(/\D/g, "").slice(0, 12);
+            cedulaInput.setCustomValidity("");
         });
     }
 
+    if (phoneInput) {
+        phoneInput.addEventListener("input", () => {
+            phoneInput.value = phoneInput.value.replace(/\D/g, "").slice(0, 10);
+            phoneInput.setCustomValidity("");
+        });
+    }
+
+    [nameInput, alternateEmailInput, addressInput].forEach((input) => {
+        if (!input) return;
+        input.addEventListener("input", () => {
+            input.setCustomValidity("");
+        });
+    });
+
+    form.addEventListener("submit", (event) => {
+        const nameValue = nameInput ? nameInput.value.trim() : "";
+        const alternateEmailValue = alternateEmailInput ? alternateEmailInput.value.trim().toLowerCase() : "";
+        const cedulaValue = cedulaInput ? cedulaInput.value.replace(/\D/g, "") : "";
+        const phoneValue = phoneInput ? phoneInput.value.replace(/\D/g, "") : "";
+        const addressValue = addressInput ? addressInput.value.trim() : "";
+
+        if (nameInput && !nameValue) {
+            nameInput.setCustomValidity("El nombre es obligatorio.");
+        }
+        if (alternateEmailInput && alternateEmailValue && !alternateEmailInput.checkValidity()) {
+            alternateEmailInput.setCustomValidity("Ingresa un correo alternativo válido.");
+        }
+        if (cedulaInput && !/^\d{6,12}$/.test(cedulaValue)) {
+            cedulaInput.setCustomValidity("La cédula debe tener entre 6 y 12 números.");
+        }
+        if (phoneInput && !/^\d{10}$/.test(phoneValue)) {
+            phoneInput.setCustomValidity("El celular debe tener exactamente 10 números.");
+        }
+        if (addressInput && !addressValue) {
+            addressInput.setCustomValidity("La dirección es obligatoria.");
+        }
+
+        if (!form.checkValidity()) {
+            event.preventDefault();
+            form.reportValidity();
+            return;
+        }
+
+        if (nameInput) nameInput.value = nameValue;
+        if (alternateEmailInput) alternateEmailInput.value = alternateEmailValue;
+        if (cedulaInput) cedulaInput.value = cedulaValue;
+        if (phoneInput) phoneInput.value = phoneValue;
+        if (addressInput) addressInput.value = addressValue;
+    });
+}
+
+document.addEventListener("DOMContentLoaded", function () {
     document.querySelectorAll(".profile-alert .btn-close").forEach((closeBtn) => {
         setTimeout(() => {
             closeBtn.click();
@@ -214,7 +428,7 @@ document.addEventListener("DOMContentLoaded", function () {
             if (container) container.innerHTML = "";
             if (btnEnviar) {
                 btnEnviar.disabled = false;
-                btnEnviar.innerHTML = '<i class="fas fa-paper-plane me-2"></i>Enviar Código';
+                btnEnviar.innerHTML = '<i class="fas fa-paper-plane me-2"></i>Enviar código';
             }
         });
 
@@ -223,5 +437,53 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
+    const modalSeguridad = document.getElementById("modalSeguridad");
+    if (modalSeguridad) {
+        modalSeguridad.addEventListener("shown.bs.modal", function () {
+            setupPasswordChangeSection();
+        });
+
+        modalSeguridad.addEventListener("hidden.bs.modal", function () {
+            const container = document.getElementById("passwordChangeMessageContainer");
+            if (container) container.innerHTML = "";
+            const codeStepInput = document.getElementById("password_change_code_step");
+            if (codeStepInput) codeStepInput.value = "";
+            const hiddenCode = document.getElementById("password_change_code");
+            if (hiddenCode) hiddenCode.value = "";
+            const currentPassword = document.getElementById("current_password");
+            const newPassword = document.getElementById("new_password");
+            if (currentPassword) {
+                currentPassword.value = "";
+                currentPassword.type = "password";
+            }
+            if (newPassword) {
+                newPassword.value = "";
+                newPassword.type = "password";
+            }
+            document.querySelectorAll("[data-password-toggle] i").forEach((icon) => {
+                icon.classList.remove("fa-eye-slash");
+                icon.classList.add("fa-eye");
+            });
+            setPasswordChangeStep("request");
+        });
+    }
+
+    const focusTarget = new URLSearchParams(window.location.search).get("focus");
+    if (focusTarget) {
+        const targetInput = focusTarget === "delivery"
+            ? document.getElementById("direccion")
+            : document.getElementById("telefono");
+
+        if (targetInput) {
+            setTimeout(() => {
+                targetInput.scrollIntoView({ behavior: "smooth", block: "center" });
+                targetInput.focus();
+            }, 250);
+        }
+    }
+
     setupCodigoInput();
+    setupPasswordChangeSection();
+    setupProfileAccountForm();
+    setPasswordChangeStep("request");
 });

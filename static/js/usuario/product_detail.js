@@ -28,6 +28,35 @@ function actualizarCarrito() {
         });
 }
 
+function actualizarDuracionPromocion() {
+    document.querySelectorAll('.promo-live[data-promo-end]').forEach((element) => {
+        const endDateRaw = element.dataset.promoEnd;
+        if (!endDateRaw) {
+            return;
+        }
+
+        const endDate = new Date(`${endDateRaw}T23:59:59`);
+        if (Number.isNaN(endDate.getTime())) {
+            return;
+        }
+
+        const diffMs = endDate.getTime() - Date.now();
+        if (diffMs <= 0) {
+            element.textContent = 'Promoción vencida.';
+            return;
+        }
+
+        const totalMinutes = Math.floor(diffMs / 60000);
+        const days = Math.floor(totalMinutes / 1440);
+        const hours = Math.floor((totalMinutes % 1440) / 60);
+        const minutes = totalMinutes % 60;
+        const baseText = element.dataset.baseText || element.textContent.trim();
+        element.dataset.baseText = baseText;
+        const remaining = days > 0 ? `${days} día(s), ${hours} hora(s)` : `${hours} hora(s), ${minutes} minuto(s)`;
+        element.textContent = `${baseText} Quedan ${remaining}.`;
+    });
+}
+
 // Actualizar el thumbnail activo cuando cambia el slide
 document.getElementById('productCarousel').addEventListener('slid.bs.carousel', function (e) {
     const activeIndex = Array.from(e.target.querySelectorAll('.carousel-item')).indexOf(e.relatedTarget);
@@ -43,6 +72,8 @@ document.getElementById('productCarousel').addEventListener('slid.bs.carousel', 
 // Inicializar al cargar la página
 document.addEventListener('DOMContentLoaded', function () {
     actualizarCarrito();
+    actualizarDuracionPromocion();
+    window.setInterval(actualizarDuracionPromocion, 60000);
     document.querySelectorAll('.cart-alert .btn-close').forEach((closeBtn) => {
         setTimeout(() => {
             closeBtn.click();

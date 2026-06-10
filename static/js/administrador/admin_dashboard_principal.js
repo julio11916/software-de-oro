@@ -21,6 +21,22 @@ function actualizarFechaHora() {
 
 setInterval(actualizarFechaHora, 1000);
 actualizarFechaHora();
+
+document.addEventListener('click', function (event) {
+    const closeButton = event.target.closest('[data-flash-toast-close]');
+    if (!closeButton) return;
+
+    const toast = closeButton.closest('.flash-toast');
+    if (!toast) return;
+
+    const stack = toast.closest('.flash-toast-stack');
+    toast.remove();
+
+    if (stack && !stack.querySelector('.flash-toast')) {
+        stack.remove();
+    }
+});
+
 // Manejo del botón Volver
 document.getElementById('backBtn').addEventListener('click', function () {
     if (window.history.length > 1) {

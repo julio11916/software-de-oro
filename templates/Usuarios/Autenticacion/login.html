@@ -1,10 +1,11 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nachoher</title>
+    {% include 'partials/_favicon_links.html' %}
+    <title>Nachohers</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -14,26 +15,22 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/usuario/user_dashboard.css') }}">
 </head>
 
-<body>
+<body class="auth-page">
     <header class="store-header">
         <div class="container-fluid px-3 px-lg-4">
             <div class="store-header-inner">
                 <button class="icon-btn-dark" type="button" data-bs-toggle="offcanvas" data-bs-target="#menuCanvas"
-                    aria-controls="menuCanvas">
+                    aria-controls="menuCanvas" aria-label="Abrir menú" title="Abrir menú" data-tooltip="Abrir menú">
                     <i class="fas fa-bars"></i>
                 </button>
 
                 <a class="brand-logo" href="{{ url_for('home') }}">
-                    <img src="{{ url_for('static', filename='img/Pagina/logo_header.png') }}" alt="Logo Nachoher">
+                    <img src="{{ url_for('static', filename='img/Pagina/logo_header.png') }}" alt="Logo Nachohers">
                 </a>
 
                 <div class="header-actions">
-                    <a href="{{ url_for('login') }}" class="icon-btn-dark">
-                        <i class="fas fa-bag-shopping"></i>
-                    </a>
-
                     <div class="user-dropdown">
-                        <button class="icon-btn-dark" type="button" onclick="toggleUserMenu()">
+                        <button class="icon-btn-dark" type="button" onclick="toggleUserMenu()" aria-label="Abrir menú de cuenta" title="Cuenta" data-tooltip="Cuenta">
                             <i class="far fa-user"></i>
                         </button>
                         <div class="dropdown-menu-custom" id="userDropdown">
@@ -52,7 +49,7 @@
 
     <div class="offcanvas offcanvas-start menu-canvas" tabindex="-1" id="menuCanvas" aria-labelledby="menuCanvasLabel">
         <div class="offcanvas-header">
-            <button type="button" class="btn-close-custom" data-bs-dismiss="offcanvas" aria-label="Close">
+            <button type="button" class="btn-close-custom" data-bs-dismiss="offcanvas" aria-label="Cerrar menú" title="Cerrar menú" data-tooltip="Cerrar menú">
                 <i class="fas fa-xmark"></i>
             </button>
             <img src="{{ url_for('static', filename='img/Pagina/logo_header.png') }}" class="offcanvas-logo" alt="Logo">
@@ -64,6 +61,10 @@
                     <i class="fas fa-house"></i>
                     <span>Home</span>
                 </a>
+                <a class="offcanvas-link active" href="{{ url_for('sobre_nosotros') }}">
+                    <i class="fas fa-user-gear"></i>
+                    <span>Sobre nosotros</span>
+                </a>
                 <a class="offcanvas-link active">
                     <i class="fas fa-shirt"></i>
                     <span>Catálogo</span>
@@ -71,6 +72,7 @@
                 <a class="offcanvas-link menu-normal" href="{{ url_for('armada') }}">  Armada</a>
                 <a class="offcanvas-link menu-normal" href="{{ url_for('ejercito') }}">  Ejército</a>
                 <a class="offcanvas-link menu-normal" href="{{ url_for('gaula') }}">  Gaula</a>
+                <a class="offcanvas-link menu-normal" href="{{ url_for('variado') }}">  Variado</a>
                 <a class="offcanvas-link menu-normal" href="{{ url_for('policia') }}">  Policía</a>
                 <a class="offcanvas-link active" href="{{ url_for('accesorios') }}">
                     <i class="fa-solid fa-glasses" style="color: rgb(29, 42, 51);"></i>
@@ -85,9 +87,9 @@
                     <i class="fas fa-clipboard-list"></i>
                     <span>Orden personalizada</span>
                 </a>
-                <a class="offcanvas-link active" href="{{ url_for('sobre_nosotros') }}">
-                    <i class="fas fa-user-gear"></i>
-                    <span>Sobre nosotros</span>
+                <a class="offcanvas-link active" href="{{ url_for('contactanos') }}">
+                    <i class="fas fa-headset"></i>
+                    <span>Cont&aacute;ctanos</span>
                 </a>
             </nav>
         </div>
@@ -106,92 +108,33 @@
         </div>
     </section>
 
+
     <main class="main-content" id="catalogo">
-        <div class="container catalog-shell">
-            <h2 class="section-title">Destacados</h2>
+        {% with carousel_id='ejercitoCarousel', titulo='Prendas destacadas - Ejército', productos=productos_destacados_ejercito, empty_message='Aún no hay prendas destacadas disponibles para Ejército.', is_public_featured=true %}
+        {% include 'Usuarios/partials/_featured_category_carousel.html' %}
+        {% endwith %}
 
-            <div id="destacadosCarousel" class="carousel slide destacados-carousel" data-bs-ride="carousel" data-bs-interval="4500">
-                <div class="carousel-inner">
-                    {% for grupo in productos|batch(4, None) %}
-                    <div class="carousel-item {% if loop.first %}active{% endif %}">
-                        <div class="row g-4 justify-content-center">
-                            {% for producto in grupo if producto %}
-                            <div class="col-lg-3 col-md-4 col-sm-6 producto-item" data-nombre="{{ producto.nombre|lower }}"
-                                data-precio="{{ producto.precio }}">
-                                <div class="card producto-card h-100">
-                                    <a href="{{ url_for('login') }}">
-                                        {% if producto.imagen_url %}
-                                        <img src="{{ url_for('static', filename=producto.imagen_url) }}" class="card-img-top"
-                                            alt="{{ producto.nombre }}">
-                                        {% else %}
-                                        <img src="{{ url_for('static', filename='img/Pagina/logo.jpeg') }}" class="card-img-top"
-                                            alt="Imagen por defecto">
-                                        {% endif %}
-                                    </a>
+        {% with carousel_id='policiaCarousel', titulo='Prendas destacadas - Policía', productos=productos_destacados_policia, empty_message='Aún no hay prendas destacadas disponibles para Policía.', is_public_featured=true %}
+        {% include 'Usuarios/partials/_featured_category_carousel.html' %}
+        {% endwith %}
 
-                                    <div class="card-body">
-                                        <h5 class="card-title">{{ producto.nombre }}</h5>
+        {% with carousel_id='armadaCarousel', titulo='Prendas destacadas - Armada', productos=productos_destacados_armada, empty_message='Aún no hay prendas destacadas disponibles para Armada.', is_public_featured=true %}
+        {% include 'Usuarios/partials/_featured_category_carousel.html' %}
+        {% endwith %}
 
-                                        {% if producto.promo_activa %}
-                                        <div class="promo-badge mb-2">
-                                            <span class="promo-tag">{{ producto.promo_etiqueta }}</span>
-                                            <small>{{ producto.promo_nombre }}</small>
-                                        </div>
-                                        <p class="price mb-1">{{ producto.precio_con_descuento|cop }}</p>
-                                        <p class="price-original">{{ producto.precio_original|cop }}</p>
-                                        {% else %}
-                                        <p class="price">{{ producto.precio|cop }}</p>
-                                        {% endif %}
-                                        {% if producto.stock|int <= 0 %}
-                                        <p class="text-danger fw-bold mb-2 text-center">Agotado</p>
-                                        {% endif %}
-                                    </div>
-                                </div>
-                            </div>
-                            {% endfor %}
-                        </div>
-                    </div>
-                    {% endfor %}
-                </div>
+        {% with carousel_id='gaulaCarousel', titulo='Prendas destacadas - Gaula', productos=productos_destacados_gaula, empty_message='Aún no hay prendas destacadas disponibles para Gaula.', is_public_featured=true %}
+        {% include 'Usuarios/partials/_featured_category_carousel.html' %}
+        {% endwith %}
 
-                <button class="carousel-control-prev" type="button" data-bs-target="#destacadosCarousel" data-bs-slide="prev">
-                    <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-                    <span class="visually-hidden">Anterior</span>
-                </button>
-                <button class="carousel-control-next" type="button" data-bs-target="#destacadosCarousel" data-bs-slide="next">
-                    <span class="carousel-control-next-icon" aria-hidden="true"></span>
-                    <span class="visually-hidden">Siguiente</span>
-                </button>
-            </div>
-        </div>
+        {% with carousel_id='variadoCarousel', titulo='Prendas destacadas - Variado', productos=productos_destacados_variado, empty_message='Aún no hay prendas destacadas disponibles para Variado.', is_public_featured=true %}
+        {% include 'Usuarios/partials/_featured_category_carousel.html' %}
+        {% endwith %}
+        {% with carousel_id='accesoriosCarousel', titulo='Prendas destacadas - Accesorios', productos=productos_destacados_accesorios, empty_message='Aún no hay accesorios destacados disponibles.', is_public_featured=true %}
+        {% include 'Usuarios/partials/_featured_category_carousel.html' %}
+        {% endwith %}
     </main>
 
-    <footer class="footer-compact">
-        <div class="container">
-            <div class="footer-content">
-                <div class="footer-brand">
-                    <i class="fas fa-crown"></i> <strong>Nachoher</strong>
-                </div>
-                <div class="footer-item">
-                    <i class="fas fa-map-marker-alt"></i> Urbanización Pablo Sexto
-                </div>
-                <div class="footer-item">
-                    <i class="fas fa-phone"></i> +57 3229393211
-                </div>
-                <div class="footer-item">
-                    <i class="fas fa-clock"></i> Lun-Vie 8:00-19:30 / Sab 8:00-14:00
-                </div>
-                <div class="footer-social">
-                    <a href="https://www.facebook.com/profile.php?id=61573294253539" target="_blank" rel="noopener noreferrer" aria-label="Facebook"><i class="fab fa-facebook"></i></a>
-                    <a href="https://www.instagram.com/nachoher_/" target="_blank" rel="noopener noreferrer" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
-                    <a href="#" aria-label="WhatsApp"><i class="fab fa-whatsapp"></i></a>
-                </div>
-            </div>
-            <div class="footer-bottom">
-                &copy; 2026 - Todos los derechos reservados
-            </div>
-        </div>
-    </footer>
+    {% include 'Usuarios/partials/footer.html' %}
 
     <script src="{{ url_for('static', filename='js/usuario/catalog_base.js') }}"></script>
     <script src="{{ url_for('static', filename='js/usuario/user_dashboard.js') }}"></script>
@@ -200,4 +143,3 @@
 </body>
 
 </html>
-

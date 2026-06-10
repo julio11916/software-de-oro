@@ -1,10 +1,11 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mi Cuenta - Nachoher</title>
+    {% include 'partials/_favicon_links.html' %}
+    <title>Mi perfil - Nachohers</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/usuario/catalog_base.css') }}">
@@ -13,254 +14,265 @@
 
 <body class="page-with-catalog-header profile-page">
     {% include 'Usuarios/partials/header_offcanvas.html' %}
+    {% include 'Usuarios/partials/_flash_toasts.html' %}
 
-    <!-- Mensajes Flash -->
-    {% with messages = get_flashed_messages(with_categories=true) %}
-    {% if messages %}
-    <div class="profile-alerts">
-        {% for category, message in messages %}
-        <div class="alert alert-{{ category }} alert-dismissible fade show profile-alert" role="alert">
-            <i class="fas fa-check-circle"></i> {{ message }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-        {% endfor %}
-    </div>
-    {% endif %}
-    {% endwith %}
+    {% set cedula_ok = usuario.cedula if usuario.cedula else '' %}
+    {% set telefono_ok = usuario.telefono if usuario.telefono else '' %}
+    {% set direccion_ok = usuario.direccion if usuario.direccion else '' %}
+    {% set nombres = usuario.nombre.split() if usuario.nombre else [] %}
+    {% set inicial = (usuario.nombre[0:1] if usuario.nombre else usuario.email[0:1])|upper %}
+    {% set nombre_corto = nombres[0] if nombres else usuario.nombre %}
+    {% set cuenta_completa = cedula_ok and telefono_ok and direccion_ok %}
 
-    <!-- Contenido Principal -->
-    <div class="container my-5 profile-main">
-        <!-- Encabezado del Perfil -->
-        <div class="profile-header mb-4">
-            <div class="d-flex align-items-start">
-                <div class="profile-avatar-lg">
-                    {% set nombres = usuario.nombre.split() %}
-                    {% if nombres|length >= 2 %}
-                    {{ nombres[0][0]|upper }}{{ nombres[1][0]|upper }}
-                    {% else %}
-                    {{ usuario.nombre[0:2]|upper }}
+    <main class="profile-shell">
+        <aside class="profile-sidebar">
+            <section class="profile-side-head">
+                <div class="profile-avatar" aria-hidden="true">{{ inicial }}</div>
+                <div>
+                    <span>Mi perfil</span>
+                    <strong>{{ nombre_corto }}</strong>
+                </div>
+            </section>
+
+            <nav class="profile-side-nav" aria-label="Secciones de mi perfil">
+                <a class="active" href="#cuenta">
+                    <i class="fas fa-gear"></i>
+                    <span>Ajustes de cuenta</span>
+                </a>
+                <a href="#pagos">
+                    <i class="fas fa-credit-card"></i>
+                    <span>Pagos</span>
+                </a>
+                <a href="{{ url_for('user_orders') }}">
+                    <i class="fas fa-clock-rotate-left"></i>
+                    <span>Últimas órdenes</span>
+                </a>
+                <button type="button" data-bs-toggle="modal" data-bs-target="#modalSeguridad">
+                    <i class="fas fa-lock"></i>
+                    <span>Seguridad</span>
+                </button>
+            </nav>
+
+            <div class="profile-side-status {{ 'is-ready' if cuenta_completa else 'is-pending' }}">
+                <i class="fas {{ 'fa-circle-check' if cuenta_completa else 'fa-circle-exclamation' }}"></i>
+                <div>
+                    <strong>{{ 'Perfil completo' if cuenta_completa else 'Perfil pendiente' }}</strong>
+                    <span>{{ 'Tus datos de contacto están listos.' if cuenta_completa else 'Agrega teléfono y dirección para comprar sin pausas.' }}</span>
+                </div>
+            </div>
+        </aside>
+
+        <section class="profile-main">
+            <section id="cuenta" class="account-card">
+                <div class="account-card__head">
+                    <div>
+                        <h1>Información de tu cuenta</h1>
+                        <p>Estos datos se usan para contacto, entrega y confirmación de pedidos.</p>
+                    </div>
+                    {% if not usuario.email_verified %}
+                    <button type="button" class="btn btn-outline-success" data-bs-toggle="modal" data-bs-target="#modalVerificacion">
+                        <i class="fas fa-shield-halved"></i>
+                        Verificar correo
+                    </button>
                     {% endif %}
                 </div>
-                <div class="ms-3 flex-grow-1">
-                    <h2 class="mb-1">{{ usuario.nombre }}</h2>
-                    <p class="text-muted mb-2">{{ usuario.email }}</p>
 
-                    {% if usuario.email_verified %}
-                    <!-- Email Verificado -->
-                    <div class="alert alert-success d-flex align-items-center py-2 mb-0"
-                        style="background-color: #d4edda; border-color: #28a745; border-left: 4px solid #28a745;">
-                        <i class="fas fa-shield-alt me-2" style="color: #28a745;"></i>
-                        <span style="color: #155724;">Tu correo est&aacute; verificado. Autenticaci&oacute;n disponible</span>
-                        <button class="btn btn-sm ms-auto" data-bs-toggle="modal" data-bs-target="#modalVerificacion"
-                            style="background: linear-gradient(135deg, hsl(226, 43%, 38%) 0%, #3263a3 60%, #1794d2 100%); color: white; border: 1px solid #3263a3; padding: 0.4rem 1rem; border-radius: 6px; box-shadow: 0 6px 14px rgba(23, 162, 184, 0.25);">Autenticar</button>
+                <form class="profile-account-form" method="POST" action="{{ url_for('update_profile') }}" novalidate>
+                    <div class="profile-field">
+                        <label for="nombre">Nombre completo</label>
+                        <input type="text" id="nombre" name="nombre" value="{{ usuario.nombre }}" autocomplete="name" required>
                     </div>
-                    {% else %}
-                    <!-- Email No Verificado -->
-                    <div class="alert alert-info d-flex align-items-center py-2 mb-0"
-                        style="background-color: #fff3cd; border-color: #ffc107; border-left: 4px solid #ffc107;">
-                        <i class="fas fa-envelope me-2" style="color: #ffc107;"></i>
-                        <span style="color: #856404;">Valida tu correo y mant&eacute;n tu cuenta segura</span>
-                        <button class="btn btn-sm ms-auto" data-bs-toggle="modal" data-bs-target="#modalVerificacion"
-                            style="background: linear-gradient(135deg, hsl(226, 43%, 38%) 0%, #3263a3 60%, #1794d2 100%); color: white; border: 1px solid #3263a3; padding: 0.4rem 1rem; border-radius: 6px; box-shadow: 0 6px 14px rgba(23, 162, 184, 0.25);">Validar</button>
-                    </div>
-                    {% endif %}
-                </div>
-            </div>
-        </div>
 
-        <!-- Grid de Opciones -->
-        <div class="row g-4">
-            <!-- Tu información -->
-            <div class="col-md-6 col-lg-4">
-                <div class="option-card" data-bs-toggle="modal" data-bs-target="#modalInformaci&oacute;n">
-                    <div class="option-icon">
-                        <i class="fas fa-id-card"></i>
-                    </div>
-                    <div class="option-content">
-                        <h5>Tu informaci&oacute;n</h5>
-                        <p class="text-muted mb-0">Nombre, apellidos y datos para identificarte</p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Datos de tu cuenta -->
-            <div class="col-md-6 col-lg-4">
-                <div class="option-card" data-bs-toggle="modal" data-bs-target="#modalDatosCuenta">
-                    <div class="option-icon">
-                        <i class="fas fa-user"></i>
-                    </div>
-                    <div class="option-content">
-                        <h5>Datos de tu cuenta</h5>
-                        <p class="text-muted mb-0">Datos que usas para acceder a la cuenta y tus estadísticas</p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Seguridad -->
-            <div class="col-md-6 col-lg-4">
-                <div class="option-card" data-bs-toggle="modal" data-bs-target="#modalSeguridad">
-                    <div class="option-icon">
-                        <i class="fas fa-lock"></i>
-                    </div>
-                    <div class="option-content">
-                        <h5>Seguridad</h5>
-                        <p class="text-muted mb-0">Activa contraseñas visibles</p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Direcciones -->
-            <div class="col-md-6 col-lg-4">
-                <div class="option-card" data-bs-toggle="modal" data-bs-target="#modalDirecciones">
-                    <div class="option-icon">
-                        <i class="fas fa-map-marker-alt"></i>
-                    </div>
-                    <div class="option-content">
-                        <h5>Direcciones</h5>
-                        <p class="text-muted mb-0">Direcciones guardadas en tu cuenta</p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Privacidad -->
-            <div class="col-md-6 col-lg-4">
-                <div class="option-card" data-bs-toggle="modal" data-bs-target="#modalPrivacidad">
-                    <div class="option-icon">
-                        <i class="fas fa-shield-alt"></i>
-                    </div>
-                    <div class="option-content">
-                        <h5>Privacidad</h5>
-                        <p class="text-muted mb-0">Preferencias y control sobre el uso de tus datos</p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Comunicaciones -->
-            <div class="col-md-6 col-lg-4">
-                <div class="option-card" data-bs-toggle="modal" data-bs-target="#modalComunicaciones">
-                    <div class="option-icon">
-                        <i class="fas fa-comment-dots"></i>
-                    </div>
-                    <div class="option-content">
-                        <h5>Comunicaciones</h5>
-                        <p class="text-muted mb-0">Elige qu&eacute; tipo de informaci&oacute;n quieres recibir</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Modal: Tu información -->
-    <div class="modal fade" id="modalInformaci&oacute;n" tabindex="-1">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title"><i class="fas fa-id-card me-2"></i>Tu Informaci&oacute;n</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <div id="direccionAlert" class="alert alert-danger d-none mt-2 mb-3" role="alert">
-                        Debes llenar este espacio.
-                    </div>
-                    <form method="POST" action="{{ url_for('update_profile') }}">
-                        <div class="mb-3">
-                            <label for="nombre" class="form-label">Nombre Completo</label>
-                            <input type="text" class="form-control" id="nombre" name="nombre"
-                                value="{{ usuario.nombre }}" required>
-                        </div>
-                        <div class="mb-3">
-                            <label for="telefono" class="form-label">Teléfono</label>
-                            <input type="tel" class="form-control" id="telefono" name="telefono"
-                                value="{{ usuario.telefono if usuario.telefono else '' }}"
-                                placeholder="+57 300 1234567">
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Correo electr&oacute;nico</label>
-                            <input type="email" class="form-control" value="{{ usuario.email }}" readonly>
-                            <small class="text-muted">El correo no se puede modificar</small>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Fecha de Registro</label>
-                            <input type="text" class="form-control" value="{{ usuario.fecha_registro }}" readonly>
-                        </div>
-                        <div class="text-end">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                            <button type="submit" class="btn btn-primary">Guardar Cambios</button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Modal: Datos de tu cuenta -->
-    <div class="modal fade" id="modalDatosCuenta" tabindex="-1">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title"><i class="fas fa-user me-2"></i>Datos de tu Cuenta</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="mb-4">
-                        <h6 class="text-muted mb-3">Informaci&oacute;n de la Cuenta</h6>
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <strong>Correo:</strong>
-                                <p>{{ usuario.email }}</p>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <strong>Tipo de Usuario:</strong>
-                                <p>{{ usuario.rol|capitalize }}</p>
-                            </div>
-                        </div>
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <strong>Pedidos Realizados:</strong>
-                                <p>{{ pedidos_total }}</p>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <strong>Total Gastado:</strong>
-                                <p>{{ gasto_total|cop }}</p>
-                            </div>
+                    <div class="profile-field">
+                        <label for="email">Correo electrónico</label>
+                        <div class="profile-locked-field">
+                            <input type="email" id="email" value="{{ usuario.email }}" readonly>
+                            <i class="fas fa-lock" title="El correo no se edita desde este formulario"></i>
                         </div>
                     </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
-                </div>
-            </div>
-        </div>
-    </div>
 
-    <!-- Modal: Seguridad -->
+                    <div class="profile-field">
+                        <label for="email_alternativo">Correo alternativo</label>
+                        <input type="email" id="email_alternativo" name="email_alternativo" value="{{ usuario.email_alternativo if usuario.email_alternativo else '' }}" placeholder="Correo de respaldo para recuperar tu contraseña" autocomplete="email">
+                        <small>Opcional. Debe ser diferente a tu correo principal y no puede ser el correo principal de otra cuenta.</small>
+                    </div>
+
+                    <div class="profile-field">
+                        <label for="cedula">Cédula <strong>*</strong></label>
+                        <input type="text" id="cedula" name="cedula" value="{{ usuario.cedula if usuario.cedula else '' }}" inputmode="numeric" minlength="6" maxlength="12" pattern="[0-9]{6,12}" placeholder="Ingresa tu número de cédula" autocomplete="off" required>
+                        <small>Solo números, entre 6 y 12 dígitos.</small>
+                    </div>
+
+                    <div class="profile-field">
+                        <label for="telefono">Celular <strong>*</strong></label>
+                        <input type="tel" id="telefono" name="telefono" value="{{ usuario.telefono if usuario.telefono else '' }}" inputmode="numeric" minlength="10" maxlength="10" pattern="[0-9]{10}" placeholder="Ingresa tu número, ej: 3001234567" autocomplete="tel" required>
+                        <small>Debe tener exactamente 10 dígitos.</small>
+                    </div>
+
+                    <div class="profile-field">
+                        <label for="direccion">Dirección de entrega <strong>*</strong></label>
+                        <input type="text" id="direccion" name="direccion" value="{{ usuario.direccion if usuario.direccion else '' }}" placeholder="Ingresa tu dirección, ej: Calle 5 #12-34, barrio, ciudad" autocomplete="street-address" required>
+                        <small>Incluye barrio, ciudad y una referencia si aplica.</small>
+                    </div>
+
+                    <div class="profile-field">
+                        <label>Fecha de registro</label>
+                        <input type="text" value="{{ usuario.fecha_registro if usuario.fecha_registro else 'Sin fecha registrada' }}" readonly>
+                    </div>
+
+                    <div class="profile-field">
+                        <label>Estado del correo</label>
+                        <input type="text" value="{{ 'Verificado' if usuario.email_verified else 'Pendiente de verificación' }}" readonly>
+                    </div>
+
+                    <div class="profile-form-note {{ 'is-ready' if cuenta_completa else 'is-pending' }}">
+                        <i class="fas {{ 'fa-circle-check' if cuenta_completa else 'fa-triangle-exclamation' }}"></i>
+                        <span>{{ 'Tu información obligatoria está completa.' if cuenta_completa else 'Teléfono y dirección son obligatorios para finalizar compras.' }}</span>
+                    </div>
+
+                    <div class="profile-actions">
+                        <button type="submit" class="btn-update">
+                            <i class="fas fa-floppy-disk"></i>
+                            Actualizar datos
+                        </button>
+                        <button type="button" class="btn-outline-action" data-bs-toggle="modal" data-bs-target="#modalSeguridad">
+                            <i class="fas fa-key"></i>
+                            Cambiar contraseña
+                        </button>
+                        <a class="btn-outline-danger" href="{{ url_for('logout') }}">
+                            <i class="fas fa-right-from-bracket"></i>
+                            Cerrar sesión
+                        </a>
+                    </div>
+                </form>
+            </section>
+
+            <section id="pagos" class="payments-card">
+                <div class="payments-card__head">
+                    <div>
+                        <h2>Pagos</h2>
+                        <p>Administra aquí tus tarjetas registradas para comprar más rápido.</p>
+                    </div>
+                    <span class="payment-count">0 tarjetas</span>
+                </div>
+
+                <div class="payment-wallet">
+                    <article class="saved-card saved-card--empty">
+                        <div class="saved-card__chip"></div>
+                        <div>
+                            <span>Tarjetas registradas</span>
+                            <strong>Aún no tienes tarjetas guardadas</strong>
+                            <small>Cuando el guardado de tarjetas esté activo, aparecerán aquí de forma segura.</small>
+                        </div>
+                    </article>
+
+                    <article class="payment-summary">
+                        <span>Total pagado</span>
+                        <strong>{{ gasto_total|cop }}</strong>
+                        <small>Pagos registrados en tus órdenes.</small>
+                    </article>
+
+                    <article class="payment-summary">
+                        <span>Pedidos activos</span>
+                        <strong>{{ pedidos_activos }}</strong>
+                        <small>Compras que siguen en proceso.</small>
+                    </article>
+                </div>
+            </section>
+
+            <section id="ordenes" class="orders-card">
+                <div class="orders-card__head">
+                    <div>
+                        <h2>Últimas órdenes</h2>
+                        <p>Revisa tus movimientos recientes.</p>
+                    </div>
+                    <a href="{{ url_for('user_orders') }}">Ver historial</a>
+                </div>
+
+                {% if pedidos_recientes %}
+                <div class="recent-orders">
+                    {% for pedido in pedidos_recientes %}
+                    <a class="recent-order" href="{{ url_for('user_order_details', id_pedido=pedido.id_pedido|int) }}">
+                        <div>
+                            <span>Pedido {{ pedido.numero_pedido_usuario }}</span>
+                            <strong>{{ pedido.monto|cop if pedido.monto else 'Monto pendiente' }}</strong>
+                            <small>{{ pedido.fecha_pedido }}</small>
+                        </div>
+                        <em class="order-status is-{{ pedido.estado_ui }}">{{ pedido.estado_label }}</em>
+                    </a>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="empty-orders">
+                    <i class="fas fa-box-open"></i>
+                    <p>Aún no tienes órdenes registradas.</p>
+                    <a href="{{ url_for('user_dashboard') }}">Explorar catálogo</a>
+                </div>
+                {% endif %}
+            </section>
+        </section>
+    </main>
+
     <div class="modal fade" id="modalSeguridad" tabindex="-1">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content profile-modal">
                 <div class="modal-header">
-                    <h5 class="modal-title"><i class="fas fa-lock me-2"></i>Seguridad</h5>
+                    <h5 class="modal-title"><i class="fas fa-lock me-2"></i>Seguridad de la cuenta</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <form method="POST" action="{{ url_for('change_password') }}">
-                        <h6 class="mb-3">Cambiar Contrasena</h6>
-                        <div class="mb-3">
-                            <label for="current_password" class="form-label">Contrasena Actual</label>
-                            <input type="password" class="form-control" id="current_password" name="current_password"
-                                required>
+                    <div class="modal-intro">
+                        <h6>Cambiar contraseña</h6>
+                        <p>El cambio se autoriza con un código enviado a tu correo.</p>
+                    </div>
+
+                    <div id="passwordChangeMessageContainer" class="mb-3"></div>
+
+                    <div id="passwordStepRequest" class="modal-section">
+                        <p class="text-muted mb-3">
+                            Solicita un código de seguridad al correo <strong>{{ usuario.email }}</strong>.
+                            Será válido por {{ PASSWORD_CHANGE_CODE_EXP_MINUTES if PASSWORD_CHANGE_CODE_EXP_MINUTES else 7 }} minutos.
+                        </p>
+                        <button type="button" class="btn btn-outline-dark" id="btnEnviarCodigoCambioPassword">
+                            <i class="fas fa-paper-plane me-2"></i>Solicitar código de seguridad
+                        </button>
+                    </div>
+
+                    <div id="passwordStepVerify" class="modal-section" style="display: none;">
+                        <label for="password_change_code_step" class="form-label">Código de seguridad</label>
+                        <input type="text" class="form-control" id="password_change_code_step" maxlength="6" inputmode="numeric" autocomplete="one-time-code">
+                        <div class="d-flex gap-2 mt-3 flex-wrap">
+                            <button type="button" class="btn btn-dark" id="btnValidarCodigoCambioPassword">Validar código y continuar</button>
+                            <button type="button" class="btn btn-outline-secondary" id="btnReenviarCodigoCambioPassword">Reenviar código</button>
                         </div>
-                        <div class="mb-3">
-                            <label for="new_password" class="form-label">Nueva Contrasena</label>
-                            <input type="password" class="form-control" id="new_password" name="new_password" required>
+                    </div>
+
+                    <form method="POST" action="{{ url_for('change_password') }}" id="changePasswordForm" class="modal-section" style="display: none;">
+                        <input type="hidden" id="password_change_code" name="password_change_code">
+                        <div class="modal-form-grid">
+                            <div>
+                                <label for="current_password" class="form-label">Contraseña actual</label>
+                                <div class="input-group">
+                                    <input type="password" class="form-control" id="current_password" name="current_password" required>
+                                    <button type="button" class="btn btn-outline-secondary" data-password-toggle data-target="current_password">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div>
+                                <label for="new_password" class="form-label">Nueva contraseña</label>
+                                <div class="input-group">
+                                    <input type="password" class="form-control" id="new_password" name="new_password" required>
+                                    <button type="button" class="btn btn-outline-secondary" data-password-toggle data-target="new_password">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                </div>
+                                <small class="text-muted">Mínimo 8 caracteres, con mayúscula, minúscula, número y carácter especial.</small>
+                            </div>
                         </div>
-                        <div class="mb-3">
-                            <label for="confirm_password" class="form-label">Confirmar Nueva Contrasena</label>
-                            <input type="password" class="form-control" id="confirm_password" name="confirm_password"
-                                required>
-                        </div>
-                        <div class="text-end">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                            <button type="submit" class="btn btn-primary">Cambiar Contrasena</button>
+                        <div class="modal-actions">
+                            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                            <button type="submit" class="btn btn-dark">Cambiar contraseña</button>
                         </div>
                     </form>
                 </div>
@@ -268,184 +280,38 @@
         </div>
     </div>
 
-    <!-- Modal: Direcciones -->
-    <div class="modal fade" id="modalDirecciones" tabindex="-1">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title"><i class="fas fa-map-marker-alt me-2"></i>Direcciones</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <form method="POST" action="{{ url_for('update_profile') }}">
-                        <input type="hidden" name="nombre" value="{{ usuario.nombre }}">
-                        <input type="hidden" name="telefono" value="{{ usuario.telefono if usuario.telefono else '' }}">
-                        <div class="mb-3">
-                            <label for="direccion" class="form-label">Direcci&oacute;n de entrega</label>
-                            <input type="text" class="form-control" id="direccion" name="direccion"
-                                value="{{ usuario.direccion if usuario.direccion else '' }}"
-                                placeholder="Calle, numero, ciudad, etc.">
-                        </div>
-                        <div class="text-end">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                            <button type="submit" class="btn btn-primary">Guardar direcci&oacute;n</button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Modal: Privacidad -->
-    <div class="modal fade" id="modalPrivacidad" tabindex="-1">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title"><i class="fas fa-shield-alt me-2"></i>Privacidad</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <form method="POST" action="{{ url_for('update_settings') }}">
-                        <h6 class="mb-3">Configuracion de Privacidad</h6>
-                        <div class="form-check form-switch mb-3">
-                            <input class="form-check-input" type="checkbox" id="perfil_publico" name="perfil_publico" {%
-                                if usuario.perfil_publico %}checked{% endif %}>
-                            <label class="form-check-label" for="perfil_publico">
-                                Hacer mi perfil publico
-                            </label>
-                        </div>
-                        <div class="form-check form-switch mb-3">
-                            <input class="form-check-input" type="checkbox" id="mostrar_historial"
-                                name="mostrar_historial" {% if usuario.mostrar_historial %}checked{% endif %}>
-                            <label class="form-check-label" for="mostrar_historial">
-                                Compartir mi historial de compras
-                            </label>
-                        </div>
-                        <!-- Mantener valores de notificaciones -->
-                        <input type="hidden" name="notif_email" value="{% if usuario.notif_email %}on{% endif %}">
-                        <input type="hidden" name="notif_pedidos" value="{% if usuario.notif_pedidos %}on{% endif %}">
-                        <input type="hidden" name="notif_promociones"
-                            value="{% if usuario.notif_promociones %}on{% endif %}">
-                        <div class="text-end">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                            <button type="submit" class="btn btn-primary">Guardar Preferencias</button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Modal: Comunicaciones -->
-    <div class="modal fade" id="modalComunicaciones" tabindex="-1">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title"><i class="fas fa-comment-dots me-2"></i>Comunicaciones</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <form method="POST" action="{{ url_for('update_settings') }}">
-                        <h6 class="mb-3">Notificaciones</h6>
-                        <div class="form-check form-switch mb-3">
-                            <input class="form-check-input" type="checkbox" id="notif_email" name="notif_email" {% if
-                                usuario.notif_email %}checked{% endif %}>
-                            <label class="form-check-label" for="notif_email">
-                                Recibir notificaciones por correo electrónico
-                            </label>
-                        </div>
-                        <div class="form-check form-switch mb-3">
-                            <input class="form-check-input" type="checkbox" id="notif_pedidos" name="notif_pedidos" {%
-                                if usuario.notif_pedidos %}checked{% endif %}>
-                            <label class="form-check-label" for="notif_pedidos">
-                                Notificarme sobre actualizaciones de pedidos
-                            </label>
-                        </div>
-                        <div class="form-check form-switch mb-3">
-                            <input class="form-check-input" type="checkbox" id="notif_promociones"
-                                name="notif_promociones" {% if usuario.notif_promociones %}checked{% endif %}>
-                            <label class="form-check-label" for="notif_promociones">
-                                Recibir ofertas y promociones especiales
-                            </label>
-                        </div>
-                        <!-- Mantener valores de privacidad -->
-                        <input type="hidden" name="perfil_publico" value="{% if usuario.perfil_publico %}on{% endif %}">
-                        <input type="hidden" name="mostrar_historial"
-                            value="{% if usuario.mostrar_historial %}on{% endif %}">
-                        <div class="text-end">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                            <button type="submit" class="btn btn-primary">Guardar Preferencias</button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Modal: Verificacion de Email -->
     <div class="modal fade" id="modalVerificacion" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header border-0">
-                    <h5 class="modal-title"><i class="fas fa-shield-alt me-2"></i>Autenticación por Correo
-                    </h5>
+            <div class="modal-content profile-modal">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-shield-alt me-2"></i>Verificación de correo</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
                     <div id="stepSendCode">
                         <div class="text-center mb-4">
-                            <div style="font-size: 64px; color: #17a2b8;">
-                                <i class="fas fa-shield-alt"></i>
-                            </div>
-                            <h6 class="mt-3">Autenticación de Seguridad</h6>
-                            <p class="text-muted">Te enviaremos un código de 6 dígitos a tu correo:</p>
+                            <div class="verification-icon"><i class="fas fa-shield-alt"></i></div>
+                            <h6 class="mt-3">Protege tu cuenta</h6>
+                            <p class="text-muted">Te enviaremos un código de 6 dígitos a:</p>
                             <p class="fw-bold">{{ usuario.email }}</p>
                         </div>
-                        <div class="alert alert-info" style="background-color: #e6f7fb; border-color: #17a2b8;">
-                            <i class="fas fa-info-circle me-2"></i>
-                            <small>El código será válido por 10 minutos</small>
-                        </div>
                         <div class="d-grid gap-2">
-                            <button type="button" class="btn btn-primary" id="btnEnviarCodigo"
-                                onclick="enviarCodigoVerificacion()">
-                                <i class="fas fa-paper-plane me-2"></i>Enviar Código
+                            <button type="button" class="btn btn-dark" id="btnEnviarCodigo" onclick="enviarCodigoVerificacion()">
+                                <i class="fas fa-paper-plane me-2"></i>Enviar código
                             </button>
-                            <button type="button" class="btn btn-outline-secondary"
-                                data-bs-dismiss="modal">Cancelar</button>
+                            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
                         </div>
                     </div>
 
                     <div id="stepVerifyCode" style="display: none;">
-                        <div class="text-center mb-4">
-                            <div style="font-size: 64px; color: #17a2b8;">
-                                <i class="fas fa-envelope"></i>
-                            </div>
-                            <h6 class="mt-3">Revisa tu correo</h6>
-                            <p class="text-muted">Ingresa el código de 6 dígitos que enviamos a:</p>
-                            <p class="fw-bold">{{ usuario.email }}</p>
-                        </div>
-
                         <form id="formVerificarCodigo" onsubmit="verificarCodigo(event)">
-                            <div class="mb-3">
-                                <label for="codigoVerificacion" class="form-label">Código de Verificación</label>
-                                <input type="text" class="form-control form-control-lg text-center"
-                                    id="codigoVerificacion" name="codigo" placeholder="123456" maxlength="6"
-                                    inputmode="numeric" style="font-size: 28px; font-weight: bold;" autocomplete="off"
-                                    required>
-                                <small class="text-muted">Solo números, sin espacios</small>
-                            </div>
-
-                            <div id="messageContainer" class="mb-3"></div>
-
+                            <label for="codigoVerificacion" class="form-label">Código de verificación</label>
+                            <input type="text" class="form-control form-control-lg text-center" id="codigoVerificacion" name="codigo" placeholder="123456" maxlength="6" inputmode="numeric" autocomplete="off" required>
+                            <div id="messageContainer" class="my-3"></div>
                             <div class="d-grid gap-2">
-                                <button type="submit" class="btn btn-success" id="btnVerificar">
-                                    <i class="fas fa-check me-2"></i>Verificar
-                                </button>
-                                <button type="button" class="btn btn-outline-primary" onclick="reenviarCodigo()">
-                                    <i class="fas fa-redo me-2"></i>Reenviar Código
-                                </button>
-                                <button type="button" class="btn btn-outline-secondary"
-                                    data-bs-dismiss="modal">Cancelar</button>
+                                <button type="submit" class="btn btn-success" id="btnVerificar"><i class="fas fa-check me-2"></i>Verificar</button>
+                                <button type="button" class="btn btn-outline-primary" onclick="reenviarCodigo()"><i class="fas fa-redo me-2"></i>Reenviar código</button>
+                                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
                             </div>
                         </form>
                     </div>
@@ -453,6 +319,8 @@
             </div>
         </div>
     </div>
+
+    {% include 'Usuarios/partials/footer.html' %}
 
     <script src="{{ url_for('static', filename='js/usuario/catalog_base.js') }}"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
