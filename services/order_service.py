@@ -898,8 +898,14 @@ def construir_vista_pedidos(
 
 
 def leer_filtros_admin_pedidos(args):
+    def normalizar_busqueda(valor):
+        texto = str(valor or "").strip()
+        if re.fullmatch(r"-\s*\d+(?:[.,]\d+)?", texto):
+            return ""
+        return texto
+
     filtros = {
-        "q": str(args.get("q", "")).strip(),
+        "q": normalizar_busqueda(args.get("q", "")),
         "estado": str(args.get("estado", "todos")).strip().lower(),
         "estado_pago": str(args.get("estado_pago", "todos")).strip().lower(),
         "fecha_desde": str(args.get("fecha_desde", "")).strip(),
@@ -907,7 +913,7 @@ def leer_filtros_admin_pedidos(args):
         "page": str(args.get("page", "1")).strip(),
     }
     pago_filtros = {
-        "q": str(args.get("pago_q", "")).strip(),
+        "q": normalizar_busqueda(args.get("pago_q", "")),
         "metodo": str(args.get("pago_metodo", "todos")).strip().lower(),
         "estado": str(args.get("pago_estado", "todos")).strip().lower(),
         "fecha_desde": str(args.get("pago_fecha_desde", "")).strip(),

@@ -313,6 +313,8 @@ def register_admin_legacy_routes(app, legacy):
         if "id_pedido" not in detalle.columns:
             detalle["id_pedido"] = pd.Series(dtype="int")
 
+        detalle["id_pedido"] = pd.to_numeric(detalle["id_pedido"], errors="coerce")
+        detalle["id_producto"] = pd.to_numeric(detalle["id_producto"], errors="coerce")
         detalle["cantidad"] = pd.to_numeric(detalle["cantidad"], errors="coerce").fillna(0)
         detalle["subtotal"] = pd.to_numeric(detalle["subtotal"], errors="coerce").fillna(0)
 
@@ -322,20 +324,30 @@ def register_admin_legacy_routes(app, legacy):
             productos["nombre"] = ""
         if "precio" not in productos.columns:
             productos["precio"] = 0
+        productos["id_producto"] = pd.to_numeric(productos["id_producto"], errors="coerce")
         productos["precio"] = pd.to_numeric(productos["precio"], errors="coerce").fillna(0)
 
         if "id_pedido" not in pedidos.columns:
             pedidos["id_pedido"] = pd.Series(dtype="int")
         if "fecha_pedido" not in pedidos.columns:
             pedidos["fecha_pedido"] = ""
+        if "estado" not in pedidos.columns:
+            pedidos["estado"] = ""
+        pedidos["id_pedido"] = pd.to_numeric(pedidos["id_pedido"], errors="coerce")
         pedidos["fecha_pedido"] = pd.to_datetime(pedidos["fecha_pedido"], errors="coerce")
 
+        if "id_pedido" not in pagos.columns:
+            pagos["id_pedido"] = pd.Series(dtype="int")
         if "monto" not in pagos.columns:
             pagos["monto"] = 0
         if "metodo_pago" not in pagos.columns:
             pagos["metodo_pago"] = ""
+        if "estado_pago" not in pagos.columns:
+            pagos["estado_pago"] = ""
+        pagos["id_pedido"] = pd.to_numeric(pagos["id_pedido"], errors="coerce")
         pagos["monto"] = pd.to_numeric(pagos["monto"], errors="coerce").fillna(0)
         pagos["metodo_pago"] = pagos["metodo_pago"].fillna("").astype(str)
+        pagos["estado_pago"] = pagos["estado_pago"].fillna("").astype(str).str.strip().str.lower()
 
         def filtrar_pedidos_por_rango(df_pedidos, desde=None, hasta=None):
             filtrado = df_pedidos.copy().dropna(subset=["fecha_pedido"])
@@ -345,12 +357,50 @@ def register_admin_legacy_routes(app, legacy):
                 filtrado = filtrado[filtrado["fecha_pedido"].dt.date <= hasta]
             return filtrado
 
+        def construir_ventas_confirmadas(pedidos_base):
+            pedidos_base = pedidos_base.copy()
+            pedidos_base["estado_ui"] = (
+                pedidos_base["estado"]
+                .fillna("")
+                .astype(str)
+                .str.strip()
+                .str.lower()
+                .map(lambda estado: legacy.PEDIDO_STATUS_ALIAS.get(estado, estado))
+            )
+
+            ids_base = set(pedidos_base["id_pedido"].dropna().tolist())
+            pagos_base = pagos[pagos["id_pedido"].isin(ids_base)].copy()
+            pagos_aprobados = pagos_base[pagos_base["estado_pago"] == "aprobado"].copy()
+            ids_aprobados = set(pagos_aprobados["id_pedido"].dropna().tolist())
+            ids_con_pago = set(pagos_base["id_pedido"].dropna().tolist())
+            ids_legacy = set(
+                pedidos_base[
+                    (pedidos_base["estado_ui"] == "entregado")
+                    & ~pedidos_base["id_pedido"].isin(ids_con_pago)
+                ]["id_pedido"].dropna().tolist()
+            )
+            ids_confirmados = ids_aprobados | ids_legacy
+
+            pedidos_confirmados = pedidos_base[pedidos_base["id_pedido"].isin(ids_confirmados)].copy()
+            detalle_confirmado = detalle[detalle["id_pedido"].isin(ids_confirmados)].copy()
+
+            ventas_pago = (
+                pagos_aprobados.groupby("id_pedido", as_index=False)["monto"]
+                .sum()
+                .rename(columns={"monto": "subtotal"})
+            )
+            ventas_legacy = (
+                detalle_confirmado[detalle_confirmado["id_pedido"].isin(ids_legacy)]
+                .groupby("id_pedido", as_index=False)["subtotal"]
+                .sum()
+            )
+            ventas_pedido = pd.concat([ventas_pago, ventas_legacy], ignore_index=True)
+            return pedidos_confirmados, detalle_confirmado, pagos_aprobados, ventas_pedido, ids_legacy
+
         def calcular_kpis_desde_pedidos(pedidos_base):
-            ids = pedidos_base["id_pedido"].tolist()
-            detalle_base = detalle[detalle["id_pedido"].isin(ids)].copy()
-            pagos_base = pagos[pagos["id_pedido"].isin(ids)].copy()
-            total_ventas_base = float(pagos_base["monto"].sum()) if not pagos_base.empty else float(detalle_base["subtotal"].sum())
-            total_pedidos_base = int(len(pedidos_base))
+            pedidos_venta, detalle_base, _, ventas_pedido, _ = construir_ventas_confirmadas(pedidos_base)
+            total_ventas_base = float(ventas_pedido["subtotal"].sum()) if not ventas_pedido.empty else 0
+            total_pedidos_base = int(len(pedidos_venta))
             total_items_base = int(detalle_base["cantidad"].sum()) if not detalle_base.empty else 0
             ticket_promedio_base = (total_ventas_base / total_pedidos_base) if total_pedidos_base > 0 else 0
             return {
@@ -398,9 +448,9 @@ def register_admin_legacy_routes(app, legacy):
                 fecha_desde, fecha_hasta = fecha_hasta, fecha_desde
 
         pedidos_filtrados = filtrar_pedidos_por_rango(pedidos, fecha_desde, fecha_hasta)
-        ids_pedidos = pedidos_filtrados["id_pedido"].tolist()
-        detalle_filtrado = detalle[detalle["id_pedido"].isin(ids_pedidos)].copy()
-        pagos_filtrados = pagos[pagos["id_pedido"].isin(ids_pedidos)].copy()
+        pedidos_ventas, detalle_filtrado, pagos_filtrados, ventas_pedido_df, ids_legacy = (
+            construir_ventas_confirmadas(pedidos_filtrados)
+        )
 
         ventas_por_producto_df = detalle_filtrado.groupby("id_producto", as_index=False)["cantidad"].sum()
         ventas_por_producto_df = pd.merge(
@@ -412,16 +462,32 @@ def register_admin_legacy_routes(app, legacy):
         ventas_por_producto_df["nombre"] = ventas_por_producto_df["nombre"].fillna("Producto sin nombre")
         ventas_por_producto_df["precio"] = pd.to_numeric(ventas_por_producto_df["precio"], errors="coerce").fillna(0)
 
-        pedidos_fechas = pedidos_filtrados.copy()
+        pedidos_fechas = pedidos_ventas.copy()
         pedidos_fechas["mes"] = pedidos_fechas["fecha_pedido"].dt.to_period("M").astype(str)
 
-        ventas_por_mes_df = detalle_filtrado.groupby("id_pedido", as_index=False)["subtotal"].sum()
-        ventas_por_mes_df = pd.merge(ventas_por_mes_df, pedidos_fechas[["id_pedido", "mes"]], on="id_pedido", how="left")
+        ventas_por_mes_df = pd.merge(
+            ventas_pedido_df,
+            pedidos_fechas[["id_pedido", "mes"]],
+            on="id_pedido",
+            how="left",
+        )
         ventas_por_mes_df = ventas_por_mes_df.dropna(subset=["mes"])
         ventas_por_mes_df = ventas_por_mes_df.groupby("mes", as_index=False)["subtotal"].sum().sort_values("mes")
 
         metodos_pago_df = pagos_filtrados.groupby("metodo_pago", as_index=False)["monto"].sum()
         metodos_pago_df = metodos_pago_df[metodos_pago_df["metodo_pago"].str.strip() != ""]
+        if ids_legacy:
+            monto_legacy = float(
+                ventas_pedido_df[ventas_pedido_df["id_pedido"].isin(ids_legacy)]["subtotal"].sum()
+            )
+            if monto_legacy > 0:
+                metodos_pago_df = pd.concat(
+                    [
+                        metodos_pago_df,
+                        pd.DataFrame([{"metodo_pago": "Sin método registrado", "monto": monto_legacy}]),
+                    ],
+                    ignore_index=True,
+                )
 
         kpis = calcular_kpis_desde_pedidos(pedidos_filtrados)
 
