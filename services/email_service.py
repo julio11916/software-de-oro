@@ -1,14 +1,46 @@
 import logging
-import random
-import string
 import mimetypes
 import os
+import random
+import smtplib
+import string
 
 from flask import current_app, render_template
-from flask_mail import Mail, Message
+from flask_mail import Connection, Mail, Message
 
 logger = logging.getLogger(__name__)
-mail = Mail()
+
+
+class TimeoutConnection(Connection):
+    """Conexion Flask-Mail con limite para evitar bloquear workers web."""
+
+    def configure_host(self):
+        timeout = float(current_app.config.get("MAIL_TIMEOUT", 10))
+        if self.mail.use_ssl:
+            host = smtplib.SMTP_SSL(self.mail.server, self.mail.port, timeout=timeout)
+        else:
+            host = smtplib.SMTP(self.mail.server, self.mail.port, timeout=timeout)
+
+        host.set_debuglevel(int(self.mail.debug))
+        if self.mail.use_tls:
+            host.starttls()
+        if self.mail.username and self.mail.password:
+            host.login(self.mail.username, self.mail.password)
+        return host
+
+
+class TimeoutMail(Mail):
+    def connect(self):
+        app = getattr(self, "app", None) or current_app
+        try:
+            return TimeoutConnection(app.extensions["mail"])
+        except KeyError as exc:
+            raise RuntimeError(
+                "La aplicacion no tiene configurada la extension de correo."
+            ) from exc
+
+
+mail = TimeoutMail()
 
 
 def generar_codigo_verificacion():
