@@ -333,7 +333,7 @@ function initPaymentMethodChart(metodosPago) {
         data: {
             labels,
             datasets: [{
-                label: 'Monto por metodo',
+                label: 'Monto por método',
                 data,
                 borderWidth: 0,
                 hoverOffset: 10,
