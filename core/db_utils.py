@@ -52,7 +52,12 @@ DATABASE_URL = _normalize_database_url(
         "postgresql+psycopg://postgres:admin@localhost:5432/software_de_oro",
     )
 )
-engine = sa.create_engine(DATABASE_URL, future=True)
+engine = sa.create_engine(
+    DATABASE_URL,
+    future=True,
+    pool_pre_ping=True,
+    pool_recycle=300,
+)
 
 
 IDENTIFIER_PATTERN = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
@@ -76,6 +81,8 @@ def ensure_tables():
         rol TEXT NOT NULL DEFAULT 'usuario',
         estado TEXT NOT NULL DEFAULT 'activo',
         fecha_registro TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        email_alternativo TEXT,
+        cedula TEXT,
         telefono TEXT,
         direccion TEXT,
         email_verified BOOLEAN NOT NULL DEFAULT FALSE,
@@ -179,6 +186,8 @@ def ensure_tables():
         conn.execute(sa.text("ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS reset_token_expiry TIMESTAMPTZ"))
         conn.execute(sa.text("ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS password_change_code TEXT"))
         conn.execute(sa.text("ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS password_change_code_expiry TIMESTAMPTZ"))
+        conn.execute(sa.text("ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS email_alternativo TEXT"))
+        conn.execute(sa.text("ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS cedula TEXT"))
         conn.execute(sa.text("ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS telefono TEXT"))
         conn.execute(sa.text("ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS direccion TEXT"))
         conn.execute(sa.text("ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS terminos_identidad_aceptados BOOLEAN NOT NULL DEFAULT FALSE"))

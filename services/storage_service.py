@@ -13,16 +13,6 @@ from models.constants import *
 from services import image_service as app_image_service
 
 
-def asegurar_columnas_usuarios():
-    with engine.begin() as conn:
-        conn.execute(sa.text("ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS email_alternativo TEXT"))
-        conn.execute(sa.text("ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS cedula TEXT"))
-        conn.execute(sa.text("ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS telefono TEXT"))
-        conn.execute(sa.text("ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS direccion TEXT"))
-        conn.execute(sa.text("ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS terminos_identidad_aceptados BOOLEAN NOT NULL DEFAULT FALSE"))
-        conn.execute(sa.text("ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS terminos_identidad_fecha TIMESTAMPTZ"))
-
-
 def normalizar_intendencia(valor):
     texto = str(valor or "").strip().lower()
     return re.sub(r"\s+", " ", texto)
@@ -31,7 +21,6 @@ def producto_requiere_talla(intendencia):
     return normalizar_intendencia(intendencia) not in INTENDENCIAS_SIN_TALLA
 
 def cargar_usuarios_df():
-    asegurar_columnas_usuarios()
     usuarios = read_table_df('usuarios')
     if usuarios.empty:
         usuarios = pd.DataFrame(columns=USUARIO_COLUMNS)
@@ -74,7 +63,6 @@ def guardar_usuarios_df(usuarios):
     Persiste el DataFrame de usuarios en PostgreSQL manteniendo tipos correctos
     para fechas y booleanos, y normalizando los tokens a texto.
     """
-    asegurar_columnas_usuarios()
     df = usuarios.copy()
 
     # Normalizar columnas de texto
