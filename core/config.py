@@ -36,6 +36,18 @@ class BaseConfig:
     MAIL_PASSWORD = os.getenv("MAIL_PASSWORD", MAIL_PASSWORD_DEFAULT)
     MAIL_DEFAULT_SENDER = os.getenv("MAIL_DEFAULT_SENDER", MAIL_DEFAULT_SENDER_DEFAULT)
     MAIL_TIMEOUT = max(1, int(os.getenv("MAIL_TIMEOUT", "10")))
+    MAIL_SENDER_NAME = os.getenv("MAIL_SENDER_NAME", "Nachohers").strip() or "Nachohers"
+
+    BREVO_API_KEY = os.getenv("BREVO_API_KEY", "").strip()
+    BREVO_API_URL = os.getenv(
+        "BREVO_API_URL",
+        "https://api.brevo.com/v3/smtp/email",
+    ).strip()
+    BREVO_TIMEOUT = max(1, int(os.getenv("BREVO_TIMEOUT", "15")))
+    MAIL_PROVIDER = os.getenv(
+        "MAIL_PROVIDER",
+        "brevo" if BREVO_API_KEY else "smtp",
+    ).strip().lower()
 
     PROJECT_NAME = os.getenv("PROJECT_NAME", "NACHOHERS").strip() or "NACHOHERS"
     TRANSFER_QR_IMAGE = os.getenv("TRANSFER_QR_IMAGE", "img/Pagina/qr.jpeg").strip() or "img/Pagina/qr.jpeg"
