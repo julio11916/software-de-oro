@@ -35,6 +35,7 @@ class BaseConfig:
     MAIL_USERNAME = os.getenv("MAIL_USERNAME", MAIL_USERNAME_DEFAULT)
     MAIL_PASSWORD = os.getenv("MAIL_PASSWORD", MAIL_PASSWORD_DEFAULT)
     MAIL_DEFAULT_SENDER = os.getenv("MAIL_DEFAULT_SENDER", MAIL_DEFAULT_SENDER_DEFAULT)
+    MAIL_TIMEOUT = max(1, int(os.getenv("MAIL_TIMEOUT", "10")))
 
     PROJECT_NAME = os.getenv("PROJECT_NAME", "NACHOHERS").strip() or "NACHOHERS"
     TRANSFER_QR_IMAGE = os.getenv("TRANSFER_QR_IMAGE", "img/Pagina/qr.jpeg").strip() or "img/Pagina/qr.jpeg"
