@@ -1,10 +1,13 @@
+import base64
 import logging
 import mimetypes
 import os
 import random
 import smtplib
 import string
+from email.utils import parseaddr
 
+import requests
 from flask import current_app, render_template
 from flask_mail import Connection, Mail, Message
 
@@ -38,6 +41,104 @@ class TimeoutMail(Mail):
             raise RuntimeError(
                 "La aplicacion no tiene configurada la extension de correo."
             ) from exc
+
+    def send(self, message):
+        provider = str(current_app.config.get("MAIL_PROVIDER", "smtp")).strip().lower()
+        if provider == "brevo":
+            self._send_with_brevo(message)
+            return
+        super().send(message)
+
+    @staticmethod
+    def _address_payload(address, default_name=""):
+        if isinstance(address, (tuple, list)) and len(address) >= 2:
+            name = str(address[0] or "").strip()
+            email = str(address[1] or "").strip()
+        else:
+            name, email = parseaddr(str(address or "").strip())
+
+        payload = {"email": email}
+        if name or default_name:
+            payload["name"] = name or default_name
+        return payload
+
+    def _send_with_brevo(self, message):
+        api_key = str(current_app.config.get("BREVO_API_KEY", "")).strip()
+        if not api_key:
+            raise RuntimeError(
+                "MAIL_PROVIDER esta configurado como brevo, pero falta BREVO_API_KEY."
+            )
+
+        sender = message.sender or current_app.config.get("MAIL_DEFAULT_SENDER", "")
+        sender_payload = self._address_payload(
+            sender,
+            default_name=str(current_app.config.get("MAIL_SENDER_NAME", "Nachohers")).strip(),
+        )
+        if not sender_payload.get("email"):
+            raise RuntimeError(
+                "Falta MAIL_DEFAULT_SENDER para enviar correos mediante Brevo."
+            )
+
+        recipients = [
+            self._address_payload(address)
+            for address in (message.recipients or [])
+        ]
+        recipients = [item for item in recipients if item.get("email")]
+        if not recipients:
+            raise RuntimeError("El correo no tiene destinatarios validos.")
+
+        payload = {
+            "sender": sender_payload,
+            "to": recipients,
+            "subject": str(message.subject or "").strip(),
+        }
+        if message.html:
+            payload["htmlContent"] = message.html
+        elif message.body:
+            payload["textContent"] = message.body
+        else:
+            raise RuntimeError("El correo no tiene contenido HTML ni texto.")
+
+        for source_attr, target_key in (("cc", "cc"), ("bcc", "bcc")):
+            addresses = getattr(message, source_attr, None) or []
+            values = [self._address_payload(address) for address in addresses]
+            values = [item for item in values if item.get("email")]
+            if values:
+                payload[target_key] = values
+
+        reply_to = getattr(message, "reply_to", None)
+        if reply_to:
+            payload["replyTo"] = self._address_payload(reply_to)
+
+        attachments = []
+        for attachment in message.attachments or []:
+            raw_data = attachment.data
+            if isinstance(raw_data, str):
+                raw_data = raw_data.encode("utf-8")
+            attachments.append(
+                {
+                    "name": attachment.filename or "adjunto",
+                    "content": base64.b64encode(raw_data).decode("ascii"),
+                }
+            )
+        if attachments:
+            payload["attachment"] = attachments
+
+        response = requests.post(
+            str(current_app.config.get("BREVO_API_URL")).strip(),
+            headers={
+                "accept": "application/json",
+                "api-key": api_key,
+                "content-type": "application/json",
+            },
+            json=payload,
+            timeout=float(current_app.config.get("BREVO_TIMEOUT", 15)),
+        )
+        if not response.ok:
+            detail = response.text[:500].strip()
+            raise RuntimeError(
+                f"Brevo rechazo el correo con estado {response.status_code}: {detail}"
+            )
 
 
 mail = TimeoutMail()
