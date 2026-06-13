@@ -27,6 +27,9 @@ def build_auth_image_legacy_bindings(
     def normalizar_email(valor):
         return app_auth_service.normalizar_email(valor)
 
+    def nombre_persona_es_valido(valor):
+        return app_auth_service.nombre_persona_es_valido(valor)
+
     def email_es_valido(email):
         return bool(re.fullmatch(r"[^@\s]+@[^@\s]+\.[^@\s]+", str(email or "").strip()))
 
@@ -64,6 +67,9 @@ def build_auth_image_legacy_bindings(
 
     def password_cumple_estandares(password):
         return app_auth_service.password_cumple_estandares(password)
+
+    def password_requisitos_faltantes(password):
+        return app_auth_service.password_requisitos_faltantes(password)
 
     def timestamp_expirado(valor_expiry):
         return app_auth_service.timestamp_expirado(valor_expiry)
@@ -183,6 +189,7 @@ def build_auth_image_legacy_bindings(
         "normalizar_imagenes_productos": normalizar_imagenes_productos,
         "extension_imagen": extension_imagen,
         "normalizar_email": normalizar_email,
+        "nombre_persona_es_valido": nombre_persona_es_valido,
         "email_es_valido": email_es_valido,
         "limpiar_registros_pendientes": limpiar_registros_pendientes,
         "obtener_registro_pendiente": obtener_registro_pendiente,
@@ -191,6 +198,7 @@ def build_auth_image_legacy_bindings(
         "crear_hash_password": crear_hash_password,
         "password_coincide": password_coincide,
         "password_cumple_estandares": password_cumple_estandares,
+        "password_requisitos_faltantes": password_requisitos_faltantes,
         "timestamp_expirado": timestamp_expirado,
         "asegurar_columnas_cambio_password": asegurar_columnas_cambio_password,
         "codigo_cambio_password_expirado": codigo_cambio_password_expirado,

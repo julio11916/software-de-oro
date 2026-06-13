@@ -223,7 +223,7 @@ def register_auth_legacy_routes(app, legacy):
             )
 
         if request.method == "POST":
-            nombre = request.form.get("nombre", "").strip()
+            nombre = " ".join(request.form.get("nombre", "").split())
             email = legacy.normalizar_email(request.form.get("email", ""))
             email_alternativo = legacy.normalizar_email(request.form.get("email_alternativo", ""))
             cedula = "".join(ch for ch in request.form.get("cedula", "") if ch.isdigit())
@@ -234,6 +234,10 @@ def register_auth_legacy_routes(app, legacy):
 
             if not nombre or not email or not cedula or not telefono or not password or not confirm_password:
                 flash("Debes completar todos los campos del formulario.", "danger")
+                return _render_registro(nombre, email, email_alternativo, cedula, telefono), 400
+
+            if not legacy.nombre_persona_es_valido(nombre):
+                flash("El nombre completo solo puede contener letras y espacios.", "danger")
                 return _render_registro(nombre, email, email_alternativo, cedula, telefono), 400
 
             if not acepta_terminos:
@@ -264,9 +268,10 @@ def register_auth_legacy_routes(app, legacy):
                 flash("Las contraseñas no coinciden.", "danger")
                 return _render_registro(nombre, email, email_alternativo, cedula, telefono), 400
 
-            if not legacy.password_cumple_estandares(password):
+            requisitos_faltantes = legacy.password_requisitos_faltantes(password)
+            if requisitos_faltantes:
                 flash(
-                    "La contraseña debe tener mínimo 8 caracteres, mayúscula, minúscula, número y carácter especial.",
+                    "A la contraseña le falta: " + ", ".join(requisitos_faltantes) + ".",
                     "danger",
                 )
                 return _render_registro(nombre, email, email_alternativo, cedula, telefono), 400

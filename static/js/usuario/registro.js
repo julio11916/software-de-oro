@@ -7,11 +7,14 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     const form = document.getElementById("registroForm");
+    const nombreInput = document.getElementById("nombre");
+    const nombreStatus = document.getElementById("nombreStatus");
     const passwordInput = document.getElementById("password");
     const confirmInput = document.getElementById("confirm_password");
     const passwordToggleButtons = document.querySelectorAll("[data-password-toggle]");
     const emailInput = document.getElementById("email");
     const alternateEmailInput = document.getElementById("email_alternativo");
+    const alternateEmailStatus = document.getElementById("alternateEmailStatus");
     const cedulaInput = document.getElementById("cedula");
     const telefonoInput = document.getElementById("telefono");
     const emailStatus = document.getElementById("emailStatus");
@@ -22,17 +25,39 @@ document.addEventListener("DOMContentLoaded", () => {
     const ruleSymbol = document.getElementById("rule-symbol");
     const ruleList = document.querySelector(".password-rules");
 
-    if (!form || !passwordInput || !confirmInput || !emailInput || !emailStatus) {
+    if (!form || !nombreInput || !passwordInput || !confirmInput || !emailInput || !emailStatus) {
         return;
     }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const nombreRegex = /^[\p{L}\s]+$/u;
+    const alternateEmailHelp = alternateEmailStatus?.textContent || "";
 
     const normalizarNumero = (input, maxLength) => {
         if (!input) {
             return;
         }
         input.value = input.value.replace(/\D/g, "").slice(0, maxLength);
+    };
+
+    const validarNombre = () => {
+        const nombre = nombreInput.value.trim();
+        const valido = Boolean(nombre) && nombreRegex.test(nombre);
+        const invalido = Boolean(nombre) && !valido;
+
+        nombreInput.setCustomValidity(
+            invalido ? "El nombre completo solo puede contener letras y espacios." : ""
+        );
+        nombreInput.classList.toggle("is-invalid", invalido);
+
+        if (nombreStatus) {
+            nombreStatus.textContent = invalido
+                ? "El nombre completo no puede contener números ni símbolos."
+                : "Solo se permiten letras y espacios.";
+            nombreStatus.classList.toggle("text-danger", invalido);
+            nombreStatus.classList.toggle("text-muted", !invalido);
+        }
+        return valido;
     };
 
     const setEmailStatus = (mensaje, tipo) => {
@@ -55,67 +80,83 @@ document.addEventListener("DOMContentLoaded", () => {
         emailStatus.classList.add("text-muted");
     };
 
+    const validarCorreoAlternativo = () => {
+        if (!alternateEmailInput) {
+            return true;
+        }
+
+        const principal = emailInput.value.trim().toLowerCase();
+        const alternativo = alternateEmailInput.value.trim().toLowerCase();
+        const repetido = Boolean(alternativo && principal && alternativo === principal);
+        const mensaje = "El correo alternativo debe ser diferente al correo principal.";
+
+        alternateEmailInput.setCustomValidity(repetido ? mensaje : "");
+        alternateEmailInput.classList.toggle("is-invalid", repetido);
+
+        if (alternateEmailStatus) {
+            alternateEmailStatus.textContent = repetido ? mensaje : alternateEmailHelp;
+            alternateEmailStatus.classList.toggle("text-danger", repetido);
+            alternateEmailStatus.classList.toggle("text-muted", !repetido);
+        }
+        return !repetido;
+    };
+
     const validarConfirmacion = () => {
         if (confirmInput.value && confirmInput.value !== passwordInput.value) {
             confirmInput.setCustomValidity("Las contraseñas no coinciden.");
-            return;
+            return false;
         }
         confirmInput.setCustomValidity("");
+        return true;
     };
 
     const setRuleState = (element, cumple) => {
         if (!element) {
             return;
         }
-        if (cumple) {
-            element.classList.add("password-rule-hidden");
-            element.classList.remove("text-danger", "text-success");
-            return;
-        }
-        element.classList.remove("password-rule-hidden");
-        element.classList.remove("text-success");
-        element.classList.add("text-danger");
+        element.classList.toggle("password-rule-hidden", cumple);
+        element.classList.toggle("text-danger", !cumple);
     };
 
-    const validarPassword = () => {
+    const validarPassword = (mostrarErrores = false) => {
         const value = passwordInput.value || "";
-        const tieneLongitud = value.length >= 8;
-        const tieneMayus = /[A-Z]/.test(value);
-        const tieneMinus = /[a-z]/.test(value);
-        const tieneNumero = /\d/.test(value);
-        const tieneSimbolo = /[^A-Za-z0-9]/.test(value);
-
-        const cumpleTodo = tieneLongitud && tieneMayus && tieneMinus && tieneNumero && tieneSimbolo;
-
-        if (ruleList) {
-            if (cumpleTodo) {
-                ruleList.classList.add("password-rule-hidden");
-            } else {
-                ruleList.classList.remove("password-rule-hidden");
-            }
-        }
+        const estados = {
+            longitud: value.length >= 8,
+            mayuscula: /[A-Z]/.test(value),
+            minuscula: /[a-z]/.test(value),
+            numero: /\d/.test(value),
+            simbolo: /[^A-Za-z0-9]/.test(value)
+        };
+        const cumpleTodo = Object.values(estados).every(Boolean);
 
         if (cumpleTodo) {
-            [ruleLength, ruleUpper, ruleLower, ruleNumber, ruleSymbol].forEach((el) => {
-                if (!el) {
-                    return;
-                }
-                el.classList.add("password-rule-hidden");
-                el.classList.remove("text-danger", "text-success");
+            ruleList?.classList.add("password-rule-hidden");
+            [ruleLength, ruleUpper, ruleLower, ruleNumber, ruleSymbol].forEach((element) => {
+                element?.classList.add("password-rule-hidden");
             });
             passwordInput.setCustomValidity("");
-            return;
+            return true;
         }
 
-        setRuleState(ruleLength, tieneLongitud);
-        setRuleState(ruleUpper, tieneMayus);
-        setRuleState(ruleLower, tieneMinus);
-        setRuleState(ruleNumber, tieneNumero);
-        setRuleState(ruleSymbol, tieneSimbolo);
+        if (mostrarErrores || value) {
+            ruleList?.classList.remove("password-rule-hidden");
+            setRuleState(ruleLength, estados.longitud);
+            setRuleState(ruleUpper, estados.mayuscula);
+            setRuleState(ruleLower, estados.minuscula);
+            setRuleState(ruleNumber, estados.numero);
+            setRuleState(ruleSymbol, estados.simbolo);
+        } else {
+            ruleList?.classList.add("password-rule-hidden");
+        }
 
-        passwordInput.setCustomValidity(
-            "La contraseña debe cumplir todas las condiciones."
-        );
+        const faltantes = [];
+        if (!estados.longitud) faltantes.push("mínimo 8 caracteres");
+        if (!estados.mayuscula) faltantes.push("una letra mayúscula");
+        if (!estados.minuscula) faltantes.push("una letra minúscula");
+        if (!estados.numero) faltantes.push("un número");
+        if (!estados.simbolo) faltantes.push("un carácter especial");
+        passwordInput.setCustomValidity(`A la contraseña le falta: ${faltantes.join(", ")}.`);
+        return false;
     };
 
     const verificarCorreoExistente = async () => {
@@ -153,11 +194,14 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     };
 
+    nombreInput.addEventListener("input", validarNombre);
+    nombreInput.addEventListener("blur", validarNombre);
+
     passwordInput.addEventListener("input", () => {
-        validarPassword();
+        validarPassword(true);
         validarConfirmacion();
     });
-    validarPassword();
+    validarPassword(false);
     confirmInput.addEventListener("input", validarConfirmacion);
 
     passwordToggleButtons.forEach((button) => {
@@ -182,13 +226,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
     emailInput.addEventListener("input", () => {
         setEmailStatus("", "info");
+        validarCorreoAlternativo();
     });
 
-    if (alternateEmailInput) {
-        alternateEmailInput.addEventListener("input", () => {
-            alternateEmailInput.setCustomValidity("");
-        });
-    }
+    alternateEmailInput?.addEventListener("input", validarCorreoAlternativo);
+    alternateEmailInput?.addEventListener("blur", validarCorreoAlternativo);
 
     if (cedulaInput) {
         cedulaInput.addEventListener("input", () => normalizarNumero(cedulaInput, 12));
@@ -206,24 +248,21 @@ document.addEventListener("DOMContentLoaded", () => {
 
     form.addEventListener("submit", async (event) => {
         event.preventDefault();
+        validarNombre();
+        validarPassword(true);
         validarConfirmacion();
+        validarCorreoAlternativo();
+
+        if (!form.checkValidity()) {
+            form.reportValidity();
+            return;
+        }
 
         const existe = await verificarCorreoExistente();
         if (existe) {
             emailInput.focus();
             emailInput.reportValidity();
             return;
-        }
-
-        if (alternateEmailInput) {
-            const principal = emailInput.value.trim().toLowerCase();
-            const alternativo = alternateEmailInput.value.trim().toLowerCase();
-            if (alternativo && alternativo === principal) {
-                alternateEmailInput.setCustomValidity("El correo alternativo debe ser diferente al principal.");
-                alternateEmailInput.reportValidity();
-                return;
-            }
-            alternateEmailInput.setCustomValidity("");
         }
 
         if (!form.checkValidity()) {
