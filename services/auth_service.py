@@ -14,6 +14,14 @@ def normalizar_email(valor):
     return str(valor or "").strip().lower()
 
 
+def nombre_persona_es_valido(valor):
+    nombre = re.sub(r"\s+", " ", str(valor or "").strip())
+    return bool(nombre) and all(
+        caracter.isalpha() or caracter == " "
+        for caracter in nombre
+    )
+
+
 def limpiar_registros_pendientes(pending_registrations):
     ahora = datetime.now()
     expirados = []
@@ -79,8 +87,23 @@ def password_coincide(password_guardado, password_plano, check_password_hash_fn)
 
 
 def password_cumple_estandares(password):
-    patron = r"(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}"
-    return bool(re.fullmatch(patron, str(password or "")))
+    return not password_requisitos_faltantes(password)
+
+
+def password_requisitos_faltantes(password):
+    valor = str(password or "")
+    requisitos = []
+    if len(valor) < 8:
+        requisitos.append("mínimo 8 caracteres")
+    if not re.search(r"[A-Z]", valor):
+        requisitos.append("una letra mayúscula")
+    if not re.search(r"[a-z]", valor):
+        requisitos.append("una letra minúscula")
+    if not re.search(r"\d", valor):
+        requisitos.append("un número")
+    if not re.search(r"[^A-Za-z0-9]", valor):
+        requisitos.append("un carácter especial")
+    return requisitos
 
 
 def timestamp_expirado(valor_expiry):

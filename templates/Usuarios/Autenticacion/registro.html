@@ -38,7 +38,16 @@
         <form method="POST" action="{{ url_for('registro') }}" id="registroForm">
             <div class="mb-3">
                 <label for="nombre" class="form-label">Nombre completo</label>
-                <input type="text" class="form-control auth-input" name="nombre" id="nombre" value="{{ nombre_registro or '' }}" required>
+                <input
+                    type="text"
+                    class="form-control auth-input"
+                    name="nombre"
+                    id="nombre"
+                    value="{{ nombre_registro or '' }}"
+                    autocomplete="name"
+                    required
+                >
+                <small id="nombreStatus" class="d-block mt-1 text-muted">Solo se permiten letras y espacios.</small>
             </div>
             <div class="mb-3">
                 <label for="email" class="form-label">Correo electrónico</label>
@@ -48,7 +57,7 @@
             <div class="mb-3">
                 <label for="email_alternativo" class="form-label">Correo electrónico alternativo <span class="text-muted">(opcional)</span></label>
                 <input type="email" class="form-control auth-input" name="email_alternativo" id="email_alternativo" value="{{ email_alternativo_registro or '' }}" autocomplete="email">
-                <small class="text-muted">Te servirá para recuperar tu contraseña si pierdes acceso al correo principal. No puede ser el correo principal de otra cuenta.</small>
+                <small id="alternateEmailStatus" class="d-block mt-1 text-muted">Te servirá para recuperar tu contraseña si pierdes acceso al correo principal. Debe ser diferente al correo principal.</small>
             </div>
             <div class="mb-3">
                 <label for="cedula" class="form-label">Cédula</label>
@@ -108,8 +117,12 @@
                         <i class="fa-regular fa-eye"></i>
                     </button>
                 </div>
-                <ul class="password-rules mt-2 mb-0" aria-live="polite">
-                    <li id="rule-length" class="text-danger">Mínimo 8 caracteres, Mayúscula, Minúscula, Número y Símbolo</li>
+                <ul class="password-rules password-rule-hidden mt-2 mb-0" aria-live="polite">
+                    <li id="rule-length" class="text-danger">Falta tener mínimo 8 caracteres.</li>
+                    <li id="rule-uppercase" class="text-danger">Falta una letra mayúscula.</li>
+                    <li id="rule-lowercase" class="text-danger">Falta una letra minúscula.</li>
+                    <li id="rule-number" class="text-danger">Falta un número.</li>
+                    <li id="rule-symbol" class="text-danger">Falta un carácter especial.</li>
                 </ul>
             </div>
             <div class="mb-3">
